@@ -555,6 +555,13 @@ body {
   color: #b71c1c;
 }
 
+.cost-per-point {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #888;
+  margin-left: 6px;
+}
+
 .summary-row .row-value .savings-badge {
   display: inline-block;
   font-size: 0.65rem;

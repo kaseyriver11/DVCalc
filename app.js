@@ -416,7 +416,7 @@ function renderSummary() {
         <div class="summary-section-label">${resortHasCashData ? 'If booking through Disney' : 'Your cash rate'}</div>
         <div class="summary-row">
           <span class="row-label">${resortHasCashData ? 'Est. Disney cash rate' : `${stayDates.length} nights x $${state.customCashRate}/night`}</span>
-          <span class="row-value rack">$${totalDisneyCash.toLocaleString()}</span>
+          <span class="row-value rack">$${totalDisneyCash.toLocaleString()} <span class="cost-per-point">$${(totalDisneyCash / totalPoints).toFixed(2)}/pt</span></span>
         </div>
 
         <div class="summary-divider"></div>
