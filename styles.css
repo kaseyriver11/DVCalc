@@ -1,0 +1,787 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* ---- Header ---- */
+.header {
+  background: linear-gradient(135deg, #1a237e, #4a148c);
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.header .subtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* ---- Controls ---- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 24px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.control-group label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.control-group select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+  min-width: 200px;
+  max-width: 360px;
+}
+
+.control-group select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+#year-select {
+  min-width: 80px;
+}
+
+/* ---- Searchable Select ---- */
+.searchable-select {
+  position: relative;
+  min-width: 360px;
+}
+
+.searchable-select input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+}
+
+.searchable-select input:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+  cursor: text;
+}
+
+.searchable-select.open input {
+  border-radius: 6px 6px 0 0;
+}
+
+.searchable-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #4a148c;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.searchable-dropdown.open {
+  display: block;
+}
+
+.searchable-option {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.searchable-option:last-child {
+  border-bottom: none;
+}
+
+.searchable-option:hover {
+  background: #f3e5f5;
+}
+
+.searchable-option.active {
+  background: #ede7f6;
+  font-weight: 600;
+}
+
+/* ---- Month Navigation ---- */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+
+.month-nav button {
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.month-nav button:hover {
+  background: #6a1b9a;
+}
+
+.month-nav .month-label {
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 140px;
+  text-align: center;
+}
+
+/* ---- Main Layout: Calendar Left, Summary Right ---- */
+.main-layout {
+  display: flex;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 16px auto;
+  padding: 0 16px;
+  align-items: flex-start;
+}
+
+.calendar-side {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-side {
+  width: 300px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+}
+
+/* ---- Selection Hint ---- */
+.selection-hint {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666;
+  padding: 6px 0;
+  font-style: italic;
+}
+
+.selection-hint .checkin-date {
+  font-weight: 600;
+  color: #1a237e;
+  font-style: normal;
+}
+
+/* ---- Calendar ---- */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.day-header {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #888;
+  padding: 6px 0;
+}
+
+.day-cell {
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+  padding: 6px 2px;
+  min-height: 54px;
+}
+
+.day-cell:hover:not(.empty) {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+.day-cell.empty {
+  cursor: default;
+  background: transparent;
+}
+
+.day-cell .day-number {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.day-cell .day-points {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+.day-cell .day-type-label {
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.6;
+  margin-top: 1px;
+}
+
+.day-cell .day-cash {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: #999;
+  letter-spacing: -0.3px;
+}
+
+/* Selected state */
+.day-cell.selected {
+  outline: 3px solid #1a237e;
+  outline-offset: -1px;
+  box-shadow: 0 1px 6px rgba(26, 35, 126, 0.25);
+}
+
+/* Check-in marker */
+.day-cell.checkin {
+  outline-color: #2e7d32;
+}
+
+.day-cell.checkin::after {
+  content: "IN";
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.45rem;
+  font-weight: 700;
+  color: #2e7d32;
+  letter-spacing: 0.5px;
+}
+
+/* Check-out marker */
+.day-cell.checkout {
+  outline: 3px dashed #b71c1c;
+  outline-offset: -1px;
+  background: rgba(183, 28, 28, 0.06) !important;
+}
+
+.day-cell.checkout::after {
+  content: "OUT";
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.45rem;
+  font-weight: 700;
+  color: #b71c1c;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Legend ---- */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+}
+
+.legend-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: #555;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ---- Settings Card (combined ownership + rental rate) ---- */
+.settings-card {
+  background: white;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 10px;
+}
+
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-divider {
+  height: 1px;
+  background: #eee;
+  margin: 8px 0;
+}
+
+.ownership-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.ownership-toggle input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #4a148c;
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-weight: 600;
+}
+
+.ownership-details {
+  margin-top: 4px;
+}
+
+.ownership-details select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  background: white;
+  cursor: pointer;
+}
+
+.ownership-details select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+.owner-dues-info {
+  font-size: 0.65rem;
+  color: #666;
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* Owner value color in summary */
+.summary-row .row-value.owner {
+  color: #4a148c;
+}
+
+.settings-row label[for="rental-rate"] {
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.settings-row input[type="range"] {
+  width: 100%;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e0e0e0;
+  border-radius: 3px;
+  outline: none;
+}
+
+.settings-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a148c;
+  cursor: pointer;
+}
+
+/* ---- Summary Panel (right side) ---- */
+.summary-card {
+  background: white;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+.summary-dates-display {
+  margin-bottom: 10px;
+}
+
+.summary-dates-display .date-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.summary-dates-display .date-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+}
+
+.summary-dates-display .date-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.summary-divider {
+  height: 1px;
+  background: #eee;
+  margin: 8px 0;
+}
+
+.summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.summary-row .row-label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.summary-row .row-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a237e;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.summary-row .row-value.cash {
+  color: #2e7d32;
+  display: inline-flex;
+  align-items: center;
+}
+
+.summary-row .row-value .save-amount {
+  min-width: 70px;
+  text-align: right;
+}
+
+.summary-row .row-value.rack {
+  color: #b71c1c;
+}
+
+.summary-row .row-value .savings-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  min-width: 42px;
+  text-align: center;
+}
+
+.summary-section-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #aaa;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.summary-row.total {
+  padding-top: 10px;
+  border-top: 2px solid #1a237e;
+  margin-top: 4px;
+}
+
+.summary-row.total .row-label {
+  font-weight: 600;
+  color: #333;
+}
+
+.summary-row.total .row-value {
+  font-size: 1.3rem;
+}
+
+.summary-nightly {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+
+.summary-nightly h4 {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 0;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.summary-nightly h4::after {
+  content: "\25B6";
+  font-size: 0.55rem;
+  transition: transform 0.15s;
+}
+
+.summary-nightly.open h4::after {
+  transform: rotate(90deg);
+}
+
+.summary-nightly h4:hover {
+  color: #4a148c;
+}
+
+.nightly-rows {
+  display: none;
+  margin-top: 6px;
+}
+
+.summary-nightly.open .nightly-rows {
+  display: block;
+}
+
+.nightly-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 0.75rem;
+}
+
+.nightly-row .night-date {
+  color: #555;
+  flex: 1;
+}
+
+.nightly-row .night-points {
+  font-weight: 600;
+  color: #1a237e;
+  min-width: 48px;
+  text-align: right;
+}
+
+.nightly-row .night-cash {
+  color: #b71c1c;
+  font-size: 0.65rem;
+  min-width: 52px;
+  text-align: right;
+}
+
+.summary-empty {
+  color: #999;
+  font-style: italic;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 24px 12px;
+}
+
+.no-cash-note {
+  font-size: 0.72rem;
+  color: #999;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.custom-cash-input {
+  margin-top: 8px;
+}
+
+.custom-cash-row {
+  margin-top: 6px;
+}
+
+.custom-cash-row label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.custom-cash-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.custom-cash-field .cash-prefix,
+.custom-cash-field .cash-suffix {
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 600;
+}
+
+.custom-cash-field input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.custom-cash-field input:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+.summary-clear {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 6px;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.summary-clear:hover {
+  border-color: #b71c1c;
+  color: #b71c1c;
+  background: rgba(183, 28, 28, 0.04);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 800px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .summary-side {
+    width: 100%;
+    position: static;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .month-nav {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .control-group select {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .searchable-select {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .day-cell {
+    min-height: 48px;
+  }
+
+  .day-cell .day-points {
+    font-size: 0.85rem;
+  }
+
+  .day-cell .day-number {
+    font-size: 0.65rem;
+  }
+}
