@@ -17,6 +17,7 @@ body {
   color: white;
   padding: 16px 24px;
   text-align: center;
+  position: relative;
 }
 
 .header h1 {
@@ -28,6 +29,32 @@ body {
 .header .subtitle {
   font-size: 0.8rem;
   opacity: 0.8;
+}
+
+.header .header-links {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 16px;
+}
+
+.header .header-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  transition: all 0.2s;
+}
+
+.header .header-links a:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.7);
 }
 
 /* ---- Controls ---- */
@@ -370,6 +397,19 @@ body {
   flex-shrink: 0;
 }
 
+.source-link {
+  font-size: 0.6rem;
+  color: #aaa;
+  text-decoration: none;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.source-link:hover {
+  color: #4a148c;
+  text-decoration: underline;
+}
+
 /* ---- Settings Card (combined ownership + rental rate) ---- */
 .settings-card {
   background: white;
@@ -443,7 +483,11 @@ body {
   color: #4a148c;
 }
 
-.settings-row label[for="rental-rate"] {
+.rental-details {
+  margin-top: 4px;
+}
+
+.rental-details label {
   font-size: 0.8rem;
   color: #333;
 }
@@ -468,7 +512,24 @@ body {
   cursor: pointer;
 }
 
+/* ---- Action Buttons (between settings and summary) ---- */
+#action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#action-buttons:empty {
+  display: none;
+}
+
 /* ---- Summary Panel (right side) ---- */
+#summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .summary-card {
   background: white;
   border-radius: 10px;
@@ -686,6 +747,18 @@ body {
   margin-top: 8px;
 }
 
+.prior-year-note {
+  font-size: 0.65rem;
+  color: #999;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.day-cash.prior-year {
+  color: #bbb;
+  font-style: italic;
+}
+
 .custom-cash-input {
   margin-top: 8px;
 }
@@ -729,6 +802,27 @@ body {
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
+.summary-compare {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: #4a148c;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.summary-compare:hover {
+  background: #6a1b9a;
+}
+
 .summary-clear {
   display: block;
   width: 100%;
@@ -747,6 +841,151 @@ body {
   border-color: #b71c1c;
   color: #b71c1c;
   background: rgba(183, 28, 28, 0.04);
+}
+
+/* ---- Booking Window: outside-window cells ---- */
+.day-cell.outside-window {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: default;
+}
+
+/* ---- Booking Window: summary note ---- */
+.booking-window-note {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 6px;
+  padding: 4px 0;
+}
+
+.booking-window-note .bw-open {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+/* ---- Split Stay: Calendar ---- */
+.day-cell.prev-segment {
+  opacity: 0.45;
+  pointer-events: none;
+  outline: 2px solid #888;
+  outline-offset: -1px;
+}
+
+/* ---- Split Stay: Summary ---- */
+.segment-block {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.segment-block:last-of-type {
+  border-bottom: none;
+}
+
+.segment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.segment-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.segment-resort {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.segment-edit {
+  font-size: 0.65rem;
+  color: #4a148c;
+  cursor: pointer;
+  margin-left: auto;
+  font-weight: 600;
+}
+
+.segment-edit:hover {
+  text-decoration: underline;
+}
+
+.segment-remove {
+  font-size: 0.9rem;
+  color: #bbb;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.segment-remove:hover {
+  color: #b71c1c;
+}
+
+.segment-detail {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 1px;
+}
+
+.segment-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.segment-compare {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #4a148c;
+  text-decoration: none;
+}
+
+.segment-compare:hover {
+  text-decoration: underline;
+}
+
+.segment-nightly-toggle {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+}
+
+.segment-nightly-toggle:hover {
+  color: #4a148c;
+}
+
+.segment-block .summary-nightly {
+  margin-top: 4px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.summary-add-segment {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: none;
+  border: 2px dashed #4a148c;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a148c;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.summary-add-segment:hover {
+  background: rgba(74, 20, 140, 0.06);
+  border-color: #6a1b9a;
 }
 
 /* ---- Responsive ---- */
@@ -791,4 +1030,108 @@ body {
   .day-cell .day-number {
     font-size: 0.65rem;
   }
+}
+
+/* ---- Availability Outlook ---- */
+.availability-outlook {
+}
+
+.availability-outlook h3 {
+  border-bottom: none !important;
+  margin-bottom: 6px !important;
+  padding-bottom: 0 !important;
+}
+
+.avail-stay-length {
+  font-weight: 400;
+  color: #999;
+  font-size: 0.7rem;
+  margin-left: 4px;
+}
+
+.avail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.avail-label {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.avail-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.avail-excellent {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.avail-good {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.avail-fair {
+  background: #fff8e1;
+  color: #f57f17;
+}
+
+.avail-low {
+  background: #fbe9e7;
+  color: #d84315;
+}
+
+.avail-very-low {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+.avail-note {
+  font-size: 0.6rem;
+  color: #aaa;
+  margin-top: 4px;
+}
+
+.avail-note a {
+  color: #aaa;
+  text-decoration: underline;
+}
+
+.avail-segment {
+  margin-bottom: 8px;
+}
+
+.avail-segment:last-of-type {
+  margin-bottom: 0;
+}
+
+.avail-segment-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 3px;
+}
+
+.avail-segment-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.avail-badge-mini {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
 }

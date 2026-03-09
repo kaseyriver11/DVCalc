@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DVC Points Year-over-Year</title>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; min-height: 100vh; }
+
+.header { background: linear-gradient(135deg, #1a237e, #4a148c); color: white; padding: 16px 24px; text-align: center; position: relative; }
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+.header .back-link { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); color: white; text-decoration: none; font-size: 0.75rem; font-weight: 600; padding: 6px 14px; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 20px; background: rgba(255,255,255,0.1); transition: all 0.2s; }
+.header .back-link:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 24px; background: white; border-bottom: 1px solid #e0e0e0; align-items: flex-end; justify-content: center; }
+.control-group { display: flex; flex-direction: column; gap: 3px; }
+.control-group label { font-size: 0.65rem; text-transform: uppercase; font-weight: 600; color: #666; letter-spacing: 0.5px; }
+.control-group select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; background: white; cursor: pointer; min-width: 200px; max-width: 360px; }
+.control-group select:focus { outline: none; border-color: #4a148c; box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15); }
+
+/* Add to Compare button */
+.add-combo-btn {
+  padding: 6px 14px;
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.add-combo-btn:hover { background: #6a1b9a; }
+
+.add-combo-btn:disabled {
+  background: #ccc;
+  cursor: default;
+}
+
+/* Combo Chips */
+.combo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 24px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  justify-content: center;
+}
+
+.combo-chips:empty { display: none; }
+
+.combo-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: #f5f5f5;
+  border: 1.5px solid;
+}
+
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chip-text { color: #333; }
+
+.chip-remove {
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #999;
+  padding: 0 2px;
+}
+
+.chip-remove:hover { color: #c62828; }
+
+.content { max-width: 700px; margin: 16px auto; padding: 0 16px; }
+
+/* Week Navigation */
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+
+.week-nav button {
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.week-nav button:hover { background: #6a1b9a; }
+
+.week-nav .week-label {
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 160px;
+  text-align: center;
+}
+
+/* Chart */
+.chart-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 12px; position: relative; }
+.yoy-chart { width: 100%; height: auto; display: block; margin: 0 auto; }
+.yoy-chart .year-hover { cursor: crosshair; }
+
+/* Chart Tooltip */
+.chart-tooltip {
+  display: none;
+  position: absolute;
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+}
+
+.chart-tooltip.visible { display: block; }
+
+.tt-year {
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  color: #ccc;
+}
+
+.tt-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.tt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tt-name { color: #ddd; }
+
+.tt-value {
+  margin-left: auto;
+  font-weight: 700;
+  padding-left: 12px;
+}
+
+/* Week Summary */
+.week-summary {
+  background: white;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.combo-summary {
+  padding: 8px 0;
+}
+
+.combo-summary + .combo-summary {
+  border-top: 1px solid #eee;
+}
+
+.combo-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.combo-summary-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.combo-summary-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.combo-summary-values {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding-left: 16px;
+  flex-wrap: wrap;
+}
+
+.combo-year-value {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.combo-year-value strong {
+  color: #1a237e;
+  font-size: 0.9rem;
+}
+
+.combo-delta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.combo-delta.up { background: #fbe9e7; color: #c62828; }
+.combo-delta.down { background: #e8f5e9; color: #2e7d32; }
+.combo-delta.same { background: #f5f5f5; color: #999; }
+
+@media (max-width: 800px) {
+  .controls { flex-direction: column; align-items: stretch; }
+  .control-group select { min-width: unset; width: 100%; }
+  .add-combo-btn { width: 100%; }
+}
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="index.html" class="back-link">&larr; Calendar</a>
+    <h1>Points Year-over-Year</h1>
+    <div class="subtitle">Compare weekly point costs between years</div>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label for="resort-select">Resort</label>
+      <select id="resort-select"></select>
+    </div>
+    <div class="control-group">
+      <label for="room-select">Room Type</label>
+      <select id="room-select"></select>
+    </div>
+    <button class="add-combo-btn" id="add-combo">+ Compare</button>
+  </div>
+  <div class="combo-chips" id="combo-chips"></div>
+
+  <div class="content">
+    <div class="week-nav">
+      <button id="prev-week">&larr;</button>
+      <span id="week-label" class="week-label"></span>
+      <button id="next-week">&rarr;</button>
+    </div>
+    <div class="chart-card">
+      <div id="chart"></div>
+      <div class="chart-tooltip" id="chart-tooltip"></div>
+    </div>
+    <div id="week-summary" class="week-summary"></div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script>
+// ---- Constants ----
+RESORTS.sort((a, b) => a.name.localeCompare(b.name));
+const YEARS = [...new Set(RESORTS.map(r => r.year))].sort();
+const SERIES_COLORS = ["#1a237e", "#e65100", "#2e7d32", "#c62828"];
+const MAX_COMBOS = 4;
+
+const SHORT_NAMES = {};
+(function buildShortNames() {
+  const seen = new Set();
+  for (const r of RESORTS) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    let n = r.name
+      .replace(/Disney's\s*/g, "")
+      .replace(/\s*at\s.*?(Resort|Tower).*$/i, "")
+      .replace(/\s*Resort\s*(&|and)\s*Spa/i, "")
+      .replace(/\s*Resort$/i, "")
+      .replace(/\s*Villas?\s*(&|and)\s*(Bungalows|Cabins)/i, "")
+      .replace(/\s*Villas?$/i, "");
+    SHORT_NAMES[r.id] = n.trim() || r.name;
+  }
+})();
+
+// ---- State ----
+const state = {
+  resortId: null,
+  roomTypeId: null,
+  selectedWeek: null,
+  pinnedCombos: [], // [{resortId, roomTypeId}]
+};
+
+let cachedWeekCount = 0;
+
+// ---- DOM ----
+const resortSelect = document.getElementById("resort-select");
+const roomSelect = document.getElementById("room-select");
+const chartEl = document.getElementById("chart");
+const weekLabelEl = document.getElementById("week-label");
+const weekSummaryEl = document.getElementById("week-summary");
+const comboChipsEl = document.getElementById("combo-chips");
+const addComboBtn = document.getElementById("add-combo");
+
+// ---- Helpers ----
+function fmtDate(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function getSundaysOfYear(year) {
+  const sundays = [];
+  const d = new Date(year, 0, 1, 12, 0, 0);
+  while (d.getDay() !== 0) d.setDate(d.getDate() + 1);
+  while (d.getFullYear() === year) {
+    sundays.push(fmtDate(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setDate(d.getDate() + 7);
+  }
+  return sundays;
+}
+
+function formatWeekLabel(sundayStr) {
+  const sun = new Date(sundayStr + "T12:00:00");
+  const sat = new Date(sun);
+  sat.setDate(sat.getDate() + 6);
+  const f = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${f(sun)}\u2013${f(sat)}`;
+}
+
+function calc7NightTotal(resortId, sundayStr, roomTypeId) {
+  const d = new Date(sundayStr + "T12:00:00");
+  let total = 0;
+  let validNights = 0;
+  for (let i = 0; i < 7; i++) {
+    const dateStr = fmtDate(d.getFullYear(), d.getMonth(), d.getDate());
+    const year = d.getFullYear();
+    const resort = RESORTS.find(r => r.id === resortId && r.year === year);
+    if (resort) {
+      const rt = resort.roomTypes.find(r => r.id === roomTypeId);
+      if (rt) {
+        const pts = getPointsForDate(resort, dateStr, roomTypeId);
+        if (pts) { total += pts; validNights++; }
+      }
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return validNights === 7 ? total : null;
+}
+
+function getYearsForResort(resortId) {
+  return YEARS.filter(y => RESORTS.some(r => r.id === resortId && r.year === y));
+}
+
+function getRoomTypeName(resortId, roomTypeId) {
+  for (const r of RESORTS) {
+    if (r.id === resortId) {
+      const rt = r.roomTypes.find(t => t.id === roomTypeId);
+      if (rt) return rt.name;
+    }
+  }
+  return roomTypeId;
+}
+
+function comboLabel(resortId, roomTypeId) {
+  return `${SHORT_NAMES[resortId] || resortId} \u2014 ${getRoomTypeName(resortId, roomTypeId)}`;
+}
+
+// ---- Combo Management ----
+function getAllCombos() {
+  const live = { resortId: state.resortId, roomTypeId: state.roomTypeId };
+  // Skip the live combo if it matches a pinned one
+  const liveIsPinned = state.pinnedCombos.some(c =>
+    c.resortId === live.resortId && c.roomTypeId === live.roomTypeId
+  );
+  if (liveIsPinned) return [...state.pinnedCombos];
+  return [live, ...state.pinnedCombos];
+}
+
+function addCombo() {
+  if (state.pinnedCombos.length >= MAX_COMBOS - 1) return;
+  // Don't add duplicates
+  const exists = state.pinnedCombos.some(c =>
+    c.resortId === state.resortId && c.roomTypeId === state.roomTypeId
+  );
+  if (exists) return;
+  state.pinnedCombos.push({
+    resortId: state.resortId,
+    roomTypeId: state.roomTypeId,
+  });
+  render();
+}
+
+function removeCombo(idx) {
+  state.pinnedCombos.splice(idx, 1);
+  render();
+}
+
+// ---- Week Data ----
+function generateWeekDataForCombo(resortId, roomTypeId) {
+  const years = getYearsForResort(resortId);
+  if (years.length === 0) return { years, weeks: [] };
+
+  const allSundays = {};
+  for (const y of years) allSundays[y] = getSundaysOfYear(y);
+
+  const weekCount = Math.min(...years.map(y => allSundays[y].length));
+  const weeks = [];
+
+  for (let i = 0; i < weekCount; i++) {
+    const week = { index: i };
+    for (const y of years) {
+      week[y] = calc7NightTotal(resortId, allSundays[y][i], roomTypeId);
+    }
+    week.label = formatWeekLabel(allSundays[years[0]][i]);
+    weeks.push(week);
+  }
+
+  return { years, weeks };
+}
+
+function getCurrentWeekIndex(weekCount) {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const thisYear = today.getFullYear();
+  const sundays = getSundaysOfYear(thisYear);
+  let currentWeekNum = 0;
+  for (let i = sundays.length - 1; i >= 0; i--) {
+    const sun = new Date(sundays[i] + "T12:00:00");
+    if (sun <= today) { currentWeekNum = i; break; }
+  }
+  return Math.min(currentWeekNum, weekCount - 1);
+}
+
+// ---- Chart ----
+function renderChart(comboData) {
+  const selIdx = state.selectedWeek;
+  const tooltipEl = document.getElementById("chart-tooltip");
+
+  // Union of all years
+  const allYears = [...new Set(comboData.flatMap(c => c.years))].sort((a, b) => a - b);
+
+  if (allYears.length === 0) {
+    chartEl.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">No data available</div>';
+    return;
+  }
+
+  // Gather all data points to compute Y range
+  let allValues = [];
+  for (const cd of comboData) {
+    const w = cd.weeks[selIdx];
+    if (!w) continue;
+    for (const yr of cd.years) {
+      if (w[yr] != null) allValues.push(w[yr]);
+    }
+  }
+
+  if (allValues.length === 0) {
+    chartEl.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">No data available for this week</div>';
+    return;
+  }
+
+  const minVal = Math.min(...allValues);
+  const maxVal = Math.max(...allValues);
+  const range = maxVal - minVal || 10;
+  // Pick a "nice" step that gives roughly 5-7 grid lines
+  const rawStep = range / 6;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const nice = [1, 2, 5, 10].map(n => n * mag);
+  const step = nice.find(n => n >= rawStep) || nice[nice.length - 1];
+  const yMin = Math.floor((minVal - range * 0.15) / step) * step;
+  const yMax = Math.ceil((maxVal + range * 0.15) / step) * step;
+
+  const W = 600, H = 260;
+  const L = 55, R = 570, T = 20, B = 220;
+  const cW = R - L, cH = B - T;
+
+  const xPos = (yr) => {
+    if (allYears.length === 1) return L + cW / 2;
+    const idx = allYears.indexOf(yr);
+    return L + (idx / (allYears.length - 1)) * cW;
+  };
+  const yPos = (v) => B - ((v - yMin) / (yMax - yMin)) * cH;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="yoy-chart">`;
+
+  // Grid lines + Y labels
+  for (let v = yMin; v <= yMax; v += step) {
+    const yy = yPos(v);
+    svg += `<line x1="${L}" y1="${yy}" x2="${R}" y2="${yy}" stroke="#eee" stroke-width="1"/>`;
+    svg += `<text x="${L - 8}" y="${yy + 4}" text-anchor="end" font-size="10" fill="#999">${v}</text>`;
+  }
+
+  // X-axis
+  svg += `<line x1="${L}" y1="${B}" x2="${R}" y2="${B}" stroke="#ccc" stroke-width="1"/>`;
+
+  // Year labels
+  allYears.forEach((yr) => {
+    const x = xPos(yr);
+    svg += `<text x="${x}" y="${B + 16}" text-anchor="middle" font-size="11" font-weight="600" fill="#666">${yr}</text>`;
+    svg += `<line x1="${x}" y1="${B}" x2="${x}" y2="${B + 4}" stroke="#ccc" stroke-width="1"/>`;
+  });
+
+  // Draw each combo's line + circles
+  comboData.forEach((cd, ci) => {
+    const color = SERIES_COLORS[ci % SERIES_COLORS.length];
+    const w = cd.weeks[selIdx];
+    if (!w) return;
+
+    const pts = [];
+    for (const yr of cd.years) {
+      if (w[yr] != null) pts.push({ year: yr, value: w[yr] });
+    }
+
+    if (pts.length > 1) {
+      const linePoints = pts.map(p => `${xPos(p.year)},${yPos(p.value)}`);
+      svg += `<polyline points="${linePoints.join(" ")}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
+    }
+
+    for (const p of pts) {
+      const cx = xPos(p.year), cy = yPos(p.value);
+      svg += `<circle cx="${cx}" cy="${cy}" r="5" fill="${color}" stroke="white" stroke-width="2"/>`;
+    }
+  });
+
+  // Invisible year-column hover zones (rendered on top)
+  const colW = allYears.length === 1 ? cW : cW / (allYears.length - 1);
+  allYears.forEach((yr, i) => {
+    const x = xPos(yr);
+    const halfW = colW / 2;
+    const x1 = Math.max(L - 10, x - halfW);
+    const x2 = Math.min(R + 10, x + halfW);
+    svg += `<rect x="${x1}" y="${T}" width="${x2 - x1}" height="${cH}" fill="transparent" class="year-hover" data-year="${yr}"/>`;
+  });
+
+  // Y-axis label
+  svg += `<text x="14" y="${T + cH / 2}" text-anchor="middle" font-size="10" fill="#999" transform="rotate(-90, 14, ${T + cH / 2})">Points (7 nights)</text>`;
+
+  svg += `</svg>`;
+  chartEl.innerHTML = svg;
+
+  // HTML tooltip hover handlers
+  const chartCard = chartEl.closest(".chart-card");
+  const svgEl = chartEl.querySelector("svg");
+
+  function showTooltip(yearStr, mouseX, mouseY) {
+    const yr = parseInt(yearStr);
+    let html = `<div class="tt-year">${yr}</div>`;
+    comboData.forEach((cd, ci) => {
+      const color = SERIES_COLORS[ci % SERIES_COLORS.length];
+      const w = cd.weeks[selIdx];
+      if (!w) return;
+      const val = w[yr];
+      if (val == null) return;
+      const label = comboLabel(cd.resortId, cd.roomTypeId);
+      html += `<div class="tt-row">`;
+      html += `<span class="tt-dot" style="background:${color}"></span>`;
+      html += `<span class="tt-name">${label}</span>`;
+      html += `<span class="tt-value">${val} pts</span>`;
+      html += `</div>`;
+    });
+
+    tooltipEl.innerHTML = html;
+    tooltipEl.classList.add("visible");
+
+    // Position relative to chart-card
+    const cardRect = chartCard.getBoundingClientRect();
+    let left = mouseX - cardRect.left + 12;
+    let top = mouseY - cardRect.top - 10;
+
+    // Keep tooltip on screen
+    const ttW = tooltipEl.offsetWidth;
+    if (left + ttW > cardRect.width - 8) left = left - ttW - 24;
+    if (top < 4) top = 4;
+
+    tooltipEl.style.left = left + "px";
+    tooltipEl.style.top = top + "px";
+  }
+
+  chartEl.querySelectorAll(".year-hover").forEach(el => {
+    el.addEventListener("mouseenter", (e) => {
+      showTooltip(el.dataset.year, e.clientX, e.clientY);
+    });
+    el.addEventListener("mousemove", (e) => {
+      showTooltip(el.dataset.year, e.clientX, e.clientY);
+    });
+    el.addEventListener("mouseleave", () => {
+      tooltipEl.classList.remove("visible");
+    });
+  });
+}
+
+// ---- Week Summary ----
+function renderWeekSummary(comboData) {
+  const selIdx = state.selectedWeek;
+
+  let html = '';
+  comboData.forEach((cd, ci) => {
+    const color = SERIES_COLORS[ci % SERIES_COLORS.length];
+    const w = cd.weeks[selIdx];
+    if (!w) return;
+
+    const label = comboLabel(cd.resortId, cd.roomTypeId);
+
+    // Last two years with data
+    const yearsWithData = cd.years.filter(yr => w[yr] != null);
+    const show = yearsWithData.length > 2 ? yearsWithData.slice(-2) : yearsWithData;
+
+    html += `<div class="combo-summary">`;
+    html += `<div class="combo-summary-header">`;
+    html += `<span class="combo-summary-dot" style="background:${color}"></span>`;
+    html += `<span class="combo-summary-name">${label}</span>`;
+    html += `</div>`;
+    html += `<div class="combo-summary-values">`;
+
+    for (const yr of show) {
+      html += `<span class="combo-year-value">${yr}: <strong>${w[yr]} pts</strong></span>`;
+    }
+
+    // Delta
+    if (show.length >= 2) {
+      const v1 = w[show[show.length - 2]];
+      const v2 = w[show[show.length - 1]];
+      if (v1 != null && v2 != null) {
+        const delta = v2 - v1;
+        const pct = v1 > 0 ? ((delta / v1) * 100).toFixed(1) : "0.0";
+        const sign = delta > 0 ? "+" : "";
+        const cls = delta > 0 ? "up" : delta < 0 ? "down" : "same";
+        html += `<span class="combo-delta ${cls}">${sign}${delta} (${sign}${pct}%)</span>`;
+      }
+    }
+
+    html += `</div></div>`;
+  });
+
+  weekSummaryEl.innerHTML = html;
+}
+
+// ---- Chips ----
+function renderChips() {
+  const liveIsPinned = state.pinnedCombos.some(c =>
+    c.resortId === state.resortId && c.roomTypeId === state.roomTypeId
+  );
+
+  let html = '';
+  state.pinnedCombos.forEach((c, i) => {
+    const colorIdx = liveIsPinned ? i : i + 1;
+    const color = SERIES_COLORS[colorIdx % SERIES_COLORS.length];
+    const label = comboLabel(c.resortId, c.roomTypeId);
+    html += `<div class="combo-chip" style="border-color:${color}">`;
+    html += `<span class="chip-dot" style="background:${color}"></span>`;
+    html += `<span class="chip-text">${label}</span>`;
+    html += `<span class="chip-remove" data-index="${i}">\u00d7</span>`;
+    html += `</div>`;
+  });
+  comboChipsEl.innerHTML = html;
+
+  // Remove handlers
+  comboChipsEl.querySelectorAll(".chip-remove").forEach(el => {
+    el.addEventListener("click", () => removeCombo(parseInt(el.dataset.index)));
+  });
+
+  // Disable add button at max
+  addComboBtn.disabled = state.pinnedCombos.length >= MAX_COMBOS - 1;
+}
+
+// ---- Week Navigation ----
+function changeWeek(direction) {
+  if (!cachedWeekCount) return;
+  let idx = state.selectedWeek + direction;
+  if (idx < 0) idx = cachedWeekCount - 1;
+  if (idx >= cachedWeekCount) idx = 0;
+  state.selectedWeek = idx;
+  render();
+}
+
+document.getElementById("prev-week").addEventListener("click", () => changeWeek(-1));
+document.getElementById("next-week").addEventListener("click", () => changeWeek(1));
+addComboBtn.addEventListener("click", addCombo);
+
+// ---- Render ----
+function render() {
+  const combos = getAllCombos();
+
+  // Generate week data for each combo
+  const comboData = combos.map(c => ({
+    resortId: c.resortId,
+    roomTypeId: c.roomTypeId,
+    ...generateWeekDataForCombo(c.resortId, c.roomTypeId),
+  }));
+
+  // Use the first combo's week count for navigation
+  cachedWeekCount = comboData[0] ? comboData[0].weeks.length : 0;
+
+  if (state.selectedWeek == null || state.selectedWeek >= cachedWeekCount) {
+    state.selectedWeek = getCurrentWeekIndex(cachedWeekCount);
+  }
+
+  // Update week label from the first combo's data
+  const w = comboData[0] && comboData[0].weeks[state.selectedWeek];
+  weekLabelEl.textContent = w ? w.label : "";
+
+  renderChart(comboData);
+  renderWeekSummary(comboData);
+  renderChips();
+}
+
+// ---- Populate ----
+function populateResorts() {
+  const seen = new Set();
+  const unique = [];
+  for (const r of RESORTS) {
+    if (!seen.has(r.id)) { seen.add(r.id); unique.push(r); }
+  }
+  unique.sort((a, b) => a.name.localeCompare(b.name));
+  resortSelect.innerHTML = "";
+  for (const r of unique) {
+    const opt = document.createElement("option");
+    opt.value = r.id;
+    opt.textContent = r.name;
+    resortSelect.appendChild(opt);
+  }
+  const defaultResort = unique.find(r => r.id === "copperCreek") || unique[0];
+  state.resortId = defaultResort.id;
+  resortSelect.value = state.resortId;
+}
+
+function populateRoomTypes() {
+  const latestYear = [...YEARS].reverse().find(y => RESORTS.some(r => r.id === state.resortId && r.year === y));
+  const resort = RESORTS.find(r => r.id === state.resortId && r.year === latestYear);
+  if (!resort) return;
+  roomSelect.innerHTML = "";
+  for (const rt of resort.roomTypes) {
+    const opt = document.createElement("option");
+    opt.value = rt.id;
+    opt.textContent = `${rt.name} (sleeps ${rt.sleeps})`;
+    roomSelect.appendChild(opt);
+  }
+  state.roomTypeId = resort.roomTypes[0].id;
+  roomSelect.value = state.roomTypeId;
+}
+
+// ---- Events ----
+resortSelect.addEventListener("change", (e) => {
+  state.resortId = e.target.value;
+  state.selectedWeek = null;
+  populateRoomTypes();
+  render();
+});
+
+roomSelect.addEventListener("change", (e) => {
+  state.roomTypeId = e.target.value;
+  render();
+});
+
+// ---- Init ----
+populateResorts();
+populateRoomTypes();
+render();
+  </script>
+</body>
+</html>

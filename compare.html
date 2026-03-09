@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DVC Resort Comparison</title>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #1a237e, #4a148c);
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+.header .back-link {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  transition: all 0.2s;
+}
+.header .back-link:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+.header { position: relative; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 24px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.control-group label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.control-group input,
+.control-group select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+.stay-summary {
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+  align-self: center;
+  padding-bottom: 4px;
+}
+
+.stay-summary strong {
+  color: #1a237e;
+  font-style: normal;
+}
+
+/* Table */
+.table-container {
+  max-width: 1200px;
+  margin: 16px auto;
+  padding: 0 16px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 60px 20px;
+  font-size: 0.95rem;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.compare-table thead {
+  background: #f8f8f8;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.compare-table th {
+  padding: 10px 12px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.5px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.compare-table th.num {
+  text-align: right;
+}
+
+.compare-table td {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.compare-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-table tbody tr:hover {
+  background: #f8f6ff;
+}
+
+.compare-table tbody tr:first-child {
+  background: #f1f8e9;
+}
+
+.compare-table tbody tr:first-child:hover {
+  background: #e8f5e9;
+}
+
+.resort-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.room-name {
+  font-size: 0.72rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.rank-num {
+  font-weight: 700;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.rank-num.top { color: #2e7d32; }
+
+.pts-value {
+  font-weight: 700;
+  color: #1a237e;
+}
+
+.rental-value {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.cash-value {
+  color: #b71c1c;
+}
+
+.savings-value {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.savings-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.na { color: #ccc; }
+.na.clickable { cursor: pointer; }
+.na.clickable:hover { color: #4a148c; }
+
+.editable-cash span { cursor: pointer; }
+.editable-cash span:hover { text-decoration: underline; }
+
+.cash-value.custom {
+  font-style: italic;
+}
+
+.cash-value.prior-year {
+  font-style: italic;
+  color: #b71c1c;
+}
+
+.prior-year-footnote {
+  font-size: 0.72rem;
+  color: #999;
+  font-style: italic;
+  margin-top: 8px;
+  text-align: right;
+}
+
+.inline-cash-input {
+  width: 80px;
+  padding: 3px 6px;
+  border: 1px solid #4a148c;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: right;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+.section-divider td {
+  padding: 12px 12px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #999;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e0e0e0;
+  border-top: 2px solid #e0e0e0;
+}
+
+.no-cash-row {
+  opacity: 0.7;
+}
+
+.select-resort {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4a148c;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.select-resort:hover {
+  text-decoration: underline;
+}
+
+.owner-cost {
+  color: #4a148c;
+  font-weight: 600;
+}
+
+/* Settings row */
+.settings-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 24px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.settings-bar label {
+  color: #666;
+}
+
+.settings-bar input[type="range"] {
+  width: 100px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e0e0e0;
+  border-radius: 2px;
+  outline: none;
+  vertical-align: middle;
+}
+
+.settings-bar input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #4a148c;
+  cursor: pointer;
+}
+
+.settings-bar .toggle-label {
+  cursor: pointer;
+}
+
+.settings-bar input[type="checkbox"] {
+  accent-color: #4a148c;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.settings-bar select {
+  padding: 3px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: white;
+}
+
+.rental-settings {
+  display: inline;
+}
+
+/* Category pills */
+.category-pills {
+  display: flex;
+  gap: 4px;
+}
+
+.category-pill {
+  padding: 5px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background: white;
+  color: #666;
+  transition: all 0.15s;
+}
+
+.category-pill:hover {
+  border-color: #4a148c;
+  color: #4a148c;
+}
+
+.category-pill.active {
+  background: #4a148c;
+  color: white;
+  border-color: #4a148c;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .controls { flex-direction: column; align-items: stretch; }
+  .category-pills { flex-wrap: wrap; }
+  .compare-table { font-size: 0.78rem; }
+  .compare-table th, .compare-table td { padding: 8px 6px; }
+}
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="index.html" class="back-link" id="back-link">&larr; Calendar</a>
+    <h1>Resort Comparison</h1>
+    <div class="subtitle">Compare point costs across all DVC resorts for your dates</div>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label for="check-in">Check-in</label>
+      <input type="date" id="check-in">
+    </div>
+    <div class="control-group">
+      <label for="check-out">Check-out</label>
+      <input type="date" id="check-out">
+    </div>
+    <div class="control-group">
+      <label>Room Category</label>
+      <div class="category-pills" id="category-pills">
+        <button class="category-pill active" data-cat="studio">Studio</button>
+        <button class="category-pill" data-cat="one">1-Bedroom</button>
+        <button class="category-pill" data-cat="two">2-Bedroom</button>
+        <button class="category-pill" data-cat="three">3-Bedroom</button>
+      </div>
+    </div>
+    <div class="stay-summary" id="stay-summary"></div>
+  </div>
+
+  <div class="settings-bar">
+    <label class="toggle-label">
+      <input type="checkbox" id="rental-toggle" checked> Show rental cost
+    </label>
+    <span class="rental-settings" id="rental-settings">
+      <label>Rate: <strong>$<span id="rental-rate-val">20</span></strong>/pt
+        <input type="range" id="rental-rate" min="15" max="25" step="0.5" value="20">
+      </label>
+    </span>
+    <label class="toggle-label">
+      <input type="checkbox" id="owner-toggle" checked> Show owner cost
+    </label>
+    <label>
+      Home resort:
+      <select id="owner-resort"></select>
+      <span id="owner-dues-label"></span>
+    </label>
+  </div>
+
+  <div class="table-container" id="results">
+    <div class="empty-state">Select check-in and check-out dates above to compare resorts</div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script>
+// ---- State ----
+RESORTS.sort((a, b) => a.name.localeCompare(b.name));
+
+const state = {
+  checkIn: null,
+  checkOut: null,
+  category: "studio",
+  rentalRate: DEFAULT_RENTAL_RATE,
+  rentalEnabled: true,
+  ownerEnabled: true,
+  ownerResortId: "saratogaSprings",
+  customCashRates: {}, // key: "resortId_roomId", value: total cash price
+};
+
+// ---- DOM ----
+const checkInInput = document.getElementById("check-in");
+const checkOutInput = document.getElementById("check-out");
+const categoryPills = document.getElementById("category-pills");
+const staySummary = document.getElementById("stay-summary");
+const resultsContainer = document.getElementById("results");
+const rentalSlider = document.getElementById("rental-rate");
+const rentalLabel = document.getElementById("rental-rate-val");
+const rentalToggle = document.getElementById("rental-toggle");
+const rentalSettings = document.getElementById("rental-settings");
+const ownerToggle = document.getElementById("owner-toggle");
+const ownerResortSelect = document.getElementById("owner-resort");
+const ownerDuesLabel = document.getElementById("owner-dues-label");
+
+// ---- Helpers ----
+function formatDate(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function getStayDates(checkIn, checkOut) {
+  if (!checkIn || !checkOut) return [];
+  const dates = [];
+  const current = new Date(checkIn + "T12:00:00");
+  const end = new Date(checkOut + "T12:00:00");
+  while (current < end) {
+    const y = current.getFullYear();
+    const m = current.getMonth();
+    const d = current.getDate();
+    dates.push(formatDate(y, m, d));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+}
+
+function getYearForDates(checkIn) {
+  if (!checkIn) return 2026;
+  return parseInt(checkIn.substring(0, 4));
+}
+
+// Map room category to matching keywords in room type names
+const CATEGORY_KEYWORDS = {
+  studio: "studio",
+  one: "one-bedroom",
+  two: "two-bedroom",
+  three: "three-bedroom",
+};
+
+function getRoomTypesForCategory(resort, category) {
+  const keyword = CATEGORY_KEYWORDS[category];
+  return resort.roomTypes.filter(rt => rt.name.toLowerCase().includes(keyword));
+}
+
+// Calculate total points for a stay at a specific resort/room
+function calcStay(resort, roomTypeId, stayDates) {
+  let totalPoints = 0;
+  let totalCash = 0;
+  let hasCash = false;
+  let isPriorYearCash = false;
+  for (const dateStr of stayDates) {
+    const pts = getPointsForDate(resort, dateStr, roomTypeId);
+    const cashResult = getCashRateWithFallback(resort, dateStr, roomTypeId);
+    const cash = cashResult ? cashResult.rate : null;
+    if (cashResult && cashResult.isPriorYear) isPriorYearCash = true;
+    if (pts) totalPoints += pts;
+    if (cash) { totalCash += cash; hasCash = true; }
+  }
+  return { totalPoints, totalCash: hasCash ? totalCash : null, isPriorYearCash };
+}
+
+// ---- Populate Owner Resort Dropdown ----
+function populateOwnerResorts() {
+  const seen = new Set();
+  const unique = [];
+  for (const r of RESORTS) {
+    if (!seen.has(r.id)) { seen.add(r.id); unique.push(r); }
+  }
+  unique.sort((a, b) => a.name.localeCompare(b.name));
+  ownerResortSelect.innerHTML = "";
+  for (const r of unique) {
+    const opt = document.createElement("option");
+    opt.value = r.id;
+    opt.textContent = r.name;
+    ownerResortSelect.appendChild(opt);
+  }
+  ownerResortSelect.value = state.ownerResortId;
+  updateDuesLabel();
+}
+
+function updateDuesLabel() {
+  const dues = DUES_PER_POINT[state.ownerResortId];
+  ownerDuesLabel.textContent = dues ? `($${dues.toFixed(2)}/pt)` : "";
+}
+
+// ---- Render ----
+function render() {
+  const stayDates = getStayDates(state.checkIn, state.checkOut);
+
+  if (stayDates.length === 0) {
+    staySummary.innerHTML = "";
+    resultsContainer.innerHTML = `<div class="empty-state">Select check-in and check-out dates above to compare resorts</div>`;
+    return;
+  }
+
+  const nights = stayDates.length;
+  const ciDate = new Date(state.checkIn + "T12:00:00");
+  const coDate = new Date(state.checkOut + "T12:00:00");
+  const fmt = d => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  staySummary.innerHTML = `${fmt(ciDate)} — ${fmt(coDate)} &middot; <strong>${nights} night${nights !== 1 ? "s" : ""}</strong>`;
+
+  // Determine which year's data to use
+  const year = getYearForDates(state.checkIn);
+
+  // Build comparison rows — one row per room type per resort
+  const rows = [];
+  const yearResorts = RESORTS.filter(r => r.year === year);
+  const seen = new Set();
+
+  for (const resort of yearResorts) {
+    if (seen.has(resort.id)) continue;
+    seen.add(resort.id);
+
+    const roomTypes = getRoomTypesForCategory(resort, state.category);
+    if (roomTypes.length === 0) continue;
+
+    for (const rt of roomTypes) {
+      const result = calcStay(resort, rt.id, stayDates);
+      if (result.totalPoints <= 0) continue;
+
+      const rowKey = `${resort.id}_${rt.id}`;
+      const customCash = state.customCashRates[rowKey];
+      const effectiveCash = customCash != null ? customCash : result.totalCash;
+      const isCustom = customCash != null;
+
+      const rentalCost = result.totalPoints * state.rentalRate;
+      const ownerDues = DUES_PER_POINT[state.ownerResortId] || 0;
+      const ownerCost = result.totalPoints * ownerDues;
+
+      rows.push({
+        resort,
+        room: rt,
+        rowKey,
+        totalPoints: result.totalPoints,
+        totalCash: effectiveCash,
+        isCustomCash: isCustom,
+        isPriorYearCash: result.isPriorYearCash && !isCustom,
+        hasBuiltInCash: result.totalCash !== null,
+        rentalCost,
+        ownerCost,
+        rentalSavings: effectiveCash ? effectiveCash - rentalCost : null,
+        rentalSavingsPct: effectiveCash
+          ? Math.round(((effectiveCash - rentalCost) / effectiveCash) * 100) : null,
+        ownerSavings: effectiveCash ? effectiveCash - ownerCost : null,
+        ownerSavingsPct: effectiveCash
+          ? Math.round(((effectiveCash - ownerCost) / effectiveCash) * 100) : null,
+      });
+    }
+  }
+
+  // Split into resorts with and without cash data
+  const withCash = rows.filter(r => r.totalCash !== null);
+  const withoutCash = rows.filter(r => r.totalCash === null);
+
+  // Sort each group by total points ascending
+  withCash.sort((a, b) => a.totalPoints - b.totalPoints);
+  withoutCash.sort((a, b) => a.totalPoints - b.totalPoints);
+
+  if (withCash.length === 0 && withoutCash.length === 0) {
+    resultsContainer.innerHTML = `<div class="empty-state">No resorts have ${state.category} rooms for these dates</div>`;
+    return;
+  }
+
+  // Build table
+  const ownerCol = state.ownerEnabled;
+  const rentalCol = state.rentalEnabled;
+  const colCount = 4 + (rentalCol ? 2 : 0) + (ownerCol ? 2 : 0);
+  let html = `<table class="compare-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Resort</th>
+        <th class="num">Cash Price</th>
+        <th class="num">Points</th>
+        ${rentalCol ? `<th class="num">Rental Cost</th>` : ""}
+        ${rentalCol ? `<th class="num">Savings (Renting)</th>` : ""}
+        ${ownerCol ? `<th class="num">Dues Cost</th>` : ""}
+        ${ownerCol ? `<th class="num">Savings (Owning)</th>` : ""}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  const anyPriorYear = withCash.some(r => r.isPriorYearCash);
+
+  withCash.forEach((row, i) => {
+    const rank = i + 1;
+    const priorYearMark = row.isPriorYearCash ? '*' : '';
+    const cashClass = row.isCustomCash ? 'cash-value custom' : row.isPriorYearCash ? 'cash-value prior-year' : 'cash-value';
+    const cashDisplay = `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${year - 1} rates` : 'Click to edit'}">$${row.totalCash.toLocaleString()}${priorYearMark}</span>`;
+    html += `<tr>
+      <td class="rank-num ${rank === 1 ? 'top' : ''}">${rank}</td>
+      <td>
+        <div class="resort-name">${row.resort.name}</div>
+        <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
+      </td>
+      <td class="num editable-cash">${cashDisplay}</td>
+      <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
+      ${rentalCol ? `<td class="num rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
+      ${rentalCol ? `<td class="num"><span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span></td>` : ""}
+      ${ownerCol ? `<td class="num owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
+      ${ownerCol ? `<td class="num"><span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span></td>` : ""}
+      <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
+    </tr>`;
+  });
+
+  if (withoutCash.length > 0) {
+    html += `<tr class="section-divider"><td colspan="${colCount}">No cash rate data available</td></tr>`;
+
+    withoutCash.forEach((row) => {
+      html += `<tr class="no-cash-row">
+        <td class="rank-num">—</td>
+        <td>
+          <div class="resort-name">${row.resort.name}</div>
+          <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
+        </td>
+        <td class="num editable-cash"><span class="na clickable" data-key="${row.rowKey}" title="Click to add cash price">+ add price</span></td>
+        <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
+        ${rentalCol ? `<td class="num rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
+        ${rentalCol ? `<td class="num"><span class="na">—</span></td>` : ""}
+        ${ownerCol ? `<td class="num owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
+        ${ownerCol ? `<td class="num"><span class="na">—</span></td>` : ""}
+        <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
+      </tr>`;
+    });
+  }
+
+  html += `</tbody></table>`;
+  if (anyPriorYear) {
+    html += `<div class="prior-year-footnote">* Cash rates based on ${year - 1} pricing</div>`;
+  }
+  resultsContainer.innerHTML = html;
+
+  // Attach inline edit handlers for cash price cells
+  resultsContainer.querySelectorAll(".editable-cash span[data-key]").forEach(span => {
+    span.style.cursor = "pointer";
+    span.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const key = span.dataset.key;
+      const currentVal = state.customCashRates[key] || "";
+      const td = span.parentElement;
+
+      const input = document.createElement("input");
+      input.type = "number";
+      input.className = "inline-cash-input";
+      input.value = currentVal;
+      input.placeholder = "Total $";
+      input.min = "0";
+      input.step = "1";
+
+      td.innerHTML = "";
+      td.appendChild(input);
+      input.focus();
+      input.select();
+
+      const commit = () => {
+        const val = parseFloat(input.value);
+        if (val > 0) {
+          state.customCashRates[key] = val;
+        } else {
+          delete state.customCashRates[key];
+        }
+        render();
+      };
+
+      input.addEventListener("blur", commit);
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") input.blur();
+        if (ev.key === "Escape") {
+          delete state.customCashRates[key];
+          render();
+        }
+      });
+    });
+  });
+
+  // Attach "Select" handlers — switch resort and return to calendar
+  resultsContainer.querySelectorAll(".select-resort").forEach(span => {
+    span.addEventListener("click", () => {
+      const resortId = span.dataset.resortId;
+      const roomId = span.dataset.roomId;
+      sessionStorage.setItem("dvc_return_to_calendar", "1");
+      sessionStorage.setItem("dvc_switch_resort", JSON.stringify({ resortId, roomId }));
+      window.location.href = "index.html";
+    });
+  });
+}
+
+// ---- Events ----
+checkInInput.addEventListener("change", (e) => {
+  state.checkIn = e.target.value || null;
+  // Auto-set checkout to next day if not set or before check-in
+  if (state.checkIn && (!state.checkOut || state.checkOut <= state.checkIn)) {
+    const next = new Date(state.checkIn + "T12:00:00");
+    next.setDate(next.getDate() + 1);
+    state.checkOut = formatDate(next.getFullYear(), next.getMonth(), next.getDate());
+    checkOutInput.value = state.checkOut;
+  }
+  checkOutInput.min = state.checkIn || "";
+  render();
+});
+
+checkOutInput.addEventListener("change", (e) => {
+  state.checkOut = e.target.value || null;
+  render();
+});
+
+categoryPills.addEventListener("click", (e) => {
+  const pill = e.target.closest(".category-pill");
+  if (!pill) return;
+  categoryPills.querySelectorAll(".category-pill").forEach(p => p.classList.remove("active"));
+  pill.classList.add("active");
+  state.category = pill.dataset.cat;
+  render();
+});
+
+rentalSlider.addEventListener("input", (e) => {
+  state.rentalRate = parseFloat(e.target.value);
+  rentalLabel.textContent = state.rentalRate % 1 === 0 ? state.rentalRate : state.rentalRate.toFixed(1);
+  render();
+});
+
+rentalToggle.addEventListener("change", (e) => {
+  state.rentalEnabled = e.target.checked;
+  rentalSettings.style.display = state.rentalEnabled ? "" : "none";
+  render();
+});
+
+ownerToggle.addEventListener("change", (e) => {
+  state.ownerEnabled = e.target.checked;
+  render();
+});
+
+ownerResortSelect.addEventListener("change", (e) => {
+  state.ownerResortId = e.target.value;
+  updateDuesLabel();
+  render();
+});
+
+// ---- Init ----
+// Read dates from URL params if provided, then try sessionStorage, otherwise use defaults
+const urlParams = new URLSearchParams(window.location.search);
+let paramCheckIn = urlParams.get("checkin");
+let paramCheckOut = urlParams.get("checkout");
+let paramCategory = urlParams.get("category");
+
+// Fall back to saved calendar state if no URL params
+if (!paramCheckIn || !paramCheckOut || !paramCategory) {
+  const calState = sessionStorage.getItem("dvc_calendar_state");
+  if (calState) {
+    try {
+      const saved = JSON.parse(calState);
+      if (!paramCheckIn && saved.checkIn) paramCheckIn = saved.checkIn;
+      if (!paramCheckOut && saved.checkOut) paramCheckOut = saved.checkOut;
+      // Derive category from saved room type if not in URL
+      if (!paramCategory && saved.resortId && saved.roomTypeId) {
+        const savedResort = RESORTS.find(r => r.id === saved.resortId && r.year === (saved.year || 2026));
+        if (savedResort) {
+          const savedRoom = savedResort.roomTypes.find(rt => rt.id === saved.roomTypeId);
+          if (savedRoom) {
+            const rn = savedRoom.name.toLowerCase();
+            if (rn.includes("three-bedroom") || rn.includes("3-bedroom")) paramCategory = "three";
+            else if (rn.includes("two-bedroom") || rn.includes("2-bedroom")) paramCategory = "two";
+            else if (rn.includes("one-bedroom") || rn.includes("1-bedroom")) paramCategory = "one";
+            else paramCategory = "studio";
+          }
+        }
+      }
+    } catch (e) {}
+  }
+}
+
+const defaultCheckIn = paramCheckIn || "2026-03-15";
+const defaultCheckOut = paramCheckOut || "2026-03-20";
+
+checkInInput.value = defaultCheckIn;
+checkOutInput.value = defaultCheckOut;
+checkOutInput.min = defaultCheckIn;
+state.checkIn = defaultCheckIn;
+state.checkOut = defaultCheckOut;
+
+if (paramCategory && ["studio", "one", "two", "three"].includes(paramCategory)) {
+  state.category = paramCategory;
+  categoryPills.querySelectorAll(".category-pill").forEach(p => {
+    p.classList.toggle("active", p.dataset.cat === paramCategory);
+  });
+}
+
+populateOwnerResorts();
+render();
+
+// Set return flag when clicking back to calendar
+document.getElementById("back-link").addEventListener("click", () => {
+  sessionStorage.setItem("dvc_return_to_calendar", "1");
+});
+  </script>
+</body>
+</html>

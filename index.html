@@ -11,6 +11,9 @@
   <div class="header">
     <h1>DVC Points Calendar</h1>
     <div class="subtitle">Disney Vacation Club — Vacation Points Per Night</div>
+    <div class="header-links">
+      <a href="compare.html">Compare Resorts &rarr;</a>
+    </div>
   </div>
 
   <div class="controls">
@@ -24,6 +27,14 @@
     <div class="control-group">
       <label for="room-select">Room Type</label>
       <select id="room-select"></select>
+    </div>
+    <div class="control-group">
+      <label for="booking-window">Booking Window</label>
+      <select id="booking-window">
+        <option value="all">All Dates</option>
+        <option value="11mo">11-Month</option>
+        <option value="7mo">7-Month</option>
+      </select>
     </div>
     <div class="control-group">
       <label for="year-select">Points Year</label>
@@ -43,6 +54,7 @@
       <div class="legend">
         <span class="legend-title">Travel Period:</span>
         <div id="legend-items" class="legend-items"></div>
+        <a class="source-link" href="https://disneyvacationclub.disney.go.com/vacation-planning/points-charts/" target="_blank" rel="noopener">Source: DVC Points Charts</a>
       </div>
     </div>
     <div class="summary-side">
@@ -59,15 +71,24 @@
         </div>
         <div class="settings-divider"></div>
         <div class="settings-row">
-          <label for="rental-rate">Rental Rate: <strong>$<span id="rental-rate-value">20</span></strong>/pt</label>
-          <input type="range" id="rental-rate" min="15" max="25" step="0.5" value="20">
+          <label class="ownership-toggle">
+            <input type="checkbox" id="rental-toggle">
+            <span class="toggle-label">I'm renting DVC points</span>
+          </label>
+          <div class="rental-details" id="rental-details" style="display: none;">
+            <label for="rental-rate">Rate: <strong>$<span id="rental-rate-value">20</span></strong>/pt</label>
+            <input type="range" id="rental-rate" min="15" max="25" step="0.5" value="20">
+          </div>
         </div>
       </div>
+      <div id="action-buttons"></div>
       <div id="summary"></div>
     </div>
   </div>
 
-  <script src="data.js"></script>
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script src="data/availability_data.js"></script>
   <script src="app.js"></script>
 
 </body>
