@@ -7009,3 +7009,22 @@ RESORTS.push({
   ]),
 });
 
+// ======================================================================
+// Deduplicate
+// ======================================================================
+
+// data.js already defines 2026/2027 entries, and those carry cash rates that
+// the PDF archive has no source for. This file re-emits the same years, so keep
+// the first entry for each (id, year) pair — data.js loads first, so it wins,
+// and the resort dropdowns stop listing every resort twice.
+(function dedupeResorts() {
+  const seen = new Set();
+  const unique = RESORTS.filter((r) => {
+    const key = r.id + "|" + r.year;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  RESORTS.length = 0;
+  RESORTS.push(...unique);
+})();

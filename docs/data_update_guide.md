@@ -7,7 +7,8 @@ Detailed instructions for updating DVC Points Calendar data year-over-year.
 ## 1. DVC Points Charts
 
 **Source:** Official DVC PDFs from Disney's CDN
-**Current data:** 2026 + 2027 (all 17 resorts)
+**Current data:** 2026 + 2027 (all 17 resorts — but only 16 come from `data.js`; Animal
+Kingdom Villas is supplied by the generated `data_historical.js`, so it has no cash rates)
 
 ### Fetching PDF URLs
 
@@ -61,7 +62,8 @@ If the API is unavailable, dvcnews.com hosts points charts as JPEG images:
 ## 2. Disney Cash Rack Rates (WDW only)
 
 **Source:** MouseSavers.com
-**Current data:** 2026 rates for all 12 WDW DVC resorts
+**Current data:** 2026 rates for 11 of the 12 WDW DVC resorts (Animal Kingdom Villas is
+missing — see "Non-WDW resorts" below)
 
 ### Where to find the data
 
@@ -69,8 +71,8 @@ If the API is unavailable, dvcnews.com hosts points charts as JPEG images:
 - **Individual resort pages:** Follow links from the hub. URL pattern: `https://www.mousesavers.com/{year}-{resort-name}-room-rates-season-dates/`
 
 Example URLs (substitute year as needed):
-- `.../2026-animal-kingdom-villas-jambo-house-room-rates-season-dates/`
-- `.../2026-animal-kingdom-villas-kidani-village-room-rates-season-dates/`
+- `.../2026-animal-kingdom-villas-jambo-house-room-rates-season-dates/` (never scraped)
+- `.../2026-animal-kingdom-villas-kidani-village-room-rates-season-dates/` (never scraped)
 - `.../2026-bay-lake-tower-room-rates-season-dates/`
 - `.../2026-beach-club-villas-room-rates-season-dates/`
 - `.../2026-boardwalk-villas-room-rates-season-dates/`
@@ -118,12 +120,17 @@ travelPeriods: wdwPeriods([
 
 Room type IDs in cashRates must match the resort's `roomTypes[].id`. If MouseSavers doesn't list a room type, omit it — `getCashRateForDate()` returns null gracefully.
 
-### Non-WDW resorts (no cash rate data)
+### Resorts with no cash rate data
 
 These 5 resorts don't have built-in cash rates (MouseSavers only covers WDW):
 - Aulani, Hilton Head, Vero Beach, Disneyland Hotel, Grand Californian
 
-The app handles this by hiding the cash column and offering a manual "compare to your own rate" input. Potential future sources: Disney's booking site (requires browser automation), Touring Plans (paid), or manual price checks.
+**Animal Kingdom Villas** is a sixth, for a different reason: it has no entry in `data.js` at
+all, so it gets neither points nor cash rates from there (the generated `data_historical.js`
+supplies its points). MouseSavers does cover AKV. See the "Animal Kingdom Villas — missing
+entirely" section of `data_reproducibility.md` for what adding it involves.
+
+The app handles all of these by hiding the cash column and offering a manual "compare to your own rate" input. Potential future sources: Disney's booking site (requires browser automation), Touring Plans (paid), or manual price checks.
 
 ---
 
