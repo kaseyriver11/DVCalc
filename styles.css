@@ -87,25 +87,109 @@ select, input, textarea, button {
   letter-spacing: 0.5px;
 }
 
-.control-group select {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  background: white;
-  cursor: pointer;
+/* ---- Custom Select (styled dropdown for Room Type / Booking Window / Points Year) ---- */
+.native-select {
+  display: none;
+}
+
+.custom-select {
+  position: relative;
   min-width: 200px;
   max-width: 360px;
 }
 
-.control-group select:focus {
-  outline: none;
+.custom-select-narrow {
+  min-width: 80px;
+  max-width: 120px;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  text-align: left;
+}
+
+.custom-select-trigger:hover {
+  border-color: #b39ddb;
+}
+
+.custom-select.open .custom-select-trigger {
   border-color: #4a148c;
+  border-radius: 6px 6px 0 0;
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
-#year-select {
-  min-width: 80px;
+.custom-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-arrow {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid #999;
+  border-bottom: 2px solid #999;
+  transform: rotate(45deg);
+  margin-top: -4px;
+  transition: transform 0.12s ease;
+}
+
+.custom-select.open .custom-select-arrow {
+  transform: rotate(-135deg);
+  margin-top: 2px;
+}
+
+.custom-select-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #4a148c;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.custom-select.open .custom-select-dropdown {
+  display: block;
+}
+
+.custom-select-option {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-select-option:last-child {
+  border-bottom: none;
+}
+
+.custom-select-option:hover {
+  background: #f3e5f5;
+}
+
+.custom-select-option.selected {
+  background: #ede7f6;
+  font-weight: 600;
 }
 
 /* ---- Searchable Select ---- */
@@ -1552,7 +1636,7 @@ select, input, textarea, button {
     justify-content: center;
   }
 
-  .control-group select {
+  .custom-select {
     min-width: unset;
     width: 100%;
   }

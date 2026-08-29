@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DVC Points Calendar</title>
   <link rel="stylesheet" href="styles.css">
+  <script data-goatcounter="https://dvcalc.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 
@@ -27,19 +29,40 @@
     </div>
     <div class="control-group">
       <label for="room-select">Room Type</label>
-      <select id="room-select"></select>
+      <div class="custom-select">
+        <select id="room-select" class="native-select"></select>
+        <button type="button" class="custom-select-trigger">
+          <span class="custom-select-value"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
+        <div class="custom-select-dropdown"></div>
+      </div>
     </div>
     <div class="control-group">
       <label for="booking-window">Booking Window</label>
-      <select id="booking-window">
-        <option value="all">All Dates</option>
-        <option value="11mo">11-Month</option>
-        <option value="7mo">7-Month</option>
-      </select>
+      <div class="custom-select">
+        <select id="booking-window" class="native-select">
+          <option value="all">All Dates</option>
+          <option value="11mo">11-Month</option>
+          <option value="7mo">7-Month</option>
+        </select>
+        <button type="button" class="custom-select-trigger">
+          <span class="custom-select-value"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
+        <div class="custom-select-dropdown"></div>
+      </div>
     </div>
     <div class="control-group">
       <label for="year-select">Points Year</label>
-      <select id="year-select"></select>
+      <div class="custom-select custom-select-narrow">
+        <select id="year-select" class="native-select"></select>
+        <button type="button" class="custom-select-trigger">
+          <span class="custom-select-value"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
+        <div class="custom-select-dropdown"></div>
+      </div>
     </div>
   </div>
 
