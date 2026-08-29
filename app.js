@@ -357,6 +357,15 @@ function getAllPreviousSegmentDates() {
   return dates;
 }
 
+// Resolves the resort-year object whose points chart actually covers a given date.
+// A stay can cross Dec 31 -> Jan 1, spanning two different calendar-year points
+// charts, so per-night lookups can't all use one fixed resort object. Falls back
+// to the given resort if that date's own year isn't in the data (e.g. historical gaps).
+function getResortForStayDate(resortId, dateStr, fallbackResort) {
+  const year = parseInt(dateStr.slice(0, 4), 10);
+  return RESORTS.find(r => r.id === resortId && r.year === year) || fallbackResort;
+}
+
 function calcSegmentTotals(seg) {
   const resort = RESORTS.find(r => r.id === seg.resortId && r.year === state.year);
   const dates = getSegmentDates(seg);
@@ -365,8 +374,9 @@ function calcSegmentTotals(seg) {
   let isPriorYearCash = false;
   const breakdown = [];
   for (const dateStr of dates) {
-    const pts = getPointsForDate(resort, dateStr, seg.roomTypeId);
-    const cashResult = getCashRateWithFallback(resort, dateStr, seg.roomTypeId);
+    const dateResort = getResortForStayDate(resort.id, dateStr, resort);
+    const pts = getPointsForDate(dateResort, dateStr, seg.roomTypeId);
+    const cashResult = getCashRateWithFallback(dateResort, dateStr, seg.roomTypeId);
     const cashRate = cashResult ? cashResult.rate : null;
     if (cashResult && cashResult.isPriorYear) isPriorYearCash = true;
     const dayOfWeek = new Date(dateStr + "T12:00:00").getDay();
@@ -1016,9 +1026,10 @@ function computeStayEntry(resort, roomTypeId, stayDates) {
   let cash = 0, cashOk = true;
   let crowdSum = 0, crowdOk = true;
   for (const dateStr of stayDates) {
-    const p = getPointsForDate(resort, dateStr, roomTypeId);
+    const dateResort = getResortForStayDate(resort.id, dateStr, resort);
+    const p = getPointsForDate(dateResort, dateStr, roomTypeId);
     if (p == null) pointsOk = false; else points += p;
-    const c = getCashRateWithFallback(resort, dateStr, roomTypeId);
+    const c = getCashRateWithFallback(dateResort, dateStr, roomTypeId);
     if (!c) cashOk = false; else cash += c.rate;
     const crowd = getCrowdForDate(dateStr);
     if (!crowd) crowdOk = false; else crowdSum += crowd.crowd;
@@ -1378,8 +1389,9 @@ function calcCurrentSegmentTotals() {
   const breakdown = [];
 
   for (const dateStr of stayDates) {
-    const pts = getPointsForDate(resort, dateStr, state.roomTypeId);
-    const cashResult = getCashRateWithFallback(resort, dateStr, state.roomTypeId);
+    const dateResort = getResortForStayDate(resort.id, dateStr, resort);
+    const pts = getPointsForDate(dateResort, dateStr, state.roomTypeId);
+    const cashResult = getCashRateWithFallback(dateResort, dateStr, state.roomTypeId);
     const cashRate = cashResult ? cashResult.rate : null;
     if (cashResult && cashResult.isPriorYear) isPriorYearCash = true;
     const dayOfWeek = new Date(dateStr + "T12:00:00").getDay();
