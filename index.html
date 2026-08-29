@@ -57,39 +57,33 @@
         <div id="legend-items" class="legend-items"></div>
         <a class="source-link" href="https://disneyvacationclub.disney.go.com/vacation-planning/points-charts/" target="_blank" rel="noopener">Source: DVC Points Charts</a>
       </div>
+      <div class="legend">
+        <span class="legend-title">Crowd Level:</span>
+        <div id="crowd-legend-items" class="legend-items"></div>
+        <a class="source-link" href="https://www.undercovertourist.com/orlando/crowd-calendar/" target="_blank" rel="noopener">Source: Undercover Tourist</a>
+      </div>
     </div>
     <div class="summary-side">
-      <div class="settings-card">
-        <div class="settings-row">
-          <label class="ownership-toggle">
-            <input type="checkbox" id="owner-toggle">
-            <span class="toggle-label">I own DVC points</span>
-          </label>
-          <div class="ownership-details" id="ownership-details" style="display: none;">
-            <select id="owner-resort"></select>
-            <div class="owner-dues-info" id="owner-dues-info"></div>
-          </div>
-        </div>
-        <div class="settings-divider"></div>
-        <div class="settings-row">
-          <label class="ownership-toggle">
-            <input type="checkbox" id="rental-toggle">
-            <span class="toggle-label">I'm renting DVC points</span>
-          </label>
-          <div class="rental-details" id="rental-details" style="display: none;">
-            <label for="rental-rate">Rate: <strong>$<span id="rental-rate-value">20</span></strong>/pt</label>
-            <input type="range" id="rental-rate" min="15" max="25" step="0.5" value="20">
-          </div>
-        </div>
-      </div>
       <div id="action-buttons"></div>
       <div id="summary"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="alternatives-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Find a Better Stay</h3>
+        <button class="modal-close" onclick="closeAlternativesModal()" aria-label="Close">&times;</button>
+      </div>
+      <div id="alternatives-modal-body"></div>
     </div>
   </div>
 
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/availability_data.js"></script>
+  <script src="data/undercovertourist_2026.js"></script>
+  <script src="data/undercovertourist_2027.js"></script>
   <script src="app.js"></script>
 
 </body>

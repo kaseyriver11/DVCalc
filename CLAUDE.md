@@ -120,3 +120,4 @@ Sourced from DVC community forums (DISboards, DVCNews, Reddit r/dvcmember). Roug
 | 8a | Multi-resort YoY comparison | Pin up to 4 resort/room combos on the YoY chart to compare trends side-by-side | Done |
 | 9 | True cost per night (ownership) | Factor in amortized purchase price + dues over remaining contract | Planned |
 | 10 | Cash value score | "Dollars saved per point" metric for each booking | Planned |
+| 11 | Owner vs. rental / owner vs. cash savings tiles | Cost Comparison card used to show separate "Owner vs. cash" and "Owner vs. rental" savings tiles; removed 2026-08-28 to compact the card down to 3 tiles (Disney / Owner / Rental). Rental tile still shows rental-vs-cash savings inline. Could re-add owner-side savings as an optional expandable section. | Removed, could re-add |
