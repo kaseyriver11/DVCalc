@@ -216,6 +216,15 @@ function getKeyDatesPeriod(dateStr, resortId) {
   return "summer";
 }
 
+// Booking windows in the order DVC's own booking process opens them up.
+const BOOKING_WINDOWS = [
+  { key: "11Mo", label: "11-Month (Home Resort)", shortLabel: "11Mo" },
+  { key: "7Mo", label: "7-Month (Any Resort)", shortLabel: "7Mo" },
+  { key: "5Mo", label: "5-Month", shortLabel: "5Mo" },
+  { key: "3Mo", label: "3-Month", shortLabel: "3Mo" },
+  { key: "1Mo", label: "1-Month", shortLabel: "1Mo" },
+];
+
 function getAvailabilityScore(resortId, roomTypeId, dateStr, window) {
   if (typeof AVAILABILITY_DATA === "undefined") return null;
   const resortData = AVAILABILITY_DATA[resortId];
@@ -228,21 +237,22 @@ function getAvailabilityScore(resortId, roomTypeId, dateStr, window) {
   return periodData[window] ?? null;
 }
 
+// Returns the worst (minimum) score per booking window across every night of the
+// stay, e.g. { "11Mo": 5.2, "7Mo": 0.3, "5Mo": null, ... } — null where no data exists.
 function getStayAvailability(resortId, roomTypeId, dates) {
   if (!dates || dates.length === 0) return null;
-  let min11 = 8, min7 = 8;
-  let has11 = false, has7 = false;
+  const mins = {}, has = {};
+  for (const w of BOOKING_WINDOWS) { mins[w.key] = 8; has[w.key] = false; }
   for (const dateStr of dates) {
-    const s11 = getAvailabilityScore(resortId, roomTypeId, dateStr, "11Mo");
-    const s7 = getAvailabilityScore(resortId, roomTypeId, dateStr, "7Mo");
-    if (s11 !== null) { min11 = Math.min(min11, s11); has11 = true; }
-    if (s7 !== null) { min7 = Math.min(min7, s7); has7 = true; }
+    for (const w of BOOKING_WINDOWS) {
+      const s = getAvailabilityScore(resortId, roomTypeId, dateStr, w.key);
+      if (s !== null) { mins[w.key] = Math.min(mins[w.key], s); has[w.key] = true; }
+    }
   }
-  if (!has11 && !has7) return null;
-  return {
-    score11Mo: has11 ? min11 : null,
-    score7Mo: has7 ? min7 : null,
-  };
+  if (!BOOKING_WINDOWS.some(w => has[w.key])) return null;
+  const scores = {};
+  for (const w of BOOKING_WINDOWS) scores[w.key] = has[w.key] ? mins[w.key] : null;
+  return scores;
 }
 
 function availabilityLabel(score, stayLength) {
@@ -264,24 +274,21 @@ function buildAvailabilityHTML(resortId, roomTypeId, dates) {
   const avail = getStayAvailability(resortId, roomTypeId, dates);
   if (!avail) return "";
   const stayLength = dates.length;
-  const label11 = availabilityLabel(avail.score11Mo, stayLength);
-  const label7 = availabilityLabel(avail.score7Mo, stayLength);
-  if (!label11 && !label7) return "";
+  const rows = BOOKING_WINDOWS.map(w => {
+    const label = availabilityLabel(avail[w.key], stayLength);
+    return label ? `
+        <div class="avail-row">
+          <span class="avail-label">${w.label}</span>
+          <span class="avail-badge ${label.cls}">${label.text}</span>
+        </div>` : "";
+  }).join("");
+  if (!rows) return "";
 
   return `
     <div class="summary-card">
       <div class="availability-outlook">
         <h3>Booking Outlook <span class="avail-stay-length">${dates.length} night${dates.length !== 1 ? "s" : ""}</span></h3>
-        ${label11 ? `
-        <div class="avail-row">
-          <span class="avail-label">11-Month (Home Resort)</span>
-          <span class="avail-badge ${label11.cls}">${label11.text}</span>
-        </div>` : ""}
-        ${label7 ? `
-        <div class="avail-row">
-          <span class="avail-label">7-Month (Any Resort)</span>
-          <span class="avail-badge ${label7.cls}">${label7.text}</span>
-        </div>` : ""}
+        ${rows}
         <div class="avail-note">Based on historical availability from <a href="https://dvcfieldguide.com/availability-tables" target="_blank" rel="noopener">DVC Field Guide</a></div>
       </div>
     </div>
@@ -311,14 +318,15 @@ function buildSplitAvailabilityHTML(segments, currentResortId, currentRoomTypeId
     if (!avail) continue;
     hasAny = true;
     const len = seg.dates.length;
-    const l11 = availabilityLabel(avail.score11Mo, len);
-    const l7 = availabilityLabel(avail.score7Mo, len);
+    const badges = BOOKING_WINDOWS.map(w => {
+      const label = availabilityLabel(avail[w.key], len);
+      return label ? `<span class="avail-badge-mini ${label.cls}">${w.shortLabel} ${label.text}</span>` : "";
+    }).join("");
     rows += `
       <div class="avail-segment">
         <div class="avail-segment-name">${seg.name} <span class="avail-stay-length">${len}n</span></div>
         <div class="avail-segment-badges">
-          ${l11 ? `<span class="avail-badge-mini ${l11.cls}">11Mo ${l11.text}</span>` : ""}
-          ${l7 ? `<span class="avail-badge-mini ${l7.cls}">7Mo ${l7.text}</span>` : ""}
+          ${badges}
         </div>
       </div>
     `;
