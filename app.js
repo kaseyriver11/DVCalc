@@ -257,38 +257,48 @@ function getStayAvailability(resortId, roomTypeId, dates) {
 
 function availabilityLabel(score, stayLength) {
   if (score === null) return null;
-  if (score <= 0.1) return { text: "Not Likely", cls: "avail-very-low" };
+  if (score <= 0.1) return { text: "Not Likely", cls: "avail-very-low", dotCls: "avail-dot-very-low" };
 
   // Score = average consecutive days available
   // Ratio = how well the typical opening fits your stay
   const ratio = score / stayLength;
 
-  if (ratio >= 1.0) return { text: "Excellent", cls: "avail-excellent" };
-  if (ratio >= 0.75) return { text: "Good", cls: "avail-good" };
-  if (ratio >= 0.5) return { text: "Fair", cls: "avail-fair" };
-  if (ratio >= 0.25) return { text: "Low", cls: "avail-low" };
-  return { text: "Not Likely", cls: "avail-very-low" };
+  if (ratio >= 1.0) return { text: "Excellent", cls: "avail-excellent", dotCls: "avail-dot-excellent" };
+  if (ratio >= 0.75) return { text: "Good", cls: "avail-good", dotCls: "avail-dot-good" };
+  if (ratio >= 0.5) return { text: "Fair", cls: "avail-fair", dotCls: "avail-dot-fair" };
+  if (ratio >= 0.25) return { text: "Low", cls: "avail-low", dotCls: "avail-dot-low" };
+  return { text: "Not Likely", cls: "avail-very-low", dotCls: "avail-dot-very-low" };
+}
+
+// Builds the compact 5-window color-block row (11mo -> 1mo), each block hoverable
+// for the full status label via the shared tooltip-card component.
+function buildAvailabilityDotsHTML(avail, stayLength) {
+  return BOOKING_WINDOWS.map((w, i) => {
+    const label = availabilityLabel(avail[w.key], stayLength);
+    if (!label) return "";
+    const align = i === 0 ? "tooltip-align-left" : i === BOOKING_WINDOWS.length - 1 ? "tooltip-align-right" : "";
+    return `
+      <div class="avail-dot-col">
+        <span class="avail-dot-label">${w.shortLabel}</span>
+        <div class="avail-dot ${label.dotCls} tooltip-anchor ${align}" tabindex="0">
+          <div class="avail-dot-tooltip tooltip-card">${w.label}: ${label.text}</div>
+        </div>
+      </div>`;
+  }).join("");
 }
 
 function buildAvailabilityHTML(resortId, roomTypeId, dates) {
   const avail = getStayAvailability(resortId, roomTypeId, dates);
   if (!avail) return "";
   const stayLength = dates.length;
-  const rows = BOOKING_WINDOWS.map(w => {
-    const label = availabilityLabel(avail[w.key], stayLength);
-    return label ? `
-        <div class="avail-row">
-          <span class="avail-label">${w.label}</span>
-          <span class="avail-badge ${label.cls}">${label.text}</span>
-        </div>` : "";
-  }).join("");
-  if (!rows) return "";
+  const dots = buildAvailabilityDotsHTML(avail, stayLength);
+  if (!dots) return "";
 
   return `
     <div class="summary-card">
       <div class="availability-outlook">
         <h3>Booking Outlook <span class="avail-stay-length">${dates.length} night${dates.length !== 1 ? "s" : ""}</span></h3>
-        ${rows}
+        <div class="avail-dot-row">${dots}</div>
         <div class="avail-note">Based on historical availability from <a href="https://dvcfieldguide.com/availability-tables" target="_blank" rel="noopener">DVC Field Guide</a></div>
       </div>
     </div>
@@ -318,16 +328,11 @@ function buildSplitAvailabilityHTML(segments, currentResortId, currentRoomTypeId
     if (!avail) continue;
     hasAny = true;
     const len = seg.dates.length;
-    const badges = BOOKING_WINDOWS.map(w => {
-      const label = availabilityLabel(avail[w.key], len);
-      return label ? `<span class="avail-badge-mini ${label.cls}">${w.shortLabel} ${label.text}</span>` : "";
-    }).join("");
+    const dots = buildAvailabilityDotsHTML(avail, len);
     rows += `
       <div class="avail-segment">
         <div class="avail-segment-name">${seg.name} <span class="avail-stay-length">${len}n</span></div>
-        <div class="avail-segment-badges">
-          ${badges}
-        </div>
+        <div class="avail-dot-row">${dots}</div>
       </div>
     `;
   }
