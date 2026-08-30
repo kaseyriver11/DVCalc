@@ -166,7 +166,7 @@ Last audited: 2026-03-08
 
 ## 3. Cash Rack Rates — THE WEAK SPOT
 
-**What:** Estimated nightly Disney cash price per room type, per season, for 11 of the 12 WDW resorts (all but Animal Kingdom Villas — see below). Used to calculate savings vs. DVC points. Includes 12.5% Florida tax.
+**What:** Estimated nightly Disney cash price per room type, per season, for all 12 WDW resorts (Animal Kingdom Villas fixed 2026-08-30 — see below). Used to calculate savings vs. DVC points. Includes 12.5% Florida tax.
 
 **Source:** MouseSavers.com — a fan site that tracks Disney room rates across ~27 micro-seasons per year.
 
@@ -258,32 +258,28 @@ The app handles this with:
 
 Potential future sources: Disney's booking site (requires browser automation), Touring Plans (paid), or manual price checks.
 
-### Animal Kingdom Villas — missing entirely
+### Animal Kingdom Villas — fixed 2026-08-30
 
-AKV is a **sixth** resort with no cash rates, and unlike the five above it is a WDW resort
-that MouseSavers does cover. The root cause is broader than cash: **AKV has no entry in
-`data.js` at all** — no points chart, no room types, no cash rates, for either 2026 or 2027.
-`data.js` defines 16 resorts, not 17.
+AKV now has a real `data.js` entry for 2026: points copied from the generated
+`data_historical.js` entry, cash rates read directly from the raw MouseSavers Jambo House +
+Kidani Village HTML tables (not a summarized fetch, to avoid misreading the unlabeled
+Sun-Wed/Thu/Fri-Sat multi-price cells). Views offered by both buildings (dsR, dsSV, oneR,
+oneSV, threeSV) are averaged across the two pages; Value and Club Concierge views only exist
+at Jambo House. Neither building lists a 2-Bedroom Value or Club Concierge rate, so `twoV`/
+`twoC` are omitted from `cashRates` — `getCashRateForDate()` already handles missing room
+types gracefully.
 
-AKV still appears in the app because `data_historical.js` generates 2026/2027 entries for all
-17 resorts from the PDF archive, and that generator never emits cash rates for anyone. So AKV
-gets correct points and falls back to the manual cash-rate input.
+**2027 was deliberately left without a `data.js` entry.** MouseSavers' 2027 AKV pages don't
+yet publish rates past late November, so there's no real Dec 24-31 "Holiday" row to average
+against Easter for the mapping. AKV 2027 still comes from the generated `data_historical.js`
+for points, and `getCashRateWithFallback()` automatically pulls 2026's cash rates as a
+prior-year fallback (same mechanism already used elsewhere) until MouseSavers publishes the
+rest of 2027.
 
-Evidence this was an oversight rather than a source limitation:
-- `DUES_PER_POINT` in `data.js` **does** include `animalKingdomVillas: 10.16`.
-- The MouseSavers slug list above includes both AKV pages, so the URLs were known.
-- AKV is treated as a WDW resort everywhere else (e.g. `NON_WDW_RESORT_IDS` in `app.js`
-  correctly excludes it).
-
-**To fix:** add an `animalKingdomVillas` entry to `data.js` for 2026 and 2027 using
-`wdwPeriods()` / `wdwPeriods2027()`, with points from the AKV PDFs in `pdfs/akv_archive/`
-(or copied from the generated `data_historical.js` entries) and cash rates from the two
-MouseSavers AKV pages. Jambo House and Kidani Village are separate MouseSavers pages but one
-DVC resort with 14 room types, so their rates need merging the same way
-`availability_data.js` averages overlapping `akv-j-*` / `akv-k-*` room types. Once `data.js`
-has AKV, the `dedupeResorts()` footer in `data_historical.js` will automatically prefer it.
-
-**Risk: Medium.** The data can be reproduced, but the mapping involves judgment calls. The annotations in `data.js` and this document should make it fully recoverable.
+**To refresh for a future year:** re-read the raw `<table>` rows from both MouseSavers pages
+(see the Jambo House page's own note: 2 prices = Sun-Thu/Fri-Sat, 3 prices = Sun-Wed/Thu/
+Fri-Sat), average overlapping views across Jambo House + Kidani Village, and apply the same
+7-period mapping documented above `wdwPeriods()` in `data.js`.
 
 ---
 

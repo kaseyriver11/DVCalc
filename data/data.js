@@ -82,7 +82,63 @@ const RESORTS = [
   // WALT DISNEY WORLD RESORTS
   // ===========================================================================================
 
-  // --- AKV 2026 moved to data_historical.js ---
+  // --- Disney's Animal Kingdom Villas ---
+  // Views: V=Value, R=Resort, SV=Savanna, C=Club Concierge (Jambo House + Kidani Village)
+  // Cash rates: MouseSavers 2026 Jambo House + Kidani Village pages, averaged where both
+  // buildings offer the same view (dsR, dsSV, oneR, oneSV, threeSV). twoV/twoC omitted --
+  // MouseSavers doesn't list Value or Club Concierge 2-Bedroom villas for either building.
+  {
+    id: "animalKingdomVillas",
+    name: "Disney's Animal Kingdom Villas",
+    year: 2026,
+    roomTypes: [
+      { id: "dsV", name: "Deluxe Studio - Value", sleeps: 4 },
+      { id: "dsR", name: "Deluxe Studio - Resort View", sleeps: 4 },
+      { id: "dsSV", name: "Deluxe Studio - Savanna View", sleeps: 4 },
+      { id: "dsC", name: "Deluxe Studio - Club Concierge", sleeps: 4 },
+      { id: "oneV", name: "One-Bedroom Villa - Value", sleeps: 5 },
+      { id: "oneR", name: "One-Bedroom Villa - Resort View", sleeps: 5 },
+      { id: "oneSV", name: "One-Bedroom Villa - Savanna View", sleeps: 5 },
+      { id: "oneC", name: "One-Bedroom Villa - Club Concierge", sleeps: 5 },
+      { id: "twoV", name: "Two-Bedroom Villa - Value", sleeps: 9 },
+      { id: "twoR", name: "Two-Bedroom Villa - Resort View", sleeps: 9 },
+      { id: "twoSV", name: "Two-Bedroom Villa - Savanna View", sleeps: 9 },
+      { id: "twoC", name: "Two-Bedroom Villa - Club Concierge", sleeps: 9 },
+      { id: "threeR", name: "Three-Bedroom Grand Villa - Resort View", sleeps: 12 },
+      { id: "threeSV", name: "Three-Bedroom Grand Villa - Savanna View", sleeps: 12 },
+    ],
+    travelPeriods: wdwPeriods([
+      { sunThu: { dsV:7, dsR:10, dsSV:13, dsC:18, oneV:17, oneR:20, oneSV:27, oneC:38, twoV:22, twoR:28, twoSV:35, twoC:51, threeR:68, threeSV:73 },
+        friSat: { dsV:10, dsR:13, dsSV:16, dsC:22, oneV:20, oneR:25, oneSV:31, oneC:43, twoV:28, twoR:34, twoSV:43, twoC:58, threeR:78, threeSV:85 } },
+      { sunThu: { dsV:8, dsR:12, dsSV:15, dsC:20, oneV:19, oneR:24, oneSV:31, oneC:41, twoV:25, twoR:31, twoSV:39, twoC:55, threeR:73, threeSV:79 },
+        friSat: { dsV:11, dsR:14, dsSV:17, dsC:23, oneV:21, oneR:28, oneSV:34, oneC:46, twoV:31, twoR:37, twoSV:48, twoC:63, threeR:82, threeSV:89 } },
+      { sunThu: { dsV:8, dsR:13, dsSV:16, dsC:21, oneV:20, oneR:26, oneSV:33, oneC:43, twoV:27, twoR:32, twoSV:42, twoC:58, threeR:78, threeSV:86 },
+        friSat: { dsV:12, dsR:15, dsSV:18, dsC:24, oneV:22, oneR:29, oneSV:35, oneC:49, twoV:32, twoR:39, twoSV:50, twoC:66, threeR:88, threeSV:96 } },
+      { sunThu: { dsV:9, dsR:14, dsSV:17, dsC:22, oneV:21, oneR:27, oneSV:34, oneC:44, twoV:29, twoR:35, twoSV:43, twoC:60, threeR:81, threeSV:89 },
+        friSat: { dsV:12, dsR:15, dsSV:20, dsC:24, oneV:24, oneR:30, oneSV:36, oneC:50, twoV:34, twoR:40, twoSV:52, twoC:66, threeR:91, threeSV:100 } },
+      { sunThu: { dsV:10, dsR:15, dsSV:19, dsC:23, oneV:23, oneR:29, oneSV:35, oneC:46, twoV:30, twoR:36, twoSV:47, twoC:61, threeR:88, threeSV:96 },
+        friSat: { dsV:13, dsR:16, dsSV:20, dsC:25, oneV:26, oneR:32, oneSV:39, oneC:53, twoV:35, twoR:44, twoSV:57, twoC:71, threeR:100, threeSV:110 } },
+      { sunThu: { dsV:12, dsR:16, dsSV:19, dsC:23, oneV:24, oneR:32, oneSV:38, oneC:49, twoV:31, twoR:40, twoSV:52, twoC:66, threeR:97, threeSV:107 },
+        friSat: { dsV:14, dsR:18, dsSV:22, dsC:26, oneV:27, oneR:35, oneSV:41, oneC:56, twoV:36, twoR:48, twoSV:61, twoC:77, threeR:111, threeSV:121 } },
+      { sunThu: { dsV:16, dsR:21, dsSV:27, dsC:33, oneV:31, oneR:38, oneSV:47, oneC:65, twoV:43, twoR:55, twoSV:70, twoC:88, threeR:117, threeSV:127 },
+        friSat: { dsV:17, dsR:23, dsSV:29, dsC:36, oneV:35, oneR:45, oneSV:52, oneC:73, twoV:48, twoR:60, twoSV:76, twoC:98, threeR:135, threeSV:144 } },
+    ], [ // cashRates (MouseSavers 2026 rack rates incl. 12.5% tax)
+      { sunThu: { dsV:666, dsR:754, dsSV:971, dsC:1086, oneV:986, oneR:1114, oneSV:1316, oneC:1540, twoR:1820, twoSV:2063, threeR:3616, threeSV:3787 },
+        friSat: { dsV:752, dsR:807, dsSV:1022, dsC:1229, oneV:1116, oneR:1259, oneSV:1488, oneC:1744, twoR:1917, twoSV:2167, threeR:3818, threeSV:3974 } },
+      { sunThu: { dsV:609, dsR:674, dsSV:928, dsC:1062, oneV:993, oneR:1091, oneSV:1348, oneC:1559, twoR:1664, twoSV:1886, threeR:3485, threeSV:3665 },
+        friSat: { dsV:648, dsR:723, dsSV:932, dsC:1134, oneV:1054, oneR:1162, oneSV:1439, oneC:1659, twoR:1778, twoSV:1956, threeR:3592, threeSV:3840 } },
+      { sunThu: { dsV:598, dsR:660, dsSV:879, dsC:1019, oneV:929, oneR:1047, oneSV:1274, oneC:1460, twoR:1607, twoSV:1817, threeR:3363, threeSV:3536 },
+        friSat: { dsV:620, dsR:689, dsSV:900, dsC:1059, oneV:962, oneR:1085, oneSV:1322, oneC:1514, twoR:1684, twoSV:1874, threeR:3455, threeSV:3665 } },
+      { sunThu: { dsV:587, dsR:647, dsSV:830, dsC:977, oneV:864, oneR:1004, oneSV:1199, oneC:1361, twoR:1550, twoSV:1748, threeR:3241, threeSV:3406 },
+        friSat: { dsV:592, dsR:655, dsSV:869, dsC:983, oneV:870, oneR:1008, oneSV:1206, oneC:1368, twoR:1590, twoSV:1791, threeR:3319, threeSV:3490 } },
+      { sunThu: { dsV:645, dsR:699, dsSV:948, dsC:1137, oneV:1091, oneR:1166, oneSV:1447, oneC:1674, twoR:1875, twoSV:2098, threeR:3641, threeSV:3806 },
+        friSat: { dsV:741, dsR:804, dsSV:1071, dsC:1301, oneV:1227, oneR:1331, oneSV:1647, oneC:1907, twoR:2149, twoSV:2396, threeR:4196, threeSV:4346 } },
+      { sunThu: { dsV:754, dsR:817, dsSV:1055, dsC:1274, oneV:1216, oneR:1333, oneSV:1672, oneC:1905, twoR:2265, twoSV:2715, threeR:4254, threeSV:4418 },
+        friSat: { dsV:830, dsR:900, dsSV:1175, dsC:1429, oneV:1361, oneR:1498, oneSV:1875, oneC:2145, twoR:2539, twoSV:3034, threeR:4754, threeSV:4938 } },
+      { sunThu: { dsV:908, dsR:983, dsSV:1304, dsC:1600, oneV:1391, oneR:1626, oneSV:1850, oneC:2120, twoR:2713, twoSV:3239, threeR:5047, threeSV:5238 },
+        friSat: { dsV:908, dsR:983, dsSV:1304, dsC:1600, oneV:1391, oneR:1626, oneSV:1850, oneC:2120, twoR:2713, twoSV:3239, threeR:5047, threeSV:5238 } },
+    ]),
+  },
 
   // --- Bay Lake Tower at Disney's Contemporary Resort ---
   // Views: R=Resort, P=Preferred, TP=Theme Park

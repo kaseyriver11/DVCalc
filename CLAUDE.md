@@ -49,7 +49,9 @@ pdfs/{resort}_archive/          # Downloaded historical PDFs for all 17 resorts 
 14. Defaults to current month
 
 ## Resorts
-All 17 DVC resorts are selectable for 2026 and 2027. Note that `data.js` only defines 16 of them — Animal Kingdom Villas has no `data.js` entry, so its 2026/2027 points come from the generated `data_historical.js` and it has **no cash rates**. Cash rates cover 11 resorts (the 12 WDW resorts minus AKV); the 5 non-WDW resorts never had them since MouseSavers is WDW-only.
+All 17 DVC resorts are selectable for 2026 and 2027, and `data.js` now defines all 17 (Animal Kingdom Villas was added 2026-08-30 — see below). Cash rates cover 12 resorts (all WDW resorts); the 5 non-WDW resorts still have none since MouseSavers is WDW-only.
+
+**Animal Kingdom Villas** points/cash rates live directly in `data.js` for 2026 only (Jambo House + Kidani Village MouseSavers pages, averaged where both buildings share a view). 2027 has no `data.js` entry — it still comes from the generated `data_historical.js` for points, and falls back to 2026's cash rates via `getCashRateWithFallback()` (same prior-year fallback other resorts use), since MouseSavers' 2027 AKV pages don't yet publish December rates.
 
 All 17 resorts have historical points data back to 2016 (or their opening year) in `data_historical.js`, auto-extracted from DVC Field Guide PDFs. Three gaps exist: BWV 2018 and PVB 2016 are image-based PDFs that can't be text-extracted, and AKV is missing from `data.js` (see `docs/data_reproducibility.md`).
 
