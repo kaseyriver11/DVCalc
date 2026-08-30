@@ -2,16 +2,23 @@
 // Sort resorts alphabetically once at startup
 RESORTS.sort((a, b) => a.name.localeCompare(b.name));
 
-// Discover available years from the data
-const AVAILABLE_YEARS = [...new Set(RESORTS.map(r => r.year))].sort();
+// All years present in the data (used internally for cross-year lookups, e.g.
+// stays spanning Dec 31 -> Jan 1, or the historical Year-over-Year comparisons).
+const ALL_DATA_YEARS = [...new Set(RESORTS.map(r => r.year))].sort();
+
+// The main calendar only offers the current + upcoming years — old historical
+// years aren't useful for trip planning here (that's what changes.html is for).
+const currentRealYear = new Date().getFullYear();
+const upcomingYears = ALL_DATA_YEARS.filter(y => y >= currentRealYear);
+const AVAILABLE_YEARS = upcomingYears.length ? upcomingYears : [ALL_DATA_YEARS[ALL_DATA_YEARS.length - 1]];
 
 function resortsForYear(year) {
   return RESORTS.filter(r => r.year === year);
 }
 
-const defaultYear = AVAILABLE_YEARS.includes(new Date().getFullYear())
-  ? new Date().getFullYear()
-  : AVAILABLE_YEARS[AVAILABLE_YEARS.length - 1];
+const defaultYear = AVAILABLE_YEARS.includes(currentRealYear)
+  ? currentRealYear
+  : AVAILABLE_YEARS[0];
 const defaultResorts = resortsForYear(defaultYear);
 const defaultResort = defaultResorts.find(r => r.id === "copperCreek") || defaultResorts[0];
 
