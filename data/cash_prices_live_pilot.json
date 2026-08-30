@@ -1,0 +1,1468 @@
+{
+  "resortSlug": "copper-creek-villas-and-cabins",
+  "adults": 2,
+  "children": 0,
+  "nights": 4,
+  "generatedAt": "2026-08-30T23:45:36+00:00",
+  "snapshots": [
+    {
+      "checkIn": "2026-09-01",
+      "checkOut": "2026-09-05",
+      "capturedAt": "2026-08-30T23:45:28+00:00",
+      "unavailable": true,
+      "reasonCodes": [
+        "INVENTORY_UNAVAILABLE"
+      ],
+      "roomCount": 18,
+      "rooms": [
+        {
+          "code": "JB",
+          "id": "80011049",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "522.00",
+          "nights": [
+            {
+              "date": "2026-09-01",
+              "subtotal": "509.00"
+            },
+            {
+              "date": "2026-09-02",
+              "subtotal": "509.00"
+            },
+            {
+              "date": "2026-09-03",
+              "subtotal": "509.00"
+            },
+            {
+              "date": "2026-09-04",
+              "subtotal": "561.00"
+            }
+          ],
+          "totalSubtotal": "2088.00",
+          "totalTax": "261.02"
+        },
+        {
+          "code": "JC",
+          "id": "80011051",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "583.25",
+          "nights": [
+            {
+              "date": "2026-09-01",
+              "subtotal": "570.00"
+            },
+            {
+              "date": "2026-09-02",
+              "subtotal": "570.00"
+            },
+            {
+              "date": "2026-09-03",
+              "subtotal": "570.00"
+            },
+            {
+              "date": "2026-09-04",
+              "subtotal": "623.00"
+            }
+          ],
+          "totalSubtotal": "2333.00",
+          "totalTax": "291.63"
+        },
+        {
+          "code": "JZ",
+          "id": "18410811",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "719.00",
+          "nights": [
+            {
+              "date": "2026-09-01",
+              "subtotal": "707.00"
+            },
+            {
+              "date": "2026-09-02",
+              "subtotal": "707.00"
+            },
+            {
+              "date": "2026-09-03",
+              "subtotal": "707.00"
+            },
+            {
+              "date": "2026-09-04",
+              "subtotal": "755.00"
+            }
+          ],
+          "totalSubtotal": "2876.00",
+          "totalTax": "359.52"
+        },
+        {
+          "code": "XC",
+          "id": "80011203",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2E",
+          "id": "18390997",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "JS",
+          "id": "80011059",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "XB",
+          "id": "80011201",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "XA",
+          "id": "80011199",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "JD",
+          "id": "80011053",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "Z3",
+          "id": "19000112",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "Z9",
+          "id": "19000113",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2I",
+          "id": "18393813",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "ZS",
+          "id": "19000114",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2D",
+          "id": "18393617",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "25",
+          "id": "18410810",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2K",
+          "id": "18393852",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2A",
+          "id": "18391003",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2F",
+          "id": "18391001",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        }
+      ]
+    },
+    {
+      "checkIn": "2026-09-30",
+      "checkOut": "2026-10-04",
+      "capturedAt": "2026-08-30T23:45:30+00:00",
+      "unavailable": false,
+      "reasonCodes": [],
+      "roomCount": 18,
+      "rooms": [
+        {
+          "code": "Z3",
+          "id": "19000112",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "657.75",
+          "nights": [
+            {
+              "date": "2026-09-30",
+              "subtotal": "576.00"
+            },
+            {
+              "date": "2026-10-01",
+              "subtotal": "595.00"
+            },
+            {
+              "date": "2026-10-02",
+              "subtotal": "730.00"
+            },
+            {
+              "date": "2026-10-03",
+              "subtotal": "730.00"
+            }
+          ],
+          "totalSubtotal": "2631.00",
+          "totalTax": "328.88"
+        },
+        {
+          "code": "JB",
+          "id": "80011049",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "659.25",
+          "nights": [
+            {
+              "date": "2026-09-30",
+              "subtotal": "577.00"
+            },
+            {
+              "date": "2026-10-01",
+              "subtotal": "596.00"
+            },
+            {
+              "date": "2026-10-02",
+              "subtotal": "732.00"
+            },
+            {
+              "date": "2026-10-03",
+              "subtotal": "732.00"
+            }
+          ],
+          "totalSubtotal": "2637.00",
+          "totalTax": "329.63"
+        },
+        {
+          "code": "2A",
+          "id": "18391003",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "659.25",
+          "nights": [
+            {
+              "date": "2026-09-30",
+              "subtotal": "577.00"
+            },
+            {
+              "date": "2026-10-01",
+              "subtotal": "596.00"
+            },
+            {
+              "date": "2026-10-02",
+              "subtotal": "732.00"
+            },
+            {
+              "date": "2026-10-03",
+              "subtotal": "732.00"
+            }
+          ],
+          "totalSubtotal": "2637.00",
+          "totalTax": "329.63"
+        },
+        {
+          "code": "JC",
+          "id": "80011051",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "709.25",
+          "nights": [
+            {
+              "date": "2026-09-30",
+              "subtotal": "598.00"
+            },
+            {
+              "date": "2026-10-01",
+              "subtotal": "625.00"
+            },
+            {
+              "date": "2026-10-02",
+              "subtotal": "807.00"
+            },
+            {
+              "date": "2026-10-03",
+              "subtotal": "807.00"
+            }
+          ],
+          "totalSubtotal": "2837.00",
+          "totalTax": "354.64"
+        },
+        {
+          "code": "Z9",
+          "id": "19000113",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "709.50",
+          "nights": [
+            {
+              "date": "2026-09-30",
+              "subtotal": "599.00"
+            },
+            {
+              "date": "2026-10-01",
+              "subtotal": "625.00"
+            },
+            {
+              "date": "2026-10-02",
+              "subtotal": "807.00"
+            },
+            {
+              "date": "2026-10-03",
+              "subtotal": "807.00"
+            }
+          ],
+          "totalSubtotal": "2838.00",
+          "totalTax": "354.77"
+        },
+        {
+          "code": "JZ",
+          "id": "18410811",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "925.00",
+          "nights": [
+            {
+              "date": "2026-09-30",
+              "subtotal": "790.00"
+            },
+            {
+              "date": "2026-10-01",
+              "subtotal": "822.00"
+            },
+            {
+              "date": "2026-10-02",
+              "subtotal": "1044.00"
+            },
+            {
+              "date": "2026-10-03",
+              "subtotal": "1044.00"
+            }
+          ],
+          "totalSubtotal": "3700.00",
+          "totalTax": "462.50"
+        },
+        {
+          "code": "25",
+          "id": "18410810",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "930.50",
+          "nights": [
+            {
+              "date": "2026-09-30",
+              "subtotal": "796.00"
+            },
+            {
+              "date": "2026-10-01",
+              "subtotal": "828.00"
+            },
+            {
+              "date": "2026-10-02",
+              "subtotal": "1049.00"
+            },
+            {
+              "date": "2026-10-03",
+              "subtotal": "1049.00"
+            }
+          ],
+          "totalSubtotal": "3722.00",
+          "totalTax": "465.26"
+        },
+        {
+          "code": "XC",
+          "id": "80011203",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2E",
+          "id": "18390997",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "JS",
+          "id": "80011059",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "XB",
+          "id": "80011201",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "XA",
+          "id": "80011199",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "JD",
+          "id": "80011053",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2I",
+          "id": "18393813",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "ZS",
+          "id": "19000114",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2D",
+          "id": "18393617",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2K",
+          "id": "18393852",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2F",
+          "id": "18391001",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        }
+      ]
+    },
+    {
+      "checkIn": "2027-01-15",
+      "checkOut": "2027-01-19",
+      "capturedAt": "2026-08-30T23:45:32+00:00",
+      "unavailable": false,
+      "reasonCodes": [],
+      "roomCount": 18,
+      "rooms": [
+        {
+          "code": "2D",
+          "id": "18393617",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "596.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "611.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "611.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "581.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "581.00"
+            }
+          ],
+          "totalSubtotal": "2384.00",
+          "totalTax": "298.02"
+        },
+        {
+          "code": "JB",
+          "id": "80011049",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "600.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "615.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "615.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "585.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "585.00"
+            }
+          ],
+          "totalSubtotal": "2400.00",
+          "totalTax": "300.02"
+        },
+        {
+          "code": "XA",
+          "id": "80011199",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "600.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "615.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "615.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "585.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "585.00"
+            }
+          ],
+          "totalSubtotal": "2400.00",
+          "totalTax": "300.02"
+        },
+        {
+          "code": "2A",
+          "id": "18391003",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "600.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "615.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "615.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "585.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "585.00"
+            }
+          ],
+          "totalSubtotal": "2400.00",
+          "totalTax": "300.02"
+        },
+        {
+          "code": "Z3",
+          "id": "19000112",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "602.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "617.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "617.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "587.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "587.00"
+            }
+          ],
+          "totalSubtotal": "2408.00",
+          "totalTax": "301.02"
+        },
+        {
+          "code": "JC",
+          "id": "80011051",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "681.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "701.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "701.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "661.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "661.00"
+            }
+          ],
+          "totalSubtotal": "2724.00",
+          "totalTax": "340.52"
+        },
+        {
+          "code": "Z9",
+          "id": "19000113",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "689.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "707.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "707.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "671.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "671.00"
+            }
+          ],
+          "totalSubtotal": "2756.00",
+          "totalTax": "344.52"
+        },
+        {
+          "code": "JZ",
+          "id": "18410811",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "846.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "862.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "862.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "830.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "830.00"
+            }
+          ],
+          "totalSubtotal": "3384.00",
+          "totalTax": "423.00"
+        },
+        {
+          "code": "25",
+          "id": "18410810",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "857.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "872.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "872.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "842.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "842.00"
+            }
+          ],
+          "totalSubtotal": "3428.00",
+          "totalTax": "428.50"
+        },
+        {
+          "code": "JD",
+          "id": "80011053",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "901.50",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "917.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "917.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "886.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "886.00"
+            }
+          ],
+          "totalSubtotal": "3606.00",
+          "totalTax": "450.76"
+        },
+        {
+          "code": "ZS",
+          "id": "19000114",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "907.50",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "923.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "923.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "892.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "892.00"
+            }
+          ],
+          "totalSubtotal": "3630.00",
+          "totalTax": "453.76"
+        },
+        {
+          "code": "XB",
+          "id": "80011201",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "936.50",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "962.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "962.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "911.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "911.00"
+            }
+          ],
+          "totalSubtotal": "3746.00",
+          "totalTax": "468.26"
+        },
+        {
+          "code": "2E",
+          "id": "18390997",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "990.50",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "1016.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "1016.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "965.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "965.00"
+            }
+          ],
+          "totalSubtotal": "3962.00",
+          "totalTax": "495.26"
+        },
+        {
+          "code": "JS",
+          "id": "80011059",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1148.50",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "1174.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "1174.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "1123.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "1123.00"
+            }
+          ],
+          "totalSubtotal": "4594.00",
+          "totalTax": "574.26"
+        },
+        {
+          "code": "XC",
+          "id": "80011203",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1552.00",
+          "nights": [
+            {
+              "date": "2027-01-15",
+              "subtotal": "1591.00"
+            },
+            {
+              "date": "2027-01-16",
+              "subtotal": "1591.00"
+            },
+            {
+              "date": "2027-01-17",
+              "subtotal": "1513.00"
+            },
+            {
+              "date": "2027-01-18",
+              "subtotal": "1513.00"
+            }
+          ],
+          "totalSubtotal": "6208.00",
+          "totalTax": "776.02"
+        },
+        {
+          "code": "2I",
+          "id": "18393813",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2K",
+          "id": "18393852",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2F",
+          "id": "18391001",
+          "unavailable": true,
+          "reasonCode": "LOS_RESTRICTION",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        }
+      ]
+    },
+    {
+      "checkIn": "2027-03-30",
+      "checkOut": "2027-04-03",
+      "capturedAt": "2026-08-30T23:45:34+00:00",
+      "unavailable": false,
+      "reasonCodes": [],
+      "roomCount": 18,
+      "rooms": [
+        {
+          "code": "2D",
+          "id": "18393617",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "810.25",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "815.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "815.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "815.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "796.00"
+            }
+          ],
+          "totalSubtotal": "3241.00",
+          "totalTax": "405.14"
+        },
+        {
+          "code": "JB",
+          "id": "80011049",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "815.25",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "801.00"
+            }
+          ],
+          "totalSubtotal": "3261.00",
+          "totalTax": "407.63"
+        },
+        {
+          "code": "XA",
+          "id": "80011199",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "815.25",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "801.00"
+            }
+          ],
+          "totalSubtotal": "3261.00",
+          "totalTax": "407.63"
+        },
+        {
+          "code": "2A",
+          "id": "18391003",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "815.25",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "820.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "801.00"
+            }
+          ],
+          "totalSubtotal": "3261.00",
+          "totalTax": "407.63"
+        },
+        {
+          "code": "Z3",
+          "id": "19000112",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "823.50",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "829.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "829.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "829.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "807.00"
+            }
+          ],
+          "totalSubtotal": "3294.00",
+          "totalTax": "411.77"
+        },
+        {
+          "code": "JC",
+          "id": "80011051",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "877.00",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "884.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "884.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "884.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "856.00"
+            }
+          ],
+          "totalSubtotal": "3508.00",
+          "totalTax": "438.50"
+        },
+        {
+          "code": "Z9",
+          "id": "19000113",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "889.25",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "898.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "898.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "898.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "863.00"
+            }
+          ],
+          "totalSubtotal": "3557.00",
+          "totalTax": "444.63"
+        },
+        {
+          "code": "JZ",
+          "id": "18410811",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1090.50",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "1105.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "1105.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "1105.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "1047.00"
+            }
+          ],
+          "totalSubtotal": "4362.00",
+          "totalTax": "545.27"
+        },
+        {
+          "code": "25",
+          "id": "18410810",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1106.00",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "1122.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "1122.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "1122.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "1058.00"
+            }
+          ],
+          "totalSubtotal": "4424.00",
+          "totalTax": "553.00"
+        },
+        {
+          "code": "JD",
+          "id": "80011053",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1270.50",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "1305.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "1305.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "1305.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "1167.00"
+            }
+          ],
+          "totalSubtotal": "5082.00",
+          "totalTax": "635.27"
+        },
+        {
+          "code": "ZS",
+          "id": "19000114",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1279.50",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "1314.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "1314.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "1314.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "1176.00"
+            }
+          ],
+          "totalSubtotal": "5118.00",
+          "totalTax": "639.75"
+        },
+        {
+          "code": "XB",
+          "id": "80011201",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1330.50",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "1338.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "1338.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "1338.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "1308.00"
+            }
+          ],
+          "totalSubtotal": "5322.00",
+          "totalTax": "665.25"
+        },
+        {
+          "code": "2E",
+          "id": "18390997",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1400.50",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "1410.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "1410.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "1410.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "1372.00"
+            }
+          ],
+          "totalSubtotal": "5602.00",
+          "totalTax": "700.25"
+        },
+        {
+          "code": "JS",
+          "id": "80011059",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "1583.50",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "1609.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "1609.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "1609.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "1507.00"
+            }
+          ],
+          "totalSubtotal": "6334.00",
+          "totalTax": "791.77"
+        },
+        {
+          "code": "XC",
+          "id": "80011203",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "2416.00",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "2430.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "2430.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "2430.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "2374.00"
+            }
+          ],
+          "totalSubtotal": "9664.00",
+          "totalTax": "1208.00"
+        },
+        {
+          "code": "2F",
+          "id": "18391001",
+          "unavailable": false,
+          "reasonCode": null,
+          "avgPerNight": "2496.75",
+          "nights": [
+            {
+              "date": "2027-03-30",
+              "subtotal": "2513.00"
+            },
+            {
+              "date": "2027-03-31",
+              "subtotal": "2513.00"
+            },
+            {
+              "date": "2027-04-01",
+              "subtotal": "2513.00"
+            },
+            {
+              "date": "2027-04-02",
+              "subtotal": "2448.00"
+            }
+          ],
+          "totalSubtotal": "9987.00",
+          "totalTax": "1248.39"
+        },
+        {
+          "code": "2I",
+          "id": "18393813",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        },
+        {
+          "code": "2K",
+          "id": "18393852",
+          "unavailable": true,
+          "reasonCode": "INVENTORY_UNAVAILABLE",
+          "avgPerNight": null,
+          "nights": [],
+          "totalSubtotal": null,
+          "totalTax": null
+        }
+      ]
+    }
+  ]
+}

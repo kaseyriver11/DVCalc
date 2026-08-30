@@ -1,7 +1,43 @@
 # Live Disney Cash Pricing — Research & Plan
 
-**Status:** Research complete, not yet built. Written 2026-08-30 after live exploration of
-`disneyworld.disney.go.com`, updated same day after finding the real pricing API.
+**Status:** Phase 1 pilot script built and run for Copper Creek (`scripts/scrape_live_prices.py`,
+sample output in `data/cash_prices_live_pilot.json`). Not yet wired into the app or scheduled.
+Written 2026-08-30 after live exploration of `disneyworld.disney.go.com`, updated same day
+after finding the real pricing API, updated again after the first pilot run.
+
+## Pilot results (Copper Creek, 2026-08-30)
+
+Ran the scraper for 4 target dates at different lead times. Confirmed the exact concern raised
+before building this: **near-term dates return sparse pricing**, but not for the reason
+expected, and it's a real per-room signal, not noise:
+
+| Check-in | Lead time | Rooms priced | Rooms sold out |
+|---|---|---|---|
+| 2026-09-01 | ~2 days | 3 / 18 | 15 / 18 |
+| 2026-09-30 | ~1 month | 7 / 18 | 11 / 18 |
+| 2027-01-15 | ~4.5 months | 15 / 18 | 3 / 18 |
+| 2027-03-30 | ~7 months | 16 / 18 | 2 / 18 |
+
+**Why so many rooms are "sold out" even 7 months out:** DVC resorts only release whatever
+rooms *aren't* reserved by points-holders for cash rental — cash inventory at a DVC villa is
+inherently much more limited than at a normal Disney hotel. Seeing most rooms unavailable for
+near-term dates is expected behavior, not a scraper bug.
+
+**The API distinguishes two levels of unavailability**, and the script now handles both:
+- **Per-search** (`reasonsUnavailable`, plural, top-level): the searched party/dates found no
+  bookable combination at all. Other rooms in the same response can still be fully priced.
+- **Per-room** (`reasonUnavailable`, singular, on the room object): that specific room has no
+  inventory for these dates. Its object shrinks to just `code`/`id`/`currentlyInCart` — no
+  `displayPrice`, no `orderedPricePerNight`, nothing to fall back to. This was the real
+  explanation for "some rooms return no pricing" — not a broken request, a genuine per-room
+  sold-out state. The pilot script now checks for this and records `unavailable: true` with
+  the reason code on that room rather than crashing or silently producing `null`.
+
+**Sanity check against existing data:** Copper Creek's static 2026 MouseSavers "Premier" rate
+(`data.js`) is $771 (Sun-Thu) to $868 (Fri-Sat) per night for the studio. The live 2027 scrape
+for the equivalent period landed at ~$810-815/night average across a mixed weekday/weekend
+stay — same order of magnitude, and higher as expected for the following year. Good first
+signal that the live numbers are trustworthy.
 
 ## Goal
 
