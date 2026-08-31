@@ -1,10 +1,74 @@
 # Live Disney Cash Pricing — Research & Plan
 
-**Status:** Phase 1 pilot (`scripts/scrape_live_prices.py`) and Phase 1.5 period-aggregation
-build (`scripts/build_live_cash_rates.py`, output in `data/cash_prices_live.json`) both done for
-Copper Creek. Not yet wired into the app or scheduled. Written 2026-08-30 after live exploration
-of `disneyworld.disney.go.com`, updated same day after finding the real pricing API, again after
-the first pilot run, and again after the full 2027 period build.
+**Status:** All 12 WDW DVC resorts built (`scripts/build_live_cash_rates.py`, output in
+`data/cash_prices_live.json`, one entry per app resort id). Not yet wired into the app or
+scheduled. The 5 non-WDW resorts (Aulani, Vero Beach, Hilton Head, Disneyland Hotel, Grand
+Californian) are NOT covered -- see "Non-WDW resorts" below. Written 2026-08-30 after live
+exploration of `disneyworld.disney.go.com`, updated same day after finding the real pricing API
+and again after the Copper Creek pilot, updated again after finding the `categories-and-rooms`
+endpoint and building out all 12 WDW resorts.
+
+## The room-code mapping problem, solved properly
+
+The pilot's Copper Creek mapping used image-URL slugs (reliable, where Disney's CDN embeds a
+code + descriptive name in the filename) plus **price clustering** for the rest (guessing a
+code's room type from which price tier it landed in). That guess was wrong: `JB, JC, Z3, Z9,
+JZ, 25, JD, ZS, JS` all turned out to be Wilderness Lodge's regular **hotel** rooms (Fireworks
+View, Water View, Club Level, etc.) that happen to share Copper Creek's pricing response, not
+DVC villa variants. Price alone can't distinguish "cheaper studio variant" from "unrelated hotel
+room that happens to cost about the same."
+
+Found a better source instead: `GET
+.../resort/{slug}/categories-and-rooms/?storeId=wdw&accessible=false` (same API family, no auth)
+returns every room type's exact name, category, subtype, and an `alternateIdentifiers.CRS.value`
+field -- confirmed by cross-referencing against a live `availability-and-prices` response that
+`CRS.value` **is** the pricing API's `code` field, exactly, for every resort checked. This
+replaced all the guessed codes with an authoritative mapping and is how all 12 resorts below
+were built -- no image-slug hunting, no price clustering, no browser needed for this part.
+
+Corrected Copper Creek: `2A, 2D` (Deluxe Studio), `2E` (1BR), `2F, 2H, 2X` (2BR, incl. lock-off
+variants), `2I` (3BR Grand), `2K` (2BR Cabin). Boulder Ridge, sharing the same slug/inventory,
+gets its own separate codes: `XA` (Deluxe Studio), `XB` (1BR), `XC` (2BR) -- kept as a separate
+average from Copper Creek's, matching data.js's separate resort entries, even though one HTTP
+request serves both (request caching in the script avoids double-fetching a shared slug).
+
+## All 12 WDW DVC resorts
+
+Each resort below was verified by fetching `categories-and-rooms`, filtering out the
+"Rooms & Suites" / "Rooms & Suites with Club Level Service" categories (the resort's regular,
+non-DVC hotel rooms), and matching the remaining DVC categories (Studios, Villas, Bungalows,
+Cabin, Treehouse Villa, Tower/Duo Studios) against this app's `roomTypes[]` ids for that resort.
+Full code tables live in `RESORT_CONFIGS` in `scripts/build_live_cash_rates.py`.
+
+| App resort id | Slug | Notes |
+|---|---|---|
+| animalKingdomVillas | `animal-kingdom-lodge` | One slug covers both Jambo House and Kidani Village (matches data.js's existing averaged-across-both-buildings approach) |
+| bayLakeTower | `bay-lake-tower-at-contemporary` | |
+| beachClubVillas | `beach-club-villas` | `beach-club-resort` slug returns identical codes -- only one needed |
+| boardwalkVillas | `boardwalk-villas` | `boardwalk-inn` slug returns identical codes. No live code found for 2-Bedroom Villa -- BoardWalk's 2BRs appear to only be bookable as a studio+1BR lock-off combination, not their own CRS-coded room |
+| boulderRidge | `copper-creek-villas-and-cabins` | Shares Copper Creek's slug; own code subset (see above) |
+| copperCreek | `copper-creek-villas-and-cabins` | |
+| fortWildernessCabins | `dvc-cabins-at-fort-wilderness-resort` | Found via a link crawl of disneyworld.disney.go.com/resorts/ (my earlier slug guesses were all wrong) |
+| grandFloridian | `villas-at-grand-floridian-resort-and-spa` | The base `grand-floridian-resort-and-spa` slug is the *regular hotel*, zero DVC rooms -- the villas building has its own separate slug |
+| oldKeyWest | `old-key-west-resort` | Simplest resort: no view variants, one code per room type |
+| polynesianVillas | `polynesian-resort` | Covers both the original Deluxe Studios/Bungalows and the Island Tower's Duo Studios/1BR/2BR/Penthouses. No live code found for Tower 2BR Resort/Preferred view -- only Theme Park view appears cash-bookable |
+| rivieraResort | `riviera-resort` | |
+| saratogaSprings | `saratoga-springs-resort-and-spa` | |
+
+## Non-WDW resorts: a different, harder problem
+
+Checked Aulani first (`www.disneyaulani.com`) since it has the most to gain (zero cash coverage
+today). Its rooms/rates pages are static marketing content -- no availability widget, no date
+picker, no network calls to any pricing API at all when loaded. This isn't the same system with
+a different slug; it's a fundamentally different booking flow (or one that requires an
+interactive booking-widget click-through not yet investigated). `disneyaulani.disney.go.com`
+doesn't resolve in DNS, ruling out the obvious slug-swap guess. `disneyland.disney.go.com`
+*does* resolve and accepts the same request shape as the WDW API, but returns 0 rooms for every
+slug guess tried -- also not a quick win. Vero Beach and Hilton Head weren't investigated yet;
+as non-WDW-central-reservation DVC resorts they likely have the same problem as Aulani. None of
+the 5 non-WDW resorts are in scope for this build -- would need a separate investigation (find
+their actual booking flow, likely by watching network traffic through an interactive
+click-through rather than a quick API-guessing pass) before attempting.
 
 ## Shared inventory: Copper Creek and Boulder Ridge
 
@@ -14,24 +78,12 @@ at Wilderness Lodge — Boulder Ridge is the original 2000-era villas, Copper Cr
 addition. Confirmed live: querying both resort slugs with identical dates returns byte-identical
 room IDs and prices. Disney's cash-booking system doesn't distinguish them. Decision (user
 confirmed): both DVC resorts read from the same live dataset rather than trying to artificially
-split an inventory pool Disney itself doesn't split. Worth checking whether other resort pairs
-at shared physical properties behave the same way (Beach Club/Yacht Club flagged as a likely
-candidate, not yet investigated).
-
-## Room-code mapping (Copper Creek / Boulder Ridge)
-
-Disney's `code` field (e.g. `"2E"`) is an internal room code, not a human name. Mapped to this
-app's `roomTypes[]` IDs two ways:
-- **Confirmed via CDN image slug** — Disney's room-photo URLs embed the code plus a descriptive
-  name (e.g. `.../copper-creek-resort-2a-deluxe-studio-resort-view/...` → `2A` = Deluxe Studio).
-  Copper Creek's slugs gave `2A, 2D, 2E, 2F, 2I, 2K`; Boulder Ridge uses a differently-formatted
-  URL (`.../boulder-ridge-villas/standard/{category}/room-{code}-g00.jpg`) and confirmed `XA, XB,
-  XC` for the same three tiers.
-- **Inferred by price clustering** for the remaining codes (`JB, JC, Z3, Z9` alongside the
-  confirmed Deluxe Studio codes at ~$810-890/night in the pilot sample; `JZ, 25, JD, ZS`
-  alongside One-Bedroom at ~$1090-1400; `JS` alongside Two-Bedroom at ~$1583, likely the
-  Lock-Off variant). Full mapping lives in `ROOM_CODE_TO_APP_TYPE` in
-  `scripts/build_live_cash_rates.py`.
+split an inventory pool Disney itself doesn't split (see "Room-code mapping problem" above for
+the corrected per-building code split). Checked whether Beach Club Villas has the same issue
+with the regular Beach Club/Yacht Club hotel rooms -- it doesn't share with Yacht Club, but its
+own slug's response does mix in Beach Club's regular hotel rooms (Rooms & Suites categories),
+same as every other resort below; the `categories-and-rooms` filtering handles that uniformly
+now rather than needing a special case per resort.
 
 ## Pilot results (Copper Creek, 2026-08-30)
 
@@ -134,7 +186,9 @@ over time per the agreed "average + honestly-labeled last-checked" display desig
 Replace/supplement the static MouseSavers-derived cash rates (`data.js`) with real, current
 prices pulled directly from Disney's own booking site — for all 17 resorts, including the 5
 non-WDW resorts (Aulani, Vero Beach, Hilton Head, Disneyland Hotel, Grand Californian) that
-have **no cash data today** since MouseSavers is WDW-only.
+have **no cash data today** since MouseSavers is WDW-only. All 12 WDW resorts are done as of
+2026-08-30; the 5 non-WDW resorts remain the real coverage gap (see "Non-WDW resorts" above) --
+ironically the ones with the most to gain are the hardest to reach.
 
 The ask isn't just "today's price" — it's "what does this room typically cost N months out,"
 since Disney's real prices move with promos and demand. That means this is a **time-series
@@ -264,16 +318,15 @@ this is a very light daily job — plausibly seconds, not minutes.
 
 ## Recommended phasing
 
-1. **Phase 1 — prove the pipeline, with a validation check:** Copper Creek (your pick — and a
-   good one: since it already has MouseSavers rates, we can sanity-check the scraped live
-   prices against the existing estimate before trusting this approach anywhere else). Confirm
-   the GitHub Actions + API-call + git-commit-back flow works end-to-end, and compare a few
+1. **Phase 1 — prove the pipeline, with a validation check:** Copper Creek. Done. Compared
    scraped prices against `data.js`'s current MouseSavers numbers for the same dates/rooms.
-2. **Phase 2 — close the real gap:** expand to the 5 non-WDW resorts with zero cash data
-   today — biggest coverage win.
-3. **Phase 3 (stretch) — go live everywhere:** extend to all 12 WDW resorts, eventually
-   letting live data supersede the static MouseSavers snapshot entirely, and consider
-   surfacing true day-by-day pricing instead of season-level estimates given the API supports it.
+2. **Phase 1.5 — extend to all 12 WDW resorts.** Done 2026-08-30 (see "All 12 WDW DVC resorts"
+   above). Still manual (`python scripts/build_live_cash_rates.py`), not yet scheduled.
+3. **Phase 2 — close the real gap:** the 5 non-WDW resorts with zero cash data today — biggest
+   remaining coverage win, but a harder problem (see "Non-WDW resorts" above). Not started.
+4. **Phase 3 — wire it in:** GitHub Actions schedule (see "Why this still can't run 'in' the
+   static site" below) and surface the data in the app's Cost Comparison card (average + honestly
+   -labeled last-checked, per the agreed design). Not started.
 
 ## Open risks to keep in mind
 

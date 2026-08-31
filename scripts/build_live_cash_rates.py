@@ -1,22 +1,35 @@
 #!/usr/bin/env python3
 """
-Builds averaged live cash rates for a resort, bucketed by (date-range, day-type,
-room-type) -- one average per distinct date-range within each DVC travel period,
-not blended across a whole period, so e.g. Easter and Christmas (both under the
-"Holiday" period name) stay separate instead of smearing into one number.
+Builds averaged live cash rates for every WDW DVC resort, bucketed by
+(date-range, day-type, room-type) -- one average per distinct date-range
+within each DVC travel period, not blended across a whole period, so e.g.
+Easter and Christmas (both under the "Holiday" period name) stay separate
+instead of smearing into one number.
 
-Reuses the raw per-night API calls from scrape_live_prices.py, sampling one
-representative stay per date-range (capped at 7 nights, which always covers a
-full Sun-Sat cycle -- 5 Sun-Thu nights + 2 Fri-Sat nights -- regardless of which
-day of the week the range starts on).
+Room-code -> app-roomType mappings below were built from Disney's own
+categories-and-rooms API (not image-slug guessing or price clustering --
+see docs/live_pricing_plan.md for how that endpoint was found and why the
+original Copper Creek mapping, which *did* use price clustering, turned out
+to be wrong: several "inferred" codes were actually the resort's regular
+hotel rooms, not DVC villa variants). Every code below was cross-checked
+against a live availability-and-prices response for that resort to confirm
+the API's "code" field matches categories-and-rooms' CRS identifier exactly.
+
+Samples one representative stay per date-range (capped at 7 nights, which
+always covers a full Sun-Sat cycle -- 5 Sun-Thu nights + 2 Fri-Sat nights --
+regardless of which day of the week the range starts on). Tries the
+preferred year first and falls back to the other year for any date-range
+that isn't bookable yet (or, for a past-dated range, isn't bookable anymore)
+-- see paired_ranges().
 
 Each run appends new snapshots into the output file's "history" rather than
-overwriting, so "average" and "lastChecked" diverge naturally as this gets run
-repeatedly over time. Right now, on the first run, they'll be identical -- that's
-expected and correct, not a bug.
+overwriting, so "average" and "lastChecked" diverge naturally as this gets
+run repeatedly over time. Right now, on the first run, they'll be identical
+-- that's expected and correct, not a bug.
 
 Usage:
-    python3 scripts/build_live_cash_rates.py copper-creek-villas-and-cabins --year 2027
+    python3 scripts/build_live_cash_rates.py                  # all resorts
+    python3 scripts/build_live_cash_rates.py --resort copperCreek boulderRidge
 """
 
 import argparse
@@ -41,28 +54,117 @@ REQUEST_TIMEOUT_SECONDS = 20
 DELAY_BETWEEN_REQUESTS_SECONDS = 2.0
 MAX_RETRIES = 3
 
-# Copper Creek Villas & Cabins / Boulder Ridge Villas share one cash inventory
-# pool in Disney's booking system (confirmed live: identical room IDs and
-# prices from both resort slugs) -- see docs/live_pricing_plan.md. Both DVC
-# resorts in data.js should read from this same live dataset.
-ROOM_CODE_TO_APP_TYPE = {
-    # Deluxe Studio -- confirmed via Copper Creek's branded image slugs (2A, 2D)
-    # and Boulder Ridge's (XA); JB/JC/Z3/Z9 inferred by tight price clustering
-    # (~$810-890/night in the 2027-03-30 pilot sample, right alongside 2A/2D/XA).
-    "2A": "deluxeStudio", "2D": "deluxeStudio", "JB": "deluxeStudio", "JC": "deluxeStudio",
-    "XA": "deluxeStudio", "Z3": "deluxeStudio", "Z9": "deluxeStudio",
-    # One-Bedroom Villa -- confirmed 2E, XB; JZ/25/JD/ZS inferred by price
-    # clustering (~$1090-1400/night, distinctly below the 2-bedroom tier).
-    "2E": "oneBedroom", "XB": "oneBedroom", "JZ": "oneBedroom", "25": "oneBedroom",
-    "JD": "oneBedroom", "ZS": "oneBedroom",
-    # Two-Bedroom Villa -- confirmed 2F, XC ($2400s); JS included too (~$1583,
-    # likely the cheaper Lock-Off variant of the same room type -- the resort
-    # does list a distinct "2 Bedroom Lock-Off Villa" room name).
-    "2F": "twoBedroom", "XC": "twoBedroom", "JS": "twoBedroom",
-    # Three-Bedroom Grand Villa -- confirmed via image slug.
-    "2I": "threeBedroom",
-    # Two-Bedroom Cabin -- confirmed via image slug.
-    "2K": "twoBedCabin",
+# app resort id (matches data.js RESORTS[].id) -> { slug, codes }
+# "codes" maps Disney's room `code` to this app's roomTypes[].id for that
+# resort. Codes not listed here (mostly "Rooms & Suites" / "Rooms & Suites
+# with Club Level Service" categories -- the resort's regular, non-DVC hotel
+# rooms that share the same pricing response) are intentionally skipped.
+#
+# copperCreek and boulderRidge share ONE physical building and ONE cash
+# inventory pool at Wilderness Lodge (confirmed live: querying either slug
+# returns byte-identical room ids/prices) -- see docs/live_pricing_plan.md.
+# They're kept as separate app resorts here (matching data.js) but point at
+# the same slug; request caching in main() means that slug is only fetched
+# once per date-range, not twice.
+RESORT_CONFIGS = {
+    "animalKingdomVillas": {
+        "slug": "animal-kingdom-lodge",
+        "codes": {
+            "U7": "dsV", "UR": "dsR", "UA": "dsR", "U2": "dsSV", "AU": "dsSV", "UX": "dsC",
+            "U8": "oneV", "US": "oneR", "UB": "oneR", "U3": "oneSV", "BU": "oneSV", "UY": "oneC",
+            "UC": "twoR", "CU": "twoSV",
+            "UD": "threeR", "U5": "threeSV", "DU": "threeSV",
+        },
+    },
+    "bayLakeTower": {
+        "slug": "bay-lake-tower-at-contemporary",
+        "codes": {
+            "4W": "dsR", "4S": "dsP", "4A": "dsTP",
+            "4X": "oneR", "4O": "oneP", "4B": "oneTP",
+            "4Y": "twoR", "4T": "twoP", "4C": "twoTP",
+            "4V": "threeP", "4D": "threeTP",
+        },
+    },
+    "beachClubVillas": {
+        "slug": "beach-club-villas",
+        "codes": {"DA": "deluxeStudio", "DB": "oneBedroom", "DC": "twoBedroom"},
+    },
+    "boardwalkVillas": {
+        "slug": "boardwalk-villas",
+        "codes": {
+            "ZA": "dsR", "AZ": "dsBP", "SZ": "dsBP",
+            "ZB": "oneR", "BZ": "oneBP", "OZ": "oneBP",
+            "DZ": "threeBP", "AI6": "threeBP", "AI9": "threeBP",
+            # No live code found for 2-Bedroom Villa (twoR/twoBP) -- BoardWalk's
+            # 2BRs appear to only be bookable as lock-offs of a studio + 1BR,
+            # not as their own CRS-coded room. Left unmapped, not guessed.
+        },
+    },
+    "boulderRidge": {
+        "slug": "copper-creek-villas-and-cabins",
+        "codes": {"XA": "deluxeStudio", "XB": "oneBedroom", "XC": "twoBedroom"},
+    },
+    "copperCreek": {
+        "slug": "copper-creek-villas-and-cabins",
+        "codes": {
+            "2A": "deluxeStudio", "2D": "deluxeStudio",
+            "2E": "oneBedroom",
+            "2F": "twoBedroom", "2H": "twoBedroom", "2X": "twoBedroom",
+            "2I": "threeBedroom",
+            "2K": "twoBedCabin",
+        },
+    },
+    "fortWildernessCabins": {
+        "slug": "dvc-cabins-at-fort-wilderness-resort",
+        "codes": {"AD6": "cabin"},
+    },
+    "grandFloridian": {
+        "slug": "villas-at-grand-floridian-resort-and-spa",
+        "codes": {
+            "AAI": "rsR", "AAN": "rsP", "AAT": "rsTP",
+            "86": "dsR", "81": "dsP",
+            "87": "oneR", "82": "oneP",
+            "88": "twoR", "83": "twoP",
+            "85": "threeP",
+        },
+    },
+    "oldKeyWest": {
+        "slug": "old-key-west-resort",
+        "codes": {"KA": "deluxeStudio", "KB": "oneBedroom", "KC": "twoBedroom", "KD": "threeBedroom"},
+    },
+    "polynesianVillas": {
+        "slug": "polynesian-resort",
+        "codes": {
+            "MU": "dsR", "MV": "dsP", "AF3": "dsTP",
+            "MW": "twoBedBungalow",
+            "AFR": "duoR", "AFV": "duoP", "AFW": "duoPM",
+            "AF7": "oneR", "AF9": "oneP", "AGA": "oneTP",
+            "AGF": "twoTP",
+            "AGH": "penthouseP", "AGJ": "penthouseTP",
+            # No live code found for Tower 2BR Villa Resort/Preferred view
+            # (twoR/twoP) -- only the Theme Park view (AGF) appears bookable
+            # for cash. Left unmapped, not guessed.
+        },
+    },
+    "rivieraResort": {
+        "slug": "riviera-resort",
+        "codes": {
+            "W0": "towerStudio", "10": "dsR", "A1": "dsP",
+            "A9": "oneR", "C0": "oneP",
+            "H0": "twoR", "J0": "twoP",
+            "T0": "threeBedroom",
+        },
+    },
+    "saratogaSprings": {
+        "slug": "saratoga-springs-resort-and-spa",
+        "codes": {
+            "TA": "dsS", "S9": "dsP",
+            "TB": "oneS", "SB": "oneP",
+            "TC": "twoS", "SH": "twoP",
+            "TD": "threeS", "SK": "threeP",
+            "TH": "treehouse",
+        },
+    },
 }
 
 # Mirrors data.js's wdwPeriods()/wdwPeriods2027() date ranges, but kept as
@@ -151,28 +253,18 @@ def day_type(date_str):
     return "friSat" if d.weekday() in (4, 5) else "sunThu"  # Mon=0 .. Fri=4, Sat=5
 
 
-def sample_date_range(slug, range_start, range_end, adults=2, children=0):
-    """Fetches one representative stay for a date-range (up to 7 nights, capped
-    to the range's own length), and buckets per-night prices by (dayType,
-    appRoomType). Returns {dayType: {appRoomType: [prices...]}}.
+def bucket_response(data, codes):
+    """Buckets a raw availability-and-prices response's per-night prices by
+    (dayType, appRoomType), using the given resort's code map. Returns
+    {dayType: {appRoomType: [prices...]}}.
     """
-    start = datetime.date.fromisoformat(range_start)
-    end = datetime.date.fromisoformat(range_end)
-    max_nights = (end - start).days + 1
-    nights = min(7, max_nights)
-    check_in = start.isoformat()
-    check_out = (start + datetime.timedelta(days=nights)).isoformat()
-
-    data = fetch_resort_pricing(slug, check_in, check_out, adults, children)
     room_lookup = data.get("roomPriceLookup") or {}
-
     buckets = {"sunThu": {}, "friSat": {}}
     for room_id in data.get("orderedRoomIds", []):
         room = room_lookup.get(room_id)
         if not room or room.get("reasonUnavailable"):
             continue
-        code = room.get("code")
-        app_type = ROOM_CODE_TO_APP_TYPE.get(code)
+        app_type = codes.get(room.get("code"))
         if not app_type:
             continue
         for night in room.get("orderedPricePerNight", []):
@@ -180,75 +272,55 @@ def sample_date_range(slug, range_start, range_end, adults=2, children=0):
             price = (night.get("price") or {}).get("subtotal")
             if not date or price is None:
                 continue
-            dt = day_type(date)
-            buckets[dt].setdefault(app_type, []).append(float(price))
-
-    return buckets, check_in, check_out
+            buckets[day_type(date)].setdefault(app_type, []).append(float(price))
+    return buckets
 
 
-def merge_history(existing, new_entries):
-    """Appends new_entries (list of raw price floats with a timestamp) into
-    the existing history list for a (dateRange, dayType, appRoomType) bucket.
+def sample_date_range(slug, range_start, range_end, adults, children, cache):
+    """Fetches one representative stay for a date-range (up to 7 nights,
+    capped to the range's own length). Caches the raw response by (slug,
+    check_in, check_out) so resorts sharing a slug (copperCreek/boulderRidge)
+    don't double-fetch. Returns (raw_response, check_in, check_out).
     """
-    if existing is None:
-        existing = []
-    existing.extend(new_entries)
-    return existing
+    start = datetime.date.fromisoformat(range_start)
+    end = datetime.date.fromisoformat(range_end)
+    nights = min(7, (end - start).days + 1)
+    check_in = start.isoformat()
+    check_out = (start + datetime.timedelta(days=nights)).isoformat()
+
+    cache_key = (slug, check_in, check_out, adults, children)
+    if cache_key not in cache:
+        cache[cache_key] = fetch_resort_pricing(slug, check_in, check_out, adults, children)
+        time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
+    return cache[cache_key], check_in, check_out
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("slug", help="Resort URL slug, e.g. copper-creek-villas-and-cabins")
-    parser.add_argument("--year", type=int, default=2027, help="Preferred year to sample. Falls back to the other year for any date-range that isn't bookable yet (or already isn't bookable anymore).")
-    parser.add_argument("--fallback-year", type=int, default=None, help="Defaults to the other of 2026/2027.")
-    parser.add_argument("--adults", type=int, default=2)
-    parser.add_argument("--children", type=int, default=0)
-    parser.add_argument("--out", default=None)
-    args = parser.parse_args()
-
-    fallback_year = args.fallback_year or (2026 if args.year == 2027 else 2027)
-    if args.year not in PERIODS_BY_YEAR or fallback_year not in PERIODS_BY_YEAR:
-        raise SystemExit(f"Only years {sorted(PERIODS_BY_YEAR)} are supported.")
-
-    out_path = args.out or os.path.join("data", "cash_prices_live.json")
-    now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
-
-    # Load existing history if present, so re-runs accumulate instead of overwrite.
-    existing = {}
-    if os.path.exists(out_path):
-        with open(out_path, "r", encoding="utf-8") as f:
-            existing = json.load(f)
-
-    result_periods = existing.get("periods", [])
-    # Index existing periods by (periodName, rangeIndex) for quick lookup/merge.
-    # Keyed by index (not rangeStart) now, since the same slot can be filled by
-    # either year's dates depending on which one is currently bookable.
+def build_resort(app_id, slug, codes, preferred_year, fallback_year, adults, children, existing_entry, now, cache):
+    result_periods = (existing_entry or {}).get("periods", [])
     existing_index = {(p["period"], p.get("rangeIndex", 0)): p for p in result_periods}
 
-    for period_name, range_idx, years in paired_ranges(args.year, fallback_year):
+    for period_name, range_idx, years in paired_ranges(preferred_year, fallback_year):
         # Try the preferred year first; if it's not bookable yet (or, in the
         # rare case a past-dated range fell out of the booking window, not
         # bookable anymore), fall back to the other year's equivalent range.
-        # This directly implements "if 2026 or 2027 data isn't available, use
-        # the alternate year" -- per date-range, not as an all-or-nothing switch.
-        try_order = [args.year] + ([fallback_year] if fallback_year in years else [])
-        buckets = check_in = check_out = None
+        try_order = [preferred_year] + ([fallback_year] if fallback_year in years else [])
+        raw = None
         year_used = None
         for y in try_order:
             range_start, range_end = years[y]
-            print(f"Sampling {period_name} {y} ({range_start} to {range_end}) ...")
+            print(f"  {period_name} {y} ({range_start} to {range_end}) ...")
             try:
-                buckets, check_in, check_out = sample_date_range(args.slug, range_start, range_end, args.adults, args.children)
+                raw, check_in, check_out = sample_date_range(slug, range_start, range_end, adults, children, cache)
                 year_used = y
                 break
             except Exception as e:
-                print(f"  FAILED ({y}): {e}", file=sys.stderr)
-                time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
+                print(f"    FAILED ({y}): {e}", file=sys.stderr)
 
-        if buckets is None:
-            print(f"  SKIPPED: neither {args.year} nor {fallback_year} was bookable for {period_name}", file=sys.stderr)
+        if raw is None:
+            print(f"    SKIPPED: neither {preferred_year} nor {fallback_year} was bookable for {period_name}", file=sys.stderr)
             continue
 
+        buckets = bucket_response(raw, codes)
         range_start, range_end = years[year_used]
         key = (period_name, range_idx)
         entry = existing_index.get(key)
@@ -275,23 +347,59 @@ def main():
                 room_type_summary[f"{app_type}/{day_t}"] = f"avg=${hist_bucket['average']} last=${hist_bucket['lastChecked']} (n={hist_bucket['sampleCount']})"
 
         for k, v in sorted(room_type_summary.items()):
-            print(f"    {k}: {v}")
+            print(f"      {k}: {v}")
+        if not room_type_summary:
+            print(f"      (no mapped rooms priced -- fully sold out or nothing bookable)")
 
-        time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
-
-    output = {
-        "resortSlug": args.slug,
-        "preferredYear": args.year,
+    return {
+        "resortSlug": slug,
+        "preferredYear": preferred_year,
         "fallbackYear": fallback_year,
-        "adults": args.adults,
-        "children": args.children,
+        "adults": adults,
+        "children": children,
         "lastRunAt": now,
         "periods": result_periods,
     }
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2)
-    print(f"\nWrote {out_path}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--resort", nargs="+", default=None, choices=sorted(RESORT_CONFIGS), help="Limit to specific app resort ids. Defaults to all.")
+    parser.add_argument("--year", type=int, default=2027, help="Preferred year to sample. Falls back to the other year for any date-range that isn't bookable yet.")
+    parser.add_argument("--fallback-year", type=int, default=None, help="Defaults to the other of 2026/2027.")
+    parser.add_argument("--adults", type=int, default=2)
+    parser.add_argument("--children", type=int, default=0)
+    parser.add_argument("--out", default=None)
+    args = parser.parse_args()
+
+    fallback_year = args.fallback_year or (2026 if args.year == 2027 else 2027)
+    if args.year not in PERIODS_BY_YEAR or fallback_year not in PERIODS_BY_YEAR:
+        raise SystemExit(f"Only years {sorted(PERIODS_BY_YEAR)} are supported.")
+
+    resort_ids = args.resort or sorted(RESORT_CONFIGS)
+    out_path = args.out or os.path.join("data", "cash_prices_live.json")
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+
+    existing = {}
+    if os.path.exists(out_path):
+        with open(out_path, "r", encoding="utf-8") as f:
+            existing = json.load(f)
+
+    cache = {}
+    output = dict(existing)
+    for app_id in resort_ids:
+        cfg = RESORT_CONFIGS[app_id]
+        print(f"=== {app_id} ({cfg['slug']}) ===")
+        output[app_id] = build_resort(
+            app_id, cfg["slug"], cfg["codes"], args.year, fallback_year,
+            args.adults, args.children, existing.get(app_id), now, cache,
+        )
+        os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(output, f, indent=2)
+        print()
+
+    print(f"Wrote {out_path}")
 
 
 if __name__ == "__main__":
