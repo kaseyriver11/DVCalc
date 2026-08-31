@@ -65,8 +65,26 @@ ROOM_CODE_TO_APP_TYPE = {
     "2K": "twoBedCabin",
 }
 
-# Mirrors data.js's wdwPeriods2027() date ranges, but kept as separate entries
-# per date-range rather than blended per period -- see the Holiday note below.
+# Mirrors data.js's wdwPeriods()/wdwPeriods2027() date ranges, but kept as
+# separate entries per date-range rather than blended per period -- see the
+# Holiday note below. Both years use the SAME period names and the SAME number
+# of date-ranges per period (only the exact days shift, since Easter and
+# Thanksgiving move each year), so a range in PERIODS_2026 pairs positionally
+# with the range at the same (period name, index) in PERIODS_2027 -- that
+# pairing is what the year-fallback logic below relies on.
+PERIODS_2026 = [
+    ("Adventure", [("2026-09-01", "2026-09-30")]),
+    ("Dream", [("2026-01-01", "2026-01-31"), ("2026-05-01", "2026-05-14")]),
+    ("Choice", [("2026-05-15", "2026-06-10"), ("2026-12-01", "2026-12-23")]),
+    ("Select", [("2026-02-01", "2026-02-15"), ("2026-06-11", "2026-08-31")]),
+    ("Preferred", [("2026-10-01", "2026-11-24"), ("2026-11-28", "2026-11-30")]),
+    ("Premier", [("2026-02-16", "2026-03-28"), ("2026-04-06", "2026-04-30"), ("2026-11-25", "2026-11-27")]),
+    # Easter and Christmas/New Year's are both called "Holiday" in DVC's points
+    # chart, but they're different demand events -- kept as separate date-range
+    # buckets here rather than averaged together (see chat: "holidays get wonky").
+    ("Holiday", [("2026-03-29", "2026-04-05"), ("2026-12-24", "2026-12-31")]),
+]
+
 PERIODS_2027 = [
     ("Adventure", [("2027-09-01", "2027-09-30")]),
     ("Dream", [("2027-01-01", "2027-01-31"), ("2027-05-01", "2027-05-14")]),
@@ -74,11 +92,27 @@ PERIODS_2027 = [
     ("Select", [("2027-02-01", "2027-02-15"), ("2027-06-11", "2027-08-31")]),
     ("Preferred", [("2027-10-01", "2027-11-23"), ("2027-11-27", "2027-11-30")]),
     ("Premier", [("2027-02-16", "2027-03-20"), ("2027-03-29", "2027-04-30"), ("2027-11-24", "2027-11-26")]),
-    # Easter and Christmas/New Year's are both called "Holiday" in DVC's points
-    # chart, but they're different demand events -- kept as separate date-range
-    # buckets here rather than averaged together (see chat: "holidays get wonky").
     ("Holiday", [("2027-03-21", "2027-03-28"), ("2027-12-24", "2027-12-31")]),
 ]
+
+PERIODS_BY_YEAR = {2026: PERIODS_2026, 2027: PERIODS_2027}
+
+
+def paired_ranges(preferred_year, fallback_year):
+    """Yields (period_name, range_index, {year: (range_start, range_end), ...})
+    for every (period_name, range_index) slot, pairing the preferred year's
+    date-range with the fallback year's date-range at the same position.
+    """
+    preferred = PERIODS_BY_YEAR[preferred_year]
+    fallback = PERIODS_BY_YEAR[fallback_year]
+    fallback_lookup = {name: ranges for name, ranges in fallback}
+    for period_name, ranges in preferred:
+        fb_ranges = fallback_lookup.get(period_name, [])
+        for idx, (range_start, range_end) in enumerate(ranges):
+            years = {preferred_year: (range_start, range_end)}
+            if idx < len(fb_ranges):
+                years[fallback_year] = fb_ranges[idx]
+            yield period_name, idx, years
 
 
 def fetch_resort_pricing(slug, check_in, check_out, adults=2, children=0):
@@ -165,11 +199,16 @@ def merge_history(existing, new_entries):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("slug", help="Resort URL slug, e.g. copper-creek-villas-and-cabins")
-    parser.add_argument("--year", type=int, default=2027)
+    parser.add_argument("--year", type=int, default=2027, help="Preferred year to sample. Falls back to the other year for any date-range that isn't bookable yet (or already isn't bookable anymore).")
+    parser.add_argument("--fallback-year", type=int, default=None, help="Defaults to the other of 2026/2027.")
     parser.add_argument("--adults", type=int, default=2)
     parser.add_argument("--children", type=int, default=0)
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
+
+    fallback_year = args.fallback_year or (2026 if args.year == 2027 else 2027)
+    if args.year not in PERIODS_BY_YEAR or fallback_year not in PERIODS_BY_YEAR:
+        raise SystemExit(f"Only years {sorted(PERIODS_BY_YEAR)} are supported.")
 
     out_path = args.out or os.path.join("data", "cash_prices_live.json")
     now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
@@ -181,47 +220,69 @@ def main():
             existing = json.load(f)
 
     result_periods = existing.get("periods", [])
-    # Index existing periods by (periodName, rangeStart) for quick lookup/merge.
-    existing_index = {(p["period"], p["rangeStart"]): p for p in result_periods}
+    # Index existing periods by (periodName, rangeIndex) for quick lookup/merge.
+    # Keyed by index (not rangeStart) now, since the same slot can be filled by
+    # either year's dates depending on which one is currently bookable.
+    existing_index = {(p["period"], p.get("rangeIndex", 0)): p for p in result_periods}
 
-    for period_name, ranges in PERIODS_2027:
-        for range_start, range_end in ranges:
-            print(f"Sampling {period_name} ({range_start} to {range_end}) ...")
+    for period_name, range_idx, years in paired_ranges(args.year, fallback_year):
+        # Try the preferred year first; if it's not bookable yet (or, in the
+        # rare case a past-dated range fell out of the booking window, not
+        # bookable anymore), fall back to the other year's equivalent range.
+        # This directly implements "if 2026 or 2027 data isn't available, use
+        # the alternate year" -- per date-range, not as an all-or-nothing switch.
+        try_order = [args.year] + ([fallback_year] if fallback_year in years else [])
+        buckets = check_in = check_out = None
+        year_used = None
+        for y in try_order:
+            range_start, range_end = years[y]
+            print(f"Sampling {period_name} {y} ({range_start} to {range_end}) ...")
             try:
                 buckets, check_in, check_out = sample_date_range(args.slug, range_start, range_end, args.adults, args.children)
+                year_used = y
+                break
             except Exception as e:
-                print(f"  FAILED: {e}", file=sys.stderr)
-                continue
+                print(f"  FAILED ({y}): {e}", file=sys.stderr)
+                time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
 
-            key = (period_name, range_start)
-            entry = existing_index.get(key)
-            if entry is None:
-                entry = {"period": period_name, "rangeStart": range_start, "rangeEnd": range_end, "roomTypes": {}}
-                result_periods.append(entry)
-                existing_index[key] = entry
+        if buckets is None:
+            print(f"  SKIPPED: neither {args.year} nor {fallback_year} was bookable for {period_name}", file=sys.stderr)
+            continue
 
-            room_type_summary = {}
-            for day_t in ("sunThu", "friSat"):
-                for app_type, prices in buckets[day_t].items():
-                    entry["roomTypes"].setdefault(app_type, {}).setdefault(day_t, {"history": []})
-                    hist_bucket = entry["roomTypes"][app_type][day_t]
-                    for p in prices:
-                        hist_bucket["history"].append({"price": p, "capturedAt": now})
-                    all_prices = [h["price"] for h in hist_bucket["history"]]
-                    hist_bucket["average"] = round(statistics.mean(all_prices), 2)
-                    hist_bucket["lastChecked"] = hist_bucket["history"][-1]["price"]
-                    hist_bucket["lastCheckedAt"] = hist_bucket["history"][-1]["capturedAt"]
-                    hist_bucket["sampleCount"] = len(all_prices)
-                    room_type_summary[f"{app_type}/{day_t}"] = f"avg=${hist_bucket['average']} last=${hist_bucket['lastChecked']} (n={hist_bucket['sampleCount']})"
+        range_start, range_end = years[year_used]
+        key = (period_name, range_idx)
+        entry = existing_index.get(key)
+        if entry is None:
+            entry = {"period": period_name, "rangeIndex": range_idx, "roomTypes": {}}
+            result_periods.append(entry)
+            existing_index[key] = entry
+        entry["rangeStart"] = range_start
+        entry["rangeEnd"] = range_end
+        entry["yearUsed"] = year_used
 
-            for k, v in sorted(room_type_summary.items()):
-                print(f"    {k}: {v}")
+        room_type_summary = {}
+        for day_t in ("sunThu", "friSat"):
+            for app_type, prices in buckets[day_t].items():
+                entry["roomTypes"].setdefault(app_type, {}).setdefault(day_t, {"history": []})
+                hist_bucket = entry["roomTypes"][app_type][day_t]
+                for p in prices:
+                    hist_bucket["history"].append({"price": p, "capturedAt": now})
+                all_prices = [h["price"] for h in hist_bucket["history"]]
+                hist_bucket["average"] = round(statistics.mean(all_prices), 2)
+                hist_bucket["lastChecked"] = hist_bucket["history"][-1]["price"]
+                hist_bucket["lastCheckedAt"] = hist_bucket["history"][-1]["capturedAt"]
+                hist_bucket["sampleCount"] = len(all_prices)
+                room_type_summary[f"{app_type}/{day_t}"] = f"avg=${hist_bucket['average']} last=${hist_bucket['lastChecked']} (n={hist_bucket['sampleCount']})"
 
-            time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
+        for k, v in sorted(room_type_summary.items()):
+            print(f"    {k}: {v}")
+
+        time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
 
     output = {
         "resortSlug": args.slug,
-        "year": args.year,
+        "preferredYear": args.year,
+        "fallbackYear": fallback_year,
         "adults": args.adults,
         "children": args.children,
         "lastRunAt": now,

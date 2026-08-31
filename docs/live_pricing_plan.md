@@ -105,8 +105,24 @@ Full averaged results (Sun-Thu / Fri-Sat, per room type):
 | Adventure | Sep 1-30 | $597 / $676 | $811 / $931 | $1,064 / $1,205 | — |
 | Preferred | Oct 1 - Nov 23 | $719 / $796 | $1,039 / $1,158 | $1,415 / $1,595 | — |
 
-Missing: Preferred (Nov 27-30), Premier (Nov 24-26), Choice (Dec 1-23), Holiday/Christmas
-(Dec 24-31) — all beyond the current booking horizon, to be filled in on a later re-run.
+## Year-fallback for out-of-horizon ranges
+
+Added a general rule to `build_live_cash_rates.py`: for each date-range, try the preferred
+year (2027) first; if that fails (out of Disney's booking horizon), fall back to the same
+range's 2026 dates instead — since the two years share the exact same DVC period structure and
+relative date ranges, 2026 is a reasonable stand-in until 2027 opens up. Each output entry
+records `yearUsed` so the source year is always visible, never silently blended.
+
+Re-running with this logic, **13 of 14 ranges now have real data** — the 4 that previously
+404'd on 2027 (Preferred Nov 28-30, Premier Nov 25-27, Holiday/Christmas Dec 24-31, and part of
+Choice) succeeded on their 2026 fallback dates instead.
+
+**One range still has no data at all: Choice / Dec 1-23.** 2027 is out of the booking horizon
+(as expected), but the 2026 fallback (Dec 1-8, 2026 — about 3 months from today) came back with
+**all 18 rooms sold out** (`reasonUnavailable: INVENTORY_UNAVAILABLE` on every room), not a
+request failure. This matches the pilot's documented finding that near-term DVC cash inventory
+is scarce — it's a legitimate "no live data yet" case, not a bug, and is left blank rather than
+papered over. It should fill in from either year on a later re-run as inventory releases.
 
 Not yet resolved: only one snapshot exists per bucket so far (n = one sampling run), so
 `average` and `lastChecked` are currently identical everywhere — that's expected on a first
