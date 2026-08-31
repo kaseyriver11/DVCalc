@@ -27,6 +27,13 @@ overwriting, so "average" and "lastChecked" diverge naturally as this gets
 run repeatedly over time. Right now, on the first run, they'll be identical
 -- that's expected and correct, not a bug.
 
+Covers all 12 WDW DVC resorts plus 3 more: Vero Beach and Hilton Head (DVC-only
+resorts served through the *same* WDW API despite not being linked from its
+resorts page -- found by slug guessing) and Disneyland Hotel Villas (genuinely
+on a different backend -- Disneyland Resort's `dlr-resort-details-api`, a
+different URL shape and no `marketingOfferId` field -- see ENDPOINTS). Grand
+Californian and Aulani are NOT covered -- see docs/live_pricing_plan.md.
+
 Usage:
     python3 scripts/build_live_cash_rates.py                  # all resorts
     python3 scripts/build_live_cash_rates.py --resort copperCreek boulderRidge
@@ -42,10 +49,29 @@ import time
 import urllib.error
 import urllib.request
 
-API_URL_TMPL = (
-    "https://disneyworld.disney.go.com/wdw-resorts-details-api/api/v1/"
-    "resort/{slug}/availability-and-prices/?storeId=wdw"
-)
+# Two Disney booking backends in play here. WDW resorts (including the
+# "non-WDW" DVC resorts Vero Beach and Hilton Head, which -- surprisingly --
+# are served through the WDW domain, not a separate one) use one API shape;
+# Disneyland Resort properties (Anaheim) use a differently-shaped one on a
+# different domain, found by watching real network traffic while loading
+# disneyland.disney.go.com's own rates-rooms page (see docs/live_pricing_plan.md):
+# different path (`dlr-resort-details-api`, no `resort/` segment in the URL),
+# and its `availability-and-prices` call 404s with "Marketing offer not
+# found" if `marketingOfferId` is present at all -- omit the field entirely.
+ENDPOINTS = {
+    "wdw": {
+        "url_tmpl": "https://disneyworld.disney.go.com/wdw-resorts-details-api/api/v1/resort/{slug}/availability-and-prices/?storeId=wdw",
+        "referer_tmpl": "https://disneyworld.disney.go.com/resorts/{slug}/rates-rooms/",
+        "origin": "https://disneyworld.disney.go.com",
+        "include_marketing_offer": True,
+    },
+    "dlr": {
+        "url_tmpl": "https://disneyland.disney.go.com/dlr-resort-details-api/api/v1/availability-and-prices/{slug}/?storeId=dlr",
+        "referer_tmpl": "https://disneyland.disney.go.com/hotels/{slug}/rates-rooms/",
+        "origin": "https://disneyland.disney.go.com",
+        "include_marketing_offer": False,
+    },
+}
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
@@ -165,6 +191,38 @@ RESORT_CONFIGS = {
             "TH": "treehouse",
         },
     },
+    # Non-WDW DVC resorts. Vero Beach and Hilton Head turned out to be served
+    # through the *same* WDW domain/API as every resort above -- just not
+    # linked from disneyworld.disney.go.com/resorts/ (found by brute-force
+    # slug guessing, same technique as fortWildernessCabins). Disneyland
+    # Hotel Villas is the one genuinely on the Anaheim (DLR) backend --
+    # confirmed real, working request/response, see ENDPOINTS above. Grand
+    # Californian and Aulani are NOT included: Grand Californian's rates page
+    # shows only ordinary hotel rooms/suites, no DVC villa branding or
+    # distinguishable code family anywhere; Aulani's site has no live pricing
+    # API reachable at all (static marketing pages, zero network calls to any
+    # backend on page load). See docs/live_pricing_plan.md for what was
+    # checked before concluding that rather than guessing at either.
+    "veroBeach": {
+        "slug": "vero-beach-resort",
+        "codes": {
+            "AO": "deluxeStudio", "IG": "innStandard", "IO": "innOcean",
+            "BO": "oneBedroom", "CO": "twoBedroom", "DO": "beachCottage",
+        },
+    },
+    "hiltonHead": {
+        "slug": "hilton-head-resort",
+        "codes": {"AR": "deluxeStudio", "BR": "oneBedroom", "CR": "twoBedroom", "DR": "threeBedroom"},
+    },
+    "disneylandHotel": {
+        "slug": "the-villas-at-disneyland-hotel",
+        "endpoint": "dlr",
+        "codes": {
+            "9AS": "dsS", "9AP": "dsP", "9AG": "gardenDS",
+            "9BP": "oneP", "9CP": "twoP", "9DP": "threeP",
+            "9US": "duoS", "9UP": "duoP", "9UG": "gardenDuo",
+        },
+    },
 }
 
 # Mirrors data.js's wdwPeriods()/wdwPeriods2027() date ranges, but kept as
@@ -199,14 +257,74 @@ PERIODS_2027 = [
 
 PERIODS_BY_YEAR = {2026: PERIODS_2026, 2027: PERIODS_2027}
 
+# Vero Beach, Hilton Head, and Disneyland Hotel Villas each have their own
+# travel-period names and date ranges (not the shared WDW 7-period structure
+# above) -- mirrored from data.js's per-resort travelPeriods arrays. Keyed by
+# app resort id; each resort's 2026 and 2027 lists have the same period names
+# in the same order with the same range-count per period (only the exact days
+# shift), so they pair positionally just like PERIODS_2026/PERIODS_2027 do.
+PERIODS_BY_RESORT = {
+    "hiltonHead": {
+        2026: [
+            ("Value", [("2026-01-01", "2026-01-31"), ("2026-12-01", "2026-12-17")]),
+            ("Regular", [("2026-02-01", "2026-03-31"), ("2026-11-01", "2026-11-30"), ("2026-12-18", "2026-12-31")]),
+            ("Peak", [("2026-04-01", "2026-06-10"), ("2026-08-28", "2026-10-31")]),
+            ("Premier", [("2026-06-11", "2026-08-27")]),
+        ],
+        2027: [
+            ("Value", [("2027-01-01", "2027-01-31"), ("2027-12-01", "2027-12-17")]),
+            ("Regular", [("2027-02-01", "2027-03-31"), ("2027-11-01", "2027-11-30"), ("2027-12-18", "2027-12-31")]),
+            ("Peak", [("2027-04-01", "2027-06-10"), ("2027-08-28", "2027-10-31")]),
+            ("Premier", [("2027-06-11", "2027-08-27")]),
+        ],
+    },
+    "veroBeach": {
+        2026: [
+            ("Value", [("2026-09-01", "2026-11-24")]),
+            ("Regular", [("2026-05-01", "2026-05-31"), ("2026-11-28", "2026-12-23")]),
+            ("Choice", [("2026-01-01", "2026-01-31"), ("2026-06-01", "2026-08-31"), ("2026-11-25", "2026-11-27")]),
+            ("Peak", [("2026-02-01", "2026-02-21"), ("2026-04-12", "2026-04-30")]),
+            ("Premier", [("2026-02-22", "2026-04-11"), ("2026-12-24", "2026-12-31")]),
+        ],
+        2027: [
+            ("Value", [("2027-09-01", "2027-11-23")]),
+            ("Regular", [("2027-05-01", "2027-05-31"), ("2027-11-27", "2027-12-23")]),
+            ("Choice", [("2027-01-01", "2027-01-31"), ("2027-06-01", "2027-08-31"), ("2027-11-24", "2027-11-26")]),
+            ("Peak", [("2027-02-01", "2027-02-13"), ("2027-04-04", "2027-04-30")]),
+            ("Premier", [("2027-02-14", "2027-04-03"), ("2027-12-24", "2027-12-31")]),
+        ],
+    },
+    "disneylandHotel": {
+        2026: [
+            ("Adventure", [("2026-01-01", "2026-01-31")]),
+            ("Dream", [("2026-05-01", "2026-05-22"), ("2026-08-16", "2026-09-15")]),
+            ("Choice", [("2026-02-01", "2026-03-14"), ("2026-09-16", "2026-09-30")]),
+            ("Select", [("2026-05-23", "2026-05-31"), ("2026-10-01", "2026-11-23"), ("2026-11-28", "2026-12-17")]),
+            ("Preferred", [("2026-06-01", "2026-08-15")]),
+            ("Premier", [("2026-03-15", "2026-03-28"), ("2026-04-06", "2026-04-30")]),
+            ("Holiday", [("2026-03-29", "2026-04-05"), ("2026-11-24", "2026-11-27"), ("2026-12-18", "2026-12-31")]),
+        ],
+        2027: [
+            ("Adventure", [("2027-01-01", "2027-01-31")]),
+            ("Dream", [("2027-05-01", "2027-05-22"), ("2027-08-16", "2027-09-15")]),
+            ("Choice", [("2027-02-01", "2027-03-14"), ("2027-09-16", "2027-09-30")]),
+            ("Select", [("2027-05-23", "2027-05-31"), ("2027-10-01", "2027-11-22"), ("2027-11-27", "2027-12-17")]),
+            ("Preferred", [("2027-06-01", "2027-08-15")]),
+            ("Premier", [("2027-03-15", "2027-03-20"), ("2027-03-29", "2027-04-30")]),
+            ("Holiday", [("2027-03-21", "2027-03-28"), ("2027-11-23", "2027-11-26"), ("2027-12-18", "2027-12-31")]),
+        ],
+    },
+}
 
-def paired_ranges(preferred_year, fallback_year):
+
+def paired_ranges(preferred_year, fallback_year, periods_by_year=None):
     """Yields (period_name, range_index, {year: (range_start, range_end), ...})
     for every (period_name, range_index) slot, pairing the preferred year's
     date-range with the fallback year's date-range at the same position.
     """
-    preferred = PERIODS_BY_YEAR[preferred_year]
-    fallback = PERIODS_BY_YEAR[fallback_year]
+    periods_by_year = periods_by_year or PERIODS_BY_YEAR
+    preferred = periods_by_year[preferred_year]
+    fallback = periods_by_year[fallback_year]
     fallback_lookup = {name: ranges for name, ranges in fallback}
     for period_name, ranges in preferred:
         fb_ranges = fallback_lookup.get(period_name, [])
@@ -217,23 +335,25 @@ def paired_ranges(preferred_year, fallback_year):
             yield period_name, idx, years
 
 
-def fetch_resort_pricing(slug, check_in, check_out, adults=2, children=0):
-    url = API_URL_TMPL.format(slug=slug)
+def fetch_resort_pricing(slug, check_in, check_out, adults=2, children=0, endpoint="wdw"):
+    ep = ENDPOINTS[endpoint]
+    url = ep["url_tmpl"].format(slug=slug)
     payload = {
         "checkInDate": check_in,
         "checkOutDate": check_out,
         "partyMix": {"adultCount": adults, "childCount": children, "nonAdultAges": []},
         "region": "US",
         "accessible": False,
-        "marketingOfferId": "room-only",
     }
+    if ep["include_marketing_offer"]:
+        payload["marketingOfferId"] = "room-only"
     body = json.dumps(payload).encode("utf-8")
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "User-Agent": USER_AGENT,
-        "Origin": "https://disneyworld.disney.go.com",
-        "Referer": f"https://disneyworld.disney.go.com/resorts/{slug}/rates-rooms/",
+        "Origin": ep["origin"],
+        "Referer": ep["referer_tmpl"].format(slug=slug),
     }
     last_err = None
     for attempt in range(1, MAX_RETRIES + 1):
@@ -276,7 +396,7 @@ def bucket_response(data, codes):
     return buckets
 
 
-def sample_date_range(slug, range_start, range_end, adults, children, cache):
+def sample_date_range(slug, range_start, range_end, adults, children, cache, endpoint="wdw"):
     """Fetches one representative stay for a date-range (up to 7 nights,
     capped to the range's own length). Caches the raw response by (slug,
     check_in, check_out) so resorts sharing a slug (copperCreek/boulderRidge)
@@ -288,18 +408,18 @@ def sample_date_range(slug, range_start, range_end, adults, children, cache):
     check_in = start.isoformat()
     check_out = (start + datetime.timedelta(days=nights)).isoformat()
 
-    cache_key = (slug, check_in, check_out, adults, children)
+    cache_key = (endpoint, slug, check_in, check_out, adults, children)
     if cache_key not in cache:
-        cache[cache_key] = fetch_resort_pricing(slug, check_in, check_out, adults, children)
+        cache[cache_key] = fetch_resort_pricing(slug, check_in, check_out, adults, children, endpoint)
         time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
     return cache[cache_key], check_in, check_out
 
 
-def build_resort(app_id, slug, codes, preferred_year, fallback_year, adults, children, existing_entry, now, cache):
+def build_resort(app_id, slug, codes, preferred_year, fallback_year, adults, children, existing_entry, now, cache, endpoint="wdw", periods_by_year=None):
     result_periods = (existing_entry or {}).get("periods", [])
     existing_index = {(p["period"], p.get("rangeIndex", 0)): p for p in result_periods}
 
-    for period_name, range_idx, years in paired_ranges(preferred_year, fallback_year):
+    for period_name, range_idx, years in paired_ranges(preferred_year, fallback_year, periods_by_year):
         # Try the preferred year first; if it's not bookable yet (or, in the
         # rare case a past-dated range fell out of the booking window, not
         # bookable anymore), fall back to the other year's equivalent range.
@@ -310,7 +430,7 @@ def build_resort(app_id, slug, codes, preferred_year, fallback_year, adults, chi
             range_start, range_end = years[y]
             print(f"  {period_name} {y} ({range_start} to {range_end}) ...")
             try:
-                raw, check_in, check_out = sample_date_range(slug, range_start, range_end, adults, children, cache)
+                raw, check_in, check_out = sample_date_range(slug, range_start, range_end, adults, children, cache, endpoint)
                 year_used = y
                 break
             except Exception as e:
@@ -389,10 +509,13 @@ def main():
     output = dict(existing)
     for app_id in resort_ids:
         cfg = RESORT_CONFIGS[app_id]
-        print(f"=== {app_id} ({cfg['slug']}) ===")
+        endpoint = cfg.get("endpoint", "wdw")
+        periods_by_year = PERIODS_BY_RESORT.get(app_id)
+        print(f"=== {app_id} ({cfg['slug']}, endpoint={endpoint}) ===")
         output[app_id] = build_resort(
             app_id, cfg["slug"], cfg["codes"], args.year, fallback_year,
             args.adults, args.children, existing.get(app_id), now, cache,
+            endpoint=endpoint, periods_by_year=periods_by_year,
         )
         os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
         with open(out_path, "w", encoding="utf-8") as f:

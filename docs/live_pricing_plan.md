@@ -1,12 +1,13 @@
 # Live Disney Cash Pricing — Research & Plan
 
-**Status:** All 12 WDW DVC resorts built (`scripts/build_live_cash_rates.py`, output in
-`data/cash_prices_live.json`, one entry per app resort id). Not yet wired into the app or
-scheduled. The 5 non-WDW resorts (Aulani, Vero Beach, Hilton Head, Disneyland Hotel, Grand
-Californian) are NOT covered -- see "Non-WDW resorts" below. Written 2026-08-30 after live
-exploration of `disneyworld.disney.go.com`, updated same day after finding the real pricing API
-and again after the Copper Creek pilot, updated again after finding the `categories-and-rooms`
-endpoint and building out all 12 WDW resorts.
+**Status:** 15 of 17 DVC resorts built (`scripts/build_live_cash_rates.py`, output in
+`data/cash_prices_live.json`, one entry per app resort id): all 12 WDW resorts, plus Vero Beach,
+Hilton Head, and Disneyland Hotel Villas. Not yet wired into the app or scheduled. Grand
+Californian and Aulani are NOT covered -- see "Non-WDW resorts" below. Written 2026-08-30 after
+live exploration of `disneyworld.disney.go.com`, updated same day after finding the real pricing
+API and again after the Copper Creek pilot, updated again after finding the
+`categories-and-rooms` endpoint and building out all 12 WDW resorts, updated 2026-08-31 after
+extending to Vero Beach, Hilton Head, and Disneyland Hotel Villas.
 
 ## The room-code mapping problem, solved properly
 
@@ -55,20 +56,71 @@ Full code tables live in `RESORT_CONFIGS` in `scripts/build_live_cash_rates.py`.
 | rivieraResort | `riviera-resort` | |
 | saratogaSprings | `saratoga-springs-resort-and-spa` | |
 
-## Non-WDW resorts: a different, harder problem
+## Non-WDW resorts
 
-Checked Aulani first (`www.disneyaulani.com`) since it has the most to gain (zero cash coverage
-today). Its rooms/rates pages are static marketing content -- no availability widget, no date
-picker, no network calls to any pricing API at all when loaded. This isn't the same system with
-a different slug; it's a fundamentally different booking flow (or one that requires an
-interactive booking-widget click-through not yet investigated). `disneyaulani.disney.go.com`
-doesn't resolve in DNS, ruling out the obvious slug-swap guess. `disneyland.disney.go.com`
-*does* resolve and accepts the same request shape as the WDW API, but returns 0 rooms for every
-slug guess tried -- also not a quick win. Vero Beach and Hilton Head weren't investigated yet;
-as non-WDW-central-reservation DVC resorts they likely have the same problem as Aulani. None of
-the 5 non-WDW resorts are in scope for this build -- would need a separate investigation (find
-their actual booking flow, likely by watching network traffic through an interactive
-click-through rather than a quick API-guessing pass) before attempting.
+Turned out to be three different situations, not one problem:
+
+**Vero Beach and Hilton Head: same WDW system, just not linked from its resorts page.**
+Despite being geographically nowhere near Walt Disney World, both are served through the exact
+same `disneyworld.disney.go.com/wdw-resorts-details-api` used by every resort above -- found by
+the same brute-force slug guessing used for `fortWildernessCabins` (`vero-beach-resort`,
+`hilton-head-resort`). Each has its own custom travel-period structure (not the shared WDW
+7-period calendar -- Vero Beach: Value/Regular/Choice/Peak/Premier; Hilton Head:
+Value/Regular/Peak/Premier), mirrored from `data.js` into `PERIODS_BY_RESORT` in the script.
+Vero Beach's room categories are misleadingly labeled in Disney's own API (its "Deluxe Studios"
+category actually contains the 3-Bedroom Beach Cottage and both Inn room types alongside the
+real Deluxe Studio) -- codes and subtypes were used to build the mapping, not category names.
+**But querying live pricing across 10 (Vero Beach) and 8 (Hilton Head) date-ranges, at multiple
+lead times from ~1 week to ~16 months out, with both 7-night and 2-night stays, found zero
+available rooms every single time.** Confirmed this isn't a mapping bug -- the response returns
+all of a resort's known room codes with `reasonUnavailable: INVENTORY_UNAVAILABLE` on every one,
+same shape as a real per-room sold-out signal elsewhere. Read as a genuine finding: these are
+DVC's two smallest, most remote resorts (Vero Beach has 6 total room-type codes, Hilton Head 4,
+versus 100+ at a WDW mega-resort), and Disney appears not to release meaningful cash inventory
+for either through the general booking site. The static MouseSavers-derived estimate in
+`data.js` remains the only usable price for these two -- the live pipeline is wired up and will
+pick up real data automatically if/when inventory ever appears, but has none to show today.
+
+**Disneyland Hotel Villas: a genuinely different backend, and it works.** Disneyland Resort
+(Anaheim) runs on `disneyland.disney.go.com`, not `disneyworld.disney.go.com`, with its own API:
+`dlr-resort-details-api` instead of `wdw-resorts-details-api`, a different URL shape (no
+`resort/` path segment), and its own quirk -- including `marketingOfferId` in the request body
+at all (any value) makes `availability-and-prices` 404 with "Marketing offer not found"; omit
+the field entirely and it works. Found by watching real network traffic while loading
+`disneyland.disney.go.com/hotels/disneyland-hotel/rates-rooms/` in a browser (guessing at API
+paths blindly, the way the WDW pricing endpoint was first found, didn't get there -- this one
+needed to see the actual request). The room-code source is different too:
+`categories-and-room-types` (not `-rooms`) returns rooms directly (no separate
+`roomCategoryLookup`/`roomLookup` nesting the same way) with an `analyticsId` field instead of
+`alternateIdentifiers.CRS.value` -- and that `analyticsId` is the pricing `code` with a leading
+"V" stripped (`V9AS` in categories → `9AS` in pricing), confirmed by cross-referencing a live
+response. All 9 of the villas' room codes (Duo/Deluxe Studio × Standard/Preferred/Garden, 1BR/2BR
+/3BR Preferred) matched cleanly to `data.js`'s existing room type ids. Worth noting for later:
+the tax on a real quote here came out to ~17% (Anaheim's hotel tax rate), not WDW's 12.5% Florida
+rate -- irrelevant to what's stored (pre-tax subtotal, like every other resort) but relevant
+if the app ever computes a with-tax total for this resort specifically.
+
+**Grand Californian: couldn't confirm a DVC-specific mapping, so left it out rather than guess.**
+The Villas at Disney's Grand Californian Hotel & Spa is a real, currently-active DVC resort
+(`data.js` has full points/cash data for it), but there's no "Villas at Grand Californian" page
+anywhere on the current Disneyland Resort site -- unlike Disneyland Hotel, which has one. Its
+`grand-californian-hotel` slug (same domain/API as Disneyland Hotel Villas, confirmed working)
+returns 19 rooms, but every one is an ordinary hotel room or named "Signature Suite" (Arcadia,
+Arroyo, El Capitan, Mount Whitney, Sycamore) -- no "Villa," "Studio," or "Vacation Club" branding
+anywhere, and the room objects carry no amenity/description data to check for villa-defining
+features (full kitchen, washer/dryer) the way WDW's richer API does. The 1BR/2BR/3BR "Suite"
+categories are plausible candidates by bedroom count, but pricing them as if they were the DVC
+villas without stronger confirmation risks mislabeling regular hotel suite prices as DVC villa
+prices -- exactly the kind of mistake the `categories-and-rooms` discovery was meant to prevent
+elsewhere in this project. Left unresolved rather than guessed.
+
+**Aulani: no live pricing API reachable at all.** Its rooms/rates pages
+(`www.disneyaulani.com`) are static marketing content -- no availability widget, no date picker,
+no network calls to any backend on page load. `disneyaulani.disney.go.com` doesn't resolve in
+DNS, ruling out the obvious slug-swap guess. This is a fundamentally different booking flow (or
+one that requires an interactive booking-widget click-through not yet investigated) -- would
+need a separate investigation before attempting, the same way Disneyland Hotel Villas needed
+watching real network traffic rather than guessing paths blind.
 
 ## Shared inventory: Copper Creek and Boulder Ridge
 
@@ -186,9 +238,10 @@ over time per the agreed "average + honestly-labeled last-checked" display desig
 Replace/supplement the static MouseSavers-derived cash rates (`data.js`) with real, current
 prices pulled directly from Disney's own booking site — for all 17 resorts, including the 5
 non-WDW resorts (Aulani, Vero Beach, Hilton Head, Disneyland Hotel, Grand Californian) that
-have **no cash data today** since MouseSavers is WDW-only. All 12 WDW resorts are done as of
-2026-08-30; the 5 non-WDW resorts remain the real coverage gap (see "Non-WDW resorts" above) --
-ironically the ones with the most to gain are the hardest to reach.
+have **no cash data today** since MouseSavers is WDW-only. 15 of 17 are done as of 2026-08-31:
+all 12 WDW resorts plus Vero Beach, Hilton Head, and Disneyland Hotel Villas (though Vero Beach
+and Hilton Head currently have zero live rooms to show — see "Non-WDW resorts" above). Grand
+Californian and Aulani remain the real coverage gap.
 
 The ask isn't just "today's price" — it's "what does this room typically cost N months out,"
 since Disney's real prices move with promos and demand. That means this is a **time-series
@@ -322,8 +375,11 @@ this is a very light daily job — plausibly seconds, not minutes.
    scraped prices against `data.js`'s current MouseSavers numbers for the same dates/rooms.
 2. **Phase 1.5 — extend to all 12 WDW resorts.** Done 2026-08-30 (see "All 12 WDW DVC resorts"
    above). Still manual (`python scripts/build_live_cash_rates.py`), not yet scheduled.
-3. **Phase 2 — close the real gap:** the 5 non-WDW resorts with zero cash data today — biggest
-   remaining coverage win, but a harder problem (see "Non-WDW resorts" above). Not started.
+3. **Phase 2 — close the real gap:** the 5 non-WDW resorts with zero cash data today. Done
+   2026-08-31 for Vero Beach, Hilton Head, and Disneyland Hotel Villas (see "Non-WDW resorts"
+   above); Grand Californian and Aulani remain, each needing more investigation before
+   attempting (Grand Californian: no confirmed way to distinguish villa rooms from regular hotel
+   suites; Aulani: no live pricing API found at all yet).
 4. **Phase 3 — wire it in:** GitHub Actions schedule (see "Why this still can't run 'in' the
    static site" below) and surface the data in the app's Cost Comparison card (average + honestly
    -labeled last-checked, per the agreed design). Not started.
