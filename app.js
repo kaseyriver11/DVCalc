@@ -35,7 +35,6 @@ const state = {
   ownerResortId: "saratogaSprings",
   customCashRate: null, // user-entered nightly cash rate for resorts without data
   segments: [], // completed split-stay segments: [{ resortId, roomTypeId, checkIn, checkOut }]
-  bookingWindow: "all", // "all", "7mo", "11mo"
   compareMonthStart: null, // 0-11 or null — restricts Stay Insights / the alternatives modal to a travel window
   compareMonthEnd: null,   // 0-11 or null; start > end wraps across the year boundary (e.g. Dec–Apr)
   altCrossResort: false,   // "Find a Better Stay" modal: also search other resorts, not just the current one
@@ -55,7 +54,6 @@ const legendItems = document.getElementById("legend-items");
 const selectionHint = document.getElementById("selection-hint");
 const summaryContainer = document.getElementById("summary");
 const actionButtons = document.getElementById("action-buttons");
-const bookingWindowSelect = document.getElementById("booking-window");
 
 // ---- Custom Select (styled dropdown wrapper around a native <select>) ----
 // Keeps the native <select> as the source of truth (existing .value reads/writes
@@ -104,9 +102,9 @@ document.addEventListener("click", (e) => {
 
 // Re-syncs every custom dropdown's displayed label/options with its native <select>.
 // Called from renderCalendar(), which already runs after every action that can
-// change room type, booking window, or points year.
+// change room type or points year.
 function syncCustomSelects() {
-  [roomSelect, bookingWindowSelect, yearSelect].forEach(sel => sel._customSelectRender && sel._customSelectRender());
+  [roomSelect, yearSelect].forEach(sel => sel._customSelectRender && sel._customSelectRender());
 }
 
 // ---- Helpers ----
@@ -179,18 +177,6 @@ function getCategoryFromRoom(rt) {
 }
 
 const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-// ---- Booking Window ----
-// Returns the last bookable date (YYYY-MM-DD) for the selected window, or null if "all"
-function getBookingWindowCutoff() {
-  if (state.bookingWindow === "all") return null;
-  const months = state.bookingWindow === "11mo" ? 11 : 7;
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-  const cutoff = new Date(today);
-  cutoff.setMonth(cutoff.getMonth() + months);
-  return formatDate(cutoff.getFullYear(), cutoff.getMonth(), cutoff.getDate());
-}
 
 // ---- Availability Confidence ----
 const NON_WDW_RESORT_IDS = new Set(["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"]);
@@ -1280,7 +1266,6 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const stayDates = new Set(getStayDates());
   const prevSegDates = getAllPreviousSegmentDates();
-  const windowCutoff = getBookingWindowCutoff();
 
   for (let i = 0; i < firstDay; i++) {
     const el = document.createElement("div");
@@ -1297,7 +1282,6 @@ function renderCalendar() {
     const cashIsPriorYear = cashResult ? cashResult.isPriorYear : false;
     const dayOfWeek = new Date(year, month, d).getDay();
     const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
-    const isOutsideWindow = windowCutoff && dateStr > windowCutoff;
 
     const isStayNight = stayDates.has(dateStr);
     const isCheckIn = dateStr === state.checkIn;
@@ -1310,7 +1294,6 @@ function renderCalendar() {
     if (isStayNight) el.classList.add("selected");
     if (isCheckIn) el.classList.add("checkin");
     if (isCheckOut) el.classList.add("checkout");
-    if (isOutsideWindow) el.classList.add("outside-window");
 
     const tooltipAlign = dayOfWeek <= 1 ? "tooltip-align-left" : dayOfWeek >= 5 ? "tooltip-align-right" : "";
     let periodTooltipHTML = "";
@@ -1349,9 +1332,7 @@ function renderCalendar() {
       </div>
     `;
 
-    if (!isOutsideWindow) {
-      el.addEventListener("click", () => handleDateClick(dateStr));
-    }
+    el.addEventListener("click", () => handleDateClick(dateStr));
     calendarGrid.appendChild(el);
   }
 }
@@ -1849,13 +1830,6 @@ nextBtn.addEventListener("click", () => {
   renderCalendar();
 });
 
-// Booking window selector
-bookingWindowSelect.addEventListener("change", (e) => {
-  state.bookingWindow = e.target.value;
-  renderCalendar();
-  renderSummary();
-});
-
 // Year selector
 yearSelect.addEventListener("change", (e) => {
   state.year = parseInt(e.target.value);
@@ -1958,9 +1932,7 @@ populateYears();
 yearSelect.value = state.year;
 populateRoomTypes();
 roomSelect.value = state.roomTypeId;
-bookingWindowSelect.value = state.bookingWindow;
 initCustomSelect(roomSelect);
-initCustomSelect(bookingWindowSelect);
 initCustomSelect(yearSelect);
 updateHint();
 renderCalendar();

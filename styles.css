@@ -1482,14 +1482,6 @@ select, input, textarea, button {
   background: rgba(183, 28, 28, 0.04);
 }
 
-/* ---- Booking Window: outside-window cells ---- */
-.day-cell.outside-window {
-  opacity: 0.3;
-  pointer-events: none;
-  cursor: default;
-}
-
-
 /* ---- Split Stay: Calendar ---- */
 .day-cell.prev-segment {
   opacity: 0.45;
