@@ -1,9 +1,37 @@
 # Live Disney Cash Pricing — Research & Plan
 
-**Status:** Phase 1 pilot script built and run for Copper Creek (`scripts/scrape_live_prices.py`,
-sample output in `data/cash_prices_live_pilot.json`). Not yet wired into the app or scheduled.
-Written 2026-08-30 after live exploration of `disneyworld.disney.go.com`, updated same day
-after finding the real pricing API, updated again after the first pilot run.
+**Status:** Phase 1 pilot (`scripts/scrape_live_prices.py`) and Phase 1.5 period-aggregation
+build (`scripts/build_live_cash_rates.py`, output in `data/cash_prices_live.json`) both done for
+Copper Creek. Not yet wired into the app or scheduled. Written 2026-08-30 after live exploration
+of `disneyworld.disney.go.com`, updated same day after finding the real pricing API, again after
+the first pilot run, and again after the full 2027 period build.
+
+## Shared inventory: Copper Creek and Boulder Ridge
+
+Copper Creek Villas & Cabins and Boulder Ridge Villas are two separate DVC resorts (separate
+points charts, separate `RESORTS[]` entries in `data.js`) but **one physical building complex**
+at Wilderness Lodge — Boulder Ridge is the original 2000-era villas, Copper Creek is the 2017
+addition. Confirmed live: querying both resort slugs with identical dates returns byte-identical
+room IDs and prices. Disney's cash-booking system doesn't distinguish them. Decision (user
+confirmed): both DVC resorts read from the same live dataset rather than trying to artificially
+split an inventory pool Disney itself doesn't split. Worth checking whether other resort pairs
+at shared physical properties behave the same way (Beach Club/Yacht Club flagged as a likely
+candidate, not yet investigated).
+
+## Room-code mapping (Copper Creek / Boulder Ridge)
+
+Disney's `code` field (e.g. `"2E"`) is an internal room code, not a human name. Mapped to this
+app's `roomTypes[]` IDs two ways:
+- **Confirmed via CDN image slug** — Disney's room-photo URLs embed the code plus a descriptive
+  name (e.g. `.../copper-creek-resort-2a-deluxe-studio-resort-view/...` → `2A` = Deluxe Studio).
+  Copper Creek's slugs gave `2A, 2D, 2E, 2F, 2I, 2K`; Boulder Ridge uses a differently-formatted
+  URL (`.../boulder-ridge-villas/standard/{category}/room-{code}-g00.jpg`) and confirmed `XA, XB,
+  XC` for the same three tiers.
+- **Inferred by price clustering** for the remaining codes (`JB, JC, Z3, Z9` alongside the
+  confirmed Deluxe Studio codes at ~$810-890/night in the pilot sample; `JZ, 25, JD, ZS`
+  alongside One-Bedroom at ~$1090-1400; `JS` alongside Two-Bedroom at ~$1583, likely the
+  Lock-Off variant). Full mapping lives in `ROOM_CODE_TO_APP_TYPE` in
+  `scripts/build_live_cash_rates.py`.
 
 ## Pilot results (Copper Creek, 2026-08-30)
 
@@ -38,6 +66,52 @@ near-term dates is expected behavior, not a scraper bug.
 for the equivalent period landed at ~$810-815/night average across a mixed weekday/weekend
 stay — same order of magnitude, and higher as expected for the following year. Good first
 signal that the live numbers are trustworthy.
+
+## Period-based aggregation build (Copper Creek, all 2027 periods)
+
+Ran `scripts/build_live_cash_rates.py`, which samples one representative stay per DVC
+date-range (not per named period — see the Holiday note in the script), buckets per-night
+prices by `(dayType, roomType)`, and averages. 14 date-ranges across 2027's 7 named periods
+(Holiday split into its Easter and Christmas sub-ranges, per the "holidays get wonky" concern).
+
+**10 of 14 succeeded.** The 4 failures were all Nov 24 - Dec 31, 2027 — ~451+ days from today —
+and failed with HTTP 404, consistent with the ~400-450 day booking-horizon limit found during
+the pilot. This is a real system limit (Disney hasn't opened that far out for booking yet), not
+a scraper bug — those ranges will succeed on a later re-run as the horizon rolls forward.
+
+**Unexpected finding: DVC's period boundaries don't always match real cash-rate changes.**
+The "Dream" range (May 1-14) and "Choice" range (May 15 - Jun 10) — different DVC points
+periods, split specifically because points cost differs between them — came back with
+**byte-identical live cash prices**, all 35 sampled nightly rates matching exactly. Verified
+this wasn't a request bug: the two calls sent genuinely different check-in dates (`2027-05-01`
+vs `2027-05-15`) and got the same nightly price sequence back regardless. Read as a real signal,
+not noise: Disney's own room-rate calendar apparently doesn't change at May 15 the way DVC's
+points chart does — the two "periods" sit inside one underlying Disney rate window for cash
+purposes. This is exactly the kind of gap live data is meant to catch that a static
+period-level mapping (like the MouseSavers approach) can't.
+
+Full averaged results (Sun-Thu / Fri-Sat, per room type):
+
+| Period | Range | Deluxe Studio | 1BR | 2BR | 2BR Cabin |
+|---|---|---|---|---|---|
+| Dream | Jan 1-31 | $605 / $849 | $893 / $1,239 | $1,525 / $2,336 | — |
+| Select | Feb 1-15 | $649 / $740 | $935 / $1,062 | $1,522 / $1,816 | $3,071 / $3,514 |
+| Premier | Feb 16 - Mar 20 | $706 / $821 | $1,027 / $1,188 | $1,782 / $2,110 | — |
+| Holiday (Easter) | Mar 21-28 | $841 / $841 | $1,266 / $1,266 | $2,184 / $2,184 | — |
+| Premier | Mar 29 - Apr 30 | $818 / $818 | $1,229 / $1,188 | $2,126 / $2,110 | — |
+| Dream | May 1-14 | $633 / $681 | $906 / $998 | $1,569 / $1,721 | — |
+| Choice | May 15 - Jun 10 | $633 / $681 | $906 / $998 | $1,569 / $1,721 | — |
+| Select | Jun 11 - Aug 31 | $617 / $619 | $853 / $855 | $1,444 / $1,448 | — |
+| Adventure | Sep 1-30 | $597 / $676 | $811 / $931 | $1,064 / $1,205 | — |
+| Preferred | Oct 1 - Nov 23 | $719 / $796 | $1,039 / $1,158 | $1,415 / $1,595 | — |
+
+Missing: Preferred (Nov 27-30), Premier (Nov 24-26), Choice (Dec 1-23), Holiday/Christmas
+(Dec 24-31) — all beyond the current booking horizon, to be filled in on a later re-run.
+
+Not yet resolved: only one snapshot exists per bucket so far (n = one sampling run), so
+`average` and `lastChecked` are currently identical everywhere — that's expected on a first
+run (per the script's own docstring), and will start to diverge once this runs repeatedly
+over time per the agreed "average + honestly-labeled last-checked" display design.
 
 ## Goal
 
