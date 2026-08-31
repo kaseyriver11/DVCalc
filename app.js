@@ -783,8 +783,8 @@ function nextWindowYearSpan(start, end) {
 // Combines night-window stats across the year(s) a travel window actually spans (only
 // pulling a second year's chart when the window wraps the calendar boundary), filtered
 // down to just the dates inside that window.
-function computeCompareWindowStats(resort, roomTypeId, nights) {
-  const { compareMonthStart: start, compareMonthEnd: end } = state;
+function computeCompareWindowStats(resort, roomTypeId, nights, { allYear = false } = {}) {
+  const { compareMonthStart: start, compareMonthEnd: end } = allYear ? {} : state;
   if (start == null || end == null) {
     const stats = computeNightWindowStats(resort, roomTypeId, nights);
     return { stats, totalAvailable: stats.length, startYear: resort.year, endYear: resort.year };
@@ -807,8 +807,8 @@ function computeCompareWindowStats(resort, roomTypeId, nights) {
   return { stats, totalAvailable: combined.length, startYear, endYear };
 }
 
-function compareRangeLabel(startYear, endYear) {
-  const { compareMonthStart: start, compareMonthEnd: end } = state;
+function compareRangeLabel(startYear, endYear, { allYear = false } = {}) {
+  const { compareMonthStart: start, compareMonthEnd: end } = allYear ? {} : state;
   if (start == null || end == null) return `in ${startYear}`;
   return startYear === endYear
     ? `in ${MONTH_SHORT[start]}–${MONTH_SHORT[end]} ${startYear}`
@@ -1097,15 +1097,13 @@ function buildStayInsightsHTML(resort, roomTypeId, stayDates) {
   const nights = stayDates.length;
   if (nights < 1) return "";
 
-  const picker = buildCompareRangePickerHTML();
-  const { stats, totalAvailable, startYear, endYear } = computeCompareWindowStats(resort, roomTypeId, nights);
-  const rangeLabel = compareRangeLabel(startYear, endYear);
+  const { stats, totalAvailable, startYear, endYear } = computeCompareWindowStats(resort, roomTypeId, nights, { allYear: true });
+  const rangeLabel = compareRangeLabel(startYear, endYear, { allYear: true });
 
   if (totalAvailable === 0) {
     return `
       <div class="summary-card wide">
         <h3>Stay Insights</h3>
-        ${picker}
         <div class="summary-empty">No points chart available ${rangeLabel} for this resort.</div>
       </div>
     `;
@@ -1119,7 +1117,6 @@ function buildStayInsightsHTML(resort, roomTypeId, stayDates) {
     return `
       <div class="summary-card wide">
         <h3>Stay Insights</h3>
-        ${picker}
         <div class="summary-empty">Not enough ${nights}-night stays ${rangeLabel} to compare.</div>
       </div>
     `;
@@ -1162,7 +1159,6 @@ function buildStayInsightsHTML(resort, roomTypeId, stayDates) {
   return `
     <div class="summary-card wide">
       <h3>Stay Insights</h3>
-      ${picker}
       <div class="dist-subtitle">vs. every other ${nights}-night stay at ${resort.name} ${rangeLabel}</div>
 
       ${valueScoreHTML}
