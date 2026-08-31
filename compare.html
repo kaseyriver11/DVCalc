@@ -168,6 +168,15 @@ body {
   color: #333;
 }
 
+.resort-name-select {
+  cursor: pointer;
+}
+
+.resort-name-select:hover {
+  color: #4a148c;
+  text-decoration: underline;
+}
+
 .room-name {
   font-size: 0.72rem;
   color: #888;
@@ -215,6 +224,85 @@ body {
 .na { color: #ccc; }
 .na.clickable { cursor: pointer; }
 .na.clickable:hover { color: #4a148c; }
+
+/* Booking Outlook — compact strip (11mo -> 1mo), one column not five */
+.outlook-header-sub {
+  display: block;
+  font-weight: 400;
+  text-transform: none;
+  color: #bbb;
+  font-size: 0.62rem;
+  letter-spacing: 0;
+  margin-top: 1px;
+}
+
+.outlook-strip {
+  display: flex;
+  gap: 2px;
+}
+
+.outlook-dot {
+  position: relative;
+  width: 12px;
+  height: 18px;
+  border-radius: 3px;
+}
+
+.outlook-dot.outlook-none { background: #f0f0f0; }
+.outlook-excellent { background: #2e7d32; }
+.outlook-good { background: #f9a825; }
+.outlook-fair { background: #ef6c00; }
+.outlook-low { background: #d84315; }
+.outlook-very-low { background: #b71c1c; }
+
+/* Generic hover tooltip, reused for the outlook dots */
+.tooltip-anchor { position: relative; }
+
+.tooltip-card {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 8px 10px;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 50;
+}
+
+.tooltip-card::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: white;
+}
+
+.tooltip-anchor.tooltip-align-left .tooltip-card { left: -8px; transform: none; }
+.tooltip-anchor.tooltip-align-left .tooltip-card::before { left: 14px; transform: none; }
+.tooltip-anchor.tooltip-align-right .tooltip-card { left: auto; right: -8px; transform: none; }
+.tooltip-anchor.tooltip-align-right .tooltip-card::before { left: auto; right: 14px; transform: none; }
+
+.tooltip-anchor:hover .tooltip-card,
+.tooltip-anchor:focus .tooltip-card,
+.tooltip-anchor:focus-within .tooltip-card {
+  opacity: 1;
+  visibility: visible;
+}
+
+.outlook-tooltip {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
 
 .editable-cash span { cursor: pointer; }
 .editable-cash span:hover { text-decoration: underline; }
@@ -432,6 +520,7 @@ body {
 
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
+  <script src="data/availability_data.js"></script>
   <script>
 // ---- State ----
 RESORTS.sort((a, b) => a.name.localeCompare(b.name));
@@ -516,6 +605,104 @@ function calcStay(resort, roomTypeId, stayDates) {
   return { totalPoints, totalCash: hasCash ? totalCash : null, isPriorYearCash };
 }
 
+// ---- Booking Outlook (ported from app.js — same historical-availability model,
+// condensed here into one compact per-row strip instead of the calendar's larger
+// labeled block layout, since a comparison table has far less room per resort) ----
+const NON_WDW_RESORT_IDS = new Set(["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"]);
+
+function getKeyDatesPeriod(dateStr, resortId) {
+  const date = new Date(dateStr + "T12:00:00");
+  const month = date.getMonth();
+  const day = date.getDate();
+  const isNonWDW = NON_WDW_RESORT_IDS.has(resortId);
+
+  if ((month === 11 && day >= 25) || (month === 0 && day <= 5)) return "newYears";
+
+  if (isNonWDW) {
+    if (month === 0 || month === 1) return "presidents";
+    if (month === 2 || month === 3) return "easter";
+    if (month >= 4 && month <= 7) return "summer";
+    if (month >= 8 && month <= 10) return "thanksgiving";
+    if (month === 11) return "christmas";
+  } else {
+    if (month === 0) return "marathon";
+    if (month === 1) return "presidents";
+    if (month === 2 || month === 3) return "easter";
+    if (month === 4) return "summer";
+    if (month >= 5 && month <= 7) return "summer";
+    if (month === 8 || month === 9) return "foodAndWine";
+    if (month === 10) return "thanksgiving";
+    if (month === 11) return "christmas";
+  }
+  return "summer";
+}
+
+const BOOKING_WINDOWS = [
+  { key: "11Mo", label: "11-Month (Home Resort)", shortLabel: "11" },
+  { key: "7Mo", label: "7-Month (Any Resort)", shortLabel: "7" },
+  { key: "5Mo", label: "5-Month", shortLabel: "5" },
+  { key: "3Mo", label: "3-Month", shortLabel: "3" },
+  { key: "1Mo", label: "1-Month", shortLabel: "1" },
+];
+
+function getAvailabilityScore(resortId, roomTypeId, dateStr, window) {
+  if (typeof AVAILABILITY_DATA === "undefined") return null;
+  const resortData = AVAILABILITY_DATA[resortId];
+  if (!resortData) return null;
+  const roomData = resortData[roomTypeId];
+  if (!roomData) return null;
+  const period = getKeyDatesPeriod(dateStr, resortId);
+  const periodData = roomData[period];
+  if (!periodData) return null;
+  return periodData[window] ?? null;
+}
+
+function getStayAvailability(resortId, roomTypeId, dates) {
+  if (!dates || dates.length === 0) return null;
+  const mins = {}, has = {};
+  for (const w of BOOKING_WINDOWS) { mins[w.key] = 8; has[w.key] = false; }
+  for (const dateStr of dates) {
+    for (const w of BOOKING_WINDOWS) {
+      const s = getAvailabilityScore(resortId, roomTypeId, dateStr, w.key);
+      if (s !== null) { mins[w.key] = Math.min(mins[w.key], s); has[w.key] = true; }
+    }
+  }
+  if (!BOOKING_WINDOWS.some(w => has[w.key])) return null;
+  const scores = {};
+  for (const w of BOOKING_WINDOWS) scores[w.key] = has[w.key] ? mins[w.key] : null;
+  return scores;
+}
+
+function availabilityLabel(score, stayLength) {
+  if (score === null) return null;
+  if (score <= 0.1) return { text: "Not Likely", cls: "outlook-very-low" };
+  const ratio = score / stayLength;
+  if (ratio >= 1.0) return { text: "Excellent", cls: "outlook-excellent" };
+  if (ratio >= 0.75) return { text: "Good", cls: "outlook-good" };
+  if (ratio >= 0.5) return { text: "Fair", cls: "outlook-fair" };
+  if (ratio >= 0.25) return { text: "Low", cls: "outlook-low" };
+  return { text: "Not Likely", cls: "outlook-very-low" };
+}
+
+// One compact column, not five — a tight row of tiny colored blocks (11mo -> 1mo),
+// each hoverable for the full window name + status. Keeps the whole outlook
+// scannable at a glance down the table instead of eating five column widths.
+function buildOutlookStripHTML(resortId, roomTypeId, stayDates) {
+  const avail = getStayAvailability(resortId, roomTypeId, stayDates);
+  if (!avail) return `<span class="na">—</span>`;
+  const stayLength = stayDates.length;
+  const dots = BOOKING_WINDOWS.map((w, i) => {
+    const label = availabilityLabel(avail[w.key], stayLength);
+    if (!label) return `<div class="outlook-dot outlook-none"></div>`;
+    const align = i === 0 ? "tooltip-align-left" : i === BOOKING_WINDOWS.length - 1 ? "tooltip-align-right" : "";
+    return `
+      <div class="outlook-dot ${label.cls} tooltip-anchor ${align}" tabindex="0">
+        <div class="tooltip-card outlook-tooltip">${w.label}: ${label.text}</div>
+      </div>`;
+  }).join("");
+  return `<div class="outlook-strip">${dots}</div>`;
+}
+
 // ---- Populate Owner Resort Dropdown ----
 function populateOwnerResorts() {
   const seen = new Set();
@@ -588,6 +775,7 @@ function render() {
         resort,
         room: rt,
         rowKey,
+        outlookHTML: buildOutlookStripHTML(resort.id, rt.id, stayDates),
         totalPoints: result.totalPoints,
         totalCash: effectiveCash,
         isCustomCash: isCustom,
@@ -621,12 +809,13 @@ function render() {
   // Build table
   const ownerCol = state.ownerEnabled;
   const rentalCol = state.rentalEnabled;
-  const colCount = 4 + (rentalCol ? 2 : 0) + (ownerCol ? 2 : 0);
+  const colCount = 5 + (rentalCol ? 2 : 0) + (ownerCol ? 2 : 0);
   let html = `<table class="compare-table">
     <thead>
       <tr>
         <th>#</th>
         <th>Resort</th>
+        <th>Booking Outlook <span class="outlook-header-sub">11&rarr;1mo</span></th>
         <th class="num">Cash Price</th>
         <th class="num">Points</th>
         ${rentalCol ? `<th class="num">Rental Cost</th>` : ""}
@@ -648,9 +837,10 @@ function render() {
     html += `<tr>
       <td class="rank-num ${rank === 1 ? 'top' : ''}">${rank}</td>
       <td>
-        <div class="resort-name">${row.resort.name}</div>
+        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}</div>
         <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
       </td>
+      <td>${row.outlookHTML}</td>
       <td class="num editable-cash">${cashDisplay}</td>
       <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
       ${rentalCol ? `<td class="num rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
@@ -668,9 +858,10 @@ function render() {
       html += `<tr class="no-cash-row">
         <td class="rank-num">—</td>
         <td>
-          <div class="resort-name">${row.resort.name}</div>
+          <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}</div>
           <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
         </td>
+        <td>${row.outlookHTML}</td>
         <td class="num editable-cash"><span class="na clickable" data-key="${row.rowKey}" title="Click to add cash price">+ add price</span></td>
         <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
         ${rentalCol ? `<td class="num rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
@@ -731,11 +922,13 @@ function render() {
     });
   });
 
-  // Attach "Select" handlers — switch resort and return to calendar
-  resultsContainer.querySelectorAll(".select-resort").forEach(span => {
-    span.addEventListener("click", () => {
-      const resortId = span.dataset.resortId;
-      const roomId = span.dataset.roomId;
+  // Attach "Select" handlers — switch resort and return to calendar. The resort
+  // name itself is also clickable (same behavior, different element) so users
+  // don't have to reach all the way over to the dedicated "Select" link.
+  resultsContainer.querySelectorAll(".select-resort, .resort-name-select").forEach(el => {
+    el.addEventListener("click", () => {
+      const resortId = el.dataset.resortId;
+      const roomId = el.dataset.roomId;
       sessionStorage.setItem("dvc_return_to_calendar", "1");
       sessionStorage.setItem("dvc_switch_resort", JSON.stringify({ resortId, roomId }));
       window.location.href = "index.html";
