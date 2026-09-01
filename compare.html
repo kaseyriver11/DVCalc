@@ -562,7 +562,8 @@ const state = {
   ownerEnabled: true,
   ownerResortId: "saratogaSprings",
   customCashRates: {}, // key: "resortId_roomId", value: total cash price
-  sortBy: "points", // "points" | "cash" — always ascending (cheapest first)
+  sortBy: "points", // "points" | "cash" | "rentalSavingsPct" | "ownerSavingsPct"
+  sortDir: "asc", // "asc" | "desc" — toggles when clicking the already-active column
 };
 
 // ---- DOM ----
@@ -578,6 +579,35 @@ const rentalSettings = document.getElementById("rental-settings");
 const ownerToggle = document.getElementById("owner-toggle");
 const ownerResortSelect = document.getElementById("owner-resort");
 const ownerDuesLabel = document.getElementById("owner-dues-label");
+
+// ---- Sorting ----
+// Each sortable column: how to read its value off a row, and which direction
+// makes sense to land on the first time it's clicked (cheapest/fewest first
+// for price & points, biggest savings first for percentages — "click once,
+// see the best deal" rather than making the user flip it every time).
+const SORT_COLUMNS = {
+  cash: { label: "Cash Price", accessor: r => r.totalCash, defaultDir: "asc" },
+  points: { label: "Points", accessor: r => r.totalPoints, defaultDir: "asc" },
+  rentalSavingsPct: { label: "Savings (Renting)", accessor: r => r.rentalSavingsPct, defaultDir: "desc" },
+  ownerSavingsPct: { label: "Savings (Owning)", accessor: r => r.ownerSavingsPct, defaultDir: "desc" },
+};
+
+function setSortBy(key) {
+  if (state.sortBy === key) {
+    state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+  } else {
+    state.sortBy = key;
+    state.sortDir = SORT_COLUMNS[key].defaultDir;
+  }
+  render();
+}
+
+function sortHeaderHTML(key) {
+  const col = SORT_COLUMNS[key];
+  const active = state.sortBy === key;
+  const arrow = active ? `<span class="sort-arrow">${state.sortDir === "asc" ? "&#9650;" : "&#9660;"}</span>` : "";
+  return `<th class="num sortable${active ? " sort-active" : ""}" data-sort="${key}">${col.label}${arrow}</th>`;
+}
 
 // ---- Helpers ----
 function formatDate(year, month, day) {
@@ -826,10 +856,21 @@ function render() {
   const withCash = rows.filter(r => r.totalCash !== null);
   const withoutCash = rows.filter(r => r.totalCash === null);
 
-  // Sort by whichever column is active (always ascending — cheapest first).
-  // The "no cash data" group can only ever sort by points, since it has none.
-  const sortByCash = state.sortBy === "cash";
-  withCash.sort((a, b) => sortByCash ? a.totalCash - b.totalCash : a.totalPoints - b.totalPoints);
+  // A savings-% sort only makes sense when that column is actually visible and
+  // has data (a resort with no cash rate has no savings figure either) — fall
+  // back to points rather than silently sorting by something the user can't see.
+  if ((state.sortBy === "rentalSavingsPct" && !state.rentalEnabled) ||
+      (state.sortBy === "ownerSavingsPct" && !state.ownerEnabled)) {
+    state.sortBy = "points";
+    state.sortDir = SORT_COLUMNS.points.defaultDir;
+  }
+
+  // Sort by whichever column is active, in the active direction. The "no cash
+  // data" group can only ever sort by points, since it has neither a cash
+  // price nor any savings figure.
+  const accessor = SORT_COLUMNS[state.sortBy].accessor;
+  const dirMul = state.sortDir === "desc" ? -1 : 1;
+  withCash.sort((a, b) => (accessor(a) - accessor(b)) * dirMul);
   withoutCash.sort((a, b) => a.totalPoints - b.totalPoints);
 
   if (withCash.length === 0 && withoutCash.length === 0) {
@@ -847,12 +888,12 @@ function render() {
         <th>#</th>
         <th>Resort</th>
         <th>Booking Outlook <span class="outlook-header-sub">11&rarr;1mo</span></th>
-        <th class="num sortable${sortByCash ? " sort-active" : ""}" data-sort="cash">Cash Price${sortByCash ? '<span class="sort-arrow">&#9650;</span>' : ""}</th>
-        <th class="num sortable${sortByCash ? "" : " sort-active"}" data-sort="points">Points${sortByCash ? "" : '<span class="sort-arrow">&#9650;</span>'}</th>
+        ${sortHeaderHTML("cash")}
+        ${sortHeaderHTML("points")}
         ${rentalCol ? `<th class="num">Rental Cost</th>` : ""}
-        ${rentalCol ? `<th class="num">Savings (Renting)</th>` : ""}
+        ${rentalCol ? sortHeaderHTML("rentalSavingsPct") : ""}
         ${ownerCol ? `<th class="num">Dues Cost</th>` : ""}
-        ${ownerCol ? `<th class="num">Savings (Owning)</th>` : ""}
+        ${ownerCol ? sortHeaderHTML("ownerSavingsPct") : ""}
         <th></th>
       </tr>
     </thead>
@@ -912,10 +953,7 @@ function render() {
 
   // Attach sort-header handlers
   resultsContainer.querySelectorAll(".sortable").forEach(th => {
-    th.addEventListener("click", () => {
-      state.sortBy = th.dataset.sort;
-      render();
-    });
+    th.addEventListener("click", () => setSortBy(th.dataset.sort));
   });
 
   // Attach inline edit handlers for cash price cells
