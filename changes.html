@@ -238,8 +238,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   .add-combo-btn { width: 100%; }
 }
   </style>
-  <script data-goatcounter="https://dvcalc.goatcounter.com/count"
-          async src="//gc.zgo.at/count.js"></script>
+  <script>
+    // See index.html for why this is injected after load instead of a static tag.
+    window.addEventListener("load", () => {
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "//gc.zgo.at/count.js";
+      s.setAttribute("data-goatcounter", "https://dvcalc.goatcounter.com/count");
+      document.body.appendChild(s);
+    });
+  </script>
 </head>
 <body>
 
