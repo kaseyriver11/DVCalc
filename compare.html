@@ -140,6 +140,26 @@ body {
   text-align: right;
 }
 
+.compare-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.compare-table th.sortable:hover {
+  color: #4a148c;
+}
+
+.compare-table th.sort-active {
+  color: #4a148c;
+}
+
+.sort-arrow {
+  display: inline-block;
+  font-size: 0.6rem;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
 .compare-table td {
   padding: 10px 12px;
   font-size: 0.85rem;
@@ -534,6 +554,7 @@ const state = {
   ownerEnabled: true,
   ownerResortId: "saratogaSprings",
   customCashRates: {}, // key: "resortId_roomId", value: total cash price
+  sortBy: "points", // "points" | "cash" — always ascending (cheapest first)
 };
 
 // ---- DOM ----
@@ -797,8 +818,10 @@ function render() {
   const withCash = rows.filter(r => r.totalCash !== null);
   const withoutCash = rows.filter(r => r.totalCash === null);
 
-  // Sort each group by total points ascending
-  withCash.sort((a, b) => a.totalPoints - b.totalPoints);
+  // Sort by whichever column is active (always ascending — cheapest first).
+  // The "no cash data" group can only ever sort by points, since it has none.
+  const sortByCash = state.sortBy === "cash";
+  withCash.sort((a, b) => sortByCash ? a.totalCash - b.totalCash : a.totalPoints - b.totalPoints);
   withoutCash.sort((a, b) => a.totalPoints - b.totalPoints);
 
   if (withCash.length === 0 && withoutCash.length === 0) {
@@ -816,8 +839,8 @@ function render() {
         <th>#</th>
         <th>Resort</th>
         <th>Booking Outlook <span class="outlook-header-sub">11&rarr;1mo</span></th>
-        <th class="num">Cash Price</th>
-        <th class="num">Points</th>
+        <th class="num sortable${sortByCash ? " sort-active" : ""}" data-sort="cash">Cash Price${sortByCash ? '<span class="sort-arrow">&#9650;</span>' : ""}</th>
+        <th class="num sortable${sortByCash ? "" : " sort-active"}" data-sort="points">Points${sortByCash ? "" : '<span class="sort-arrow">&#9650;</span>'}</th>
         ${rentalCol ? `<th class="num">Rental Cost</th>` : ""}
         ${rentalCol ? `<th class="num">Savings (Renting)</th>` : ""}
         ${ownerCol ? `<th class="num">Dues Cost</th>` : ""}
@@ -878,6 +901,14 @@ function render() {
     html += `<div class="prior-year-footnote">* Cash rates based on ${year - 1} pricing</div>`;
   }
   resultsContainer.innerHTML = html;
+
+  // Attach sort-header handlers
+  resultsContainer.querySelectorAll(".sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      state.sortBy = th.dataset.sort;
+      render();
+    });
+  });
 
   // Attach inline edit handlers for cash price cells
   resultsContainer.querySelectorAll(".editable-cash span[data-key]").forEach(span => {
