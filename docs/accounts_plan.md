@@ -4,11 +4,23 @@
 Google sign-in via Supabase project `dvcalc_start`, tested end to end
 locally: clicking "Sign in with Google" redirects through Google's real
 consent flow and Supabase's callback, lands back on the app, and the header
-correctly shows the signed-in account with a working sign-out. Not yet
-deployed to production (GitHub Pages) — Supabase's Redirect URLs allow-list
-currently only permits `localhost:8794`; the production URL needs to be
-added there before login will work live. Phase 2 (contract CRUD) not
-started.
+correctly shows the signed-in account with a working sign-out.
+
+Phase 2 (contract CRUD) built 2026-09-03 — `account.html` with add/edit/
+delete/deactivate for contracts, plus a (currently inert) reminder
+opt-in/lead-time preference on the profile. `auth.js` extended with
+`addContract`/`updateContract`/`deleteContract`/`getProfile`/`updateProfile`.
+Verified the signed-out gate renders correctly with no console errors; the
+signed-in contract-management flow (add/edit/delete, RLS isolation between
+two different accounts) still needs a hands-on pass by the account owner,
+since completing a real Google sign-in isn't something to do on someone's
+behalf.
+
+Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
+allow-list currently only permits `localhost:8794`; the production URL
+needs to be added there before login will work live. Phase 3
+(personalization payoff — wiring contracts into the calendar/compare pages)
+not started.
 
 ## Context
 

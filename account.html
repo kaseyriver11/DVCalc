@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My DVC Contracts</title>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #1a237e, #4a148c);
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+  position: relative;
+}
+
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+.header .header-links {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-link {
+  color: white;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  transition: all 0.2s;
+}
+.back-link:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+
+.account-btn {
+  color: white;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.account-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+
+.account-link-btn {
+  display: inline-block;
+  color: white;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  transition: all 0.2s;
+}
+.account-link-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+
+.page {
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.gate {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 48px 32px;
+  text-align: center;
+  color: #666;
+}
+
+.gate p { margin-bottom: 18px; font-size: 0.95rem; }
+
+.big-signin-btn {
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.big-signin-btn:hover { background: #38106b; }
+
+.section {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a237e;
+  margin-bottom: 14px;
+}
+
+.section-sub {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.empty-note {
+  color: #999;
+  font-style: italic;
+  font-size: 0.88rem;
+  padding: 8px 0 16px;
+}
+
+.contract-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.contract-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.contract-card.inactive { opacity: 0.55; }
+
+.contract-main { flex: 1; min-width: 200px; }
+
+.contract-name { font-weight: 600; color: #1a237e; font-size: 0.95rem; }
+
+.contract-meta {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 3px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.badge-direct { background: #e8f5e9; color: #2e7d32; }
+.badge-resale { background: #fff3e0; color: #e65100; }
+.badge-inactive { background: #eee; color: #888; }
+
+.contract-actions { display: flex; gap: 8px; }
+
+.small-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #555;
+  cursor: pointer;
+}
+.small-btn:hover { border-color: #4a148c; color: #4a148c; }
+.small-btn.danger:hover { border-color: #c62828; color: #c62828; }
+
+.add-btn {
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-btn:hover { background: #38106b; }
+
+.contract-form {
+  border-top: 1px solid #eee;
+  margin-top: 16px;
+  padding-top: 16px;
+  display: none;
+}
+.contract-form.open { display: block; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+.form-field.full { grid-column: 1 / -1; }
+
+.form-field label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.4px;
+}
+
+.form-field input, .form-field select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: inherit;
+}
+
+.form-field input:focus, .form-field select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
+}
+
+.purchase-type-toggle { display: flex; gap: 8px; }
+
+.purchase-type-toggle button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #555;
+}
+.purchase-type-toggle button.selected {
+  background: #4a148c;
+  border-color: #4a148c;
+  color: white;
+}
+
+.form-actions { display: flex; gap: 10px; }
+
+.save-btn {
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.save-btn:hover { background: #38106b; }
+
+.cancel-btn {
+  background: white;
+  color: #666;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.form-error {
+  color: #c62828;
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+}
+
+.reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reminder-row label {
+  font-size: 0.88rem;
+  color: #444;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reminder-row input[type="number"] {
+  width: 60px;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.reminder-note {
+  font-size: 0.78rem;
+  color: #999;
+  margin-top: 8px;
+}
+
+@media (max-width: 560px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .header .header-links { position: static; transform: none; justify-content: center; margin-top: 8px; }
+}
+  </style>
+  <script data-goatcounter="https://dvcalc.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+  <script type="module" src="auth.js"></script>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-links">
+      <span id="account-control"></span>
+      <a href="index.html" class="back-link">&larr; Calendar</a>
+    </div>
+    <h1>My DVC Contracts</h1>
+    <div class="subtitle">Manage your contracts to unlock personalized booking windows</div>
+  </div>
+
+  <div class="page" id="page-content">
+    <div class="gate">
+      <p>Loading&hellip;</p>
+    </div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script>
+const USE_YEARS = ["Feb", "Mar", "Apr", "Jun", "Aug", "Sep", "Oct", "Dec"];
+const pageContent = document.getElementById("page-content");
+
+// Unique resorts (data.js has one entry per resort per year -- dedupe by id).
+function uniqueResorts() {
+  const seen = new Set();
+  const list = [];
+  for (const r of RESORTS) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    list.push({ id: r.id, name: r.name });
+  }
+  return list.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function resortName(id) {
+  const r = RESORTS.find(r => r.id === id);
+  return r ? r.name : id;
+}
+
+let editingId = null; // contract id currently being edited, or null for "adding new"
+
+function renderGate() {
+  pageContent.innerHTML = `
+    <div class="gate">
+      <p>Sign in to save your DVC contracts and unlock personalized booking windows on the calendar.</p>
+      <button type="button" class="big-signin-btn" id="gate-signin">Sign in with Google</button>
+    </div>
+  `;
+  document.getElementById("gate-signin").addEventListener("click", () => window.DVCAuth.signInWithGoogle());
+}
+
+function renderUnconfigured() {
+  pageContent.innerHTML = `
+    <div class="gate">
+      <p>Accounts aren't set up on this deployment yet.</p>
+    </div>
+  `;
+}
+
+async function renderSignedIn() {
+  const [contracts, profile] = await Promise.all([
+    window.DVCAuth.getContracts(),
+    window.DVCAuth.getProfile(),
+  ]);
+
+  const resorts = uniqueResorts();
+
+  pageContent.innerHTML = `
+    <div class="section">
+      <h2>Your Contracts</h2>
+      <div class="section-sub">Own more than one? Add each separately -- DVCalc will combine what they unlock together.</div>
+      <div class="contract-list" id="contract-list"></div>
+      <button type="button" class="add-btn" id="show-add-form">+ Add Contract</button>
+      <div class="contract-form" id="contract-form">
+        <div class="form-error" id="form-error" style="display:none;"></div>
+        <div class="form-grid">
+          <div class="form-field full">
+            <label for="f-nickname">Nickname (optional)</label>
+            <input type="text" id="f-nickname" placeholder="e.g. Mom's contract">
+          </div>
+          <div class="form-field">
+            <label for="f-resort">Home Resort</label>
+            <select id="f-resort">
+              ${resorts.map(r => `<option value="${r.id}">${r.name}</option>`).join("")}
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="f-useyear">Use Year</label>
+            <select id="f-useyear">
+              ${USE_YEARS.map(y => `<option value="${y}">${y}</option>`).join("")}
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="f-points">Points per Year</label>
+            <input type="number" id="f-points" min="1" step="1" placeholder="e.g. 150">
+          </div>
+          <div class="form-field">
+            <label>Purchase Type</label>
+            <div class="purchase-type-toggle">
+              <button type="button" id="f-type-direct" class="selected">Direct</button>
+              <button type="button" id="f-type-resale">Resale</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="f-price">Purchase Price (optional)</label>
+            <input type="number" id="f-price" min="0" step="1" placeholder="Total $ paid">
+          </div>
+          <div class="form-field">
+            <label for="f-date">Purchase Date (optional)</label>
+            <input type="date" id="f-date">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="save-btn" id="save-contract">Save Contract</button>
+          <button type="button" class="cancel-btn" id="cancel-contract">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Deadline Reminders</h2>
+      <div class="reminder-row">
+        <label><input type="checkbox" id="r-opt-in" ${profile?.reminder_opt_in ? "checked" : ""}> Email me before banking/borrowing deadlines</label>
+        <label>Lead time: <input type="number" id="r-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days</label>
+        <button type="button" class="small-btn" id="save-reminders">Save</button>
+      </div>
+      <div class="reminder-note">Coming soon -- this saves your preference now, but emails aren't sending yet.</div>
+    </div>
+  `;
+
+  renderContractList(contracts, resorts);
+
+  document.getElementById("show-add-form").addEventListener("click", () => openForm(null));
+  document.getElementById("cancel-contract").addEventListener("click", closeForm);
+  document.getElementById("save-contract").addEventListener("click", () => saveForm(contracts));
+  document.getElementById("f-type-direct").addEventListener("click", () => setPurchaseType("direct"));
+  document.getElementById("f-type-resale").addEventListener("click", () => setPurchaseType("resale"));
+  document.getElementById("save-reminders").addEventListener("click", saveReminderPrefs);
+
+  // Row-level edit/delete/reactivate buttons (delegated, since the list re-renders).
+  document.getElementById("contract-list").addEventListener("click", async (e) => {
+    const editBtn = e.target.closest("[data-edit]");
+    const deleteBtn = e.target.closest("[data-delete]");
+    const toggleBtn = e.target.closest("[data-toggle-active]");
+
+    if (editBtn) {
+      const c = contracts.find(c => c.id === editBtn.dataset.edit);
+      if (c) openForm(c);
+    }
+    if (deleteBtn) {
+      if (!confirm("Delete this contract? This can't be undone.")) return;
+      await window.DVCAuth.deleteContract(deleteBtn.dataset.delete);
+      renderSignedIn();
+    }
+    if (toggleBtn) {
+      const c = contracts.find(c => c.id === toggleBtn.dataset.toggleActive);
+      if (c) {
+        await window.DVCAuth.updateContract(c.id, { is_active: !c.is_active });
+        renderSignedIn();
+      }
+    }
+  });
+}
+
+function renderContractList(contracts, resorts) {
+  const list = document.getElementById("contract-list");
+  if (contracts.length === 0) {
+    list.innerHTML = `<div class="empty-note">No contracts yet -- add your first one below.</div>`;
+    return;
+  }
+  list.innerHTML = contracts.map(c => `
+    <div class="contract-card ${c.is_active ? "" : "inactive"}">
+      <div class="contract-main">
+        <div class="contract-name">${c.nickname || resortName(c.home_resort_id)}</div>
+        <div class="contract-meta">
+          <span>${resortName(c.home_resort_id)}</span>
+          <span>&middot;</span>
+          <span>${c.use_year} UY</span>
+          <span>&middot;</span>
+          <span>${c.points_per_year.toLocaleString()} pts/yr</span>
+          <span class="badge ${c.purchase_type === "direct" ? "badge-direct" : "badge-resale"}">${c.purchase_type}</span>
+          ${c.is_active ? "" : `<span class="badge badge-inactive">inactive</span>`}
+        </div>
+      </div>
+      <div class="contract-actions">
+        <button type="button" class="small-btn" data-edit="${c.id}">Edit</button>
+        <button type="button" class="small-btn" data-toggle-active="${c.id}">${c.is_active ? "Deactivate" : "Reactivate"}</button>
+        <button type="button" class="small-btn danger" data-delete="${c.id}">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function setPurchaseType(type) {
+  document.getElementById("f-type-direct").classList.toggle("selected", type === "direct");
+  document.getElementById("f-type-resale").classList.toggle("selected", type === "resale");
+}
+
+function getSelectedPurchaseType() {
+  return document.getElementById("f-type-direct").classList.contains("selected") ? "direct" : "resale";
+}
+
+function openForm(contract) {
+  editingId = contract ? contract.id : null;
+  document.getElementById("form-error").style.display = "none";
+  document.getElementById("f-nickname").value = contract?.nickname || "";
+  document.getElementById("f-resort").value = contract?.home_resort_id || uniqueResorts()[0].id;
+  document.getElementById("f-useyear").value = contract?.use_year || USE_YEARS[0];
+  document.getElementById("f-points").value = contract?.points_per_year || "";
+  document.getElementById("f-price").value = contract?.purchase_price || "";
+  document.getElementById("f-date").value = contract?.purchase_date || "";
+  setPurchaseType(contract?.purchase_type || "direct");
+  document.getElementById("contract-form").classList.add("open");
+  document.getElementById("save-contract").textContent = contract ? "Save Changes" : "Save Contract";
+  document.getElementById("contract-form").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function closeForm() {
+  editingId = null;
+  document.getElementById("contract-form").classList.remove("open");
+}
+
+async function saveForm() {
+  const errorEl = document.getElementById("form-error");
+  errorEl.style.display = "none";
+
+  const points = parseInt(document.getElementById("f-points").value, 10);
+  if (!points || points <= 0) {
+    errorEl.textContent = "Points per year is required and must be a positive number.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  const payload = {
+    nickname: document.getElementById("f-nickname").value.trim() || null,
+    home_resort_id: document.getElementById("f-resort").value,
+    use_year: document.getElementById("f-useyear").value,
+    points_per_year: points,
+    purchase_type: getSelectedPurchaseType(),
+    purchase_price: document.getElementById("f-price").value ? parseFloat(document.getElementById("f-price").value) : null,
+    purchase_date: document.getElementById("f-date").value || null,
+  };
+
+  const result = editingId
+    ? await window.DVCAuth.updateContract(editingId, payload)
+    : await window.DVCAuth.addContract(payload);
+
+  if (result.error) {
+    errorEl.textContent = "Couldn't save: " + result.error;
+    errorEl.style.display = "block";
+    return;
+  }
+
+  closeForm();
+  renderSignedIn();
+}
+
+async function saveReminderPrefs() {
+  const btn = document.getElementById("save-reminders");
+  btn.textContent = "Saving...";
+  await window.DVCAuth.updateProfile({
+    reminder_opt_in: document.getElementById("r-opt-in").checked,
+    reminder_lead_days: parseInt(document.getElementById("r-lead-days").value, 10) || 14,
+  });
+  btn.textContent = "Saved";
+  setTimeout(() => { btn.textContent = "Save"; }, 1500);
+}
+
+function render(session) {
+  if (!window.DVCAuth.isConfigured()) {
+    renderUnconfigured();
+  } else if (session) {
+    renderSignedIn();
+  } else {
+    renderGate();
+  }
+}
+
+// auth.js's module script executes asynchronously; poll briefly for
+// window.DVCAuth to exist rather than assuming it's ready by the time this
+// inline script runs (same reasoning as auth.js's own header-control code).
+function waitForAuth(attempts) {
+  if (window.DVCAuth) {
+    window.DVCAuth.onAuthChange(render);
+  } else if (attempts > 0) {
+    setTimeout(() => waitForAuth(attempts - 1), 50);
+  } else {
+    renderUnconfigured();
+  }
+}
+waitForAuth(40);
+  </script>
+</body>
+</html>

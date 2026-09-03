@@ -71,17 +71,77 @@ function getSession() {
   return currentSession;
 }
 
+// Returns every contract for the signed-in user, active and inactive alike
+// -- account.html needs to show/reactivate inactive ones, so filtering to
+// active-only happens in whichever consumer only cares about that (e.g.
+// personalization, once Phase 3 wires it up), not here.
 async function getContracts() {
   if (!configured || !currentSession) return [];
   const { data, error } = await supabase
     .from("contracts")
     .select("*")
-    .eq("is_active", true);
+    .order("created_at", { ascending: true });
   if (error) {
     console.error("[DVCAuth] getContracts failed:", error.message);
     return [];
   }
   return data;
+}
+
+// contract: { home_resort_id, use_year, points_per_year, purchase_type,
+// purchase_price, purchase_date, nickname } -- user_id is filled in here,
+// not by the caller, since RLS requires it to match the authenticated user.
+async function addContract(contract) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { data, error } = await supabase
+    .from("contracts")
+    .insert({ ...contract, user_id: currentSession.user.id })
+    .select()
+    .single();
+  return { data, error: error?.message };
+}
+
+async function updateContract(id, patch) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { data, error } = await supabase
+    .from("contracts")
+    .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+  return { data, error: error?.message };
+}
+
+async function deleteContract(id) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { error } = await supabase.from("contracts").delete().eq("id", id);
+  return { error: error?.message };
+}
+
+async function getProfile() {
+  if (!configured || !currentSession) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", currentSession.user.id)
+    .single();
+  if (error) {
+    console.error("[DVCAuth] getProfile failed:", error.message);
+    return null;
+  }
+  return data;
+}
+
+// patch: { reminder_opt_in, reminder_lead_days, display_name }
+async function updateProfile(patch) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(patch)
+    .eq("id", currentSession.user.id)
+    .select()
+    .single();
+  return { data, error: error?.message };
 }
 
 // Resorts that only ever book at their own home resort when the contract
@@ -144,7 +204,7 @@ function renderAccountControl(session) {
 
   if (session) {
     const email = session.user?.email || "Account";
-    el.innerHTML = `<button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
+    el.innerHTML = `<a href="account.html" class="account-link-btn">My Contracts</a><button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
     document.getElementById("account-signout").addEventListener("click", signOut);
   } else {
     el.innerHTML = `<button type="button" class="account-btn" id="account-signin">Sign in with Google</button>`;
@@ -161,6 +221,11 @@ window.DVCAuth = {
   onAuthChange,
   getSession,
   getContracts,
+  addContract,
+  updateContract,
+  deleteContract,
+  getProfile,
+  updateProfile,
   getUserResortAccess,
   isConfigured: () => configured,
 };
