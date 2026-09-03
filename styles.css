@@ -61,6 +61,24 @@ select, input, textarea, button {
   border-color: rgba(255,255,255,0.7);
 }
 
+.account-btn {
+  color: white;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.account-btn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.7);
+}
+
 /* ---- Controls ---- */
 .controls {
   display: flex;

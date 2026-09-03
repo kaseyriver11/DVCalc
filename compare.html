@@ -23,11 +23,16 @@ body {
 
 .header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
 .header .subtitle { font-size: 0.8rem; opacity: 0.8; }
-.header .back-link {
+.header .header-links {
   position: absolute;
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header .back-link {
   color: white;
   text-decoration: none;
   font-size: 0.75rem;
@@ -39,6 +44,19 @@ body {
   transition: all 0.2s;
 }
 .header .back-link:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+.account-btn {
+  color: white;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.account-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
 .header { position: relative; }
 
 .controls {
@@ -493,11 +511,15 @@ body {
       document.body.appendChild(s);
     });
   </script>
+  <script type="module" src="auth.js"></script>
 </head>
 <body>
 
   <div class="header">
-    <a href="index.html" class="back-link" id="back-link">&larr; Calendar</a>
+    <div class="header-links">
+      <span id="account-control"></span>
+      <a href="index.html" class="back-link" id="back-link">&larr; Calendar</a>
+    </div>
     <h1>Resort Comparison</h1>
     <div class="subtitle">Compare point costs across all DVC resorts for your dates</div>
   </div>
