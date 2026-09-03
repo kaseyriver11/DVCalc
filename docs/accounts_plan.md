@@ -1,8 +1,14 @@
 # DVC Accounts, Contracts & Personalization
 
-**Status:** Phase 1 (auth foundation) in progress — `auth.js` and `db/schema.sql`
-written 2026-09-03, not yet connected to a real Supabase project. See the
-Phase 0/1 checklist at the bottom of this doc for what's left.
+**Status:** Phase 1 (auth foundation) done and verified 2026-09-03 — real
+Google sign-in via Supabase project `dvcalc_start`, tested end to end
+locally: clicking "Sign in with Google" redirects through Google's real
+consent flow and Supabase's callback, lands back on the app, and the header
+correctly shows the signed-in account with a working sign-out. Not yet
+deployed to production (GitHub Pages) — Supabase's Redirect URLs allow-list
+currently only permits `localhost:8794`; the production URL needs to be
+added there before login will work live. Phase 2 (contract CRUD) not
+started.
 
 ## Context
 
@@ -63,11 +69,13 @@ Resort/room-type ids are stored as plain `text`, validated at the app layer agai
 
 ## Phase 0/1 checklist — what's left
 
-Code is written (`auth.js`, `db/schema.sql`, header wiring in `index.html`/`compare.html`) and verified to leave anonymous usage completely unaffected (console shows only an expected "not configured" warning, no errors, calendar/compare render normally). What's left needs the account owner's own action — an AI assistant can't create third-party accounts on someone's behalf:
+All done as of 2026-09-03:
 
-1. Create a Supabase project (https://supabase.com).
-2. Run `db/schema.sql` in the Supabase SQL editor.
-3. In Google Cloud Console, create an OAuth 2.0 client ID (a Google Cloud project + OAuth consent screen is required first).
-4. In Supabase, enable the Google auth provider with that client ID/secret, and set the redirect URL Supabase gives you back in Google Cloud's authorized redirect URIs.
-5. Copy the Supabase project's URL and anon/public key (Project Settings → API) into `SUPABASE_URL`/`SUPABASE_ANON_KEY` at the top of `auth.js`.
-6. Test sign-in end to end locally, then deploy.
+1. ✅ Supabase project created (`dvcalc_start`, https://afqhmtqwjtjkjahepqxv.supabase.co).
+2. ✅ `db/schema.sql` run — `profiles`/`contracts`/`trips`/`reminder_log` all present.
+3. ✅ Google Cloud OAuth client created (project `dvcalc`), consent screen configured.
+4. ✅ Google provider enabled in Supabase with the client ID/secret; Supabase's callback URL added to Google's authorized redirect URIs; `localhost:8794` added to Supabase's own Redirect URLs allow-list.
+5. ✅ `SUPABASE_URL`/`SUPABASE_ANON_KEY` (publishable key) filled into `auth.js`.
+6. ✅ Tested end to end locally — real Google sign-in, session persists, header shows signed-in state, sign-out works.
+
+**Remaining before production use:** add the live GitHub Pages URL to Supabase's Redirect URLs allow-list (Authentication → URL Configuration) — without it, sign-in will work locally but fail once deployed.

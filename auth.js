@@ -10,13 +10,13 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// TODO: fill in from your Supabase project's Settings -> API page once the
-// project exists (see docs/accounts_plan.md, Phase 0/1). The anon key is
-// safe to expose client-side by design -- it has no power on its own; Row
-// Level Security in the database (db/schema.sql) is what actually gates
-// access to each user's own rows.
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+// From the dvcalc_start Supabase project's Settings -> API page. The
+// publishable key (Supabase's newer name for what used to be called the
+// "anon key") is safe to expose client-side by design -- it has no power on
+// its own; Row Level Security in the database (db/schema.sql) is what
+// actually gates access to each user's own rows.
+const SUPABASE_URL = "https://afqhmtqwjtjkjahepqxv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_moCeyHUFBzY6dKmQjHY9kw_4w2Pho3k";
 
 const configured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
