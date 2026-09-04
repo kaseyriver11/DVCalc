@@ -738,7 +738,7 @@ async function renderSignedIn() {
             </select>
           </div>
           <div class="form-field">
-            <label for="f-cash-value">Cash Value (optional)</label>
+            <label for="f-cash-value">Cash Value</label>
             <input type="number" id="f-cash-value" min="0" step="1" placeholder="Total $ for the stay">
             <div class="field-hint" id="cash-hint"></div>
           </div>
@@ -839,7 +839,7 @@ function updateCashSuggestion() {
 
   const est = estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut);
   if (!est) {
-    hint.textContent = "No cash rate data available for this resort/room -- enter your own value if you know it.";
+    hint.textContent = "No cash rate data available for this resort/room -- enter your best guess.";
     return;
   }
 
@@ -978,6 +978,12 @@ async function saveTripForm() {
     errorEl.style.display = "block";
     return;
   }
+  const cashValueRaw = document.getElementById("f-cash-value").value;
+  if (!cashValueRaw) {
+    errorEl.textContent = "Cash value is required -- without it a trip can't count toward whether your contract is paying for itself. Enter your best guess if we don't have an estimate for this resort.";
+    errorEl.style.display = "block";
+    return;
+  }
 
   const payload = {
     resort_id: document.getElementById("f-resort").value,
@@ -987,9 +993,7 @@ async function saveTripForm() {
     points_used: points,
     contract_id: document.getElementById("f-contract").value || null,
     notes: document.getElementById("f-notes").value.trim() || null,
-    custom_cash_value: document.getElementById("f-cash-value").value
-      ? parseFloat(document.getElementById("f-cash-value").value)
-      : null,
+    custom_cash_value: parseFloat(cashValueRaw),
   };
 
   const result = editingTripId
