@@ -69,12 +69,6 @@ body {
   padding: 0 16px 60px;
 }
 
-.page-top-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
-
 .gate {
   background: white;
   border-radius: 10px;
@@ -163,6 +157,19 @@ body {
   color: #999;
   margin-top: 4px;
 }
+
+.tile-add-btn {
+  margin-top: 10px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tile-add-btn:hover { background: #256428; }
 
 /* ---- Contract cost cards ---- */
 .contract-cost-card {
@@ -678,10 +685,6 @@ async function renderSignedIn() {
   const net = totalTripValue - totalCostToDate;
 
   pageContent.innerHTML = `
-    <div class="page-top-actions">
-      <button type="button" class="add-btn" id="show-add-form">+ Log a Trip</button>
-    </div>
-
     <div class="section">
       <h2>The Full Story</h2>
       <div class="section-sub">Cost of ownership to date vs. the cash value of trips you've logged</div>
@@ -695,6 +698,7 @@ async function renderSignedIn() {
           <div class="story-tile-label">Trip Value</div>
           <div class="story-tile-value">${fmt(totalTripValue)}</div>
           <div class="story-tile-sub">${trips.length} trip${trips.length === 1 ? "" : "s"} logged</div>
+          <button type="button" class="tile-add-btn" id="show-add-form">+ Log a Trip</button>
         </div>
         <div class="story-tile net">
           <div class="story-tile-label">Net</div>
