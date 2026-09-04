@@ -107,6 +107,28 @@ owned — verified against a real Saratoga Springs contract purchased 2018
 `points_per_year * that year's real published rate` and the cumulative
 total sums correctly.
 
+Trip cash-value estimate deflated for historical trips 2026-09-04 —
+previously a trip from any year got priced at whatever year data.js's
+cash rates are anchored to (2026), which meaningfully overstates old
+trips (WDW resort pricing has grown well beyond general inflation). New
+`data/cash_value_index.js` holds `CASH_VALUE_INDEX[year]`, a blended WDW
+resort price index normalized to 2026 = 1.0, built from Port Orleans
+Resort's published historical rate table (the most complete single-source
+year-by-year series found; a moderate resort, not deluxe, but sanity-checked
+within a few points of two independent Grand Floridian data points over
+the same span) with 2020/2021 interpolated across its COVID closure.
+`estimateTripCashValue()` now multiplies its remapped today's-rate
+estimate by `getCashValueMultiplier(tripYear) / getCashValueMultiplier(anchorYear)`
+and labels the result as historical pricing rather than "today's rate."
+Also fixed a pre-existing mislabel while touching this code: the remap
+target was picking RESORTS' newest year entry (2027) even when that year
+has no cash rates of its own and silently borrows 2026's via
+`getCashRateWithFallback` — it now picks the year that actually has cash
+rates (`latestCashYear()`), so the label shown to the user matches what's
+actually being used. Verified against the same $10,000-today example the
+feature was requested with: a same-dates 2026 estimate of $1,662 vs. a
+2017 estimate of $1,128 is exactly the index's 0.6785 multiplier.
+
 Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
 allow-list currently only permits `localhost:8794`; the production URL
 needs to be added there before login will work live. Phase 5

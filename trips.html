@@ -426,6 +426,7 @@ body {
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/dues_historical.js"></script>
+  <script src="data/cash_value_index.js"></script>
   <script>
 const pageContent = document.getElementById("page-content");
 let contracts = [];
@@ -497,26 +498,49 @@ function stayDateRange(startDateStr, nights) {
   return dates;
 }
 
-// Estimates what a trip would cost at today's cash rates, by remapping its
-// original month/day onto the most recent year data.js actually has pricing
-// for and running the normal cash-rate lookup -- we don't have historical
-// cash-rate archives, so this deliberately doesn't pretend to know what the
-// resort *actually* charged on the real historical dates; it's "what this
-// same week would cost booked today," which is an honest, useful proxy.
-function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
+// Which year's cash rates actually exist for a resort. RESORTS can have a
+// later year entry (e.g. 2027) with no cash rates of its own, relying on
+// getCashRateWithFallback to borrow the prior year's -- for picking a
+// remap target we want the year the rates actually came from, not just
+// the newest RESORTS entry, so the label shown to the user (and the cash
+// index's anchor year below) is accurate.
+function latestCashYear(resortId) {
   const years = [...new Set(RESORTS.filter(r => r.id === resortId).map(r => r.year))].sort((a, b) => b - a);
-  const targetYear = years[0];
-  if (!targetYear) return null;
-  const resort = RESORTS.find(r => r.id === resortId && r.year === targetYear);
+  for (const y of years) {
+    const resort = RESORTS.find(r => r.id === resortId && r.year === y);
+    if (resort?.travelPeriods?.some(p => p.cashRates)) return y;
+  }
+  return years[0] || null;
+}
+
+// Estimates what a trip cost, by remapping its original month/day onto the
+// most recent year data.js actually has cash rates for, running the normal
+// cash-rate lookup, then deflating that today-dollars figure back to the
+// trip's own year using data/cash_value_index.js's published WDW price
+// trend -- we don't have a historical rack-rate archive for every resort,
+// so this doesn't pretend to know what the resort *actually* charged on
+// the real historical dates; it's "what a similar stay likely cost that
+// year, based on how WDW resort pricing has grown since," which is a more
+// honest proxy for an old trip than pricing it at today's rate.
+function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
+  const anchorYear = latestCashYear(resortId);
+  if (!anchorYear) return null;
+  const resort = RESORTS.find(r => r.id === resortId && r.year === anchorYear);
   const roomType = resort?.roomTypes.find(rt => rt.id === roomTypeId);
   if (!resort || !roomType) return null;
 
   const nights = nightsBetween(checkIn, checkOut);
   if (nights <= 0 || nights > MAX_TRIP_NIGHTS) return null;
 
-  const stayDates = stayDateRange(remapDateToYear(checkIn, targetYear), nights);
+  const stayDates = stayDateRange(remapDateToYear(checkIn, anchorYear), nights);
   const result = calcStay(resort, roomTypeId, stayDates);
-  return result.totalCash != null ? { cash: result.totalCash, year: targetYear, nights } : null;
+  if (result.totalCash == null) return null;
+
+  const tripYear = parseInt(checkIn.slice(0, 4), 10);
+  const deflator = getCashValueMultiplier(tripYear) / getCashValueMultiplier(anchorYear);
+  const cash = result.totalCash * deflator;
+
+  return { cash, rawCash: result.totalCash, year: tripYear, anchorYear, nights, isDeflated: tripYear !== anchorYear };
 }
 
 // Suggests points used for a trip. Unlike cash, we DO have real historical
@@ -598,7 +622,7 @@ function renderUnconfigured() {
 function tripCashValue(trip) {
   if (trip.custom_cash_value != null) return { cash: trip.custom_cash_value, isCustom: true };
   const est = estimateTripCashValue(trip.resort_id, trip.room_type_id, trip.check_in, trip.check_out);
-  return est ? { cash: est.cash, isCustom: false, estimateYear: est.year } : null;
+  return est ? { cash: est.cash, isCustom: false, estimateYear: est.year, isDeflated: est.isDeflated } : null;
 }
 
 async function renderSignedIn() {
@@ -769,7 +793,7 @@ function renderTripList() {
         </div>
         <div class="trip-value">
           <div class="trip-value-amount">${v ? fmt(v.cash) : "&mdash;"}</div>
-          <div class="trip-value-note">${v ? (v.isCustom ? "your estimate" : `est. at ${v.estimateYear} rates`) : "no rate data"}</div>
+          <div class="trip-value-note">${v ? (v.isCustom ? "your estimate" : (v.isDeflated ? `est. ${v.estimateYear} pricing` : `est. at ${v.estimateYear} rates`)) : "no rate data"}</div>
         </div>
         <div class="trip-actions">
           <button type="button" class="small-btn" data-edit="${t.id}">Edit</button>
@@ -816,7 +840,9 @@ function updateEstimatePreview() {
   }
   const est = estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut);
   if (est) {
-    preview.textContent = `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"}, using ${est.year} rates for these same dates.`;
+    preview.textContent = est.isDeflated
+      ? `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"} -- today's rate for these dates, adjusted down to roughly what ${est.year} pricing looked like.`
+      : `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"}, using ${est.anchorYear} rates for these same dates.`;
     preview.classList.remove("unavailable");
   } else {
     preview.textContent = "No cash rate data available for this resort/room -- enter your own value instead.";
