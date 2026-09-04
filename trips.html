@@ -349,6 +349,13 @@ body {
 }
 .estimate-preview.unavailable { color: #999; background: #f5f5f5; }
 
+.field-hint {
+  font-size: 0.72rem;
+  color: #888;
+  min-height: 1em;
+}
+.field-hint.exact { color: #2e7d32; }
+
 .form-actions { display: flex; gap: 10px; }
 
 .save-btn {
@@ -424,6 +431,12 @@ const pageContent = document.getElementById("page-content");
 let contracts = [];
 let trips = [];
 let editingTripId = null;
+// Tracks the last value we auto-filled into Points Used, so a later
+// suggestion only overwrites the field if the user hasn't typed their own
+// number into it since -- comparing against this (not just "is it empty")
+// is what lets the suggestion keep updating as dates change without ever
+// clobbering a manual edit.
+let lastAutoFilledPoints = null;
 
 function resortName(id) {
   const r = RESORTS.find(r => r.id === id);
@@ -459,6 +472,22 @@ function calcStay(resort, roomTypeId, stayDates) {
   return { totalPoints, totalCash: hasCash ? totalCash : null };
 }
 
+function remapDateToYear(dateStr, targetYear) {
+  const [, m, d] = dateStr.split("-");
+  return `${targetYear}-${m}-${d}`;
+}
+
+function stayDateRange(startDateStr, nights) {
+  const start = new Date(startDateStr + "T12:00:00");
+  const dates = [];
+  for (let i = 0; i < nights; i++) {
+    const dt = new Date(start);
+    dt.setDate(dt.getDate() + i);
+    dates.push(formatDate(dt.getFullYear(), dt.getMonth(), dt.getDate()));
+  }
+  return dates;
+}
+
 // Estimates what a trip would cost at today's cash rates, by remapping its
 // original month/day onto the most recent year data.js actually has pricing
 // for and running the normal cash-rate lookup -- we don't have historical
@@ -476,17 +505,41 @@ function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
   const nights = nightsBetween(checkIn, checkOut);
   if (nights <= 0) return null;
 
-  const [, m, d] = checkIn.split("-");
-  const remappedStart = new Date(`${targetYear}-${m}-${d}T12:00:00`);
-  const stayDates = [];
-  for (let i = 0; i < nights; i++) {
-    const dt = new Date(remappedStart);
-    dt.setDate(dt.getDate() + i);
-    stayDates.push(formatDate(dt.getFullYear(), dt.getMonth(), dt.getDate()));
-  }
-
+  const stayDates = stayDateRange(remapDateToYear(checkIn, targetYear), nights);
   const result = calcStay(resort, roomTypeId, stayDates);
   return result.totalCash != null ? { cash: result.totalCash, year: targetYear, nights } : null;
+}
+
+// Suggests points used for a trip. Unlike cash, we DO have real historical
+// points charts (data/data_historical.js covers 2016-2027 per resort), so
+// if the trip's actual check-in year has chart data, this uses the real
+// dates directly -- no remapping needed, and no estimate caveat applies.
+// Only falls back to remapping onto the nearest year with data (same
+// technique as estimateTripCashValue) for years outside that range.
+function estimateTripPoints(resortId, roomTypeId, checkIn, checkOut) {
+  const nights = nightsBetween(checkIn, checkOut);
+  if (nights <= 0) return null;
+
+  const years = [...new Set(RESORTS.filter(r => r.id === resortId).map(r => r.year))];
+  if (years.length === 0) return null;
+
+  const checkInYear = parseInt(checkIn.slice(0, 4), 10);
+  const isExactYear = years.includes(checkInYear);
+  let targetYear = checkInYear;
+  if (!isExactYear) {
+    const sorted = [...years].sort((a, b) => b - a);
+    const pastYears = sorted.filter(y => y <= checkInYear);
+    targetYear = pastYears.length ? pastYears[0] : sorted[sorted.length - 1];
+  }
+
+  const resort = RESORTS.find(r => r.id === resortId && r.year === targetYear);
+  const roomType = resort?.roomTypes.find(rt => rt.id === roomTypeId);
+  if (!resort || !roomType) return null;
+
+  const stayStart = isExactYear ? checkIn : remapDateToYear(checkIn, targetYear);
+  const stayDates = stayDateRange(stayStart, nights);
+  const result = calcStay(resort, roomTypeId, stayDates);
+  return result.totalPoints > 0 ? { points: result.totalPoints, year: targetYear, isExactYear } : null;
 }
 
 // Cost-of-ownership: amortizes the purchase price evenly over years owned
@@ -649,6 +702,7 @@ async function renderSignedIn() {
           <div class="form-field">
             <label for="f-points">Points Used</label>
             <input type="number" id="f-points" min="0" step="1">
+            <div class="field-hint" id="points-hint"></div>
           </div>
           <div class="form-field">
             <label for="f-contract">Contract (optional)</label>
@@ -761,6 +815,49 @@ function updateEstimatePreview() {
   }
 }
 
+// Auto-fills Points Used with a suggested value (and shows a matching hint
+// under Cash Value's estimate) whenever resort/room/dates change -- but
+// only overwrites the points field if it's still showing our own last
+// suggestion. The moment the user types a different number in themselves,
+// this stops touching it and just keeps the hint updated for reference.
+function updatePointsSuggestion() {
+  const resortId = document.getElementById("f-resort").value;
+  const roomTypeId = document.getElementById("f-room").value;
+  const checkIn = document.getElementById("f-checkin").value;
+  const checkOut = document.getElementById("f-checkout").value;
+  const hint = document.getElementById("points-hint");
+  const pointsInput = document.getElementById("f-points");
+
+  if (!resortId || !roomTypeId || !checkIn || !checkOut) {
+    hint.textContent = "";
+    return;
+  }
+
+  const est = estimateTripPoints(resortId, roomTypeId, checkIn, checkOut);
+  if (!est) {
+    hint.textContent = "No points chart data available for this resort/room.";
+    hint.classList.remove("exact");
+    return;
+  }
+
+  const currentVal = pointsInput.value === "" ? null : Number(pointsInput.value);
+  const untouched = currentVal === null || currentVal === lastAutoFilledPoints;
+  if (untouched) {
+    pointsInput.value = est.points;
+    lastAutoFilledPoints = est.points;
+  }
+
+  hint.textContent = est.isExactYear
+    ? `Suggested: ${est.points} pts (${est.year} points chart)`
+    : `Suggested: ${est.points} pts (estimated using ${est.year} chart -- no ${checkIn.slice(0, 4)} data)`;
+  hint.classList.toggle("exact", est.isExactYear);
+}
+
+function updateSuggestions() {
+  updateEstimatePreview();
+  updatePointsSuggestion();
+}
+
 function setCashMode(mode) {
   document.getElementById("cash-mode-estimate").classList.toggle("selected", mode === "estimate");
   document.getElementById("cash-mode-custom").classList.toggle("selected", mode === "custom");
@@ -790,13 +887,29 @@ function wireTripForm(activeContracts) {
 
   resortSelect.addEventListener("change", () => {
     populateRoomTypesForResort(resortSelect.value, null);
-    updateEstimatePreview();
+    updateSuggestions();
   });
-  document.getElementById("f-room").addEventListener("change", updateEstimatePreview);
-  document.getElementById("f-checkin").addEventListener("change", updateEstimatePreview);
-  document.getElementById("f-checkout").addEventListener("change", updateEstimatePreview);
+  document.getElementById("f-room").addEventListener("change", updateSuggestions);
+  document.getElementById("f-checkin").addEventListener("change", updateSuggestions);
+  document.getElementById("f-checkout").addEventListener("change", updateSuggestions);
   document.getElementById("cash-mode-estimate").addEventListener("click", () => setCashMode("estimate"));
-  document.getElementById("cash-mode-custom").addEventListener("click", () => setCashMode("custom"));
+  document.getElementById("cash-mode-custom").addEventListener("click", () => {
+    setCashMode("custom");
+    // Seed the custom field with our current estimate as a starting point
+    // to adjust, rather than leaving it blank -- same "suggest, don't
+    // force" pattern as Points Used.
+    const customInput = document.getElementById("f-custom-cash");
+    if (!customInput.value) {
+      const resortId = document.getElementById("f-resort").value;
+      const roomTypeId = document.getElementById("f-room").value;
+      const checkIn = document.getElementById("f-checkin").value;
+      const checkOut = document.getElementById("f-checkout").value;
+      if (resortId && roomTypeId && checkIn && checkOut) {
+        const est = estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut);
+        if (est) customInput.value = Math.round(est.cash);
+      }
+    }
+  });
 
   document.getElementById("show-add-form").addEventListener("click", () => openTripForm(null));
   document.getElementById("cancel-trip").addEventListener("click", closeTripForm);
@@ -805,6 +918,7 @@ function wireTripForm(activeContracts) {
 
 function openTripForm(trip) {
   editingTripId = trip ? trip.id : null;
+  lastAutoFilledPoints = null;
   document.getElementById("form-error").style.display = "none";
   document.getElementById("f-resort").value = trip?.resort_id || document.getElementById("f-resort").value;
   populateRoomTypesForResort(document.getElementById("f-resort").value, trip?.room_type_id);
@@ -820,7 +934,7 @@ function openTripForm(trip) {
     setCashMode("estimate");
     document.getElementById("f-custom-cash").value = "";
   }
-  updateEstimatePreview();
+  updateSuggestions();
   document.getElementById("trip-form").classList.add("open");
   document.getElementById("save-trip").textContent = trip ? "Save Changes" : "Save Trip";
   document.getElementById("trip-form").scrollIntoView({ behavior: "smooth", block: "nearest" });
