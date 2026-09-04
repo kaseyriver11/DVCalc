@@ -69,6 +69,12 @@ body {
   padding: 0 16px 60px;
 }
 
+.page-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .gate {
   background: white;
   border-radius: 10px;
@@ -672,6 +678,10 @@ async function renderSignedIn() {
   const net = totalTripValue - totalCostToDate;
 
   pageContent.innerHTML = `
+    <div class="page-top-actions">
+      <button type="button" class="add-btn" id="show-add-form">+ Log a Trip</button>
+    </div>
+
     <div class="section">
       <h2>The Full Story</h2>
       <div class="section-sub">Cost of ownership to date vs. the cash value of trips you've logged</div>
@@ -705,7 +715,6 @@ async function renderSignedIn() {
       <div class="section-sub">Log a trip you've taken. Points used and cash value are pre-filled with our best guess -- edit either if you know the real numbers.</div>
       ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
       <div class="trip-list" id="trip-list"></div>
-      <button type="button" class="add-btn" id="show-add-form">+ Log a Trip</button>
       <div class="trip-form" id="trip-form">
         <div class="form-error" id="form-error" style="display:none;"></div>
         <div class="form-grid">
