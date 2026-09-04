@@ -1274,6 +1274,22 @@ function getContractWindowMonths(contract, resortId) {
   return null;
 }
 
+// Distinguishes the two different reasons a resort can be blocked for a
+// contract -- "this contract can ONLY ever book its home resort" (true only
+// when the contract's OWN home resort is one of the three home-only resale
+// resorts) vs. "this contract has normal 7-month reach elsewhere, just not
+// to this one specific resort" (true for a normal resale contract hitting
+// one of the three restricted resorts as its *target*, not its home). A
+// resort being blocked doesn't imply the whole contract is home-only --
+// conflating those two produced an actual wrong claim about what the
+// contract can book, not just an unclear message.
+function contractIsHomeOnly(contract) {
+  if (!contract || !window.DVCAuth || contract.purchase_type === "direct") return false;
+  const allIds = [...new Set(RESORTS.map(r => r.id))];
+  const access = window.DVCAuth.getUserResortAccess([contract], allIds);
+  return access.sevenMoResortIds.size === 0;
+}
+
 // Last bookable date (YYYY-MM-DD) for a given lead time in months from today,
 // or null if unrestricted. Mirrors the date math the old Booking Window
 // dropdown used, but now driven by real contract data instead of a manual
@@ -1578,8 +1594,10 @@ function buildContractCardHTML() {
       eligibilityHTML = `<div class="contract-eligibility contract-ok">&check; Home resort &mdash; bookable up to 11 months out</div>`;
     } else if (months === 7) {
       eligibilityHTML = `<div class="contract-eligibility contract-ok">&check; Bookable up to 7 months out with this contract</div>`;
-    } else {
+    } else if (contractIsHomeOnly(contract)) {
       eligibilityHTML = `<div class="contract-eligibility contract-blocked">&times; This contract can't book ${resort.name} &mdash; resale-restricted to ${resortNameForId(contract.home_resort_id)} only</div>`;
+    } else {
+      eligibilityHTML = `<div class="contract-eligibility contract-blocked">&times; Can't book ${resort.name} with this contract due to resale restrictions</div>`;
     }
 
     const stayDates = getStayDates();
