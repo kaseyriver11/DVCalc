@@ -157,27 +157,39 @@ async function getTrips() {
   return data;
 }
 
+// Detects PostgREST's "column doesn't exist yet" error, which shows up if
+// a database hasn't had db/migrations/002_add_trip_custom_cash_value.sql
+// run against it -- lets addTrip/updateTrip degrade gracefully (drop the
+// unsupported field and retry) instead of failing the whole save over one
+// optional column.
+function isMissingColumnError(error, column) {
+  const msg = error?.message?.toLowerCase() || "";
+  return msg.includes("could not find") && msg.includes(`'${column.toLowerCase()}'`);
+}
+
 // trip: { contract_id, resort_id, room_type_id, check_in, check_out,
 // points_used, custom_cash_value, notes } -- user_id filled in here, same
 // reasoning as addContract().
 async function addTrip(trip) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  const { data, error } = await supabase
-    .from("trips")
-    .insert({ ...trip, user_id: currentSession.user.id })
-    .select()
-    .single();
+  const payload = { ...trip, user_id: currentSession.user.id };
+  let { data, error } = await supabase.from("trips").insert(payload).select().single();
+  if (error && isMissingColumnError(error, "custom_cash_value")) {
+    const { custom_cash_value, ...rest } = payload;
+    ({ data, error } = await supabase.from("trips").insert(rest).select().single());
+    if (!error) return { data, warning: "Trip saved, but the cash value wasn't stored -- the database needs db/migrations/002_add_trip_custom_cash_value.sql run against it." };
+  }
   return { data, error: error?.message };
 }
 
 async function updateTrip(id, patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  const { data, error } = await supabase
-    .from("trips")
-    .update(patch)
-    .eq("id", id)
-    .select()
-    .single();
+  let { data, error } = await supabase.from("trips").update(patch).eq("id", id).select().single();
+  if (error && isMissingColumnError(error, "custom_cash_value")) {
+    const { custom_cash_value, ...rest } = patch;
+    ({ data, error } = await supabase.from("trips").update(rest).eq("id", id).select().single());
+    if (!error) return { data, warning: "Trip saved, but the cash value wasn't stored -- the database needs db/migrations/002_add_trip_custom_cash_value.sql run against it." };
+  }
   return { data, error: error?.message };
 }
 

@@ -326,35 +326,22 @@ body {
   box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
 }
 
-.cash-mode-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
-.cash-mode-toggle button {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: white;
-  font-size: 0.82rem;
-  cursor: pointer;
-  color: #555;
-}
-.cash-mode-toggle button.selected { background: #4a148c; border-color: #4a148c; color: white; }
-
-.estimate-preview {
-  font-size: 0.8rem;
-  color: #2e7d32;
-  background: #e8f5e9;
-  padding: 8px 10px;
-  border-radius: 6px;
-  margin-top: 4px;
-}
-.estimate-preview.unavailable { color: #999; background: #f5f5f5; }
-
 .field-hint {
   font-size: 0.72rem;
   color: #888;
   min-height: 1em;
 }
 .field-hint.exact { color: #2e7d32; }
+
+.save-warning {
+  font-size: 0.8rem;
+  color: #8a6d00;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
 
 .form-actions { display: flex; gap: 10px; }
 
@@ -438,6 +425,11 @@ let editingTripId = null;
 // is what lets the suggestion keep updating as dates change without ever
 // clobbering a manual edit.
 let lastAutoFilledPoints = null;
+// Same tracking, for the Cash Value field.
+let lastAutoFilledCash = null;
+// A non-blocking warning from the most recent save (e.g. the database is
+// missing a column), shown once at the top of Trip History then cleared.
+let pendingWarning = null;
 
 function resortName(id) {
   const r = RESORTS.find(r => r.id === id);
@@ -710,7 +702,8 @@ async function renderSignedIn() {
 
     <div class="section">
       <h2>Trip History</h2>
-      <div class="section-sub">Log a trip you've taken. Points used is what you actually know; cash value can be your own estimate or ours.</div>
+      <div class="section-sub">Log a trip you've taken. Points used and cash value are pre-filled with our best guess -- edit either if you know the real numbers.</div>
+      ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
       <div class="trip-list" id="trip-list"></div>
       <button type="button" class="add-btn" id="show-add-form">+ Log a Trip</button>
       <div class="trip-form" id="trip-form">
@@ -744,14 +737,10 @@ async function renderSignedIn() {
               ${activeContracts.map(c => `<option value="${c.id}">${contractLabel(c)}</option>`).join("")}
             </select>
           </div>
-          <div class="form-field full">
-            <label>Cash Value</label>
-            <div class="cash-mode-toggle">
-              <button type="button" id="cash-mode-estimate" class="selected">Use our estimate</button>
-              <button type="button" id="cash-mode-custom">Enter my own</button>
-            </div>
-            <div id="estimate-preview" class="estimate-preview">Pick a resort, room, and dates to see an estimate.</div>
-            <input type="number" id="f-custom-cash" min="0" step="1" placeholder="Total $ for the stay" style="display:none; margin-top: 6px;">
+          <div class="form-field">
+            <label for="f-cash-value">Cash Value (optional)</label>
+            <input type="number" id="f-cash-value" min="0" step="1" placeholder="Total $ for the stay">
+            <div class="field-hint" id="cash-hint"></div>
           </div>
           <div class="form-field full">
             <label for="f-notes">Notes (optional)</label>
@@ -768,6 +757,7 @@ async function renderSignedIn() {
 
   renderTripList();
   wireTripForm(activeContracts);
+  pendingWarning = null;
 }
 
 function renderTripList() {
@@ -827,34 +817,48 @@ function populateRoomTypesForResort(resortId, selectedRoomTypeId) {
   ).join("");
 }
 
-function updateEstimatePreview() {
+// Auto-fills Cash Value with our estimate whenever resort/room/dates
+// change -- same "suggest, don't force" pattern as Points Used below: it
+// only overwrites the field while it still holds our own last suggestion,
+// so typing a different number stops it from being touched again. Unlike
+// Points Used this field is optional (several non-WDW resorts have no cash
+// rate data at all), so an unavailable estimate just clears the hint
+// instead of blocking anything.
+function updateCashSuggestion() {
   const resortId = document.getElementById("f-resort").value;
   const roomTypeId = document.getElementById("f-room").value;
   const checkIn = document.getElementById("f-checkin").value;
   const checkOut = document.getElementById("f-checkout").value;
-  const preview = document.getElementById("estimate-preview");
+  const hint = document.getElementById("cash-hint");
+  const cashInput = document.getElementById("f-cash-value");
+
   if (!resortId || !roomTypeId || !checkIn || !checkOut) {
-    preview.textContent = "Pick a resort, room, and dates to see an estimate.";
-    preview.classList.add("unavailable");
+    hint.textContent = "";
     return;
   }
+
   const est = estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut);
-  if (est) {
-    preview.textContent = est.isDeflated
-      ? `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"} -- today's rate for these dates, adjusted down to roughly what ${est.year} pricing looked like.`
-      : `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"}, using ${est.anchorYear} rates for these same dates.`;
-    preview.classList.remove("unavailable");
-  } else {
-    preview.textContent = "No cash rate data available for this resort/room -- enter your own value instead.";
-    preview.classList.add("unavailable");
+  if (!est) {
+    hint.textContent = "No cash rate data available for this resort/room -- enter your own value if you know it.";
+    return;
   }
+
+  const currentVal = cashInput.value === "" ? null : Number(cashInput.value);
+  const untouched = currentVal === null || currentVal === lastAutoFilledCash;
+  if (untouched) {
+    cashInput.value = Math.round(est.cash);
+    lastAutoFilledCash = Math.round(est.cash);
+  }
+
+  hint.textContent = est.isDeflated
+    ? `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"} -- today's rate for these dates, adjusted down to roughly what ${est.year} pricing looked like.`
+    : `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"}, using ${est.anchorYear} rates for these same dates.`;
 }
 
-// Auto-fills Points Used with a suggested value (and shows a matching hint
-// under Cash Value's estimate) whenever resort/room/dates change -- but
-// only overwrites the points field if it's still showing our own last
-// suggestion. The moment the user types a different number in themselves,
-// this stops touching it and just keeps the hint updated for reference.
+// Same pattern for Points Used, whenever resort/room/dates change -- only
+// overwrites the field while it still holds our own last suggestion. The
+// moment the user types a different number in themselves, this stops
+// touching it and just keeps the hint updated for reference.
 function updatePointsSuggestion() {
   const resortId = document.getElementById("f-resort").value;
   const roomTypeId = document.getElementById("f-room").value;
@@ -889,19 +893,8 @@ function updatePointsSuggestion() {
 }
 
 function updateSuggestions() {
-  updateEstimatePreview();
+  updateCashSuggestion();
   updatePointsSuggestion();
-}
-
-function setCashMode(mode) {
-  document.getElementById("cash-mode-estimate").classList.toggle("selected", mode === "estimate");
-  document.getElementById("cash-mode-custom").classList.toggle("selected", mode === "custom");
-  document.getElementById("estimate-preview").style.display = mode === "estimate" ? "block" : "none";
-  document.getElementById("f-custom-cash").style.display = mode === "custom" ? "block" : "none";
-}
-
-function getCashMode() {
-  return document.getElementById("cash-mode-estimate").classList.contains("selected") ? "estimate" : "custom";
 }
 
 function uniqueResorts() {
@@ -927,24 +920,6 @@ function wireTripForm(activeContracts) {
   document.getElementById("f-room").addEventListener("change", updateSuggestions);
   document.getElementById("f-checkin").addEventListener("change", updateSuggestions);
   document.getElementById("f-checkout").addEventListener("change", updateSuggestions);
-  document.getElementById("cash-mode-estimate").addEventListener("click", () => setCashMode("estimate"));
-  document.getElementById("cash-mode-custom").addEventListener("click", () => {
-    setCashMode("custom");
-    // Seed the custom field with our current estimate as a starting point
-    // to adjust, rather than leaving it blank -- same "suggest, don't
-    // force" pattern as Points Used.
-    const customInput = document.getElementById("f-custom-cash");
-    if (!customInput.value) {
-      const resortId = document.getElementById("f-resort").value;
-      const roomTypeId = document.getElementById("f-room").value;
-      const checkIn = document.getElementById("f-checkin").value;
-      const checkOut = document.getElementById("f-checkout").value;
-      if (resortId && roomTypeId && checkIn && checkOut) {
-        const est = estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut);
-        if (est) customInput.value = Math.round(est.cash);
-      }
-    }
-  });
 
   document.getElementById("show-add-form").addEventListener("click", () => openTripForm(null));
   document.getElementById("cancel-trip").addEventListener("click", closeTripForm);
@@ -954,6 +929,7 @@ function wireTripForm(activeContracts) {
 function openTripForm(trip) {
   editingTripId = trip ? trip.id : null;
   lastAutoFilledPoints = null;
+  lastAutoFilledCash = null;
   document.getElementById("form-error").style.display = "none";
   document.getElementById("f-resort").value = trip?.resort_id || document.getElementById("f-resort").value;
   populateRoomTypesForResort(document.getElementById("f-resort").value, trip?.room_type_id);
@@ -962,13 +938,7 @@ function openTripForm(trip) {
   document.getElementById("f-points").value = trip?.points_used || "";
   document.getElementById("f-contract").value = trip?.contract_id || "";
   document.getElementById("f-notes").value = trip?.notes || "";
-  if (trip?.custom_cash_value != null) {
-    setCashMode("custom");
-    document.getElementById("f-custom-cash").value = trip.custom_cash_value;
-  } else {
-    setCashMode("estimate");
-    document.getElementById("f-custom-cash").value = "";
-  }
+  document.getElementById("f-cash-value").value = trip?.custom_cash_value != null ? trip.custom_cash_value : "";
   updateSuggestions();
   document.getElementById("trip-form").classList.add("open");
   document.getElementById("save-trip").textContent = trip ? "Save Changes" : "Save Trip";
@@ -1017,8 +987,8 @@ async function saveTripForm() {
     points_used: points,
     contract_id: document.getElementById("f-contract").value || null,
     notes: document.getElementById("f-notes").value.trim() || null,
-    custom_cash_value: getCashMode() === "custom" && document.getElementById("f-custom-cash").value
-      ? parseFloat(document.getElementById("f-custom-cash").value)
+    custom_cash_value: document.getElementById("f-cash-value").value
+      ? parseFloat(document.getElementById("f-cash-value").value)
       : null,
   };
 
@@ -1032,6 +1002,7 @@ async function saveTripForm() {
     return;
   }
 
+  pendingWarning = result.warning || null;
   closeTripForm();
   renderSignedIn();
 }
