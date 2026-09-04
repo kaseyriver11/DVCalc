@@ -1817,11 +1817,22 @@ select, input, textarea, button {
 }
 
 /* ---- Responsive ---- */
-.calendar-grid-scroll {
-  overflow-x: auto;
-}
-
 @media (max-width: 800px) {
+  /* Scoped to narrow viewports only -- overflow-x: auto here pairs with
+     .calendar-grid's min-width below to let the grid scroll horizontally
+     instead of squeezing cells illegibly. Applying it unconditionally
+     (as this used to) triggers a CSS Overflow Module interop rule: when
+     overflow-x is anything other than visible, a not-visible overflow-y
+     computes to auto too, and visible overflow-y computes to auto as
+     well (a visible/non-visible pairing isn't allowed) -- so even before
+     this was scoped, overflow-y was never actually visible on desktop,
+     it silently became a second auto scrollbar clipping the grid to a
+     shorter-than-content height for no reason, since desktop never
+     needed horizontal scroll at all. */
+  .calendar-grid-scroll {
+    overflow-x: auto;
+  }
+
   .site-nav {
     flex-direction: column;
     align-items: flex-start;
