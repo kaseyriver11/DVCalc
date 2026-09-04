@@ -1351,6 +1351,54 @@ select, input, textarea, button {
   padding: 24px 12px;
 }
 
+/* ---- Booking As (contract personalization) ---- */
+.contract-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: white;
+}
+
+.contract-select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+.contract-eligibility {
+  font-size: 0.8rem;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
+.contract-eligibility.contract-ok {
+  color: #2e7d32;
+  background: #e8f5e9;
+}
+
+.contract-eligibility.contract-blocked {
+  color: #b71c1c;
+  background: #ffebee;
+}
+
+.contract-points {
+  font-size: 0.78rem;
+  color: #666;
+  margin-top: 6px;
+  padding: 6px 10px;
+}
+
+.contract-points.contract-points-over {
+  color: #b71c1c;
+  background: #fff3e0;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
 .summary-empty.small {
   padding: 8px 4px;
   text-align: left;
@@ -1516,6 +1564,30 @@ select, input, textarea, button {
   border-color: #b71c1c;
   color: #b71c1c;
   background: rgba(183, 28, 28, 0.04);
+}
+
+/* ---- Contract personalization: dates outside this contract's current
+   booking window (11mo home / 7mo elsewhere), or a resort it can never
+   book. Dimmed but still clickable -- unlike the old Booking Window
+   dropdown, this is informational, not a hard gate, since someone may
+   reasonably want to see what a date would cost even before they can
+   actually book it. ---- */
+.day-cell.contract-not-yet-bookable {
+  opacity: 0.4;
+}
+
+.day-cell.contract-not-yet-bookable::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(0,0,0,0.035),
+    rgba(0,0,0,0.035) 4px,
+    transparent 4px,
+    transparent 9px
+  );
+  pointer-events: none;
 }
 
 /* ---- Split Stay: Calendar ---- */

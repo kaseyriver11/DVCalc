@@ -1244,6 +1244,82 @@ function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {
 }
 
 // ---- Render Calendar ----
+// ---- Account/Contract Personalization ----
+// Deliberately NOT part of `state` -- state gets wholesale-serialized to
+// sessionStorage for the index<->compare handoff (see saveStateToSession()
+// below), and contract data would go stale the moment it changes elsewhere.
+// This is a separate module-scope pair, refreshed on auth changes.
+let userContracts = [];       // every contract for the signed-in user (active + inactive)
+let selectedContractId = null; // which one the user is browsing "as", or null
+
+function getActiveContracts() {
+  return userContracts.filter(c => c.is_active);
+}
+
+function getSelectedContract() {
+  return getActiveContracts().find(c => c.id === selectedContractId) || null;
+}
+
+// How many months out someone can book a given resort under a single
+// contract: 11 (home resort), 7 (other resort this contract can reach), or
+// null (this contract can never book there -- see the resale-restriction
+// rule in auth.js). Reuses DVCAuth.getUserResortAccess() with a one-contract
+// array, since that function already unions correctly over any array length.
+function getContractWindowMonths(contract, resortId) {
+  if (!contract || !window.DVCAuth) return null;
+  const allIds = [...new Set(RESORTS.map(r => r.id))];
+  const access = window.DVCAuth.getUserResortAccess([contract], allIds);
+  if (access.homeResortIds.has(resortId)) return 11;
+  if (access.sevenMoResortIds.has(resortId)) return 7;
+  return null;
+}
+
+// Last bookable date (YYYY-MM-DD) for a given lead time in months from today,
+// or null if unrestricted. Mirrors the date math the old Booking Window
+// dropdown used, but now driven by real contract data instead of a manual
+// toggle -- see docs/accounts_plan.md, Phase 3.
+function monthsFromTodayCutoff(months) {
+  if (months == null) return null;
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const cutoff = new Date(today);
+  cutoff.setMonth(cutoff.getMonth() + months);
+  return formatDate(cutoff.getFullYear(), cutoff.getMonth(), cutoff.getDate());
+}
+
+async function refreshUserContracts() {
+  userContracts = window.DVCAuth ? await window.DVCAuth.getContracts() : [];
+  if (!getActiveContracts().some(c => c.id === selectedContractId)) selectedContractId = null;
+  renderSummary();
+  renderCalendar();
+}
+
+function setSelectedContract(id) {
+  selectedContractId = id || null;
+  renderSummary();
+  renderCalendar();
+}
+
+// auth.js's module script resolves imports asynchronously -- poll briefly
+// for window.DVCAuth rather than assuming it's ready this soon (same
+// reasoning as auth.js's own header-control code and account.html).
+function initAccountPersonalization(attempts) {
+  if (window.DVCAuth) {
+    window.DVCAuth.onAuthChange((session) => {
+      if (session) {
+        refreshUserContracts();
+      } else {
+        userContracts = [];
+        selectedContractId = null;
+        renderSummary();
+        renderCalendar();
+      }
+    });
+  } else if (attempts > 0) {
+    setTimeout(() => initAccountPersonalization(attempts - 1), 50);
+  }
+}
+
 function renderCalendar() {
   syncCustomSelects();
 
@@ -1266,6 +1342,11 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const stayDates = new Set(getStayDates());
   const prevSegDates = getAllPreviousSegmentDates();
+
+  const selectedContract = getSelectedContract();
+  const contractWindowMonths = selectedContract ? getContractWindowMonths(selectedContract, resort.id) : null;
+  const contractCutoff = contractWindowMonths != null ? monthsFromTodayCutoff(contractWindowMonths) : null;
+  const contractRestricted = selectedContract && contractWindowMonths == null;
 
   for (let i = 0; i < firstDay; i++) {
     const el = document.createElement("div");
@@ -1294,6 +1375,9 @@ function renderCalendar() {
     if (isStayNight) el.classList.add("selected");
     if (isCheckIn) el.classList.add("checkin");
     if (isCheckOut) el.classList.add("checkout");
+    if (contractRestricted || (contractCutoff && dateStr > contractCutoff)) {
+      el.classList.add("contract-not-yet-bookable");
+    }
 
     const tooltipAlign = dayOfWeek <= 1 ? "tooltip-align-left" : dayOfWeek >= 5 ? "tooltip-align-right" : "";
     let periodTooltipHTML = "";
@@ -1467,6 +1551,69 @@ function buildSegmentBlock(seg, totals, index, isCurrentSegment, totalVisible) {
   `;
 }
 
+function resortNameForId(id) {
+  const r = RESORTS.find(r => r.id === id);
+  return r ? r.name : id;
+}
+
+// Card letting a signed-in user pick which of their contracts to "book as" --
+// drives the calendar dimming in renderCalendar() and the eligibility/points
+// check below. Empty string (renders nothing) if signed out or no contracts,
+// so this is purely additive for anyone not using the account features.
+function buildContractCardHTML() {
+  const contracts = getActiveContracts();
+  if (contracts.length === 0) return "";
+
+  const resort = getResort();
+  const options = contracts.map(c => {
+    const label = `${c.nickname || resortNameForId(c.home_resort_id)} (${c.use_year} UY, ${c.points_per_year.toLocaleString()} pts)`;
+    return `<option value="${c.id}" ${c.id === selectedContractId ? "selected" : ""}>${label}</option>`;
+  }).join("");
+
+  let eligibilityHTML = "";
+  const contract = getSelectedContract();
+  if (contract) {
+    const months = getContractWindowMonths(contract, resort.id);
+    if (months === 11) {
+      eligibilityHTML = `<div class="contract-eligibility contract-ok">&check; Home resort &mdash; bookable up to 11 months out</div>`;
+    } else if (months === 7) {
+      eligibilityHTML = `<div class="contract-eligibility contract-ok">&check; Bookable up to 7 months out with this contract</div>`;
+    } else {
+      eligibilityHTML = `<div class="contract-eligibility contract-blocked">&times; This contract can't book ${resort.name} &mdash; resale-restricted to ${resortNameForId(contract.home_resort_id)} only</div>`;
+    }
+
+    const stayDates = getStayDates();
+    if (stayDates.length > 0 && !isSplitMode()) {
+      const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
+      if (totals.points != null) {
+        const over = totals.points > contract.points_per_year;
+        eligibilityHTML += `
+          <div class="contract-points${over ? " contract-points-over" : ""}">
+            ${totals.points.toLocaleString()} pts for this stay vs. ${contract.points_per_year.toLocaleString()} pts/year on this contract
+            ${over ? `&mdash; short by ${(totals.points - contract.points_per_year).toLocaleString()} pts (before any banked/borrowed points, which this doesn't track yet)` : ""}
+          </div>
+        `;
+      }
+    }
+  }
+
+  return `
+    <div class="summary-card" id="contract-card">
+      <h3>Booking As</h3>
+      <select id="contract-select" class="contract-select">
+        <option value="">Just browsing (no contract)</option>
+        ${options}
+      </select>
+      ${eligibilityHTML}
+    </div>
+  `;
+}
+
+function attachContractSelectListener() {
+  const sel = document.getElementById("contract-select");
+  if (sel) sel.addEventListener("change", (e) => setSelectedContract(e.target.value));
+}
+
 function renderSummary() {
   const resort = getResort();
   const stayDates = getStayDates();
@@ -1476,6 +1623,7 @@ function renderSummary() {
   if (stayDates.length === 0 && !inSplitMode) {
     actionButtons.innerHTML = "";
     summaryContainer.innerHTML = `
+      ${buildContractCardHTML()}
       <div class="summary-card">
         <h3>Your Stay</h3>
         <div class="summary-empty">
@@ -1483,6 +1631,7 @@ function renderSummary() {
         </div>
       </div>
     `;
+    attachContractSelectListener();
     return;
   }
 
@@ -1586,6 +1735,7 @@ function renderSummary() {
   const useCustomRate = !inSplitMode && !resortHasCashData && !hasFallbackCash && state.customCashRate;
 
   summaryContainer.innerHTML = `
+    ${!inSplitMode ? buildContractCardHTML() : ""}
     <div class="summary-card${inSplitMode ? " wide" : ""}">
       <h3>${inSplitMode ? "Split Stay" : "Your Stay"}</h3>
 
@@ -1726,6 +1876,8 @@ function renderSummary() {
       if (e.key === "Enter") e.target.blur();
     });
   }
+
+  attachContractSelectListener();
 }
 
 function clearSelection() {
@@ -1939,3 +2091,4 @@ renderCalendar();
 renderLegend();
 renderCrowdLegend();
 renderSummary();
+initAccountPersonalization(40);

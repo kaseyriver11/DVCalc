@@ -16,11 +16,35 @@ two different accounts) still needs a hands-on pass by the account owner,
 since completing a real Google sign-in isn't something to do on someone's
 behalf.
 
+Phase 3 (personalization payoff) built 2026-09-03 — a "Booking As" card in
+the calendar's right panel (`app.js`, right before `renderCalendar()`) lets
+a signed-in user pick which contract to browse as. Once selected: the card
+shows whether the currently-selected resort is home (11mo), reachable
+(7mo), or blocked (resale-restricted, naming the actual home resort it's
+restricted to) for that contract; the calendar dims dates beyond the
+applicable window (still clickable, informational not a hard gate); and if
+a selected stay's points cost exceeds the contract's annual points, a
+warning shows how many points short, explicitly caveated that banked/
+borrowed points aren't tracked yet. Re-verified the resale-restriction
+rule against fresh sources before building (exact 14-resort unrestricted
+list matched what was already encoded; confirmed banked/borrowed points
+inherit their contract's restriction, consistent with contract-level
+modeling). Split-stay mode doesn't get the card yet (out of scope for this
+pass, multi-resort personalization is a reasonable follow-on).
+
+Verified thoroughly by injecting fake contract data directly (no real
+Supabase contracts existed to test against interactively): all three
+eligibility states (home/7mo/restricted) render correctly with accurate
+resort names; points-over-budget warning triggers correctly; calendar
+dimming math verified against a real 11-vs-7-month boundary case (May 2027,
+~8 months out -- reachable under an 11-month home contract, not under a
+7-month resale contract); real DOM change-event flow through the actual
+`<select>` confirmed end to end, not just direct state manipulation.
+
 Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
 allow-list currently only permits `localhost:8794`; the production URL
-needs to be added there before login will work live. Phase 3
-(personalization payoff — wiring contracts into the calendar/compare pages)
-not started.
+needs to be added there before login will work live. Phase 4 (trip history
++ cost-of-ownership page) not started.
 
 ## Context
 
