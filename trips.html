@@ -451,10 +451,19 @@ function formatDate(year, month, day) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+// No real DVC stay comes close to this; it exists purely as a runaway
+// guard. Native <input type="date"> fires "change" on every keystroke
+// while editing a segment in place, so mid-edit on the year (e.g. typing
+// over "2024" one digit at a time) can briefly put check-in and check-out
+// thousands of years apart -- without this cap, stayDateRange()'s per-night
+// loop would try to build a date list that long and freeze the tab.
+const MAX_TRIP_NIGHTS = 90;
+
 function nightsBetween(checkIn, checkOut) {
   const ci = new Date(checkIn + "T12:00:00");
   const co = new Date(checkOut + "T12:00:00");
-  return Math.round((co - ci) / 86400000);
+  const nights = Math.round((co - ci) / 86400000);
+  return Number.isFinite(nights) ? nights : 0;
 }
 
 // Same shape as compare.html's calcStay() -- kept as its own copy here
@@ -503,7 +512,7 @@ function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
   if (!resort || !roomType) return null;
 
   const nights = nightsBetween(checkIn, checkOut);
-  if (nights <= 0) return null;
+  if (nights <= 0 || nights > MAX_TRIP_NIGHTS) return null;
 
   const stayDates = stayDateRange(remapDateToYear(checkIn, targetYear), nights);
   const result = calcStay(resort, roomTypeId, stayDates);
@@ -518,7 +527,7 @@ function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
 // technique as estimateTripCashValue) for years outside that range.
 function estimateTripPoints(resortId, roomTypeId, checkIn, checkOut) {
   const nights = nightsBetween(checkIn, checkOut);
-  if (nights <= 0) return null;
+  if (nights <= 0 || nights > MAX_TRIP_NIGHTS) return null;
 
   const years = [...new Set(RESORTS.filter(r => r.id === resortId).map(r => r.year))];
   if (years.length === 0) return null;
@@ -960,6 +969,11 @@ async function saveTripForm() {
   }
   if (checkOut <= checkIn) {
     errorEl.textContent = "Check-out must be after check-in.";
+    errorEl.style.display = "block";
+    return;
+  }
+  if (nightsBetween(checkIn, checkOut) > MAX_TRIP_NIGHTS) {
+    errorEl.textContent = `That's a ${nightsBetween(checkIn, checkOut)}-night stay -- double-check the dates.`;
     errorEl.style.display = "block";
     return;
   }
