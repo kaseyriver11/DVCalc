@@ -406,6 +406,7 @@ body {
 
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
+  <script src="data/dues_historical.js"></script>
   <script>
 const pageContent = document.getElementById("page-content");
 let contracts = [];
@@ -476,27 +477,30 @@ function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
   return result.totalCash != null ? { cash: result.totalCash, year: targetYear, nights } : null;
 }
 
-// Cost-of-ownership: amortizes the purchase price over years owned to date
-// (not a guessed contract-expiration year -- keeps this defensible without
-// needing data we don't have) plus dues at today's rate for every year
-// owned. Real historical dues rates varied year to year; using today's rate
-// uniformly is a simplification, called out in the UI rather than hidden.
+// Cost-of-ownership: amortizes the purchase price evenly over years owned
+// to date (not a guessed contract-expiration year -- keeps this defensible
+// without needing data we don't have), plus each year's *actual* published
+// dues rate for that resort (data/dues_historical.js) rather than applying
+// today's rate retroactively -- dues typically rise 4-6%/yr, so that would
+// meaningfully overstate cost in early years for anyone who's owned a while.
 function buildAmortizationSchedule(contract) {
   if (!contract.purchase_price || !contract.purchase_date) return null;
   const purchaseYear = parseInt(contract.purchase_date.slice(0, 4), 10);
   const currentYear = new Date().getFullYear();
   const totalYears = Math.max(1, currentYear - purchaseYear + 1);
-  const annualDues = contract.points_per_year * (DUES_PER_POINT[contract.home_resort_id] || 0);
   const amortizedPurchasePerYear = contract.purchase_price / totalYears;
 
   const rows = [];
   let cumulative = 0;
+  let totalDues = 0;
   for (let y = purchaseYear; y <= currentYear; y++) {
-    const yearTotal = annualDues + amortizedPurchasePerYear;
+    const dues = contract.points_per_year * getDuesForYear(contract.home_resort_id, y);
+    totalDues += dues;
+    const yearTotal = dues + amortizedPurchasePerYear;
     cumulative += yearTotal;
-    rows.push({ year: y, dues: annualDues, amortized: amortizedPurchasePerYear, total: yearTotal, cumulative });
+    rows.push({ year: y, dues, amortized: amortizedPurchasePerYear, total: yearTotal, cumulative });
   }
-  return { rows, totalYears, annualDues, amortizedPurchasePerYear, totalCostToDate: cumulative };
+  return { rows, totalYears, totalDues, amortizedPurchasePerYear, totalCostToDate: cumulative };
 }
 
 function fmt(n) {
@@ -561,7 +565,7 @@ async function renderSignedIn() {
           <tbody>${rowsHTML}</tbody>
         </table>
         <div class="amort-summary">
-          <span>Dues: <strong>${fmt(schedule.annualDues)}</strong>/yr at today's rate</span>
+          <span>Total dues paid: <strong>${fmt(schedule.totalDues)}</strong> across ${schedule.totalYears} year${schedule.totalYears === 1 ? "" : "s"} (actual rate per year)</span>
           <span>Buy-in spread over <strong>${schedule.totalYears}</strong> year${schedule.totalYears === 1 ? "" : "s"} owned so far</span>
         </div>
       </div>
@@ -602,7 +606,7 @@ async function renderSignedIn() {
 
     <div class="section">
       <h2>Cost of Ownership</h2>
-      <div class="section-sub">Amortized over years owned to date, dues at today's rate (real historical dues varied year to year -- this is a simplification, not a record of what you actually paid)</div>
+      <div class="section-sub">Buy-in amortized evenly over years owned to date; dues use each resort's actual published rate for each year (not today's rate applied retroactively)</div>
       ${activeContracts.length === 0 ? `<div class="empty-note">No active contracts yet -- <a href="account.html">add one</a>.</div>` : contractCostCards}
     </div>
 

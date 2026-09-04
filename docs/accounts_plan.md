@@ -83,6 +83,30 @@ editing a trip correctly pre-populates every field including which cash
 mode it was saved in; check-out-before-check-in validation blocks save
 with the right error message; delete calls through correctly.
 
+Cost-of-ownership dues upgraded 2026-09-04 from a flat "today's rate"
+assumption to real per-year historical dues. New `data/dues_historical.js`
+holds `DUES_HISTORY[resortId][year]` for all 17 resorts, researched via
+two parallel web-research passes cross-referencing dvcnews.com's
+historical dues table (primary), dvcresalemarket.com's 2026 dues post,
+and dvcresaleexperts.com — every 2026 figure matched `data.js`'s existing
+`DUES_PER_POINT` exactly, which is a strong sanity check on the rest of
+the series. Two lower-confidence spots, both flagged in the file's own
+comments: Grand Floridian Villas 2016-2023 rests on a single source (the
+otherwise-primary dvcnews.com table had an internally-inconsistent dip
+there); and both Riviera-adjacent newer resorts (Villas at Disneyland
+Hotel, Cabins at Fort Wilderness) turned out to have later actual
+first-dues years than assumed going in (2023 and 2024 respectively, not
+their building-opening years) — dues data starts there instead of
+earlier. `getDuesForYear(resortId, year)` clamps to the nearest known
+year outside a resort's covered range (e.g. a purchase year before a
+resort's dues history starts, or a projection year past 2026) rather than
+guessing. `buildAmortizationSchedule()` in `trips.html` now looks up the
+real rate per year instead of multiplying today's rate across every year
+owned — verified against a real Saratoga Springs contract purchased 2018
+(9 years), confirming each row's dues figure matches
+`points_per_year * that year's real published rate` and the cumulative
+total sums correctly.
+
 Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
 allow-list currently only permits `localhost:8794`; the production URL
 needs to be added there before login will work live. Phase 5
