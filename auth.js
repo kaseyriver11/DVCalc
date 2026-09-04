@@ -144,6 +144,49 @@ async function updateProfile(patch) {
   return { data, error: error?.message };
 }
 
+async function getTrips() {
+  if (!configured || !currentSession) return [];
+  const { data, error } = await supabase
+    .from("trips")
+    .select("*")
+    .order("check_in", { ascending: false });
+  if (error) {
+    console.error("[DVCAuth] getTrips failed:", error.message);
+    return [];
+  }
+  return data;
+}
+
+// trip: { contract_id, resort_id, room_type_id, check_in, check_out,
+// points_used, custom_cash_value, notes } -- user_id filled in here, same
+// reasoning as addContract().
+async function addTrip(trip) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { data, error } = await supabase
+    .from("trips")
+    .insert({ ...trip, user_id: currentSession.user.id })
+    .select()
+    .single();
+  return { data, error: error?.message };
+}
+
+async function updateTrip(id, patch) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { data, error } = await supabase
+    .from("trips")
+    .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+  return { data, error: error?.message };
+}
+
+async function deleteTrip(id) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { error } = await supabase.from("trips").delete().eq("id", id);
+  return { error: error?.message };
+}
+
 // Resorts that only ever book at their own home resort when the contract
 // backing them was bought resale -- verified against DVC's post-Jan-2019
 // resale restriction policy (last verified 2026-09-03; Disney has changed
@@ -204,7 +247,7 @@ function renderAccountControl(session) {
 
   if (session) {
     const email = session.user?.email || "Account";
-    el.innerHTML = `<a href="account.html" class="account-link-btn">My Contracts</a><button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
+    el.innerHTML = `<a href="account.html" class="account-link-btn">My Contracts</a><a href="trips.html" class="account-link-btn">Trip Value</a><button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
     document.getElementById("account-signout").addEventListener("click", signOut);
   } else {
     el.innerHTML = `<button type="button" class="account-btn" id="account-signin">Sign in with Google</button>`;
@@ -226,6 +269,10 @@ window.DVCAuth = {
   deleteContract,
   getProfile,
   updateProfile,
+  getTrips,
+  addTrip,
+  updateTrip,
+  deleteTrip,
   getUserResortAccess,
   isConfigured: () => configured,
 };

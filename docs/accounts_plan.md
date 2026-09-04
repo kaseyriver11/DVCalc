@@ -41,10 +41,52 @@ dimming math verified against a real 11-vs-7-month boundary case (May 2027,
 7-month resale contract); real DOM change-event flow through the actual
 `<select>` confirmed end to end, not just direct state manipulation.
 
+Phase 4 (trip history + cost-of-ownership page) built 2026-09-04 —
+`trips.html`, a self-contained page following the `account.html` pattern.
+Three sections: **Cost of Ownership** (per active contract, an
+amortization table spreading `purchase_price` over years owned to date
+plus `DUES_PER_POINT[home_resort_id] * points_per_year` for each of those
+years, at today's dues rate — contracts missing a price/date get a prompt
+to add one instead of a guess); **Trip History** (add/edit/delete logged
+trips — resort, room type, dates, points used (always a user-entered
+historical fact, never recomputed), optional contract link, notes, and a
+cash-value toggle between "use our estimate" and a manual override stored
+as `custom_cash_value`); and **The Full Story** (three tiles: total cost
+to date, total trip value, and the net of the two). The cash-value
+estimate (`estimateTripCashValue()`) remaps the trip's month/day onto the
+most recent year `data.js` has pricing for and runs the normal
+`getCashRateWithFallback()` lookup — deliberately not claiming to know
+what the resort actually charged on the real historical dates, just "what
+this same week costs booked today," shown with the estimate's year so
+it's never confused with a real historical rate. `auth.js` extended with
+`getTrips`/`addTrip`/`updateTrip`/`deleteTrip`; a "Trip Value" nav link
+added next to "My Contracts" in the signed-in header control.
+`db/schema.sql`'s `trips` table gained `custom_cash_value numeric(10,2)`;
+`db/migrations/002_add_trip_custom_cash_value.sql` is a catch-up migration
+for the already-created `dvcalc_start` database — **needs to be run once
+in the Supabase SQL editor before the custom-cash-value override will
+work against the live database** (schema.sql already has the column for
+any future fresh install, so this is only needed because the DB predates
+this change).
+
+Verified by injecting fake contract/trip data and driving the page's own
+`render()`/form handlers directly (no real Supabase trips exist yet, and
+completing real Google sign-in isn't something to do on the owner's
+behalf): gate and unconfigured states render with no console errors;
+signed-in render shows correct amortization math and story-tile totals
+against known inputs; the "missing purchase price" empty-state card
+renders correctly for a contract with no price/date; the add-trip form's
+live estimate preview updates correctly as resort/room/dates change;
+saving in both estimate and custom-cash modes sends the right payload
+(including the `custom_cash_value: null` vs. a number distinction);
+editing a trip correctly pre-populates every field including which cash
+mode it was saved in; check-out-before-check-in validation blocks save
+with the right error message; delete calls through correctly.
+
 Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
 allow-list currently only permits `localhost:8794`; the production URL
-needs to be added there before login will work live. Phase 4 (trip history
-+ cost-of-ownership page) not started.
+needs to be added there before login will work live. Phase 5
+(banking/borrowing email reminders) not started.
 
 ## Context
 

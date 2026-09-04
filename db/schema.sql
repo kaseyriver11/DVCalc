@@ -99,6 +99,12 @@ create table if not exists trips (
   check_in date not null,
   check_out date not null,
   points_used integer not null check (points_used >= 0),
+  -- User's own known/estimated cash value for this trip, if they'd rather
+  -- enter it than trust the app's estimate. Null means "use our estimate",
+  -- which is computed client-side on read (remapping the trip's dates onto
+  -- the current data.js year and running the normal cash-rate lookup) --
+  -- never stored, so it can't go stale as cash-rate data updates.
+  custom_cash_value numeric(10,2),
   notes text,
   created_at timestamptz not null default now(),
   constraint trips_checkout_after_checkin check (check_out > check_in)
