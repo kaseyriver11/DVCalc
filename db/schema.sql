@@ -119,6 +119,31 @@ create policy "trips: full access to own rows" on trips
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------
+-- itineraries: saved (future) stay plans a user can reload into the
+-- calendar. segments is a jsonb array of {resort_id, room_type_id,
+-- check_in, check_out} -- a single-element array is a normal stay, more
+-- than one is a split stay across resorts. Kept as one jsonb column
+-- rather than a child table since an itinerary is only ever read/written
+-- as a whole unit (load it, or don't) -- there's no use case for
+-- querying into individual segments server-side.
+-- ---------------------------------------------------------------------
+create table if not exists itineraries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  name text not null,
+  year integer not null,
+  segments jsonb not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists itineraries_user_id_idx on itineraries(user_id);
+
+alter table itineraries enable row level security;
+
+create policy "itineraries: full access to own rows" on itineraries
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------
 -- reminder_log: double-send guard for banking/borrowing deadline emails.
 -- Written only by the service-role Edge Function (Phase 5) -- users get
 -- read-only visibility into their own send history.

@@ -199,6 +199,37 @@ async function deleteTrip(id) {
   return { error: error?.message };
 }
 
+async function getItineraries() {
+  if (!configured || !currentSession) return [];
+  const { data, error } = await supabase
+    .from("itineraries")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("[DVCAuth] getItineraries failed:", error.message);
+    return [];
+  }
+  return data;
+}
+
+// itinerary: { name, year, segments } -- segments is [{ resortId, roomTypeId,
+// checkIn, checkOut }], user_id filled in here, same reasoning as addTrip().
+async function addItinerary(itinerary) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { data, error } = await supabase
+    .from("itineraries")
+    .insert({ ...itinerary, user_id: currentSession.user.id })
+    .select()
+    .single();
+  return { data, error: error?.message };
+}
+
+async function deleteItinerary(id) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { error } = await supabase.from("itineraries").delete().eq("id", id);
+  return { error: error?.message };
+}
+
 // Resorts that only ever book at their own home resort when the contract
 // backing them was bought resale -- verified against DVC's post-Jan-2019
 // resale restriction policy (last verified 2026-09-03; Disney has changed
@@ -288,6 +319,9 @@ window.DVCAuth = {
   addTrip,
   updateTrip,
   deleteTrip,
+  getItineraries,
+  addItinerary,
+  deleteItinerary,
   getUserResortAccess,
   isConfigured: () => configured,
 };

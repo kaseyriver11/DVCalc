@@ -129,6 +129,33 @@ actually being used. Verified against the same $10,000-today example the
 feature was requested with: a same-dates 2026 estimate of $1,662 vs. a
 2017 estimate of $1,128 is exactly the index's 0.6785 multiplier.
 
+Saved Itineraries added 2026-09-04 (not part of the original 5-phase
+plan — requested once accounts existed to build on) — a signed-in user
+can save the calendar's current selection, single stay or split stay
+alike, and reload it later. New `itineraries` table (`db/schema.sql`,
+`db/migrations/003_add_itineraries.sql`): `name`, `year`, and a `segments`
+jsonb array of `{resortId, roomTypeId, checkIn, checkOut}` — one column
+rather than a child table since an itinerary is only ever read or written
+as a whole unit, never queried into individual segments. `auth.js` gained
+`getItineraries`/`addItinerary`/`deleteItinerary`. `app.js`'s action-button
+row (next to "+ Add Another Resort" / "Compare All Resorts") gained a
+"💾 Save Itinerary" button, shown only when signed in, that expands into an
+inline name field pre-filled with a suggested name (`suggestItineraryName()`)
+rather than a native `prompt()`; `getFullItinerarySegments()` flattens
+`state.segments` (completed) plus the current active selection into the
+same shape the DB stores. New `itineraries.html` (nav: My Account → Saved
+Itineraries) lists saved itineraries with computed totals (points, cash,
+nights — direct lookups against the saved year's real chart data, no
+remapping needed since these are future plans, not past trips) and a
+Load button that reuses the *existing* index↔compare sessionStorage
+handoff (`dvc_calendar_state`/`dvc_return_to_calendar`) — no new restore
+logic needed in `app.js`, since `Object.assign(state, restored)` already
+happily accepts a `segments` array. Verified end to end: saved a 2-segment
+split stay from the calendar, confirmed both segments and combined
+totals (113 pts, $4,623) on the itineraries list, clicked Load, and
+watched the calendar restore the exact same split stay (matching
+segment-by-segment nightly/point breakdown) from a cold navigation.
+
 Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
 allow-list currently only permits `localhost:8794`; the production URL
 needs to be added there before login will work live. Phase 5

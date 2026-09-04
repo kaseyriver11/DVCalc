@@ -1319,9 +1319,12 @@ function setSelectedContract(id) {
 // auth.js's module script resolves imports asynchronously -- poll briefly
 // for window.DVCAuth rather than assuming it's ready this soon (same
 // reasoning as auth.js's own header-control code and account.html).
+let isSignedIn = false;
+
 function initAccountPersonalization(attempts) {
   if (window.DVCAuth) {
     window.DVCAuth.onAuthChange((session) => {
+      isSignedIn = !!session;
       if (session) {
         refreshUserContracts();
       } else {
@@ -1334,6 +1337,82 @@ function initAccountPersonalization(attempts) {
   } else if (attempts > 0) {
     setTimeout(() => initAccountPersonalization(attempts - 1), 50);
   }
+}
+
+// ---- Saved Itineraries ----
+// Same reasoning as userContracts above for staying out of `state`: this is
+// session-derived UI state for the save-form, not calendar selection state.
+let showingItinerarySaveForm = false;
+let itineraryNameDraft = null;
+let itinerarySaveStatus = null; // "saving" | "saved" | "error" | null
+
+// The full ordered list of segments an itinerary save would capture: any
+// already-completed split-stay segments, plus the current in-progress
+// selection appended as the final segment (mirrors how allSegmentTotals is
+// built in renderSummary() for display -- same "completed + current" shape).
+function getFullItinerarySegments() {
+  const segs = state.segments.map(s => ({ ...s }));
+  if (state.checkIn && state.checkOut) {
+    segs.push({
+      resortId: state.resortId,
+      roomTypeId: state.roomTypeId,
+      checkIn: state.checkIn,
+      checkOut: state.checkOut,
+    });
+  }
+  return segs;
+}
+
+function suggestItineraryName() {
+  const segs = getFullItinerarySegments();
+  if (segs.length === 0) return "";
+  if (segs.length === 1) {
+    const resort = RESORTS.find(r => r.id === segs[0].resortId && r.year === state.year);
+    return `${resort ? resort.name : segs[0].resortId}, ${formatDisplayDate(segs[0].checkIn)}`;
+  }
+  return `${segs.length}-Resort Trip, ${formatDisplayDate(segs[0].checkIn)}`;
+}
+
+function openItinerarySaveForm() {
+  showingItinerarySaveForm = true;
+  itineraryNameDraft = suggestItineraryName();
+  itinerarySaveStatus = null;
+  renderSummary();
+}
+
+function closeItinerarySaveForm() {
+  showingItinerarySaveForm = false;
+  itineraryNameDraft = null;
+  itinerarySaveStatus = null;
+  renderSummary();
+}
+
+async function confirmSaveItinerary() {
+  const input = document.getElementById("itinerary-name-input");
+  const name = (input?.value || "").trim();
+  if (!name) return;
+  itinerarySaveStatus = "saving";
+  renderSummary();
+
+  const result = await window.DVCAuth.addItinerary({
+    name,
+    year: state.year,
+    segments: getFullItinerarySegments(),
+  });
+
+  if (result.error) {
+    itinerarySaveStatus = "error";
+    renderSummary();
+    return;
+  }
+  itinerarySaveStatus = "saved";
+  renderSummary();
+  setTimeout(() => {
+    showingItinerarySaveForm = false;
+    itineraryNameDraft = null;
+    itinerarySaveStatus = null;
+    renderSummary();
+  }, 1500);
 }
 
 function renderCalendar() {
@@ -1852,10 +1931,37 @@ function renderSummary() {
   // Render action buttons between settings and summary
   const hasCompleteDates = state.checkIn && state.checkOut;
   if (hasCompleteDates) {
+    let saveItineraryHTML = "";
+    if (isSignedIn) {
+      if (showingItinerarySaveForm) {
+        const draftName = itineraryNameDraft != null ? itineraryNameDraft : suggestItineraryName();
+        const savingNow = itinerarySaveStatus === "saving";
+        const savedOk = itinerarySaveStatus === "saved";
+        saveItineraryHTML = `
+          <div class="itinerary-save-form">
+            <input type="text" id="itinerary-name-input" value="${draftName.replace(/"/g, "&quot;")}" placeholder="Name this itinerary" ${savingNow || savedOk ? "disabled" : ""}>
+            <button class="itinerary-save-confirm" onclick="confirmSaveItinerary()" ${savingNow || savedOk ? "disabled" : ""}>${savingNow ? "Saving…" : savedOk ? "Saved!" : "Save"}</button>
+            ${!savedOk ? `<button class="itinerary-save-cancel" onclick="closeItinerarySaveForm()" title="Cancel">&times;</button>` : ""}
+          </div>
+          ${itinerarySaveStatus === "error" ? `<div class="itinerary-save-error">Couldn't save -- try again.</div>` : ""}
+        `;
+      } else {
+        saveItineraryHTML = `<button class="summary-save-itinerary" onclick="openItinerarySaveForm()">&#128190; Save Itinerary</button>`;
+      }
+    }
     actionButtons.innerHTML = `
       <button class="summary-add-segment" onclick="addSegment()">+ Add Another Resort</button>
       ${!inSplitMode ? `<a class="summary-compare" href="compare.html?checkin=${overallCheckIn}&checkout=${overallCheckOut}&category=${getCategoryFromRoomType()}">Compare All Resorts</a>` : ""}
+      ${saveItineraryHTML}
     `;
+    const itineraryNameInput = document.getElementById("itinerary-name-input");
+    if (itineraryNameInput) {
+      itineraryNameInput.addEventListener("input", (e) => { itineraryNameDraft = e.target.value; });
+      itineraryNameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") confirmSaveItinerary();
+        if (e.key === "Escape") closeItinerarySaveForm();
+      });
+    }
   } else {
     actionButtons.innerHTML = "";
   }
@@ -1903,6 +2009,9 @@ function clearSelection() {
   state.checkOut = null;
   state.segments = [];
   state.customCashRate = null;
+  showingItinerarySaveForm = false;
+  itineraryNameDraft = null;
+  itinerarySaveStatus = null;
   updateHint();
   renderCalendar();
   renderSummary();

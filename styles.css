@@ -1742,6 +1742,80 @@ select, input, textarea, button {
   border-color: #6a1b9a;
 }
 
+.summary-save-itinerary {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: #2e7d32;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.summary-save-itinerary:hover {
+  background: #256428;
+}
+
+.itinerary-save-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.itinerary-save-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.itinerary-save-form input:focus {
+  outline: none;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+}
+
+.itinerary-save-confirm {
+  padding: 7px 12px;
+  background: #2e7d32;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.itinerary-save-confirm:hover { background: #256428; }
+.itinerary-save-confirm:disabled { background: #9ccc9f; cursor: default; }
+
+.itinerary-save-cancel {
+  padding: 7px 10px;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #666;
+  cursor: pointer;
+}
+
+.itinerary-save-cancel:hover { border-color: #b71c1c; color: #b71c1c; }
+
+.itinerary-save-error {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #b71c1c;
+}
+
 /* ---- Responsive ---- */
 .calendar-grid-scroll {
   overflow-x: auto;
