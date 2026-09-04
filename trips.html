@@ -385,8 +385,20 @@ body {
   .header .header-links { position: static; transform: none; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 }
   </style>
-  <script data-goatcounter="https://dvcalc.goatcounter.com/count"
-          async src="//gc.zgo.at/count.js"></script>
+  <script>
+    // Injected dynamically (not a static <script async> tag) so this third-party
+    // analytics load can never hold up the page's own load/spinner state -- a
+    // static tag still counts toward window.onload even with async, so a slow
+    // or blocked gc.zgo.at could stall the tab indicator for seconds on some
+    // networks even though the app itself has already finished rendering.
+    window.addEventListener("load", () => {
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "//gc.zgo.at/count.js";
+      s.setAttribute("data-goatcounter", "https://dvcalc.goatcounter.com/count");
+      document.body.appendChild(s);
+    });
+  </script>
   <script type="module" src="auth.js"></script>
 </head>
 <body>
