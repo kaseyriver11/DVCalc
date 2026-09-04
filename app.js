@@ -1327,9 +1327,11 @@ function initAccountPersonalization(attempts) {
       isSignedIn = !!session;
       if (session) {
         refreshUserContracts();
+        refreshUserItineraries();
       } else {
         userContracts = [];
         selectedContractId = null;
+        userItineraries = [];
         renderSummary();
         renderCalendar();
       }
@@ -1345,6 +1347,44 @@ function initAccountPersonalization(attempts) {
 let showingItinerarySaveForm = false;
 let itineraryNameDraft = null;
 let itinerarySaveStatus = null; // "saving" | "saved" | "error" | null
+let userItineraries = []; // for the "load a saved itinerary" dropdown
+
+async function refreshUserItineraries() {
+  userItineraries = window.DVCAuth ? await window.DVCAuth.getItineraries() : [];
+  renderSummary();
+}
+
+// Applies a saved itinerary straight into the live calendar state -- no
+// navigation needed since we're already on this page (unlike
+// itineraries.html's Load button, which has to hand off through
+// sessionStorage because it's a different page entirely). Same segment
+// unpacking logic as that handoff: the last segment becomes the active
+// selection, everything before it becomes completed split-stay segments.
+function loadItineraryIntoCalendar(itinerary) {
+  const segs = itinerary.segments;
+  if (!segs || !segs.length) return;
+  const last = segs[segs.length - 1];
+  const completed = segs.slice(0, -1);
+
+  state.year = itinerary.year;
+  state.resortId = last.resortId;
+  state.roomTypeId = last.roomTypeId;
+  state.checkIn = last.checkIn;
+  state.checkOut = last.checkOut;
+  state.segments = completed;
+  showingItinerarySaveForm = false;
+  itineraryNameDraft = null;
+  itinerarySaveStatus = null;
+
+  resortSearch.value = getResort().name;
+  populateYears();
+  yearSelect.value = state.year;
+  populateRoomTypes();
+  roomSelect.value = state.roomTypeId;
+  updateHint();
+  renderCalendar();
+  renderSummary();
+}
 
 // The full ordered list of segments an itinerary save would capture: any
 // already-completed split-stay segments, plus the current in-progress
@@ -1407,6 +1447,7 @@ async function confirmSaveItinerary() {
   }
   itinerarySaveStatus = "saved";
   renderSummary();
+  refreshUserItineraries();
   setTimeout(() => {
     showingItinerarySaveForm = false;
     itineraryNameDraft = null;
@@ -1711,6 +1752,39 @@ function attachContractSelectListener() {
   if (sel) sel.addEventListener("change", (e) => setSelectedContract(e.target.value));
 }
 
+// Hidden entirely if signed out or nothing saved yet -- same "purely
+// additive" pattern as buildContractCardHTML() above. Selecting an option
+// applies it immediately and the dropdown resets to the placeholder --
+// it's a one-shot action trigger, not a persistent "currently loaded"
+// indicator, since the calendar's real state (resort/dates/segments) is
+// what actually reflects what's loaded.
+function buildItineraryLoadHTML() {
+  if (!isSignedIn || userItineraries.length === 0) return "";
+  const options = userItineraries.map(itin =>
+    `<option value="${itin.id}">${itin.name}</option>`
+  ).join("");
+  return `
+    <div class="summary-card">
+      <h3>Saved Itineraries</h3>
+      <select id="itinerary-load-select" class="contract-select">
+        <option value="">Load a saved itinerary&hellip;</option>
+        ${options}
+      </select>
+    </div>
+  `;
+}
+
+function attachItineraryLoadListener() {
+  const sel = document.getElementById("itinerary-load-select");
+  if (!sel) return;
+  sel.addEventListener("change", (e) => {
+    const id = e.target.value;
+    if (!id) return;
+    const itin = userItineraries.find(i => i.id === id);
+    if (itin) loadItineraryIntoCalendar(itin);
+  });
+}
+
 function renderSummary() {
   const resort = getResort();
   const stayDates = getStayDates();
@@ -1720,6 +1794,7 @@ function renderSummary() {
   if (stayDates.length === 0 && !inSplitMode) {
     actionButtons.innerHTML = "";
     summaryContainer.innerHTML = `
+      ${buildItineraryLoadHTML()}
       ${buildContractCardHTML()}
       <div class="summary-card">
         <h3>Your Stay</h3>
@@ -1729,6 +1804,7 @@ function renderSummary() {
       </div>
     `;
     attachContractSelectListener();
+    attachItineraryLoadListener();
     return;
   }
 
@@ -1832,6 +1908,7 @@ function renderSummary() {
   const useCustomRate = !inSplitMode && !resortHasCashData && !hasFallbackCash && state.customCashRate;
 
   summaryContainer.innerHTML = `
+    ${buildItineraryLoadHTML()}
     ${!inSplitMode ? buildContractCardHTML() : ""}
     <div class="summary-card${inSplitMode ? " wide" : ""}">
       <h3>${inSplitMode ? "Split Stay" : "Your Stay"}</h3>
@@ -2002,6 +2079,7 @@ function renderSummary() {
   }
 
   attachContractSelectListener();
+  attachItineraryLoadListener();
 }
 
 function clearSelection() {
