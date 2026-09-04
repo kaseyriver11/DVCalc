@@ -19,49 +19,42 @@ body {
   color: white;
   padding: 16px 24px;
   text-align: center;
-  position: relative;
 }
 
 .header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
 .header .subtitle { font-size: 0.8rem; opacity: 0.8; }
 
-.header .header-links {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+/* ---- Site nav ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: #4a148c; }
+.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
 
-.back-link, .account-link-btn {
-  display: inline-block;
-  color: white;
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border: 1.5px solid rgba(255,255,255,0.4);
-  border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  transition: all 0.2s;
-}
-.back-link:hover, .account-link-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
-
-.account-btn {
-  color: white;
+.account-btn, .account-link-btn {
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
   padding: 6px 14px;
-  border: 1.5px solid rgba(255,255,255,0.4);
   border-radius: 20px;
-  background: rgba(255,255,255,0.1);
+  border: 1px solid #ddd;
+  background: #f7f5fa;
+  color: #4a148c;
   cursor: pointer;
-  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
 }
-.account-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+
+@media (max-width: 800px) {
+  .site-nav { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .site-nav-links { width: 100%; }
+}
 
 .page {
   max-width: 820px;
@@ -385,7 +378,6 @@ body {
 @media (max-width: 560px) {
   .form-grid { grid-template-columns: 1fr; }
   .story-tiles { grid-template-columns: 1fr; }
-  .header .header-links { position: static; transform: none; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 }
   </style>
   <script>
@@ -406,11 +398,26 @@ body {
 </head>
 <body>
 
-  <div class="header">
-    <div class="header-links">
-      <span id="account-control"></span>
-      <a href="index.html" class="back-link">&larr; Calendar</a>
+  <nav class="site-nav">
+    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare</a>
+        <a href="changes.html">Year-over-Year</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Account</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html" class="active">Trip Value</a>
+      </span>
     </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
     <h1>DVC Trip Value</h1>
     <div class="subtitle">The full story: what your membership costs vs. what it's actually delivered</div>
   </div>

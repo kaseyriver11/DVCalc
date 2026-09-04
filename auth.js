@@ -243,8 +243,11 @@ function getUserResortAccess(contracts, allResortIds) {
   return { homeResortIds, sevenMoResortIds, restrictedResortIds };
 }
 
-// Renders the sign-in/sign-out control into #account-control if the current
-// page has one (index.html and compare.html both do). Self-contained here
+// Renders the sign-in/sign-out control into #account-control, present in
+// every page's shared site-nav bar. Just the auth state itself -- the nav
+// bar's own links (My Contracts, Trip Value, etc.) are static HTML on
+// every page regardless of sign-in state, since those pages already show
+// their own sign-in gate when visited signed out. Self-contained here
 // rather than in an inline page script, since module scripts resolve their
 // imports asynchronously -- another script can't safely assume window.DVCAuth
 // exists yet just because it appears later in the document.
@@ -259,7 +262,7 @@ function renderAccountControl(session) {
 
   if (session) {
     const email = session.user?.email || "Account";
-    el.innerHTML = `<a href="account.html" class="account-link-btn">My Contracts</a><a href="trips.html" class="account-link-btn">Trip Value</a><button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
+    el.innerHTML = `<button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
     document.getElementById("account-signout").addEventListener("click", signOut);
   } else {
     el.innerHTML = `<button type="button" class="account-btn" id="account-signin">Sign in with Google</button>`;

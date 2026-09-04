@@ -15,13 +15,102 @@ select, input, textarea, button {
   font-family: inherit;
 }
 
+/* ---- Site nav ----
+   Separate from .header below by design: account-control and page links
+   used to live inside .header itself, absolutely positioned over the same
+   band as the centered title -- as account-control grew (My Contracts +
+   Trip Value + email + Sign out, all at once when signed in) it started
+   visually colliding with the title. This bar can grow freely instead. */
+.site-nav {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.site-nav-brand {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #4a148c;
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.site-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-nav-group-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #aaa;
+  font-weight: 700;
+}
+
+.site-nav-divider {
+  width: 1px;
+  height: 16px;
+  background: #e0e0e0;
+}
+
+.site-nav-links a {
+  font-size: 0.82rem;
+  color: #555;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 2px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.site-nav-links a:hover { color: #4a148c; }
+
+.site-nav-links a.active {
+  color: #4a148c;
+  border-bottom-color: #4a148c;
+  font-weight: 600;
+}
+
+.account-btn, .account-link-btn {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #f7f5fa;
+  color: #4a148c;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.account-btn:hover, .account-link-btn:hover {
+  background: #ece1f7;
+  border-color: #4a148c;
+}
+
 /* ---- Header ---- */
 .header {
   background: linear-gradient(135deg, #1a237e, #4a148c);
   color: white;
   padding: 16px 24px;
   text-align: center;
-  position: relative;
 }
 
 .header h1 {
@@ -33,68 +122,6 @@ select, input, textarea, button {
 .header .subtitle {
   font-size: 0.8rem;
   opacity: 0.8;
-}
-
-.header .header-links {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 16px;
-}
-
-.header .header-links a {
-  color: white;
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border: 1.5px solid rgba(255,255,255,0.4);
-  border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  transition: all 0.2s;
-}
-
-.header .header-links a:hover {
-  background: rgba(255,255,255,0.2);
-  border-color: rgba(255,255,255,0.7);
-}
-
-.account-btn {
-  color: white;
-  font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border: 1.5px solid rgba(255,255,255,0.4);
-  border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.account-btn:hover {
-  background: rgba(255,255,255,0.2);
-  border-color: rgba(255,255,255,0.7);
-}
-
-.account-link-btn {
-  display: inline-block;
-  color: white;
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border: 1.5px solid rgba(255,255,255,0.4);
-  border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  transition: all 0.2s;
-}
-
-.account-link-btn:hover {
-  background: rgba(255,255,255,0.2);
-  border-color: rgba(255,255,255,0.7);
 }
 
 /* ---- Controls ---- */
@@ -1721,11 +1748,14 @@ select, input, textarea, button {
 }
 
 @media (max-width: 800px) {
-  .header .header-links {
-    position: static;
-    transform: none;
-    justify-content: center;
-    margin-top: 8px;
+  .site-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .site-nav-links {
+    width: 100%;
   }
 
   .main-layout {
