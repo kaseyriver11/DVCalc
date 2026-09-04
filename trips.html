@@ -113,6 +113,15 @@ body {
   margin-bottom: 16px;
 }
 
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.section-header-row h2 { margin-bottom: 4px; }
+.section-header-row .add-btn { flex-shrink: 0; }
+
 .empty-note {
   color: #999;
   font-style: italic;
@@ -157,19 +166,6 @@ body {
   color: #999;
   margin-top: 4px;
 }
-
-.tile-add-btn {
-  margin-top: 10px;
-  background: #2e7d32;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 5px 14px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.tile-add-btn:hover { background: #256428; }
 
 /* ---- Contract cost cards ---- */
 .contract-cost-card {
@@ -698,7 +694,7 @@ async function renderSignedIn() {
           <div class="story-tile-label">Trip Value</div>
           <div class="story-tile-value">${fmt(totalTripValue)}</div>
           <div class="story-tile-sub">${trips.length} trip${trips.length === 1 ? "" : "s"} logged</div>
-          <button type="button" class="tile-add-btn" id="show-add-form">+ Log a Trip</button>
+          <button type="button" class="add-btn js-add-trip" style="margin-top: 8px;">+ Log a Trip</button>
         </div>
         <div class="story-tile net">
           <div class="story-tile-label">Net</div>
@@ -715,8 +711,13 @@ async function renderSignedIn() {
     </div>
 
     <div class="section">
-      <h2>Trip History</h2>
-      <div class="section-sub">Log a trip you've taken. Points used and cash value are pre-filled with our best guess -- edit either if you know the real numbers.</div>
+      <div class="section-header-row">
+        <div>
+          <h2>Trip History</h2>
+          <div class="section-sub">Log a trip you've taken. Points used and cash value are pre-filled with our best guess -- edit either if you know the real numbers.</div>
+        </div>
+        <button type="button" class="add-btn js-add-trip">+ Log a Trip</button>
+      </div>
       ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
       <div class="trip-list" id="trip-list"></div>
       <div class="trip-form" id="trip-form">
@@ -934,7 +935,9 @@ function wireTripForm(activeContracts) {
   document.getElementById("f-checkin").addEventListener("change", updateSuggestions);
   document.getElementById("f-checkout").addEventListener("change", updateSuggestions);
 
-  document.getElementById("show-add-form").addEventListener("click", () => openTripForm(null));
+  document.querySelectorAll(".js-add-trip").forEach(btn =>
+    btn.addEventListener("click", () => openTripForm(null))
+  );
   document.getElementById("cancel-trip").addEventListener("click", closeTripForm);
   document.getElementById("save-trip").addEventListener("click", saveTripForm);
 }
