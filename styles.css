@@ -29,6 +29,9 @@ select, input, textarea, button {
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .site-nav-brand {
