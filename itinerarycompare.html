@@ -458,18 +458,37 @@ function buildCompareTableHTML(selected) {
 
 function renderPickers() {
   return `
-    <div class="picker-row">
+    <div class="picker-row" id="picker-row">
       ${[0, 1, 2].map(i => `
         <div class="picker-slot">
           <label for="picker-${i}">Trip ${String.fromCharCode(65 + i)}${i === 0 ? "" : " (optional)"}</label>
           <select id="picker-${i}" data-slot="${i}">
             <option value="">Choose a saved itinerary&hellip;</option>
-            ${itineraries.map(itin => `<option value="${itin.id}" ${selectedIds[i] === itin.id ? "selected" : ""}>${itin.name}</option>`).join("")}
+            ${itineraries.map(itin => {
+              // Disabled (not just skipped) so it stays visible in place,
+              // making it clear *why* it's unavailable rather than the
+              // list silently shrinking as other slots fill in.
+              const takenElsewhere = selectedIds.some((id, j) => j !== i && id === itin.id);
+              return `<option value="${itin.id}" ${selectedIds[i] === itin.id ? "selected" : ""} ${takenElsewhere ? "disabled" : ""}>${itin.name}${takenElsewhere ? " (already picked)" : ""}</option>`;
+            }).join("")}
           </select>
         </div>
       `).join("")}
     </div>
   `;
+}
+
+function wirePickerListeners() {
+  [0, 1, 2].forEach(i => {
+    const sel = document.getElementById(`picker-${i}`);
+    if (!sel) return;
+    sel.addEventListener("change", (e) => {
+      selectedIds[i] = e.target.value || null;
+      document.getElementById("picker-row").outerHTML = renderPickers();
+      wirePickerListeners();
+      renderComparison();
+    });
+  });
 }
 
 function renderComparison() {
@@ -501,13 +520,7 @@ async function renderSignedIn() {
     <div class="section" id="compare-output"></div>
   `;
 
-  [0, 1, 2].forEach(i => {
-    document.getElementById(`picker-${i}`).addEventListener("change", (e) => {
-      selectedIds[i] = e.target.value || null;
-      renderComparison();
-    });
-  });
-
+  wirePickerListeners();
   renderComparison();
 }
 
