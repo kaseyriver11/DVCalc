@@ -156,6 +156,23 @@ totals (113 pts, $4,623) on the itineraries list, clicked Load, and
 watched the calendar restore the exact same split stay (matching
 segment-by-segment nightly/point breakdown) from a cold navigation.
 
+Two follow-ups added 2026-09-04 after the initial Saved Itineraries
+ship: (1) a "Load a saved itinerary" dropdown directly on the calendar
+sidebar (`app.js`'s `buildItineraryLoadHTML()`/`loadItineraryIntoCalendar()`),
+applying a selection straight into live `state` with no page navigation
+— unlike itineraries.html's Load button, which has to round-trip through
+sessionStorage since it's a different page. (2) New `itinerarycompare.html`
+(nav: My Account → Compare Itineraries) — pick up to 3 saved itineraries
+via dropdowns and see them side by side: nights, points, cash value, $/point,
+points/night, and average crowd/busy level (pooling every date across every
+segment through the same `getCrowdForDate()`/Undercover Tourist data the
+calendar's own Crowd Forecast card uses). Lower-is-better metrics (points,
+cash, $/point, crowd) get a green checkmark on whichever itinerary wins
+that row. Gates on having at least 2 saved itineraries. Verified with a
+3-way comparison including a 2-segment split stay — segment listing,
+per-metric totals, and best-value highlighting all matched hand
+calculation.
+
 Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
 allow-list currently only permits `localhost:8794`; the production URL
 needs to be added there before login will work live. Phase 5

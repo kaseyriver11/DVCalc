@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compare Itineraries</title>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #1a237e, #4a148c);
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+/* ---- Site nav ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: #4a148c; }
+.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+
+.account-btn, .account-link-btn {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #f7f5fa;
+  color: #4a148c;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
+}
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+
+@media (max-width: 800px) {
+  .site-nav { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .site-nav-links { width: 100%; }
+}
+
+.page {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.gate {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 48px 32px;
+  text-align: center;
+  color: #666;
+}
+
+.gate p { margin-bottom: 18px; font-size: 0.95rem; }
+
+.big-signin-btn {
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.big-signin-btn:hover { background: #38106b; }
+
+.section {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a237e;
+  margin-bottom: 4px;
+}
+
+.section-sub {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.empty-note {
+  color: #999;
+  font-style: italic;
+  font-size: 0.88rem;
+  padding: 8px 0 16px;
+}
+.empty-note a { color: #4a148c; }
+
+.picker-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.picker-slot label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+
+.picker-slot select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+}
+
+.picker-slot select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+.compare-table-wrap {
+  overflow-x: auto;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.compare-table th, .compare-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.compare-table thead th {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #4a148c;
+  font-weight: 700;
+  border-bottom: 2px solid #4a148c;
+}
+
+.compare-table tbody th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #888;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.compare-table .segment-line {
+  font-size: 0.78rem;
+  margin-bottom: 4px;
+}
+.compare-table .segment-line:last-child { margin-bottom: 0; }
+.compare-table .segment-resort { font-weight: 600; color: #333; }
+.compare-table .segment-dates { color: #888; }
+
+.compare-metric {
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-metric.best {
+  color: #2e7d32;
+}
+.compare-metric.best::after {
+  content: " \2713";
+  font-size: 0.8em;
+}
+
+.crowd-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: white;
+}
+.crowd-low { background: #2e7d32; }
+.crowd-moderate { background: #f9a825; }
+.crowd-busy { background: #ef6c00; }
+.crowd-heavy { background: #d84315; }
+.crowd-extreme { background: #b71c1c; }
+  </style>
+  <script>
+    // Injected dynamically (not a static <script async> tag) so this third-party
+    // analytics load can never hold up the page's own load/spinner state -- a
+    // static tag still counts toward window.onload even with async, so a slow
+    // or blocked gc.zgo.at could stall the tab indicator for seconds on some
+    // networks even though the app itself has already finished rendering.
+    window.addEventListener("load", () => {
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "//gc.zgo.at/count.js";
+      s.setAttribute("data-goatcounter", "https://dvcalc.goatcounter.com/count");
+      document.body.appendChild(s);
+    });
+  </script>
+  <script type="module" src="auth.js"></script>
+</head>
+<body>
+
+  <nav class="site-nav">
+    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare</a>
+        <a href="changes.html">Year-over-Year</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Account</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Trip Value</a>
+        <a href="itineraries.html">Saved Itineraries</a>
+        <a href="itinerarycompare.html" class="active">Compare Itineraries</a>
+      </span>
+    </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
+    <h1>Compare Itineraries</h1>
+    <div class="subtitle">Pick up to 3 saved itineraries to compare side by side</div>
+  </div>
+
+  <div class="page" id="page-content">
+    <div class="gate"><p>Loading&hellip;</p></div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script src="data/undercovertourist_2026.js"></script>
+  <script src="data/undercovertourist_2027.js"></script>
+  <script>
+const pageContent = document.getElementById("page-content");
+let itineraries = [];
+const selectedIds = [null, null, null];
+
+const CROWD_TABLES = {
+  2026: typeof UNDERCOVER_TOURIST_CROWD_2026 !== "undefined" ? UNDERCOVER_TOURIST_CROWD_2026 : null,
+  2027: typeof UNDERCOVER_TOURIST_CROWD_2027 !== "undefined" ? UNDERCOVER_TOURIST_CROWD_2027 : null,
+};
+
+function getCrowdForDate(dateStr) {
+  const table = CROWD_TABLES[dateStr.slice(0, 4)];
+  return table ? table[dateStr] || null : null;
+}
+
+function crowdClass(label) {
+  return `crowd-${label.toLowerCase()}`;
+}
+
+function resortName(id, year) {
+  const r = RESORTS.find(r => r.id === id && r.year === year) || RESORTS.find(r => r.id === id);
+  return r ? r.name : id;
+}
+
+function roomTypeName(resortId, year, roomTypeId) {
+  const r = RESORTS.find(r => r.id === resortId && r.year === year) || RESORTS.find(r => r.id === resortId);
+  const rt = r?.roomTypes.find(rt => rt.id === roomTypeId);
+  return rt ? rt.name : roomTypeId;
+}
+
+function nightsBetween(checkIn, checkOut) {
+  const ci = new Date(checkIn + "T12:00:00");
+  const co = new Date(checkOut + "T12:00:00");
+  return Math.round((co - ci) / 86400000);
+}
+
+function stayDateRange(startDateStr, nights) {
+  const start = new Date(startDateStr + "T12:00:00");
+  const dates = [];
+  for (let i = 0; i < nights; i++) {
+    const dt = new Date(start);
+    dt.setDate(dt.getDate() + i);
+    dates.push(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`);
+  }
+  return dates;
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function fmt(n) {
+  return "$" + Math.round(n).toLocaleString();
+}
+
+// Same direct-lookup approach as itineraries.html -- these are future
+// plans against the year they were saved for, so no remapping needed.
+// Also pools every date across every segment for a single blended
+// average crowd/busy score, same averaging itineraries.html's sibling
+// page (the calendar's own Crowd Forecast card) already uses.
+function calcItineraryMetrics(itinerary) {
+  let totalPoints = 0, totalCash = 0, totalNights = 0, hasCash = false;
+  const allDates = [];
+  for (const seg of itinerary.segments) {
+    const resort = RESORTS.find(r => r.id === seg.resortId && r.year === itinerary.year);
+    if (!resort) continue;
+    const nights = nightsBetween(seg.checkIn, seg.checkOut);
+    totalNights += nights;
+    const dates = stayDateRange(seg.checkIn, nights);
+    for (const dateStr of dates) {
+      allDates.push(dateStr);
+      const pts = getPointsForDate(resort, dateStr, seg.roomTypeId);
+      const cashResult = getCashRateWithFallback(resort, dateStr, seg.roomTypeId);
+      if (pts) totalPoints += pts;
+      if (cashResult && cashResult.rate) { totalCash += cashResult.rate; hasCash = true; }
+    }
+  }
+
+  const crowdEntries = allDates.map(getCrowdForDate).filter(Boolean);
+  let avgCrowd = null, avgCrowdLabel = null;
+  if (crowdEntries.length > 0) {
+    avgCrowd = Math.round(crowdEntries.reduce((sum, e) => sum + e.crowd, 0) / crowdEntries.length);
+    avgCrowdLabel = crowdEntries.find(e => e.crowd === avgCrowd)?.label
+      || crowdEntries.slice().sort((a, b) => Math.abs(a.crowd - avgCrowd) - Math.abs(b.crowd - avgCrowd))[0].label;
+  }
+
+  return {
+    totalPoints,
+    totalCash: hasCash ? totalCash : null,
+    totalNights,
+    avgCrowd,
+    avgCrowdLabel,
+    cashPerPoint: hasCash && totalPoints > 0 ? totalCash / totalPoints : null,
+    pointsPerNight: totalNights > 0 ? totalPoints / totalNights : null,
+  };
+}
+
+function renderGate() {
+  pageContent.innerHTML = `
+    <div class="gate">
+      <p>Sign in to compare the itineraries you've saved from the calendar.</p>
+      <button type="button" class="big-signin-btn" id="gate-signin">Sign in with Google</button>
+    </div>
+  `;
+  document.getElementById("gate-signin").addEventListener("click", () => window.DVCAuth.signInWithGoogle());
+}
+
+function renderUnconfigured() {
+  pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
+}
+
+function bestIndex(values) {
+  // Index of the lowest non-null value -- "best" for points/cash/crowd,
+  // where less is always the win (cheaper stay, lighter crowds).
+  let best = -1;
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] == null) continue;
+    if (best === -1 || values[i] < values[best]) best = i;
+  }
+  return best;
+}
+
+function buildCompareTableHTML(selected) {
+  if (selected.length === 0) {
+    return `<div class="empty-note">Pick at least one saved itinerary above to see its details.</div>`;
+  }
+
+  const metrics = selected.map(itin => calcItineraryMetrics(itin));
+
+  const pointsBest = bestIndex(metrics.map(m => m.totalPoints));
+  const cashBest = bestIndex(metrics.map(m => m.totalCash));
+  const crowdBest = bestIndex(metrics.map(m => m.avgCrowd));
+  const cashPerPointBest = bestIndex(metrics.map(m => m.cashPerPoint));
+
+  const headerCells = selected.map(itin => `<th>${itin.name}</th>`).join("");
+
+  const segmentRows = selected.map(itin => `
+    <td>
+      ${itin.segments.map(seg => `
+        <div class="segment-line">
+          <div class="segment-resort">${resortName(seg.resortId, itin.year)}</div>
+          <div class="segment-dates">${roomTypeName(seg.resortId, itin.year, seg.roomTypeId)} &middot; ${formatDisplayDate(seg.checkIn)} &rarr; ${formatDisplayDate(seg.checkOut)}</div>
+        </div>
+      `).join("")}
+    </td>
+  `).join("");
+
+  const nightsRow = metrics.map(m => `<td class="compare-metric">${m.totalNights}</td>`).join("");
+  const pointsRow = metrics.map((m, i) => `<td class="compare-metric${i === pointsBest ? " best" : ""}">${m.totalPoints.toLocaleString()}</td>`).join("");
+  const cashRow = metrics.map((m, i) => `<td class="compare-metric${i === cashBest ? " best" : ""}">${m.totalCash != null ? fmt(m.totalCash) : "&mdash;"}</td>`).join("");
+  const cashPerPointRow = metrics.map((m, i) => `<td class="compare-metric${i === cashPerPointBest ? " best" : ""}">${m.cashPerPoint != null ? "$" + m.cashPerPoint.toFixed(2) : "&mdash;"}</td>`).join("");
+  const pointsPerNightRow = metrics.map(m => `<td class="compare-metric">${m.pointsPerNight != null ? m.pointsPerNight.toFixed(1) : "&mdash;"}</td>`).join("");
+  const crowdRow = metrics.map((m, i) => `
+    <td class="${i === crowdBest ? "compare-metric best" : ""}">
+      ${m.avgCrowd != null ? `<span class="crowd-pill ${crowdClass(m.avgCrowdLabel)}">${m.avgCrowd}</span> ${m.avgCrowdLabel}` : "&mdash;"}
+    </td>
+  `).join("");
+
+  return `
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead><tr><th></th>${headerCells}</tr></thead>
+        <tbody>
+          <tr><th>Itinerary</th>${segmentRows}</tr>
+          <tr><th>Nights</th>${nightsRow}</tr>
+          <tr><th>Total Points</th>${pointsRow}</tr>
+          <tr><th>Cash Value</th>${cashRow}</tr>
+          <tr><th>$ per Point</th>${cashPerPointRow}</tr>
+          <tr><th>Points per Night</th>${pointsPerNightRow}</tr>
+          <tr><th>Avg. Crowd Level</th>${crowdRow}</tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderPickers() {
+  return `
+    <div class="picker-row">
+      ${[0, 1, 2].map(i => `
+        <div class="picker-slot">
+          <label for="picker-${i}">Trip ${String.fromCharCode(65 + i)}${i === 0 ? "" : " (optional)"}</label>
+          <select id="picker-${i}" data-slot="${i}">
+            <option value="">Choose a saved itinerary&hellip;</option>
+            ${itineraries.map(itin => `<option value="${itin.id}" ${selectedIds[i] === itin.id ? "selected" : ""}>${itin.name}</option>`).join("")}
+          </select>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderComparison() {
+  const selected = selectedIds
+    .map(id => itineraries.find(i => i.id === id))
+    .filter(Boolean);
+  document.getElementById("compare-output").innerHTML = buildCompareTableHTML(selected);
+}
+
+async function renderSignedIn() {
+  itineraries = await window.DVCAuth.getItineraries();
+
+  if (itineraries.length < 2) {
+    pageContent.innerHTML = `
+      <div class="section">
+        <h2>Compare Itineraries</h2>
+        <div class="empty-note">You need at least 2 saved itineraries to compare -- <a href="itineraries.html">go save another one</a> from the calendar first.</div>
+      </div>
+    `;
+    return;
+  }
+
+  pageContent.innerHTML = `
+    <div class="section">
+      <h2>Compare Itineraries</h2>
+      <div class="section-sub">Pick up to 3 saved itineraries. A green checkmark marks the better number in each row (fewer points, lower cost, lighter crowds).</div>
+      ${renderPickers()}
+    </div>
+    <div class="section" id="compare-output"></div>
+  `;
+
+  [0, 1, 2].forEach(i => {
+    document.getElementById(`picker-${i}`).addEventListener("change", (e) => {
+      selectedIds[i] = e.target.value || null;
+      renderComparison();
+    });
+  });
+
+  renderComparison();
+}
+
+function render(session) {
+  if (!window.DVCAuth.isConfigured()) {
+    renderUnconfigured();
+  } else if (session) {
+    renderSignedIn();
+  } else {
+    renderGate();
+  }
+}
+
+function waitForAuth(attempts) {
+  if (window.DVCAuth) {
+    window.DVCAuth.onAuthChange(render);
+  } else if (attempts > 0) {
+    setTimeout(() => waitForAuth(attempts - 1), 50);
+  } else {
+    renderUnconfigured();
+  }
+}
+waitForAuth(40);
+  </script>
+</body>
+</html>

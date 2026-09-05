@@ -124,3 +124,4 @@ Sourced from DVC community forums (DISboards, DVCNews, Reddit r/dvcmember). Roug
 | 10 | Cash value score | "Dollars saved per point" metric for each booking | Planned |
 | 11 | Owner vs. rental / owner vs. cash savings tiles | Cost Comparison card used to show separate "Owner vs. cash" and "Owner vs. rental" savings tiles; removed 2026-08-28 to compact the card down to 3 tiles (Disney / Owner / Rental). Rental tile still shows rental-vs-cash savings inline. Could re-add owner-side savings as an optional expandable section. | Removed, could re-add |
 | 12 | Saved trips / itineraries | Save a planned stay (single or split) from the calendar and reload it later | Done |
+| 13 | Itinerary comparison | Compare up to 3 saved itineraries side by side: points, nights, cash value, $/point, crowd level | Done |
