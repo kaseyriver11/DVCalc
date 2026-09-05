@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract Value</title>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #1a237e, #4a148c);
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+/* ---- Site nav ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: #4a148c; }
+.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+
+.account-btn, .account-link-btn {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #f7f5fa;
+  color: #4a148c;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
+}
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+
+@media (max-width: 800px) {
+  .site-nav { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .site-nav-links { width: 100%; }
+}
+
+.page {
+  max-width: 1080px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.section {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a237e;
+  margin-bottom: 4px;
+}
+
+.section-sub {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+
+.form-field label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.4px;
+}
+
+.form-field input, .form-field select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  background: white;
+}
+
+.form-field input:focus, .form-field select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
+}
+
+.purchase-type-toggle { display: flex; gap: 8px; }
+.purchase-type-toggle button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: #555;
+}
+.purchase-type-toggle button.selected { background: #4a148c; border-color: #4a148c; color: white; }
+
+.advanced-toggle {
+  font-size: 0.78rem;
+  color: #4a148c;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.advanced-fields {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 14px;
+  background: #faf8fd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.advanced-fields.open { display: grid; }
+
+.dues-mode-note {
+  font-size: 0.74rem;
+  color: #999;
+  grid-column: 1 / -1;
+}
+
+.data-freshness {
+  font-size: 0.74rem;
+  color: #999;
+  margin-top: 8px;
+}
+.data-freshness a { color: #4a148c; }
+
+.results-table-wrap { overflow-x: auto; }
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.results-table th, .results-table td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.results-table thead th {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #888;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+.results-table thead th:hover { color: #4a148c; }
+.results-table thead th.sorted { color: #4a148c; }
+
+.results-table td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.results-table .resort-name { font-weight: 600; color: #1a237e; white-space: normal; }
+.results-table .ratio-value { font-weight: 700; font-size: 0.95rem; }
+
+.restricted-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #a3401f;
+  background: #f6e5db;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.hide-restricted-row {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 700px) {
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .advanced-fields { grid-template-columns: 1fr; }
+}
+  </style>
+  <script>
+    // Injected dynamically (not a static <script async> tag) so this third-party
+    // analytics load can never hold up the page's own load/spinner state -- a
+    // static tag still counts toward window.onload even with async, so a slow
+    // or blocked gc.zgo.at could stall the tab indicator for seconds on some
+    // networks even though the app itself has already finished rendering.
+    window.addEventListener("load", () => {
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "//gc.zgo.at/count.js";
+      s.setAttribute("data-goatcounter", "https://dvcalc.goatcounter.com/count");
+      document.body.appendChild(s);
+    });
+  </script>
+  <script type="module" src="auth.js"></script>
+</head>
+<body>
+
+  <nav class="site-nav">
+    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Trip Planning</span>
+        <a href="itineraries.html">Saved Itineraries</a>
+        <a href="itinerarycompare.html">Compare Itineraries</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Buying Guide</span>
+        <a href="contractvalue.html" class="active">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Account</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+    </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
+    <h1>Contract Value</h1>
+    <div class="subtitle">Which resort gets you the most vacation value for what you'd actually spend</div>
+  </div>
+
+  <div class="page">
+    <div class="section">
+      <h2>Your Purchase</h2>
+      <div class="section-sub">Fill in how you'd actually buy -- every resort gets ranked under the same assumptions.</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="f-points">Points to Purchase</label>
+          <input type="number" id="f-points" min="1" step="1" value="150">
+        </div>
+        <div class="form-field">
+          <label>Purchase Type</label>
+          <div class="purchase-type-toggle">
+            <button type="button" id="type-resale" class="selected">Resale</button>
+            <button type="button" id="type-direct">Direct</button>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="f-vacation-years">Years You'll Keep Vacationing</label>
+          <input type="number" id="f-vacation-years" min="1" step="1" value="30">
+        </div>
+        <div class="form-field">
+          <label for="f-closing">Closing Cost</label>
+          <input type="number" id="f-closing" min="0" step="1" value="500">
+        </div>
+      </div>
+
+      <button type="button" class="advanced-toggle" id="advanced-toggle">Advanced assumptions &#9662;</button>
+      <div class="advanced-fields" id="advanced-fields">
+        <div class="form-field">
+          <label for="f-point-value">Vacation Value ($/pt/yr)</label>
+          <input type="number" id="f-point-value" min="1" step="1" value="20">
+        </div>
+        <div class="form-field">
+          <label for="f-value-growth">Vacation Value Growth (%/yr)</label>
+          <input type="number" id="f-value-growth" min="0" step="0.1" value="4.0">
+        </div>
+        <div class="form-field">
+          <label for="f-dues-growth">Dues Growth Override (%/yr)</label>
+          <input type="number" id="f-dues-growth" min="0" step="0.1" placeholder="per-resort actuals">
+        </div>
+        <div class="dues-mode-note" id="dues-mode-note">Dues growth defaults to each resort's own real historical trend (2016-2026 average, computed from published dues history) -- fill in the override above to use one flat rate for every resort instead.</div>
+      </div>
+
+      <div class="hide-restricted-row">
+        <input type="checkbox" id="f-hide-restricted">
+        <label for="f-hide-restricted">Hide resale-restricted resorts (Riviera, Disneyland Hotel Villas, Fort Wilderness Cabins)</label>
+      </div>
+
+      <div class="data-freshness">
+        Purchase prices as of <strong id="data-as-of"></strong> -- resale and direct pricing change monthly.
+        Check <a href="https://www.fidelityrealestate.com" target="_blank" rel="noopener">Fidelity Real Estate</a>,
+        <a href="https://www.dvcforless.com" target="_blank" rel="noopener">DVC For Less</a>, or
+        <a href="https://dvcnews.com/dvc-program-menu/financial/pricing-a-promotions" target="_blank" rel="noopener">DVCNews</a>
+        for current listings. This is a rough long-term comparison, not financial advice.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Ranked by Value</h2>
+      <div class="section-sub">Ratio = total vacation value &divide; total cost over the years you'll keep vacationing. Higher is better -- more value delivered per dollar spent, all-in (buy-in + dues).</div>
+      <div id="results-body"></div>
+    </div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script src="data/dues_historical.js"></script>
+  <script src="data/cash_value_index.js"></script>
+  <script src="data/resort_investment.js"></script>
+  <script>
+const currentRealYear = new Date().getFullYear();
+let purchaseType = "resale";
+let sortKey = "ratio";
+let sortDir = "desc";
+
+function fmt(n) { return "$" + Math.round(n).toLocaleString(); }
+
+function resortDisplayName(id) {
+  const r = RESORTS.find(r => r.id === id);
+  return r ? r.name : id;
+}
+
+// Per-resort historical dues CAGR, computed live from dues_historical.js
+// (same data the Membership Value page's cost-of-ownership math already
+// uses) rather than a single guessed flat rate for every resort -- some
+// resorts' dues have genuinely risen much faster than others (Hilton
+// Head/Vero Beach/Old Key West all run 6%+/yr; Riviera and Copper Creek,
+// DVC's newest resorts, are still under 2.5%/yr).
+function historicalDuesCagr(resortId) {
+  const history = DUES_HISTORY[resortId];
+  if (!history) return 0.045; // shouldn't happen -- every resort has a history entry
+  const years = Object.keys(history).map(Number).sort((a, b) => a - b);
+  const first = years[0], last = years[years.length - 1];
+  if (last === first) return 0.045;
+  return Math.pow(history[last] / history[first], 1 / (last - first)) - 1;
+}
+
+// Whether a resale contract at this resort could ONLY ever book this same
+// resort -- reuses the app's real resale-restriction logic (the same rule
+// account.html/app.js already enforce) rather than a second hardcoded
+// copy of the three home-only resorts.
+function isHomeOnlyResale(resortId) {
+  if (!window.DVCAuth) return false;
+  const allIds = [...new Set(RESORTS.map(r => r.id))];
+  const access = window.DVCAuth.getUserResortAccess(
+    [{ home_resort_id: resortId, purchase_type: "resale" }],
+    allIds,
+  );
+  return access.sevenMoResortIds.size === 0;
+}
+
+function computeRow(resortId, inputs) {
+  const inv = RESORT_INVESTMENT_DATA[resortId];
+  if (!inv) return null;
+
+  const pricePerPoint = purchaseType === "direct" ? inv.directPricePerPoint : inv.resalePricePerPoint;
+  const initialCost = pricePerPoint * inputs.points + inputs.closingCost;
+
+  const yearsRemaining = inv.contractExpirationYear - currentRealYear;
+  const vacationYears = Math.max(0, Math.min(inputs.desiredVacationYears, yearsRemaining));
+
+  const duesRate = inputs.duesGrowthOverride != null ? inputs.duesGrowthOverride : historicalDuesCagr(resortId);
+  const currentDuesPerPoint = DUES_PER_POINT[resortId] || 0;
+
+  let totalDues = 0;
+  let totalValue = 0;
+  for (let t = 0; t < vacationYears; t++) {
+    totalDues += currentDuesPerPoint * inputs.points * Math.pow(1 + duesRate, t);
+    totalValue += inputs.pointValue * inputs.points * Math.pow(1 + inputs.valueGrowth, t);
+  }
+
+  const finalCost = initialCost + totalDues;
+  const ratio = finalCost > 0 ? totalValue / finalCost : 0;
+
+  return {
+    resortId,
+    resortName: resortDisplayName(resortId),
+    pricePerPoint,
+    contractExpirationYear: inv.contractExpirationYear,
+    yearsRemaining,
+    vacationYears,
+    totalDues,
+    finalCost,
+    totalValue,
+    ratio,
+    isRestricted: purchaseType === "resale" && isHomeOnlyResale(resortId),
+  };
+}
+
+function bestIndices(values, direction = "high") {
+  let bestVal = null;
+  for (const v of values) {
+    if (v == null) continue;
+    if (bestVal == null || (direction === "high" ? v > bestVal : v < bestVal)) bestVal = v;
+  }
+  if (bestVal == null) return new Set();
+  return new Set(values.map((v, i) => (v === bestVal ? i : -1)).filter(i => i !== -1));
+}
+
+function sortRows(rows) {
+  const dir = sortDir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    if (sortKey === "resortName") return a.resortName.localeCompare(b.resortName) * dir;
+    return (a[sortKey] - b[sortKey]) * dir;
+  });
+}
+
+function renderResults() {
+  const points = Math.max(1, parseInt(document.getElementById("f-points").value, 10) || 150);
+  const desiredVacationYears = Math.max(1, parseInt(document.getElementById("f-vacation-years").value, 10) || 30);
+  const closingCost = Math.max(0, parseFloat(document.getElementById("f-closing").value) || 0);
+  const pointValue = Math.max(0, parseFloat(document.getElementById("f-point-value").value) || 20);
+  const valueGrowth = (parseFloat(document.getElementById("f-value-growth").value) || 0) / 100;
+  const duesOverrideRaw = document.getElementById("f-dues-growth").value;
+  const duesGrowthOverride = duesOverrideRaw !== "" ? parseFloat(duesOverrideRaw) / 100 : null;
+  const hideRestricted = document.getElementById("f-hide-restricted").checked;
+
+  const inputs = { points, desiredVacationYears, closingCost, pointValue, valueGrowth, duesGrowthOverride };
+
+  let rows = Object.keys(RESORT_INVESTMENT_DATA)
+    .map(id => computeRow(id, inputs))
+    .filter(Boolean);
+
+  if (hideRestricted) rows = rows.filter(r => !r.isRestricted);
+
+  const sorted = sortRows(rows);
+  const ratioBest = bestIndices(sorted.map(r => r.ratio), "high");
+
+  const colHeader = (key, label) => `<th data-sort="${key}" class="${sortKey === key ? "sorted" : ""}">${label}${sortKey === key ? (sortDir === "asc" ? " &uarr;" : " &darr;") : ""}</th>`;
+
+  const rowsHTML = sorted.map((r, i) => `
+    <tr>
+      <td class="resort-name">${r.resortName}${r.isRestricted ? `<span class="restricted-badge">resale-restricted</span>` : ""}</td>
+      <td class="num">$${r.pricePerPoint.toFixed(2)}</td>
+      <td class="num">${r.contractExpirationYear} (${r.yearsRemaining}y)</td>
+      <td class="num">${r.vacationYears}</td>
+      <td class="num">${fmt(r.totalDues)}</td>
+      <td class="num">${fmt(r.finalCost)}</td>
+      <td class="num">${fmt(r.totalValue)}</td>
+      <td class="num ratio-value" style="${ratioBest.has(i) ? "color:#2e7d32" : ""}">${r.ratio.toFixed(2)}${ratioBest.has(i) ? " &#10003;" : ""}</td>
+    </tr>
+  `).join("");
+
+  document.getElementById("results-body").innerHTML = `
+    <div class="results-table-wrap">
+      <table class="results-table">
+        <thead>
+          <tr>
+            ${colHeader("resortName", "Resort")}
+            ${colHeader("pricePerPoint", "Price/Pt")}
+            <th>Contract Expires</th>
+            ${colHeader("vacationYears", "Vacation Yrs")}
+            ${colHeader("totalDues", "Total Dues")}
+            ${colHeader("finalCost", "Total Cost")}
+            ${colHeader("totalValue", "Vacation Value")}
+            ${colHeader("ratio", "Ratio")}
+          </tr>
+        </thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>
+  `;
+
+  document.querySelectorAll("th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      if (sortKey === key) {
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortKey = key;
+        sortDir = key === "resortName" ? "asc" : "desc";
+      }
+      renderResults();
+    });
+  });
+}
+
+function setPurchaseType(type) {
+  purchaseType = type;
+  document.getElementById("type-resale").classList.toggle("selected", type === "resale");
+  document.getElementById("type-direct").classList.toggle("selected", type === "direct");
+  // Direct purchases have no closing cost; resale typically runs a few
+  // hundred dollars. Only auto-adjust if the field still holds either
+  // default, so a manual edit doesn't get silently overwritten by
+  // switching purchase type back and forth.
+  const closingInput = document.getElementById("f-closing");
+  if (closingInput.value === "500" || closingInput.value === "0") {
+    closingInput.value = type === "direct" ? "0" : "500";
+  }
+  renderResults();
+}
+
+document.getElementById("data-as-of").textContent = new Date(INVESTMENT_DATA_AS_OF + "T12:00:00").toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+
+document.getElementById("type-resale").addEventListener("click", () => setPurchaseType("resale"));
+document.getElementById("type-direct").addEventListener("click", () => setPurchaseType("direct"));
+document.getElementById("advanced-toggle").addEventListener("click", () => {
+  document.getElementById("advanced-fields").classList.toggle("open");
+});
+document.getElementById("f-hide-restricted").addEventListener("change", renderResults);
+["f-points", "f-vacation-years", "f-closing", "f-point-value", "f-value-growth", "f-dues-growth"].forEach(id => {
+  document.getElementById(id).addEventListener("input", renderResults);
+});
+
+function waitForAuthThenRender(attempts) {
+  if (window.DVCAuth || attempts <= 0) {
+    renderResults();
+  } else {
+    setTimeout(() => waitForAuthThenRender(attempts - 1), 50);
+  }
+}
+waitForAuthThenRender(40);
+  </script>
+</body>
+</html>
