@@ -309,10 +309,9 @@ body {
           <input type="number" id="f-value-growth" min="0" step="0.1" value="5.0">
         </div>
         <div class="form-field">
-          <label for="f-dues-growth">Dues Growth Override (%/yr)</label>
-          <input type="number" id="f-dues-growth" min="0" step="0.1" placeholder="per-resort actuals">
+          <label for="f-dues-growth">Dues Growth (%/yr)</label>
+          <input type="number" id="f-dues-growth" min="0" step="0.1" value="4.0">
         </div>
-        <div class="dues-mode-note" id="dues-mode-note">Dues growth defaults to each resort's own real historical trend (2016-2026 average, computed from published dues history) -- fill in the override above to use one flat rate for every resort instead.</div>
       </div>
 
       <div class="hide-restricted-row">
@@ -331,7 +330,7 @@ body {
 
     <div class="section">
       <h2>Ranked by Value</h2>
-      <div class="section-sub">Ratio = total vacation value &divide; total cost over the years you'll keep vacationing. Higher is better -- more value delivered per dollar spent, all-in (buy-in + dues).</div>
+      <div class="section-sub">Both ratios = value &divide; total cost (buy-in + dues) over the years you'll keep vacationing -- higher is better either way. <strong>Cash Ratio</strong> compares owning to paying rack rate, using the Vacation Value assumptions above. <strong>Rent Ratio</strong> compares owning to just renting points from another owner every time (fixed at $20/pt growing 4%/yr), so you can see whether buying beats renting, not just beats paying cash.</div>
       <div id="results-body"></div>
     </div>
   </div>
@@ -344,7 +343,7 @@ body {
   <script>
 const currentRealYear = new Date().getFullYear();
 let purchaseType = "resale";
-let sortKey = "ratio";
+let sortKey = "cashRatio";
 let sortDir = "desc";
 
 function fmt(n) { return "$" + Math.round(n).toLocaleString(); }
@@ -354,20 +353,14 @@ function resortDisplayName(id) {
   return r ? r.name : id;
 }
 
-// Per-resort historical dues CAGR, computed live from dues_historical.js
-// (same data the Membership Value page's cost-of-ownership math already
-// uses) rather than a single guessed flat rate for every resort -- some
-// resorts' dues have genuinely risen much faster than others (Hilton
-// Head/Vero Beach/Old Key West all run 6%+/yr; Riviera and Copper Creek,
-// DVC's newest resorts, are still under 2.5%/yr).
-function historicalDuesCagr(resortId) {
-  const history = DUES_HISTORY[resortId];
-  if (!history) return 0.045; // shouldn't happen -- every resort has a history entry
-  const years = Object.keys(history).map(Number).sort((a, b) => a - b);
-  const first = years[0], last = years[years.length - 1];
-  if (last === first) return 0.045;
-  return Math.pow(history[last] / history[first], 1 / (last - first)) - 1;
-}
+// Fixed reference baseline for Rent Ratio -- what renting points from
+// another owner costs, independent of whatever Vacation Value assumption
+// the user's set above. $20/pt matches the app's own rental-rate slider
+// default elsewhere; not exposed as an input since the point of this
+// column is a single, stable "how does owning compare to just renting
+// every time" reference, not another adjustable scenario.
+const RENT_POINT_VALUE = 20;
+const RENT_VALUE_GROWTH = 0.04;
 
 // Whether a resale contract at this resort could ONLY ever book this same
 // resort -- reuses the app's real resale-restriction logic (the same rule
@@ -393,18 +386,20 @@ function computeRow(resortId, inputs) {
   const yearsRemaining = inv.contractExpirationYear - currentRealYear;
   const vacationYears = Math.max(0, Math.min(inputs.desiredVacationYears, yearsRemaining));
 
-  const duesRate = inputs.duesGrowthOverride != null ? inputs.duesGrowthOverride : historicalDuesCagr(resortId);
   const currentDuesPerPoint = DUES_PER_POINT[resortId] || 0;
 
   let totalDues = 0;
   let totalValue = 0;
+  let totalRentValue = 0;
   for (let t = 0; t < vacationYears; t++) {
-    totalDues += currentDuesPerPoint * inputs.points * Math.pow(1 + duesRate, t);
+    totalDues += currentDuesPerPoint * inputs.points * Math.pow(1 + inputs.duesGrowth, t);
     totalValue += inputs.pointValue * inputs.points * Math.pow(1 + inputs.valueGrowth, t);
+    totalRentValue += RENT_POINT_VALUE * inputs.points * Math.pow(1 + RENT_VALUE_GROWTH, t);
   }
 
   const finalCost = initialCost + totalDues;
-  const ratio = finalCost > 0 ? totalValue / finalCost : 0;
+  const cashRatio = finalCost > 0 ? totalValue / finalCost : 0;
+  const rentRatio = finalCost > 0 ? totalRentValue / finalCost : 0;
 
   return {
     resortId,
@@ -416,7 +411,8 @@ function computeRow(resortId, inputs) {
     totalDues,
     finalCost,
     totalValue,
-    ratio,
+    cashRatio,
+    rentRatio,
     isRestricted: purchaseType === "resale" && isHomeOnlyResale(resortId),
   };
 }
@@ -450,11 +446,10 @@ function renderResults() {
   const closingCost = Math.max(0, parseFloat(document.getElementById("f-closing").value) || 0);
   const pointValue = Math.max(0, parseFloat(document.getElementById("f-point-value").value) || 35);
   const valueGrowth = (parseFloat(document.getElementById("f-value-growth").value) || 0) / 100;
-  const duesOverrideRaw = document.getElementById("f-dues-growth").value;
-  const duesGrowthOverride = duesOverrideRaw !== "" ? parseFloat(duesOverrideRaw) / 100 : null;
+  const duesGrowth = (parseFloat(document.getElementById("f-dues-growth").value) || 0) / 100;
   const hideRestricted = document.getElementById("f-hide-restricted").checked;
 
-  const inputs = { points, desiredVacationYears, closingCost, pointValue, valueGrowth, duesGrowthOverride };
+  const inputs = { points, desiredVacationYears, closingCost, pointValue, valueGrowth, duesGrowth };
 
   let rows = Object.keys(RESORT_INVESTMENT_DATA)
     .map(id => computeRow(id, inputs))
@@ -463,7 +458,8 @@ function renderResults() {
   if (hideRestricted) rows = rows.filter(r => !r.isRestricted);
 
   const sorted = sortRows(rows);
-  const ratioBest = bestIndices(sorted.map(r => r.ratio), "high");
+  const cashRatioBest = bestIndices(sorted.map(r => r.cashRatio), "high");
+  const rentRatioBest = bestIndices(sorted.map(r => r.rentRatio), "high");
 
   const colHeader = (key, label) => `<th data-sort="${key}" class="${sortKey === key ? "sorted" : ""}">${label}${sortKey === key ? (sortDir === "asc" ? " &uarr;" : " &darr;") : ""}</th>`;
 
@@ -476,7 +472,8 @@ function renderResults() {
       <td class="num">${fmt(r.totalDues)}</td>
       <td class="num">${fmt(r.finalCost)}</td>
       <td class="num">${fmt(r.totalValue)}</td>
-      <td class="num ratio-value" style="${ratioBest.has(i) ? "color:#2e7d32" : ""}">${r.ratio.toFixed(2)}${ratioBest.has(i) ? " &#10003;" : ""}</td>
+      <td class="num ratio-value" style="${cashRatioBest.has(i) ? "color:#2e7d32" : ""}">${r.cashRatio.toFixed(2)}${cashRatioBest.has(i) ? " &#10003;" : ""}</td>
+      <td class="num ratio-value" style="${rentRatioBest.has(i) ? "color:#2e7d32" : ""}">${r.rentRatio.toFixed(2)}${rentRatioBest.has(i) ? " &#10003;" : ""}</td>
     </tr>
   `).join("");
 
@@ -492,7 +489,8 @@ function renderResults() {
             ${colHeader("totalDues", "Total Dues")}
             ${colHeader("finalCost", "Total Cost")}
             ${colHeader("totalValue", "Vacation Value")}
-            ${colHeader("ratio", "Ratio")}
+            ${colHeader("cashRatio", "Cash Ratio")}
+            ${colHeader("rentRatio", "Rent Ratio")}
           </tr>
         </thead>
         <tbody>${rowsHTML}</tbody>
