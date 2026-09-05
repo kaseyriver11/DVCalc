@@ -385,16 +385,18 @@ function renderUnconfigured() {
 // direction "low" (default) picks the lowest value as best -- fewer
 // points spent, lighter crowds. direction "high" picks the highest --
 // cash value and $/point are about how much rack-rate value you're
-// getting for your points, so more is the win there, not less.
-function bestIndex(values, direction = "low") {
-  let best = -1;
-  for (let i = 0; i < values.length; i++) {
-    if (values[i] == null) continue;
-    if (best === -1) { best = i; continue; }
-    const better = direction === "high" ? values[i] > values[best] : values[i] < values[best];
-    if (better) best = i;
+// getting for your points, so more is the win there, not less. Returns a
+// Set of every index tied for best (not just the first one found) -- a
+// genuine tie should highlight both columns, not arbitrarily favor
+// whichever happened to come first in the row.
+function bestIndices(values, direction = "low") {
+  let bestVal = null;
+  for (const v of values) {
+    if (v == null) continue;
+    if (bestVal == null || (direction === "high" ? v > bestVal : v < bestVal)) bestVal = v;
   }
-  return best;
+  if (bestVal == null) return new Set();
+  return new Set(values.map((v, i) => (v === bestVal ? i : -1)).filter(i => i !== -1));
 }
 
 function buildCompareTableHTML(selected) {
@@ -404,10 +406,10 @@ function buildCompareTableHTML(selected) {
 
   const metrics = selected.map(itin => calcItineraryMetrics(itin));
 
-  const pointsBest = bestIndex(metrics.map(m => m.totalPoints));
-  const cashBest = bestIndex(metrics.map(m => m.totalCash), "high");
-  const crowdBest = bestIndex(metrics.map(m => m.avgCrowd));
-  const cashPerPointBest = bestIndex(metrics.map(m => m.cashPerPoint), "high");
+  const pointsBest = bestIndices(metrics.map(m => m.totalPoints));
+  const cashBest = bestIndices(metrics.map(m => m.totalCash), "high");
+  const crowdBest = bestIndices(metrics.map(m => m.avgCrowd));
+  const cashPerPointBest = bestIndices(metrics.map(m => m.cashPerPoint), "high");
 
   const headerCells = selected.map(itin => `<th>${itin.name}</th>`).join("");
 
@@ -423,12 +425,12 @@ function buildCompareTableHTML(selected) {
   `).join("");
 
   const nightsRow = metrics.map(m => `<td class="compare-metric">${m.totalNights}</td>`).join("");
-  const pointsRow = metrics.map((m, i) => `<td class="compare-metric${i === pointsBest ? " best" : ""}">${m.totalPoints.toLocaleString()}</td>`).join("");
-  const cashRow = metrics.map((m, i) => `<td class="compare-metric${i === cashBest ? " best" : ""}">${m.totalCash != null ? fmt(m.totalCash) : "&mdash;"}</td>`).join("");
-  const cashPerPointRow = metrics.map((m, i) => `<td class="compare-metric${i === cashPerPointBest ? " best" : ""}">${m.cashPerPoint != null ? "$" + m.cashPerPoint.toFixed(2) : "&mdash;"}</td>`).join("");
+  const pointsRow = metrics.map((m, i) => `<td class="compare-metric${pointsBest.has(i) ? " best" : ""}">${m.totalPoints.toLocaleString()}</td>`).join("");
+  const cashRow = metrics.map((m, i) => `<td class="compare-metric${cashBest.has(i) ? " best" : ""}">${m.totalCash != null ? fmt(m.totalCash) : "&mdash;"}</td>`).join("");
+  const cashPerPointRow = metrics.map((m, i) => `<td class="compare-metric${cashPerPointBest.has(i) ? " best" : ""}">${m.cashPerPoint != null ? "$" + m.cashPerPoint.toFixed(2) : "&mdash;"}</td>`).join("");
   const pointsPerNightRow = metrics.map(m => `<td class="compare-metric">${m.pointsPerNight != null ? m.pointsPerNight.toFixed(1) : "&mdash;"}</td>`).join("");
   const crowdRow = metrics.map((m, i) => `
-    <td class="${i === crowdBest ? "compare-metric best" : ""}">
+    <td class="${crowdBest.has(i) ? "compare-metric best" : ""}">
       ${m.avgCrowd != null ? `<span class="crowd-pill ${crowdClass(m.avgCrowdLabel)}">${m.avgCrowd}</span> ${m.avgCrowdLabel}` : "&mdash;"}
     </td>
   `).join("");
