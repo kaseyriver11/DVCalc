@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suggest a Stay</title>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #1a237e, #4a148c);
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+/* ---- Site nav ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: #4a148c; }
+.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+
+.account-btn, .account-link-btn {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #f7f5fa;
+  color: #4a148c;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
+}
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+
+@media (max-width: 800px) {
+  .site-nav { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .site-nav-links { width: 100%; }
+}
+
+.page {
+  max-width: 960px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.section {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a237e;
+  margin-bottom: 4px;
+}
+
+.section-sub {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+
+.form-field label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.4px;
+}
+
+.form-field input, .form-field select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  background: white;
+}
+
+.form-field input:focus, .form-field select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
+}
+
+.scope-note {
+  font-size: 0.76rem;
+  color: #999;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+.scope-note a { color: #4a148c; }
+
+.find-btn {
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.find-btn:hover { background: #38106b; }
+
+.results-summary {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 14px;
+}
+.results-summary strong { color: #1a237e; }
+
+.empty-note {
+  color: #999;
+  font-style: italic;
+  font-size: 0.88rem;
+  padding: 16px 0;
+}
+
+.results-table-wrap { overflow-x: auto; }
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.results-table th, .results-table td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.results-table thead th {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #888;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+.results-table thead th:hover { color: #4a148c; }
+.results-table thead th.sorted { color: #4a148c; }
+
+.results-table td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.results-table .resort-name { font-weight: 600; color: #1a237e; white-space: normal; }
+.results-table .room-name { font-size: 0.78rem; color: #888; }
+
+.view-btn {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #4a148c;
+  background: white;
+  color: #4a148c;
+  cursor: pointer;
+}
+.view-btn:hover { background: #4a148c; color: white; }
+
+@media (max-width: 700px) {
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+}
+  </style>
+  <script>
+    // Injected dynamically (not a static <script async> tag) so this third-party
+    // analytics load can never hold up the page's own load/spinner state -- a
+    // static tag still counts toward window.onload even with async, so a slow
+    // or blocked gc.zgo.at could stall the tab indicator for seconds on some
+    // networks even though the app itself has already finished rendering.
+    window.addEventListener("load", () => {
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "//gc.zgo.at/count.js";
+      s.setAttribute("data-goatcounter", "https://dvcalc.goatcounter.com/count");
+      document.body.appendChild(s);
+    });
+  </script>
+  <script type="module" src="auth.js"></script>
+</head>
+<body>
+
+  <nav class="site-nav">
+    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html" class="active">Suggest a Stay</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Trip Planning</span>
+        <a href="itineraries.html">Saved Itineraries</a>
+        <a href="itinerarycompare.html">Compare Itineraries</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Account</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+    </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
+    <h1>Suggest a Stay</h1>
+    <div class="subtitle">Tell us your points budget and what you're after -- we'll find stays that fit</div>
+  </div>
+
+  <div class="page">
+    <div class="section">
+      <h2>Your Budget</h2>
+      <div class="section-sub">Fill in what you know. Everything else stays flexible.</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="f-points">Points Available</label>
+          <input type="number" id="f-points" min="1" step="1" placeholder="e.g. 150">
+        </div>
+        <div class="form-field">
+          <label for="f-year">Points Year</label>
+          <select id="f-year"></select>
+        </div>
+        <div class="form-field">
+          <label for="f-month">Travel Month</label>
+          <select id="f-month">
+            <option value="any">Any month</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="f-category">Room Type</label>
+          <select id="f-category">
+            <option value="any">Any</option>
+            <option value="studio">Studio</option>
+            <option value="one">1-Bedroom</option>
+            <option value="two">2-Bedroom</option>
+            <option value="three">3-Bedroom / Grand Villa</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="f-nights">Minimum Nights</label>
+          <input type="number" id="f-nights" min="1" step="1" value="1">
+        </div>
+        <div class="form-field">
+          <label for="f-scope">Resorts to Search</label>
+          <select id="f-scope">
+            <option value="all">All resorts</option>
+            <option value="access" id="scope-access-option" style="display:none;">Resorts I can book</option>
+            <option value="home" id="scope-home-option" style="display:none;">My home resort(s) only</option>
+          </select>
+        </div>
+      </div>
+      <div class="scope-note" id="scope-note" style="display:none;"></div>
+      <button type="button" class="find-btn" id="find-btn">Find Stays</button>
+    </div>
+
+    <div class="section" id="results-section" style="display:none;">
+      <h2>Feasible Stays</h2>
+      <div id="results-body"></div>
+    </div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script>
+const currentRealYear = new Date().getFullYear();
+const ALL_DATA_YEARS = [...new Set(RESORTS.map(r => r.year))].sort();
+const AVAILABLE_YEARS = ALL_DATA_YEARS.filter(y => y >= currentRealYear).length
+  ? ALL_DATA_YEARS.filter(y => y >= currentRealYear)
+  : [ALL_DATA_YEARS[ALL_DATA_YEARS.length - 1]];
+
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+let userContracts = [];
+let sortKey = "nights";
+let sortDir = "desc";
+let lastResults = [];
+
+function formatDate(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() + n);
+  return formatDate(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+// Inclusive keyword match, not a "default to studio" fallback -- a room
+// only counts toward a category if its name actually says so. Matters
+// here specifically: unlike app.js's own getCategoryFromRoom() (which
+// defaults anything unmatched to "studio", fine for a display label but
+// wrong for a hard filter), this page uses category as a real filter, so
+// something like Aulani's plain "Hotel Room" needs to fall into neither
+// bucket rather than being miscounted as a studio.
+const CATEGORY_KEYWORDS = { studio: "studio", one: "one-bedroom", two: "two-bedroom", three: "three-bedroom" };
+
+function roomMatchesCategory(rt, category) {
+  if (category === "any") return true;
+  return rt.name.toLowerCase().includes(CATEGORY_KEYWORDS[category]);
+}
+
+const CATEGORY_LABELS = { studio: "Studio", one: "1-Bedroom", two: "2-Bedroom", three: "3-Bedroom" };
+
+function uniqueResorts(year) {
+  const seen = new Set();
+  const list = [];
+  for (const r of RESORTS) {
+    if (r.year !== year || seen.has(r.id)) continue;
+    seen.add(r.id);
+    list.push(r);
+  }
+  return list.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// Greedily extends a stay night by night from startDateStr while the
+// running point total stays within budget. This IS the correct max-nights
+// answer for a single continuous stay (not just a heuristic) -- points
+// per night are always positive, so there's no benefit to skipping a
+// night the way there might be in a more general knapsack problem.
+function maxNightsWithinBudget(resort, roomTypeId, startDateStr, budget, capNights) {
+  let total = 0, nights = 0, dateStr = startDateStr;
+  for (let i = 0; i < capNights; i++) {
+    const pts = getPointsForDate(resort, dateStr, roomTypeId);
+    if (pts == null || total + pts > budget) break;
+    total += pts;
+    nights++;
+    dateStr = addDays(dateStr, 1);
+  }
+  return { nights, total };
+}
+
+function findFeasibleStays({ points, year, month, category, minNights, resortIds }) {
+  const resorts = uniqueResorts(year).filter(r => resortIds == null || resortIds.has(r.id));
+  const results = [];
+  const CAP_NIGHTS = 14;
+
+  for (const resort of resorts) {
+    const roomTypes = resort.roomTypes.filter(rt => roomMatchesCategory(rt, category));
+    for (const rt of roomTypes) {
+      let bestStart = null, bestNights = 0, bestTotal = 0;
+
+      const daysInMonth = month === "any" ? null : new Date(year, month + 1, 0).getDate();
+      const startDates = month === "any"
+        ? Array.from({ length: 365 }, (_, i) => addDays(`${year}-01-01`, i))
+        : Array.from({ length: daysInMonth }, (_, i) => formatDate(year, month, i + 1));
+
+      for (const startDate of startDates) {
+        const { nights, total } = maxNightsWithinBudget(resort, rt.id, startDate, points, CAP_NIGHTS);
+        if (nights >= minNights && nights > bestNights) {
+          bestNights = nights;
+          bestStart = startDate;
+          bestTotal = total;
+        }
+      }
+
+      if (bestStart) {
+        results.push({
+          resortId: resort.id,
+          resortName: resort.name,
+          roomTypeId: rt.id,
+          roomName: rt.name,
+          year,
+          checkIn: bestStart,
+          checkOut: addDays(bestStart, bestNights),
+          nights: bestNights,
+          pointsUsed: bestTotal,
+          pointsLeft: points - bestTotal,
+        });
+      }
+    }
+  }
+  return results;
+}
+
+function fmtNum(n) { return n.toLocaleString(); }
+
+function sortResults(results) {
+  const dir = sortDir === "asc" ? 1 : -1;
+  return [...results].sort((a, b) => {
+    if (sortKey === "resortName" || sortKey === "roomName") {
+      return a[sortKey].localeCompare(b[sortKey]) * dir;
+    }
+    return (a[sortKey] - b[sortKey]) * dir;
+  });
+}
+
+function renderResults() {
+  const section = document.getElementById("results-section");
+  const body = document.getElementById("results-body");
+  section.style.display = "block";
+
+  if (lastResults.length === 0) {
+    body.innerHTML = `<div class="empty-note">Nothing fits that budget with these filters -- try more points, a shorter minimum stay, or a wider room/resort search.</div>`;
+    return;
+  }
+
+  const sorted = sortResults(lastResults);
+  const rows = sorted.map(r => `
+    <tr>
+      <td>
+        <div class="resort-name">${r.resortName}</div>
+        <div class="room-name">${r.roomName}</div>
+      </td>
+      <td>${r.checkIn} &rarr; ${r.checkOut}</td>
+      <td class="num">${r.nights}</td>
+      <td class="num">${fmtNum(r.pointsUsed)}</td>
+      <td class="num">${fmtNum(r.pointsLeft)}</td>
+      <td><button type="button" class="view-btn" data-view="${sorted.indexOf(r)}">View</button></td>
+    </tr>
+  `).join("");
+
+  const colHeader = (key, label) => `<th data-sort="${key}" class="${sortKey === key ? "sorted" : ""}">${label}${sortKey === key ? (sortDir === "asc" ? " &uarr;" : " &darr;") : ""}</th>`;
+
+  body.innerHTML = `
+    <div class="results-summary"><strong>${lastResults.length}</strong> resort/room combination${lastResults.length === 1 ? "" : "s"} fit your budget.</div>
+    <div class="results-table-wrap">
+      <table class="results-table">
+        <thead>
+          <tr>
+            ${colHeader("resortName", "Resort")}
+            <th>Best Dates</th>
+            ${colHeader("nights", "Nights")}
+            ${colHeader("pointsUsed", "Points Used")}
+            ${colHeader("pointsLeft", "Points Left")}
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+
+  body.querySelectorAll("th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      if (sortKey === key) {
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortKey = key;
+        sortDir = key === "resortName" || key === "roomName" ? "asc" : "desc";
+      }
+      renderResults();
+    });
+  });
+
+  body.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const r = sorted[Number(btn.dataset.view)];
+      const restoredState = {
+        year: r.year,
+        resortId: r.resortId,
+        roomTypeId: r.roomTypeId,
+        checkIn: r.checkIn,
+        checkOut: r.checkOut,
+        segments: [],
+      };
+      sessionStorage.setItem("dvc_calendar_state", JSON.stringify(restoredState));
+      sessionStorage.setItem("dvc_return_to_calendar", "1");
+      window.location.href = "index.html";
+    });
+  });
+}
+
+function runSearch() {
+  const points = parseInt(document.getElementById("f-points").value, 10);
+  if (!points || points <= 0) {
+    alert("Enter how many points you have available.");
+    return;
+  }
+  const year = parseInt(document.getElementById("f-year").value, 10);
+  const monthVal = document.getElementById("f-month").value;
+  const month = monthVal === "any" ? "any" : parseInt(monthVal, 10);
+  const category = document.getElementById("f-category").value;
+  const minNights = Math.max(1, parseInt(document.getElementById("f-nights").value, 10) || 1);
+  const scope = document.getElementById("f-scope").value;
+
+  let resortIds = null;
+  if (scope !== "all" && window.DVCAuth) {
+    const allIds = [...new Set(RESORTS.map(r => r.id))];
+    const access = window.DVCAuth.getUserResortAccess(userContracts.filter(c => c.is_active), allIds);
+    resortIds = scope === "home" ? access.homeResortIds : new Set([...access.homeResortIds, ...access.sevenMoResortIds]);
+  }
+
+  lastResults = findFeasibleStays({ points, year, month, category, minNights, resortIds });
+  renderResults();
+}
+
+function populateYearAndMonth() {
+  const yearSelect = document.getElementById("f-year");
+  yearSelect.innerHTML = AVAILABLE_YEARS.map(y => `<option value="${y}">${y}</option>`).join("");
+
+  const monthSelect = document.getElementById("f-month");
+  MONTH_NAMES.forEach((name, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = name;
+    monthSelect.appendChild(opt);
+  });
+}
+
+async function initAccountScope(attempts) {
+  if (!window.DVCAuth) {
+    if (attempts > 0) setTimeout(() => initAccountScope(attempts - 1), 50);
+    return;
+  }
+  window.DVCAuth.onAuthChange(async (session) => {
+    userContracts = session ? await window.DVCAuth.getContracts() : [];
+    const hasActive = userContracts.some(c => c.is_active);
+    document.getElementById("scope-access-option").style.display = hasActive ? "" : "none";
+    document.getElementById("scope-home-option").style.display = hasActive ? "" : "none";
+    const note = document.getElementById("scope-note");
+    if (!session) {
+      note.style.display = "";
+      note.innerHTML = `Sign in to search only resorts you can actually book with your <a href="account.html">contracts</a>.`;
+    } else if (!hasActive) {
+      note.style.display = "";
+      note.innerHTML = `Add a <a href="account.html">contract</a> to filter by what you can actually book.`;
+    } else {
+      note.style.display = "none";
+    }
+  });
+}
+
+populateYearAndMonth();
+document.getElementById("find-btn").addEventListener("click", runSearch);
+document.getElementById("f-points").addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
+initAccountScope(40);
+  </script>
+</body>
+</html>
