@@ -14,8 +14,14 @@ create table if not exists profiles (
   display_name text,
   reminder_opt_in boolean not null default false,
   reminder_lead_days int not null default 14,
+  -- Opaque token for the no-login unsubscribe link in reminder emails --
+  -- see db/migrations/004_add_reminder_unsubscribe_token.sql for why this
+  -- exists as its own column rather than deriving it from something else.
+  reminder_unsubscribe_token uuid not null default gen_random_uuid(),
   created_at timestamptz not null default now()
 );
+
+create unique index if not exists profiles_reminder_unsubscribe_token_idx on profiles(reminder_unsubscribe_token);
 
 alter table profiles enable row level security;
 

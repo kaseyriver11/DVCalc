@@ -115,7 +115,7 @@ Sourced from DVC community forums (DISboards, DVCNews, Reddit r/dvcmember). Roug
 | 2 | Optimal date finder | Given resort/room/# nights/date range, find the cheapest window | Not planned |
 | 3 | Weekday/weekend optimization hints | Show "save X points by shifting check-in by 1 day" | Not planned |
 | 4 | Split stay calculator | Model multi-segment stays across resorts to save points | Done |
-| 5 | Banking/borrowing use year planner | Timeline of point availability, deadlines, expiration by use year | Planned |
+| 5 | Banking/borrowing use year planner | Each contract shows its real next deadline in My Contracts (client-side, live now); reminder emails via a Supabase Edge Function + Resend are coded (`supabase/functions/`) but need the site owner to deploy them — see `docs/phase5_deployment.md` | Built, pending deployment |
 | 6 | Booking window indicator | Mark 11-month and 7-month booking window open dates on calendar | Done |
 | 7 | Points budget reverse calculator | "I have X points — show me what I can book" — `suggest.html`, "Suggest a Stay," searches every resort/room for the longest stay a given budget affords in a target month, optionally scoped to resorts a signed-in user's contracts can actually book | Done |
 | 8 | Year-over-year point changes | Highlight point increases/decreases between years | Done |

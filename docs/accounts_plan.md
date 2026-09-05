@@ -173,10 +173,31 @@ that row. Gates on having at least 2 saved itineraries. Verified with a
 per-metric totals, and best-value highlighting all matched hand
 calculation.
 
+Phase 5 (banking/borrowing email reminders) code written 2026-09-04, not
+yet deployed — this is the one phase that genuinely can't be finished by
+editing files alone. What's built: `supabase/functions/send-banking-reminders/`
+(daily-cron-triggered, finds opted-in users' active contracts, computes
+each use year's next deadline via the same {month, day} lookup table now
+duplicated in both the Edge Function and `account.html`, checks
+`reminder_log` before sending to guard against double-sends, sends via
+Resend), `supabase/functions/unsubscribe-reminders/` (public one-click
+unsubscribe using a new `profiles.reminder_unsubscribe_token`, since a
+login-gated toggle alone doesn't satisfy the CAN-SPAM/GDPR expectation
+flagged in this doc's own risk list), and
+`db/migrations/004_add_reminder_unsubscribe_token.sql`. Also added,
+independent of the backend and already fully working: `account.html`
+now shows each active contract's actual next banking/borrowing deadline
+date and days-until, computed client-side.
+
+Deployment requires steps only the account owner can do — a Supabase
+CLI login+link+deploy, a Resend account with a verified sending domain,
+setting secrets, and scheduling the pg_cron job. Full instructions in
+`docs/phase5_deployment.md`. Until that's done, contracts show their real
+deadlines in the UI, but no reminder emails actually send.
+
 Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
 allow-list currently only permits `localhost:8794`; the production URL
-needs to be added there before login will work live. Phase 5
-(banking/borrowing email reminders) not started.
+needs to be added there before login will work live.
 
 ## Context
 

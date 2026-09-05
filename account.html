@@ -147,6 +147,13 @@ body {
   flex-wrap: wrap;
 }
 
+.contract-deadline {
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 6px;
+}
+.contract-deadline strong { color: #4a148c; }
+
 .badge {
   display: inline-block;
   font-size: 0.65rem;
@@ -367,6 +374,55 @@ body {
 const USE_YEARS = ["Feb", "Mar", "Apr", "Jun", "Aug", "Sep", "Oct", "Dec"];
 const pageContent = document.getElementById("page-content");
 
+// Banking/borrowing deadline: always 8 months after the use year's start
+// month, same calendar date every year regardless of which specific
+// 12-month cycle you're in. {month, day} below is 1-indexed and is the
+// deadline itself -- not the use-year start -- so "next deadline" is just
+// "the next time this month/day occurs on or after today," which handles
+// both same-year deadlines (Feb, Mar, Apr) and next-year ones (Jun, Aug,
+// Sep, Oct, Dec) with one rule instead of hardcoding which roll over.
+// Mirrors the Edge Function's copy of this table exactly -- see
+// supabase/functions/send-banking-reminders/index.ts.
+const DEADLINE_BY_USE_YEAR = {
+  Feb: { month: 9, day: 30 },  // Sep 30
+  Mar: { month: 10, day: 31 }, // Oct 31
+  Apr: { month: 11, day: 30 }, // Nov 30
+  Jun: { month: 1, day: 31 },  // Jan 31
+  Aug: { month: 3, day: 31 },  // Mar 31
+  Sep: { month: 4, day: 30 },  // Apr 30
+  Oct: { month: 5, day: 31 },  // May 31
+  Dec: { month: 7, day: 31 },  // Jul 31
+};
+
+// "Today" as a calendar date in Eastern time, independent of the
+// visitor's own timezone -- otherwise someone browsing from a timezone
+// hours ahead/behind ET could see a deadline flip a day early or late
+// right around midnight ET.
+function todayInEastern() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date());
+  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return { year: Number(map.year), month: Number(map.month), day: Number(map.day) };
+}
+
+function dateOnlyUTC(year, month, day) {
+  return Date.UTC(year, month - 1, day);
+}
+
+function nextDeadlineForUseYear(useYear, today) {
+  const { month, day } = DEADLINE_BY_USE_YEAR[useYear];
+  const todayMs = dateOnlyUTC(today.year, today.month, today.day);
+  let candidateMs = dateOnlyUTC(today.year, month, day);
+  if (candidateMs < todayMs) candidateMs = dateOnlyUTC(today.year + 1, month, day);
+  return { ms: candidateMs, daysUntil: Math.round((candidateMs - todayMs) / 86400000) };
+}
+
+function formatDeadlineDate(ms) {
+  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 // Unique resorts (data.js has one entry per resort per year -- dedupe by id).
 function uniqueResorts() {
   const seen = new Set();
@@ -471,7 +527,7 @@ async function renderSignedIn() {
         <label>Lead time: <input type="number" id="r-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days</label>
         <button type="button" class="small-btn" id="save-reminders">Save</button>
       </div>
-      <div class="reminder-note">Coming soon -- this saves your preference now, but emails aren't sending yet.</div>
+      <div class="reminder-note">Saves your preference now. Actual reminder emails depend on the site owner finishing deployment of the reminder service -- see docs/accounts_plan.md.</div>
     </div>
   `;
 
@@ -515,7 +571,10 @@ function renderContractList(contracts, resorts) {
     list.innerHTML = `<div class="empty-note">No contracts yet -- add your first one below.</div>`;
     return;
   }
-  list.innerHTML = contracts.map(c => `
+  const today = todayInEastern();
+  list.innerHTML = contracts.map(c => {
+    const deadline = c.is_active ? nextDeadlineForUseYear(c.use_year, today) : null;
+    return `
     <div class="contract-card ${c.is_active ? "" : "inactive"}">
       <div class="contract-main">
         <div class="contract-name">${c.nickname || resortName(c.home_resort_id)}</div>
@@ -528,6 +587,7 @@ function renderContractList(contracts, resorts) {
           <span class="badge ${c.purchase_type === "direct" ? "badge-direct" : "badge-resale"}">${c.purchase_type}</span>
           ${c.is_active ? "" : `<span class="badge badge-inactive">inactive</span>`}
         </div>
+        ${deadline ? `<div class="contract-deadline">Next banking/borrowing deadline: <strong>${formatDeadlineDate(deadline.ms)}</strong> (${deadline.daysUntil} day${deadline.daysUntil === 1 ? "" : "s"})</div>` : ""}
       </div>
       <div class="contract-actions">
         <button type="button" class="small-btn" data-edit="${c.id}">Edit</button>
@@ -535,7 +595,8 @@ function renderContractList(contracts, resorts) {
         <button type="button" class="small-btn danger" data-delete="${c.id}">Delete</button>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function setPurchaseType(type) {
