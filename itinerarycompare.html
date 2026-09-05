@@ -382,13 +382,17 @@ function renderUnconfigured() {
   pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
 }
 
-function bestIndex(values) {
-  // Index of the lowest non-null value -- "best" for points/cash/crowd,
-  // where less is always the win (cheaper stay, lighter crowds).
+// direction "low" (default) picks the lowest value as best -- fewer
+// points spent, lighter crowds. direction "high" picks the highest --
+// cash value and $/point are about how much rack-rate value you're
+// getting for your points, so more is the win there, not less.
+function bestIndex(values, direction = "low") {
   let best = -1;
   for (let i = 0; i < values.length; i++) {
     if (values[i] == null) continue;
-    if (best === -1 || values[i] < values[best]) best = i;
+    if (best === -1) { best = i; continue; }
+    const better = direction === "high" ? values[i] > values[best] : values[i] < values[best];
+    if (better) best = i;
   }
   return best;
 }
@@ -401,9 +405,9 @@ function buildCompareTableHTML(selected) {
   const metrics = selected.map(itin => calcItineraryMetrics(itin));
 
   const pointsBest = bestIndex(metrics.map(m => m.totalPoints));
-  const cashBest = bestIndex(metrics.map(m => m.totalCash));
+  const cashBest = bestIndex(metrics.map(m => m.totalCash), "high");
   const crowdBest = bestIndex(metrics.map(m => m.avgCrowd));
-  const cashPerPointBest = bestIndex(metrics.map(m => m.cashPerPoint));
+  const cashPerPointBest = bestIndex(metrics.map(m => m.cashPerPoint), "high");
 
   const headerCells = selected.map(itin => `<th>${itin.name}</th>`).join("");
 
@@ -486,7 +490,7 @@ async function renderSignedIn() {
   pageContent.innerHTML = `
     <div class="section">
       <h2>Compare Itineraries</h2>
-      <div class="section-sub">Pick up to 3 saved itineraries. A green checkmark marks the better number in each row (fewer points, lower cost, lighter crowds).</div>
+      <div class="section-sub">Pick up to 3 saved itineraries. A green checkmark marks the better number in each row -- fewer points and lighter crowds win, but higher cash value and $/point win too (more rack-rate value for the points you're spending).</div>
       ${renderPickers()}
     </div>
     <div class="section" id="compare-output"></div>
