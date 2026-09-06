@@ -28,16 +28,11 @@ contents of `db/migrations/004_add_reminder_unsubscribe_token.sql` → Run.
 
 1. Sign up at [resend.com](https://resend.com) (free tier: 3,000 emails/month,
    100/day — plenty for a hobby-scale tool).
-2. **Domain verification** — Resend's sandbox address
-   (`onboarding@resend.dev`) only delivers to *your own* Resend account email,
-   which is useless once other people sign up for reminders. To actually
-   email real users, add a domain you control under Resend's **Domains**
-   page and add the DNS records it gives you (a few TXT/CNAME records at
-   your domain registrar). If you don't have a domain for this yet, this is
-   the one hard blocker — everything else here works regardless, but sending
-   to real users won't until a domain is verified.
-3. Create an API key under **API Keys** → note it down, you'll set it as a
-   secret in step 4.
+2. **Domain verification** — done, using `dvcalc.app` (added under Resend's
+   **Domains** page, DNS records added at Squarespace alongside the GitHub
+   Pages A/AAAA records already there).
+3. Create an API key under **API Keys**, "Sending access" permission →
+   note it down, you'll set it as a secret in step 4.
 
 ## 3. Install the Supabase CLI and link this project
 
@@ -62,13 +57,14 @@ before.
 
 ```
 supabase secrets set RESEND_API_KEY=<your resend api key>
-supabase secrets set REMINDER_FROM_EMAIL="DVCalc <reminders@yourdomain.com>"
-supabase secrets set APP_BASE_URL=<wherever DVCalc is actually hosted, e.g. https://yourusername.github.io/DVCalc>
+supabase secrets set REMINDER_FROM_EMAIL="DVCalc <reminders@dvcalc.app>"
+supabase secrets set APP_BASE_URL=https://dvcalc.app
 ```
 
-Use the same domain you verified in Resend for `REMINDER_FROM_EMAIL`. Leave
-it unset only if you're just testing against your own inbox with the
-`onboarding@resend.dev` sandbox address.
+`REMINDER_FROM_EMAIL` uses `dvcalc.app` since that's the domain verified in
+Resend — the address doesn't need to be a real inbox, just a valid address at
+the verified domain. `APP_BASE_URL` is the live site now that `dvcalc.app` is
+up (used for any links back to the app in the reminder email itself).
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are already available to every
 Edge Function automatically — you don't need to set those yourself.

@@ -1371,6 +1371,7 @@ function loadItineraryIntoCalendar(itinerary) {
   state.roomTypeId = last.roomTypeId;
   state.checkIn = last.checkIn;
   state.checkOut = last.checkOut;
+  state.month = Number(last.checkIn.split("-")[1]) - 1;
   state.segments = completed;
   showingItinerarySaveForm = false;
   itineraryNameDraft = null;

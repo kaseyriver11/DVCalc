@@ -310,6 +310,24 @@ body {
   margin-top: 8px;
 }
 
+.danger-zone {
+  border: 1px solid #f5c6c6;
+}
+.danger-zone h2 { color: #a3401f; }
+.delete-account-btn {
+  background: white;
+  color: #b3261e;
+  border: 1px solid #b3261e;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.delete-account-btn:hover { background: #fdecea; }
+.delete-account-btn:disabled { opacity: 0.6; cursor: default; }
+
 @media (max-width: 560px) {
   .form-grid { grid-template-columns: 1fr; }
 }
@@ -532,7 +550,13 @@ async function renderSignedIn() {
         <label>Lead time: <input type="number" id="r-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days</label>
         <button type="button" class="small-btn" id="save-reminders">Save</button>
       </div>
-      <div class="reminder-note">Saves your preference now. Actual reminder emails depend on the site owner finishing deployment of the reminder service -- see docs/accounts_plan.md.</div>
+      <div class="reminder-note">Emails send automatically once you're within your lead time of a deadline.</div>
+    </div>
+
+    <div class="section danger-zone">
+      <h2>Danger Zone</h2>
+      <div class="section-sub">Permanently deletes your account, every contract, all trip history, and every saved itinerary. There's no undo.</div>
+      <button type="button" class="delete-account-btn" id="delete-account">Delete My Account</button>
     </div>
   `;
 
@@ -544,6 +568,7 @@ async function renderSignedIn() {
   document.getElementById("f-type-direct").addEventListener("click", () => setPurchaseType("direct"));
   document.getElementById("f-type-resale").addEventListener("click", () => setPurchaseType("resale"));
   document.getElementById("save-reminders").addEventListener("click", saveReminderPrefs);
+  document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
 
   // Row-level edit/delete/reactivate buttons (delegated, since the list re-renders).
   document.getElementById("contract-list").addEventListener("click", async (e) => {
@@ -677,6 +702,23 @@ async function saveReminderPrefs() {
   });
   btn.textContent = "Saved";
   setTimeout(() => { btn.textContent = "Save"; }, 1500);
+}
+
+async function handleDeleteAccount() {
+  if (!confirm("Permanently delete your account? This removes every contract, all trip history, and every saved itinerary. This can't be undone.")) return;
+  if (prompt('Type DELETE to confirm:') !== "DELETE") return;
+
+  const btn = document.getElementById("delete-account");
+  btn.textContent = "Deleting...";
+  btn.disabled = true;
+  const { error } = await window.DVCAuth.deleteAccount();
+  if (error) {
+    alert(`Couldn't delete account: ${error}`);
+    btn.textContent = "Delete My Account";
+    btn.disabled = false;
+    return;
+  }
+  window.location.href = "index.html";
 }
 
 function render(session) {

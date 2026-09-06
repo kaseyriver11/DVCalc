@@ -189,15 +189,19 @@ independent of the backend and already fully working: `account.html`
 now shows each active contract's actual next banking/borrowing deadline
 date and days-until, computed client-side.
 
-Deployment requires steps only the account owner can do — a Supabase
-CLI login+link+deploy, a Resend account with a verified sending domain,
-setting secrets, and scheduling the pg_cron job. Full instructions in
-`docs/phase5_deployment.md`. Until that's done, contracts show their real
-deadlines in the UI, but no reminder emails actually send.
+Deployed and verified live 2026-09-06: both Edge Functions deployed, Resend
+domain verification completed against the real `dvcalc.app` domain (bought
+and DNS-configured the same day), secrets set, and a manual test round-trip
+confirmed the full pipeline -- a real reminder email delivered successfully,
+and a repeat call correctly returned `skipped` instead of sending twice
+(`reminder_log`'s unique constraint holding as designed). Daily `pg_cron`
+schedule set per `docs/phase5_deployment.md`. `account.html`'s reminder note
+updated from the "depends on deployment" placeholder to reflect that emails
+now actually send.
 
-Not yet deployed to production (GitHub Pages) — Supabase's Redirect URLs
-allow-list currently only permits `localhost:8794`; the production URL
-needs to be added there before login will work live.
+Deployed to production: `dvcalc.app` is live (GitHub Pages custom domain),
+and its URL is in Supabase's Redirect URLs allow-list alongside
+`localhost:8794`, so Google sign-in works on both.
 
 ## Context
 

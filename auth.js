@@ -59,6 +59,20 @@ async function signOut() {
   await supabase.auth.signOut();
 }
 
+// Permanently deletes the signed-in user's auth account, which cascades
+// (via `on delete cascade` FKs, see db/schema.sql) through profiles,
+// contracts, trips, itineraries, and reminder_log -- nothing survives.
+// Regular client roles can't DELETE from auth.users directly, so this calls
+// a SECURITY DEFINER Postgres function (db/migrations/005) that does it on
+// the caller's own behalf, scoped to auth.uid() server-side -- there's no
+// way to pass a different user's id through this call.
+async function deleteAccount() {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { error } = await supabase.rpc("delete_own_account");
+  if (!error) await supabase.auth.signOut();
+  return { error: error?.message };
+}
+
 // Registers a callback for session changes, and fires it immediately with
 // whatever's currently known (possibly null) so late-registering consumers
 // don't have to separately ask for the initial state.
@@ -307,6 +321,7 @@ init();
 window.DVCAuth = {
   signInWithGoogle,
   signOut,
+  deleteAccount,
   onAuthChange,
   getSession,
   getContracts,

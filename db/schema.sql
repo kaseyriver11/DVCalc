@@ -171,3 +171,23 @@ create policy "reminder_log: select own" on reminder_log
 -- No insert/update/delete policy for regular users -- only the
 -- service-role key (used by the scheduled Edge Function) can write here,
 -- which bypasses RLS entirely by design.
+
+-- ---------------------------------------------------------------------
+-- Self-service account deletion. The `authenticated` role can't DELETE
+-- from auth.users directly, so this SECURITY DEFINER function does it on
+-- the caller's own behalf (auth.uid() only -- never a passed-in id).
+-- Cascades through every table above via their `on delete cascade` FKs.
+-- ---------------------------------------------------------------------
+create or replace function public.delete_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke all on function public.delete_own_account() from public;
+grant execute on function public.delete_own_account() to authenticated;

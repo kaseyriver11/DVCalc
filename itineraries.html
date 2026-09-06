@@ -361,6 +361,7 @@ async function renderSignedIn() {
         roomTypeId: last.roomTypeId,
         checkIn: last.checkIn,
         checkOut: last.checkOut,
+        month: Number(last.checkIn.split("-")[1]) - 1,
         segments: completed,
       };
       sessionStorage.setItem("dvc_calendar_state", JSON.stringify(restoredState));
