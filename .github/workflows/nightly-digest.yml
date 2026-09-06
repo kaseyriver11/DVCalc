@@ -1,0 +1,33 @@
+name: Nightly Data Watchdog & Digest
+
+# Deliberately workflow_dispatch-only for now, NOT on a schedule -- see
+# docs/nightly_pipeline_plan.md. Run it manually once via the Actions tab
+# ("Run workflow") to confirm the email arrives and looks right before
+# switching the trigger to a cron schedule.
+on:
+  workflow_dispatch: {}
+  # schedule:
+  #   - cron: "0 9 * * *"  # 9am UTC (~4-5am Eastern) -- uncomment once verified
+
+permissions:
+  contents: write
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run freshness watchdogs and send digest
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DIGEST_TO_EMAIL: ${{ secrets.DIGEST_TO_EMAIL }}
+        run: python3 scripts/nightly_watchdog.py
+
+      - name: Commit updated watchdog state, if changed
+        run: |
+          git config user.name "dvcalc-bot"
+          git config user.email "actions@github.com"
+          git add data/.watchdog_state.json
+          git diff --staged --quiet || git commit -m "Update nightly watchdog state [skip ci]"
+          git diff --staged --quiet || git push
