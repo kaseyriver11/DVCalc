@@ -222,22 +222,44 @@ def build_email_html(results, severity):
 
 
 def send_email(subject, html):
+    """Returns None on success, or an error-detail string on failure --
+    never raises, so a Resend problem shows up as one more report line
+    instead of crashing the whole run before the state file gets saved."""
     api_key = os.environ.get("RESEND_API_KEY")
     to_email = os.environ.get("DIGEST_TO_EMAIL")
     from_email = os.environ.get("DIGEST_FROM", "DVCalc <digest@dvcalc.app>")
     if not api_key or not to_email:
         print("[nightly_watchdog] RESEND_API_KEY/DIGEST_TO_EMAIL not set -- skipping send, printing report instead:\n")
         print(html)
-        return
+        return None
     payload = json.dumps({"from": from_email, "to": to_email, "subject": subject, "html": html}).encode()
     req = urllib.request.Request(
         "https://api.resend.com/emails",
         data=payload,
         method="POST",
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            # Without this, urllib's default "Python-urllib/3.x" User-Agent
+            # gets blocked by Cloudflare (in front of api.resend.com) before
+            # the request ever reaches Resend's own auth logic -- confirmed
+            # by a Cloudflare "error code: 1010" response, not a Resend one.
+            "User-Agent": UA,
+        },
     )
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(f"[nightly_watchdog] Resend response: {resp.status}")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            print(f"[nightly_watchdog] Resend response: {resp.status}")
+            return None
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "ignore")
+        detail = f"Resend send failed: HTTP {e.code} -- {body}"
+        print(f"[nightly_watchdog] {detail}")
+        return detail
+    except (urllib.error.URLError, TimeoutError) as e:
+        detail = f"Resend send failed: {e}"
+        print(f"[nightly_watchdog] {detail}")
+        return detail
 
 
 def main():
@@ -256,7 +278,13 @@ def main():
     }[severity]
 
     html = build_email_html(results, severity)
-    send_email(subject, html)
+    send_error = send_email(subject, html)
+    if send_error:
+        # Can't retroactively fix the email that just failed to send, but
+        # this makes sure the failure still shows up in the run's own
+        # printed output and exit code, not just silently swallowed.
+        results.append(("error", send_error))
+        severity = severity_of(results)
     save_state(state)
 
     print(f"[nightly_watchdog] severity={severity}")
