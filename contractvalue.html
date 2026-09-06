@@ -166,32 +166,68 @@ body {
 
 .results-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 0.83rem;
+  font-size: 0.8rem;
 }
 
 .results-table th, .results-table td {
-  padding: 9px 12px;
+  padding: 7px 6px;
   text-align: left;
   border-bottom: 1px solid #eee;
-  white-space: nowrap;
+  overflow: hidden;
 }
 
 .results-table thead th {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   color: #888;
   font-weight: 700;
   cursor: pointer;
   user-select: none;
+  white-space: normal;
+  line-height: 1.3;
+  vertical-align: bottom;
 }
 .results-table thead th:hover { color: #4a148c; }
 .results-table thead th.sorted { color: #4a148c; }
 
-.results-table td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.results-table td.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .results-table .resort-name { font-weight: 600; color: #1a237e; white-space: normal; }
-.results-table .ratio-value { font-weight: 700; font-size: 0.95rem; }
+.results-table .ratio-value { font-weight: 700; font-size: 0.92rem; }
+
+.price-cell { text-align: right; }
+.price-input-wrap { display: inline-flex; align-items: center; gap: 1px; font-size: 0.78rem; }
+.price-input {
+  width: 60px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px 3px;
+  background: #fff;
+  color: inherit;
+}
+.price-input:hover { border-color: #9575cd; }
+.price-input:focus { outline: none; border-color: #4a148c; box-shadow: 0 0 0 2px rgba(74,20,140,0.15); }
+.price-reset-row { line-height: 1; margin-top: 2px; }
+.price-reset {
+  border: none;
+  background: none;
+  color: #4a148c;
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.price-reset:hover { color: #7b1fa2; }
 
 .restricted-badge {
   display: inline-block;
@@ -205,13 +241,83 @@ body {
   white-space: nowrap;
 }
 
+/* ---- Hover tooltips: column-header info icons and the restricted badge
+   share this one mechanism (data-tip attribute + hover-revealed bubble)
+   so both explain themselves right where a user's already looking,
+   instead of needing a separate legend read beforehand. ---- */
+[data-tip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 230px;
+  background: #1a237e;
+  color: white;
+  font-size: 0.74rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  line-height: 1.45;
+  padding: 9px 11px;
+  border-radius: 6px;
+  white-space: normal;
+  text-align: left;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  pointer-events: none;
+}
+
+[data-tip]:hover::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: #1a237e;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.info-icon {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ddd;
+  color: #666;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 13px;
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+.results-table thead th:hover .info-icon { background: #4a148c; color: white; }
+
 .hide-restricted-row {
   font-size: 0.8rem;
   color: #555;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.restricted-legend {
+  font-size: 0.76rem;
+  color: #888;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 700px) {
@@ -294,7 +400,7 @@ body {
         </div>
         <div class="form-field">
           <label for="f-closing">Closing Cost</label>
-          <input type="number" id="f-closing" min="0" step="1" value="500">
+          <input type="number" id="f-closing" min="0" step="1" value="1500">
         </div>
       </div>
 
@@ -316,8 +422,9 @@ body {
 
       <div class="hide-restricted-row">
         <input type="checkbox" id="f-hide-restricted">
-        <label for="f-hide-restricted">Hide resale-restricted resorts (Riviera, Disneyland Hotel Villas, Fort Wilderness Cabins)</label>
+        <label for="f-hide-restricted">Hide resale-restricted resorts</label>
       </div>
+      <div class="restricted-legend"><span class="restricted-badge" data-tip="Resale points bought at this resort can only ever book stays here -- not any other DVC resort. Direct-purchased points at this same resort don't have this restriction.">resale-restricted</span> = if bought resale, these points can only book this same resort (Riviera, Disneyland Hotel Villas, Fort Wilderness Cabins). Direct purchases at these resorts don't have this limit.</div>
 
       <div class="data-freshness">
         Purchase prices as of <strong id="data-as-of"></strong> -- resale and direct pricing change monthly.
@@ -330,7 +437,7 @@ body {
 
     <div class="section">
       <h2>Ranked by Value</h2>
-      <div class="section-sub">Both ratios = value &divide; total cost (buy-in + dues) over the years you'll keep vacationing -- higher is better either way. <strong>Cash Ratio</strong> compares owning to paying rack rate, using the Vacation Value assumptions above. <strong>Rent Ratio</strong> compares owning to just renting points from another owner every time (fixed at $20/pt growing 4%/yr), so you can see whether buying beats renting, not just beats paying cash.</div>
+      <div class="section-sub">Higher ratio = better value. <strong>Cash Ratio</strong> is vs. paying rack rate; <strong>Rent Ratio</strong> is vs. renting points instead of owning. Hover any <span class="info-icon" style="margin-left:0;">?</span> for what a column means.</div>
       <div id="results-body"></div>
     </div>
   </div>
@@ -345,6 +452,11 @@ const currentRealYear = new Date().getFullYear();
 let purchaseType = "resale";
 let sortKey = "cashRatio";
 let sortDir = "desc";
+// User-typed price overrides, e.g. "found a resale listing for less than
+// the report average." Keyed by "resortId:purchaseType" (not just resortId)
+// so a resale override doesn't silently get reused as a direct price if
+// the user flips the toggle, and vice versa.
+let priceOverrides = {};
 
 function fmt(n) { return "$" + Math.round(n).toLocaleString(); }
 
@@ -380,7 +492,10 @@ function computeRow(resortId, inputs) {
   const inv = RESORT_INVESTMENT_DATA[resortId];
   if (!inv) return null;
 
-  const pricePerPoint = purchaseType === "direct" ? inv.directPricePerPoint : inv.resalePricePerPoint;
+  const defaultPrice = purchaseType === "direct" ? inv.directPricePerPoint : inv.resalePricePerPoint;
+  const overrideKey = `${resortId}:${purchaseType}`;
+  const hasOverride = priceOverrides[overrideKey] != null;
+  const pricePerPoint = hasOverride ? priceOverrides[overrideKey] : defaultPrice;
   const initialCost = pricePerPoint * inputs.points + inputs.closingCost;
 
   const yearsRemaining = inv.contractExpirationYear - currentRealYear;
@@ -405,6 +520,8 @@ function computeRow(resortId, inputs) {
     resortId,
     resortName: resortDisplayName(resortId),
     pricePerPoint,
+    defaultPrice,
+    hasOverride,
     contractExpirationYear: inv.contractExpirationYear,
     yearsRemaining,
     vacationYears,
@@ -461,12 +578,15 @@ function renderResults() {
   const cashRatioBest = bestIndices(sorted.map(r => r.cashRatio), "high");
   const rentRatioBest = bestIndices(sorted.map(r => r.rentRatio), "high");
 
-  const colHeader = (key, label) => `<th data-sort="${key}" class="${sortKey === key ? "sorted" : ""}">${label}${sortKey === key ? (sortDir === "asc" ? " &uarr;" : " &darr;") : ""}</th>`;
+  const colHeader = (key, label, tip) => `<th data-sort="${key}" class="${sortKey === key ? "sorted" : ""}">${label}${tip ? `<span class="info-icon" data-tip="${tip}">?</span>` : ""}${sortKey === key ? (sortDir === "asc" ? " &uarr;" : " &darr;") : ""}</th>`;
 
   const rowsHTML = sorted.map((r, i) => `
     <tr>
-      <td class="resort-name">${r.resortName}${r.isRestricted ? `<span class="restricted-badge">resale-restricted</span>` : ""}</td>
-      <td class="num">$${r.pricePerPoint.toFixed(2)}</td>
+      <td class="resort-name">${r.resortName}${r.isRestricted ? `<span class="restricted-badge" data-tip="Resale points bought at this resort can only ever book stays here -- not any other DVC resort. Direct-purchased points at this same resort don't have this restriction.">resale-restricted</span>` : ""}</td>
+      <td class="num price-cell">
+        <span class="price-input-wrap">$<input type="number" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" /></span>
+        ${r.hasOverride ? `<div class="price-reset-row"><button type="button" class="price-reset" data-resort="${r.resortId}" title="Reset to default $${r.defaultPrice.toFixed(2)}/pt">reset</button></div>` : ""}
+      </td>
       <td class="num">${r.contractExpirationYear} (${r.yearsRemaining}y)</td>
       <td class="num">${r.vacationYears}</td>
       <td class="num">${fmt(r.totalDues)}</td>
@@ -480,17 +600,28 @@ function renderResults() {
   document.getElementById("results-body").innerHTML = `
     <div class="results-table-wrap">
       <table class="results-table">
+        <colgroup>
+          <col style="width:20%">
+          <col style="width:11%">
+          <col style="width:11%">
+          <col style="width:8%">
+          <col style="width:10%">
+          <col style="width:10%">
+          <col style="width:12%">
+          <col style="width:9%">
+          <col style="width:9%">
+        </colgroup>
         <thead>
           <tr>
             ${colHeader("resortName", "Resort")}
-            ${colHeader("pricePerPoint", "Price/Pt")}
-            <th>Contract Expires</th>
-            ${colHeader("vacationYears", "Vacation Yrs")}
-            ${colHeader("totalDues", "Total Dues")}
-            ${colHeader("finalCost", "Total Cost")}
-            ${colHeader("totalValue", "Vacation Value")}
-            ${colHeader("cashRatio", "Cash Ratio")}
-            ${colHeader("rentRatio", "Rent Ratio")}
+            ${colHeader("pricePerPoint", "Price/Pt", `Current ${purchaseType} price per point for this resort (see the "prices as of" note below for source and date). Editable -- type in a real listing price you've found and the whole row recalculates.`)}
+            <th>Contract Expires<span class="info-icon" data-tip="The real year this resort's DVC deed expires, with years remaining from today in parentheses. After this, ownership ends -- no more points, no refund.">?</span></th>
+            ${colHeader("vacationYears", "Vacation Yrs", "How many years this row's math actually covers -- your \"Years You'll Keep Vacationing\" input, capped at whatever's shorter: that number, or this resort's real years remaining.")}
+            ${colHeader("totalDues", "Total Dues", "Sum of annual dues over the Vacation Years, starting at today's real rate and compounding at your Dues Growth assumption.")}
+            ${colHeader("finalCost", "Total Cost", "Everything you'd pay: purchase price × points, plus closing cost, plus Total Dues.")}
+            ${colHeader("totalValue", "Vacation Value", "What those vacation nights would be worth over the years, using your Vacation Value ($/pt/yr) and its growth rate above.")}
+            ${colHeader("cashRatio", "Cash Ratio", "Vacation Value ÷ Total Cost. Higher = more rack-rate value delivered per dollar you'd actually spend, compared to paying cash instead of owning.")}
+            ${colHeader("rentRatio", "Rent Ratio", "Same idea as Cash Ratio, but compared to renting points from another owner instead -- fixed at $20/pt growing 4%/yr, not tied to your Vacation Value inputs above. Shows whether owning beats renting, not just beats paying cash.")}
           </tr>
         </thead>
         <tbody>${rowsHTML}</tbody>
@@ -510,19 +641,44 @@ function renderResults() {
       renderResults();
     });
   });
+
+  document.querySelectorAll(".price-input").forEach(input => {
+    // "change" (not "input") so re-rendering the table -- which the new
+    // price needs, to reflow Total Cost/Cash Ratio/Rent Ratio and possibly
+    // re-sort -- doesn't yank focus out from under the user mid-keystroke.
+    input.addEventListener("change", () => {
+      const resortId = input.dataset.resort;
+      const key = `${resortId}:${purchaseType}`;
+      const val = parseFloat(input.value);
+      if (!isFinite(val) || val <= 0) {
+        delete priceOverrides[key];
+      } else {
+        priceOverrides[key] = val;
+      }
+      renderResults();
+    });
+  });
+
+  document.querySelectorAll(".price-reset").forEach(btn => {
+    btn.addEventListener("click", () => {
+      delete priceOverrides[`${btn.dataset.resort}:${purchaseType}`];
+      renderResults();
+    });
+  });
 }
 
 function setPurchaseType(type) {
   purchaseType = type;
   document.getElementById("type-resale").classList.toggle("selected", type === "resale");
   document.getElementById("type-direct").classList.toggle("selected", type === "direct");
-  // Direct purchases have no closing cost; resale typically runs a few
-  // hundred dollars. Only auto-adjust if the field still holds either
-  // default, so a manual edit doesn't get silently overwritten by
-  // switching purchase type back and forth.
+  // Direct purchases have no closing cost; resale runs Disney's $500
+  // estoppel/transfer fee plus roughly $1,000 more in title/closing fees.
+  // Only auto-adjust if the field still holds either default, so a manual
+  // edit doesn't get silently overwritten by switching purchase type back
+  // and forth.
   const closingInput = document.getElementById("f-closing");
-  if (closingInput.value === "500" || closingInput.value === "0") {
-    closingInput.value = type === "direct" ? "0" : "500";
+  if (closingInput.value === "1500" || closingInput.value === "0") {
+    closingInput.value = type === "direct" ? "0" : "1500";
   }
   renderResults();
 }
