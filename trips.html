@@ -185,11 +185,13 @@ body {
 
 .contract-cost-missing a { color: #4a148c; }
 
+.amort-table-wrap { overflow-x: auto; margin-top: 8px; }
+
 .amort-table {
   width: 100%;
+  min-width: 420px;
   border-collapse: collapse;
   font-size: 0.78rem;
-  margin-top: 8px;
 }
 
 .amort-table th {
@@ -199,6 +201,7 @@ body {
   font-weight: 600;
   font-size: 0.68rem;
   text-transform: uppercase;
+  white-space: nowrap;
   border-bottom: 1px solid #eee;
 }
 .amort-table th:first-child { text-align: left; }
@@ -677,10 +680,12 @@ async function renderSignedIn() {
     return `
       <div class="contract-cost-card">
         <div class="contract-cost-name">${contractLabel(c)}</div>
-        <table class="amort-table">
-          <thead><tr><th>Year</th><th>Dues</th><th>Amortized Buy-In</th><th>Year Total</th><th>Cumulative</th></tr></thead>
-          <tbody>${rowsHTML}</tbody>
-        </table>
+        <div class="amort-table-wrap">
+          <table class="amort-table">
+            <thead><tr><th>Year</th><th>Dues</th><th>Amortized Buy-In</th><th>Year Total</th><th>Cumulative</th></tr></thead>
+            <tbody>${rowsHTML}</tbody>
+          </table>
+        </div>
         <div class="amort-summary">
           <span>Total dues paid: <strong>${fmt(schedule.totalDues)}</strong> across ${schedule.totalYears} year${schedule.totalYears === 1 ? "" : "s"} (actual rate per year)</span>
           <span>Buy-in spread over <strong>${schedule.totalYears}</strong> year${schedule.totalYears === 1 ? "" : "s"} owned so far</span>
