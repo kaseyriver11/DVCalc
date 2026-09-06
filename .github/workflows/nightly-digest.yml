@@ -17,16 +17,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run freshness watchdogs and send digest
+      - name: Run freshness watchdogs, rotate live pricing, and send digest
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           DIGEST_TO_EMAIL: ${{ secrets.DIGEST_TO_EMAIL }}
         run: python3 scripts/nightly_watchdog.py
 
-      - name: Commit updated watchdog state, if changed
+      - name: Commit updated watchdog state and live pricing, if changed
         run: |
           git config user.name "dvcalc-bot"
           git config user.email "actions@github.com"
-          git add data/.watchdog_state.json
-          git diff --staged --quiet || git commit -m "Update nightly watchdog state [skip ci]"
+          git add data/.watchdog_state.json data/cash_prices_live.json
+          git diff --staged --quiet || git commit -m "Update nightly watchdog state and live pricing [skip ci]"
           git diff --staged --quiet || git push

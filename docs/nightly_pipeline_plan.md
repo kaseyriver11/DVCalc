@@ -1,11 +1,11 @@
 # Nightly Data Pipeline & Morning Digest
 
-**Status:** Designed 2026-09-06. Phase 1 (watchdogs + email) scaffolded and
-ready to review — `.github/workflows/nightly-digest.yml` +
-`scripts/nightly_watchdog.py`. **Not yet scheduled to run automatically** —
-wired to a manual trigger only until you've reviewed it and added the one
-required secret. Phase 2 (live cash pricing folded into the same nightly run)
-is designed below but not yet built.
+**Status:** Both phases live as of 2026-09-06. Phase 1 (watchdogs + email)
+verified via a real manual run, then a real Cloudflare/User-Agent bug found
+and fixed (see below), then scheduled on a real nightly cron (9am UTC).
+Phase 2 (live cash pricing folded into the same nightly run, via a resort
+rotation) built and integration-tested the same night — see "Phase 2" below
+for what changed from the original plan.
 
 ## The ask
 
@@ -121,62 +121,68 @@ other page should expect this same pattern (some anti-bot/anti-spam
 mechanism, not a real content change) rather than assuming the hashing
 approach itself is broken.
 
-## What's built right now (Phase 1)
+## What's built (Phase 1)
 
 - **`scripts/nightly_watchdog.py`** — implements every Tier 2 check above,
-  reads/writes `data/.watchdog_state.json` (new, tracks last-seen PDF URLs,
-  page hashes, and which year's Undercover Tourist nudge has already fired),
-  composes the digest, sends it via Resend. Runnable locally right now for
-  testing: `RESEND_API_KEY=... DIGEST_TO_EMAIL=you@example.com python3
-  scripts/nightly_watchdog.py`.
+  reads/writes `data/.watchdog_state.json` (tracks last-seen PDF URLs, page
+  hashes, which year's Undercover Tourist nudge has fired, and the live
+  pricing rotation index), composes the digest, sends it via Resend.
+  Runnable locally for testing: `RESEND_API_KEY=... DIGEST_TO_EMAIL=you@example.com
+  python3 scripts/nightly_watchdog.py`.
 - **`.github/workflows/nightly-digest.yml`** — runs the script, commits any
-  changed state file back to `main`. **Trigger is `workflow_dispatch`
-  only right now** (a manual "Run workflow" button in GitHub's Actions tab) —
-  deliberately not on a `schedule:` yet.
+  changed state/pricing files back to `main`. Scheduled daily at 9am UTC
+  (~4-5am Eastern), `workflow_dispatch` also available for on-demand runs.
 
-## What's still needed before this runs on its own
+**A real bug found on the first live run, worth recording:** the first
+`workflow_dispatch` test failed with a bare HTTP 403 and no useful detail --
+`send_email()` didn't catch the error at all, so the script crashed before
+either the real failure reason or the watchdog state could be saved. Once
+caught properly, the actual cause turned out to be Cloudflare (sitting in
+front of api.resend.com) blocking the request over urllib's default
+`Python-urllib/3.x` User-Agent -- a well-known scraper signature -- before
+the request ever reached Resend's own auth logic. Fixed both: `send_email()`
+now catches send failures and folds them into the report instead of
+crashing, and the request carries a real User-Agent. Re-ran manually,
+confirmed the digest arrived correctly, then flipped on the schedule.
 
-1. **Add a GitHub Actions secret**: repo → Settings → Secrets and variables →
-   Actions → New repository secret, name `RESEND_API_KEY`, value your Resend
-   API key. (GitHub Actions secrets and Supabase secrets are two entirely
-   separate stores — the key has to be added here too, even though it
-   already exists as a Supabase secret for the reminder emails.) Also add
-   `DIGEST_TO_EMAIL` with your own email address.
-2. **Run it once manually** (the "Run workflow" button, or
-   `gh workflow run nightly-digest.yml` if you have the `gh` CLI) and confirm
-   the email arrives and looks right.
-3. **Flip the trigger to `schedule:`** — once step 2 looks good, change
-   `workflow_dispatch` to a cron expression in the workflow file (e.g.
-   `0 9 * * *`, which is 9am UTC — about 4-5am Eastern depending on DST, so
-   it's sitting in your inbox well before morning). I'll make this change the
-   moment you confirm the manual run looked right — didn't want to turn on
-   an unattended nightly job touching the live repo and sending real email
-   without you seeing it work at least once first.
+## Phase 2 — live cash pricing, built and folded into the same run
 
-## Phase 2 (not built yet) — folding in live cash pricing
+`scripts/build_live_cash_rates.py` was untouched -- Phase 2 wraps it via
+`subprocess`, doesn't reimplement or modify its internals. New in
+`nightly_watchdog.py`:
 
-`scripts/build_live_cash_rates.py` already exists, already hits Disney's real
-booking API, and already appends to history correctly on repeated runs (see
-its own docstring) — it just isn't on any schedule yet, and running all 15
-supported resorts every single night is unnecessarily heavy (and mildly
-impolite scraping-wise) for data that doesn't need refreshing that often.
+- **`check_live_pricing()`** picks a **rotating batch of 3 resorts** per
+  night (`PRICING_ROTATION_BATCH_SIZE`), tracked via `pricingRotationIndex`
+  in the shared state file so it cycles through all 15 supported resorts
+  over ~5 nights rather than hitting all of them every night -- lighter load,
+  more polite scraping, and matches how often this data actually needs
+  refreshing. Runs `build_live_cash_rates.py --resort <batch>` as a
+  subprocess and folds its outcome into the same digest as the Tier 2
+  watchdogs -- one email, not two.
+- **A real false positive found and fixed here too:** the first classification
+  attempt flagged *any* `FAILED` line in the script's output as worth
+  reviewing. Testing against a real resort (`animalKingdomVillas`) showed
+  this was wrong -- `FAILED (2027): HTTP Error 404` for far-future date
+  ranges is expected, already-documented behavior (Disney's ~400-450 day
+  booking horizon, see `docs/live_pricing_plan.md`'s own pilot findings), and
+  the script's *own* year-fallback logic already recovers it, producing real
+  pricing data right after the "failure." Fixed by only flagging failures
+  whose error text is something *other* than `404` -- a genuinely different
+  exception (timeout, JSON shape change, KeyError from an API change) is the
+  real signal worth surfacing; a 404 on the preferred year alone is not.
+- Verified with a full integration run covering all 6 checks together
+  (5 watchdogs + the live-pricing rotation) before shipping -- came back
+  clean, 3 resorts (`animalKingdomVillas`, `bayLakeTower`, `beachClubVillas`)
+  refreshed successfully.
+- `.github/workflows/nightly-digest.yml`'s commit step now also stages
+  `data/cash_prices_live.json`, so each night's rotation batch gets pushed
+  back to the repo alongside the watchdog state.
 
-Planned approach: add a resort **rotation** to the nightly workflow — e.g. 3
-resorts per night, cycling through all 15 over roughly a 5-night window —
-rather than redesigning the script's own sampling logic. This is a smaller
-lift than the full "sample by lead time" model `docs/live_pricing_plan.md`
-originally sketched, and gets real accumulating price history going sooner;
-the fuller lead-time-bucket model is still worth revisiting once there's a
-few weeks of rotation data to look at.
-
-Once that's added, the nightly email's routine-success line becomes real
-(e.g. "Live pricing: 3/3 resorts refreshed, 0 sold out completely, 1 date
-range out of booking horizon") and any resort that comes back with an
-unexpected response shape (a real risk `docs/live_pricing_plan.md` already
-flagged — Disney's API isn't a documented public contract) shows up as a
-Tier 1 error in the digest rather than silently writing bad data.
-
-This is intentionally a separate follow-up rather than something rushed into
-tonight's build — it touches real user-facing pricing data, so it deserves
-its own focused pass rather than being bolted onto the watchdog scaffold at
-the last minute.
+**Not done, deliberately deferred:** the fuller "sample by lead time" model
+`docs/live_pricing_plan.md` originally sketched (multiple snapshots per
+target date at varying lead times, not just "refresh whichever resorts are
+due tonight"). The rotation approach gets real accumulating price history
+going now; revisit the lead-time-bucket model once there's a few weeks of
+rotation data to look at and a clearer sense of what's actually useful to
+show in the app's Cost Comparison card (wiring live pricing into the UI at
+all is still a separate, not-yet-started step).

@@ -3,11 +3,13 @@
 Nightly freshness watchdog + morning digest email.
 
 Checks whether any of DVCalc's manually-maintained data sources have
-changed since the last run, and emails a one-shot summary via Resend. Never
-writes to data.js / resort_investment.js / dues_historical.js or any other
-file real users' numbers come from -- only ever writes to its own state
-file (data/.watchdog_state.json), so a bad parse here can never corrupt data
-someone's making a real purchase or trip decision from. See
+changed since the last run, refreshes a rotating slice of live Disney cash
+pricing, and emails a one-shot summary via Resend. Never writes to data.js /
+resort_investment.js / dues_historical.js -- only its own state file
+(data/.watchdog_state.json) and data/cash_prices_live.json (the live-pricing
+time series, which is designed to be appended to repeatedly -- see
+build_live_cash_rates.py's own docstring), so a bad parse here can never
+corrupt data someone's making a real purchase or trip decision from. See
 docs/nightly_pipeline_plan.md for the full design and why each check works
 the way it does.
 
@@ -26,9 +28,13 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
+
+sys.path.insert(0, os.path.dirname(__file__))
+from build_live_cash_rates import RESORT_CONFIGS  # noqa: E402
 
 STATE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", ".watchdog_state.json")
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
@@ -192,6 +198,54 @@ def check_undercover_tourist_season(state, results):
         results.append(("ok", "Undercover Tourist: not yet in the seasonal check window"))
 
 
+# Tier 1: live Disney cash pricing genuinely has new data every night, but
+# hitting all 15 supported resorts every single run would be both wasteful
+# and impolite scraping for data that doesn't need refreshing that often at
+# the per-resort level. Instead: a rotation, a fixed batch each night,
+# cycling through the full resort list over ~5 nights. Reuses
+# build_live_cash_rates.py exactly as-is (as a subprocess, not reimplemented)
+# -- see docs/nightly_pipeline_plan.md's Phase 2 section for why.
+PRICING_ROTATION_BATCH_SIZE = 3
+
+
+def check_live_pricing(state, results):
+    resort_ids = sorted(RESORT_CONFIGS)
+    idx = state.get("pricingRotationIndex", 0) % len(resort_ids)
+    batch = [resort_ids[(idx + i) % len(resort_ids)] for i in range(PRICING_ROTATION_BATCH_SIZE)]
+    state["pricingRotationIndex"] = (idx + PRICING_ROTATION_BATCH_SIZE) % len(resort_ids)
+
+    script_path = os.path.join(os.path.dirname(__file__), "build_live_cash_rates.py")
+    try:
+        proc = subprocess.run(
+            [sys.executable, script_path, "--resort", *batch],
+            capture_output=True, text=True, timeout=900,
+        )
+    except subprocess.TimeoutExpired:
+        results.append(("error", f"live pricing: timed out sampling {', '.join(batch)}"))
+        return
+
+    output = proc.stdout + proc.stderr
+    failed_lines = [l.strip() for l in output.splitlines() if "FAILED" in l]
+    skipped_lines = [l.strip() for l in output.splitlines() if "SKIPPED" in l]
+    # A FAILED(year) line fires every time the *preferred* year 404s before
+    # falling back to the other year -- confirmed normal, expected behavior
+    # for far-future date-ranges outside Disney's ~400-450 day booking
+    # horizon (see docs/live_pricing_plan.md's own pilot findings). Only
+    # treat a failure as worth reviewing if its error text is something
+    # OTHER than that well-understood 404 pattern -- a genuinely different
+    # exception (timeout, JSON shape change, KeyError) is the real signal.
+    unexpected_failures = [l for l in failed_lines if "404" not in l]
+
+    if proc.returncode != 0:
+        tail = failed_lines[:3] or output.strip().splitlines()[-3:]
+        results.append(("error", f"live pricing: script exited {proc.returncode} for {', '.join(batch)} -- {'; '.join(tail)}"))
+    elif unexpected_failures:
+        results.append(("review", f"live pricing: {len(unexpected_failures)} unexpected fetch failure(s) sampling {', '.join(batch)} -- {unexpected_failures[0]}"))
+    else:
+        note = f", {len(skipped_lines)} date-range(s) with no data this run (booking horizon/sold out, expected)" if skipped_lines else ""
+        results.append(("ok", f"live pricing: refreshed {', '.join(batch)}{note}"))
+
+
 def severity_of(results):
     statuses = {r[0] for r in results}
     if "error" in statuses:
@@ -269,6 +323,7 @@ def main():
     check_points_chart_pdfs(state, results)
     check_page_hashes(state, results)
     check_undercover_tourist_season(state, results)
+    check_live_pricing(state, results)
 
     severity = severity_of(results)
     subject = {
