@@ -1,7 +1,11 @@
 # DVCalc Facebook Growth Plan
 
-**Status:** Planning only — gated on reaching v1.0 (see "Before we start" below).
-Not started.
+**Status:** v1.0 is effectively done (see "Before we start," updated
+2026-09-06) — the gate this plan was waiting on has cleared. Growth work
+itself hasn't started yet. See "Month 1 Plan" below for the concrete,
+realistic first-30-days breakdown, written after directly correcting a
+"0 to 10,000 in a month" target that isn't achievable through legitimate
+organic growth (see that section for the honest numbers and why).
 
 ## Take on the Gemini plan
 
@@ -57,28 +61,79 @@ I can actually help on a recurring basis.
 
 ## Before we start: what "v1.0" means
 
-Worth pinning down concretely rather than assuming — most of the feature
-table in `CLAUDE.md` already reads "Done." Candidates for what's actually
-gating launch:
-- [ ] Decide the v1.0 feature bar (or confirm current feature set is enough)
-- [ ] Phase 5 (banking/borrowing reminder emails) is coded but not deployed
-      — decide if that ships before or after a Facebook push, since it's a
-      natural thing to point new users toward
-- [ ] Basic QA pass across resorts/room types/edge cases (multi-device)
-- [ ] Custom domain — currently live only at the GitHub Pages URL
-      (`kaseyriver11.github.io/DVCalc`), no `CNAME` file, no DNS set up.
-      Decision needed: keep GitHub Pages as host and just point a bought
-      domain at it (cheapest — buy domain, add `CNAME` file to repo,
-      add DNS records, done), or migrate hosting elsewhere
-      (Netlify/Cloudflare Pages) at the same time. Domain purchase itself
-      has to be done by you (registrar + payment); I can handle the
-      `CNAME`/DNS/repo-side config once it's bought.
-- [ ] Confirm GoatCounter (`dvcalc.goatcounter.com`) is actually receiving
-      pageviews, not just correctly embedded — log in and check
-      (code-side setup verified 2026-09-05: account exists, tracking
-      snippet present on all 9 pages consistently)
-- [ ] A single "share this app" link/landing state you're comfortable
-      putting in front of strangers
+- [x] ~~Decide the v1.0 feature bar~~ — current feature set confirmed enough.
+- [x] ~~Phase 5 deployed~~ — banking/borrowing reminder emails fully live and
+      tested against `dvcalc.app` as of 2026-09-06.
+- [x] ~~Basic QA pass~~ — swept all 9 pages for console errors, verified nav
+      links, did a code-level mobile responsiveness audit (see
+      `dvcalc_v1_launch_checklist` artifact for the full rundown).
+- [x] ~~Custom domain~~ — `dvcalc.app` purchased and live over HTTPS.
+- [x] ~~Confirm GoatCounter is actually receiving pageviews~~ — confirmed,
+      real traffic showing up.
+- [x] ~~A single "share this app" link~~ — `dvcalc.app` itself is that link.
+
+**v1.0 is done. This plan's own gate has cleared.**
+
+## Month 1 Plan — realistic targets, week by week
+
+**The honest number check first, since it shapes everything below:**
+a brand-new Page with no existing audience, growing to 10,000 real
+followers in 30 days through organic posting alone, isn't realistic —
+Facebook's algorithm has suppressed new-Page organic reach for years, and
+follower growth compounds slowly from zero. A defensible organic target for
+month 1 is **low hundreds to roughly 1,000–2,000 real, engaged people**
+across the Page and (if it launches this month) the Group combined — not
+10,000. Hitting 10,000 for real would need paid ad spend, realistically
+**$3,000–$15,000+** depending on targeting precision, which is a genuinely
+different plan (ask if you want that one costed out instead). Buying
+followers isn't on the table at all — fake followers actively hurt an
+algorithm-scored Page and undercut the "trusted expert" positioning this
+whole plan depends on.
+
+This month is Phase 1 (authority-building) plus the *setup* half of Phase 2
+— not a launch month. That's the trade for doing this for real instead of
+buying a fake number.
+
+**Week 1 — setup, no posting yet**
+- [ ] Create the Page now (free, no reason to wait) — bio links straight to
+      `dvcalc.app`, no content push yet
+- [ ] Identify and join 4-6 high-traffic DVC Facebook groups with your real
+      profile (DVC Fan, DVC Members, DVC Resale Community, etc.)
+- [ ] Read each group's self-promotion rules before posting anything
+- [ ] Adopt the link-tagging convention from Phase 0 below so results are
+      measurable from day one, not guessed at in week 4
+
+**Week 2-3 — Phase 1, for real**
+- [ ] Answer real scenario/math questions in those groups from your
+      *personal* profile, using the app, screenshot the result — no link
+      unless asked, mention you built it if it comes up naturally
+- [ ] Aim for 3-5 genuine, helpful answers per week — quality and
+      real usefulness over frequency; this is reputation-building, not
+      a posting quota
+- [ ] Log every recurring question — that list becomes both future
+      Group/Page content and a real feature-request signal
+- [ ] Bring me the question text and I'll help you work out the numbers and
+      draft a clear, non-spammy reply — I can't post it, that has to be you
+
+**Week 4 — first real content, decide on the Group**
+- [ ] If Phase 1 got real traction (people asking "what tool is this," a
+      few genuine Page follows trickling in from your bio link), start
+      Phase 3's content cadence softly: 1-2 Page posts this week using real
+      DVCalc data (a `changes.html` year-over-year point swing, a
+      `contractvalue.html` ranking) — not a hard sales push
+- [ ] Decide whether to launch the dedicated Group yet, based on whether
+      you now have both some personal credibility and a real bank of
+      seed questions from weeks 2-3 — a Group with neither hits the
+      classic cold-start problem
+- [ ] End-of-month check-in: look at GoatCounter's tagged-link data (Phase 0)
+      for what's actually driving clicks, not just what got likes
+
+**Realistic end-of-month-1 outcome:** a real Page with a genuine, if small,
+following; 4-6 groups where you're a recognized helpful presence; a content
+backlog seeded from real questions; and a clear-eyed read on whether the
+Group is ready to launch in month 2. That's a real foundation — not a
+number, but a base an actual 10,000 could be built on over the following
+few months, the way the rest of this doc's phases already lay out.
 
 ## Phase 0 — Instrumentation (before any posting)
 
