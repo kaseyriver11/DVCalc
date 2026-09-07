@@ -1517,9 +1517,51 @@ function getCashRateForDate(resort, dateStr, roomTypeId) {
   return period.cashRates[dayType][roomTypeId];
 }
 
+// Real Disney booking-site prices, collected nightly for a rotating subset
+// of resorts (see scripts/nightly_watchdog.py / docs/nightly_pipeline_plan.md).
+// CASH_PRICES_LIVE is optional -- only loaded on pages that include
+// data/cash_prices_live_summary.js -- so every lookup here is defensive.
+// Matched by (resort id + the exact chart year being viewed) so a live
+// sample taken for 2027 is never silently shown against 2026 dates or vice
+// versa, even though DVC's period calendar structure repeats year to year.
+function getLiveCashRate(resort, dateStr, roomTypeId) {
+  if (typeof CASH_PRICES_LIVE === "undefined") return null;
+  const resortData = CASH_PRICES_LIVE[resort.id];
+  if (!resortData) return null;
+  const dayType = getDayType(dateStr);
+  for (const period of resortData.periods) {
+    if (period.yearUsed !== resort.year) continue;
+    if (dateStr < period.rangeStart || dateStr > period.rangeEnd) continue;
+    const bucket = period.roomTypes[roomTypeId]?.[dayType];
+    if (bucket && bucket.average != null) {
+      return {
+        rate: bucket.average,
+        lastChecked: bucket.lastChecked,
+        lastCheckedAt: bucket.lastCheckedAt,
+        sampleCount: bucket.sampleCount,
+      };
+    }
+  }
+  return null;
+}
+
 // Get cash rate with fallback to prior year's data if current year has none.
-// Returns { rate, isPriorYear } or null if no rate found at all.
+// Checks live pricing first (see getLiveCashRate) -- when a fresh sample
+// exists it silently takes over from the static MouseSavers-derived rate,
+// same as choosing "replace" over "show both" for this feature. Returns
+// { rate, isPriorYear, isLive?, lastCheckedAt?, sampleCount? } or null.
 function getCashRateWithFallback(resort, dateStr, roomTypeId) {
+  const live = getLiveCashRate(resort, dateStr, roomTypeId);
+  if (live) {
+    return {
+      rate: live.rate,
+      isPriorYear: false,
+      isLive: true,
+      lastCheckedAt: live.lastCheckedAt,
+      sampleCount: live.sampleCount,
+    };
+  }
+
   // Try current year first
   const rate = getCashRateForDate(resort, dateStr, roomTypeId);
   if (rate) return { rate, isPriorYear: false };

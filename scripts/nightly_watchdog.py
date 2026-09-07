@@ -245,6 +245,67 @@ def check_live_pricing(state, results):
         note = f", {len(skipped_lines)} date-range(s) with no data this run (booking horizon/sold out, expected)" if skipped_lines else ""
         results.append(("ok", f"live pricing: refreshed {', '.join(batch)}{note}"))
 
+    build_live_pricing_summary(results)
+
+
+LIVE_PRICING_JSON = os.path.join(os.path.dirname(__file__), "..", "data", "cash_prices_live.json")
+LIVE_PRICING_SUMMARY_JS = os.path.join(os.path.dirname(__file__), "..", "data", "cash_prices_live_summary.js")
+
+
+def build_live_pricing_summary(results):
+    """Regenerates the lightweight client-facing summary from the full
+    cash_prices_live.json every night, regardless of which resorts were
+    just refreshed -- cheap (pure JSON transform, no network), and keeps
+    the summary in sync with the full file's cumulative state rather than
+    just tonight's batch. Strips each bucket's raw `history` array (kept
+    in the full file for time-series analysis) down to just what the app
+    needs to display -- average, last-checked price/date, sample count --
+    so the file the browser downloads stays small and bounded no matter
+    how much history accumulates server-side over time.
+    """
+    try:
+        with open(LIVE_PRICING_JSON, "r", encoding="utf-8") as f:
+            full = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        results.append(("error", f"live pricing summary: couldn't read {LIVE_PRICING_JSON} -- {e}"))
+        return
+
+    summary = {}
+    for resort_id, resort_data in full.items():
+        periods_out = []
+        for p in resort_data.get("periods", []):
+            room_types_out = {}
+            for room_type, day_types in p.get("roomTypes", {}).items():
+                room_types_out[room_type] = {
+                    day_type: {
+                        "average": bucket.get("average"),
+                        "lastChecked": bucket.get("lastChecked"),
+                        "lastCheckedAt": bucket.get("lastCheckedAt"),
+                        "sampleCount": bucket.get("sampleCount"),
+                    }
+                    for day_type, bucket in day_types.items()
+                }
+            if room_types_out:
+                periods_out.append({
+                    "rangeStart": p.get("rangeStart"),
+                    "rangeEnd": p.get("rangeEnd"),
+                    "yearUsed": p.get("yearUsed"),
+                    "roomTypes": room_types_out,
+                })
+        if periods_out:
+            summary[resort_id] = {"periods": periods_out}
+
+    js = (
+        "// Auto-generated nightly by scripts/nightly_watchdog.py from data/cash_prices_live.json.\n"
+        "// Stripped of raw sample history (kept there for time-series analysis) -- this file\n"
+        "// only carries what the app displays: average, last-checked price/date, and sample\n"
+        "// count per (resort, sampled date-range, room type, day type). See\n"
+        "// docs/nightly_pipeline_plan.md and getLiveCashRate() in data.js.\n"
+        f"const CASH_PRICES_LIVE = {json.dumps(summary, indent=2)};\n"
+    )
+    with open(LIVE_PRICING_SUMMARY_JS, "w", encoding="utf-8") as f:
+        f.write(js)
+
 
 def severity_of(results):
     statuses = {r[0] for r in results}

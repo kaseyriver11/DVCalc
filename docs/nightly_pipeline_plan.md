@@ -183,6 +183,54 @@ confirmed the digest arrived correctly, then flipped on the schedule.
 target date at varying lead times, not just "refresh whichever resorts are
 due tonight"). The rotation approach gets real accumulating price history
 going now; revisit the lead-time-bucket model once there's a few weeks of
-rotation data to look at and a clearer sense of what's actually useful to
-show in the app's Cost Comparison card (wiring live pricing into the UI at
-all is still a separate, not-yet-started step).
+rotation data to look at.
+
+## Phase 3 — wired into the app's actual cash-rate lookups (2026-09-06)
+
+Every cash price shown anywhere in the app goes through one function,
+`getCashRateWithFallback()` in `data.js` -- so that's the one place this
+needed to plug in, not a per-page change.
+
+- **`build_live_pricing_summary()`** (new, in `nightly_watchdog.py`, called
+  every night after the pricing rotation regardless of which resorts were
+  just touched) reads the full `data/cash_prices_live.json` and writes a
+  stripped-down `data/cash_prices_live_summary.js` -- same data, minus each
+  bucket's raw sample-history array. This matters for growth: the full file
+  accumulates history forever and will keep growing; the summary only grows
+  with resort/period *coverage*, so it stays a bounded, fast-loading file
+  regardless of how long the nightly job has been running. Loaded via a
+  plain `<script src="data/cash_prices_live_summary.js">` tag on all 9
+  pages, same idiom as every other data file -- no async fetch, no loading-
+  order changes.
+- **`getLiveCashRate()`** (new, in `data.js`) looks up a live sample by
+  resort id, matching the exact chart year being viewed (`yearUsed ===
+  resort.year`) so a 2027 sample is never shown against 2026 dates or vice
+  versa, even though DVC's period calendar structure repeats year to year.
+  Defensive against the summary script not being loaded at all
+  (`typeof CASH_PRICES_LIVE === "undefined"`).
+- **Decision: replace silently.** Asked directly rather than assumed --
+  where a live sample exists, `getCashRateWithFallback()` returns it in
+  place of the static MouseSavers-derived rate (tagging the result
+  `isLive: true` so a future UI change could still surface it, even though
+  nothing displays that tag today). No side-by-side display, no separate
+  "live" badge in this pass.
+- Room-type ID alignment turned out to already be solved: `build_live_cash_rates.py`'s
+  `codes` mapping and `data.js`'s `roomTypes[].id` use the exact same short
+  identifiers (`dsR`, `dsSV`, `oneR`, etc.) -- no adapter needed there.
+- Verified end to end in a real browser against the live-accumulated data:
+  a covered (resort, date, room type) correctly returns the live average
+  with `isLive: true`; an uncovered one for a resort *with* static data
+  falls through unchanged to the old behavior; a resort with *no* cash
+  data at all (Grand Californian) still correctly returns `null`. All
+  five existing call sites (`app.js`, `compare.html`, `trips.html`,
+  `itineraries.html`, `itinerarycompare.html`) already destructure by
+  field name (`.rate`, `.isPriorYear`), so the new `isLive`/`lastCheckedAt`/
+  `sampleCount` fields are additive and don't risk breaking anything.
+
+**Coverage today** is only whichever resorts the rotation has reached since
+launch (grows by 3/night) -- and two resorts (Grand Californian, Aulani)
+will never get live coverage at all (no confirmed API mapping, see
+`docs/live_pricing_plan.md`), two more (Vero Beach, Hilton Head) have shown
+zero bookable rooms on every sample so far. All four keep falling back to
+static data by design -- see the "missing resorts" research this session
+also did to give those four a better static estimate than today's.
