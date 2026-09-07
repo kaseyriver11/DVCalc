@@ -171,14 +171,35 @@ a clear, non-spammy reply. I can't post it — that has to be your account.
 
 ## Phase 3 — Content engine (this is the recurring collaborative part)
 
-- [ ] Set a cadence: e.g. 1 Group discussion thread + 1-2 Page posts/week
-      to start — sustainable beats ambitious
-- [ ] Build a running content backlog from real app data: point chart
-      YoY changes (`changes.html`), banking/borrowing deadline edge cases,
-      booking-window-opening dates, split-stay math, Contract Value
-      rankings (`contractvalue.html`)
+- [x] ~~Set a cadence~~ — 1-2 Page posts/week + 1 Group thread/week, per the
+      Month 1 plan above.
+- [x] ~~Build a running content backlog~~ — **flagship series decided
+      2026-09-06: "Resort Value Check."** One resort per post, real numbers
+      straight from Contract Value's own ranking (150 pts, resale, full
+      contract length, $35/pt @ 5% growth, 4% dues growth — same defaults
+      every time, stated in each post). A full month's worth of specific,
+      real-numbers posts (not templates) is drafted — see the "Resort Value
+      Check" content-calendar artifact for the actual 8 Page posts + 4
+      Group threads, including two standout angles found while building it:
+      Grand Californian is the priciest resale resort by far ($261/pt) yet
+      ranks only #11 for long-term value, and six resorts (OKW, Beach Club,
+      BoardWalk, Boulder Ridge, Hilton Head, Vero Beach) cluster at the
+      bottom purely because their contracts all expire in 2042 — not
+      because they're worse resorts. Second series, to rotate in once this
+      one's proven out: "Points Creep Watch" (YoY point chart increases,
+      from `changes.html`).
 - [ ] Put external links in the first comment, not the post caption
       (both Page and Group posts)
+
+**Important caveat carried over from the Contract Value rankings:** Grand
+Californian's and Aulani's cash rates in `data.js` are rough, clearly-flagged
+*estimates* (`isEstimate: true`, see `docs/data_reproducibility.md`), not
+observed prices. The Contract Value ranking above doesn't actually depend on
+them (it uses one flat assumed vacation-value-per-point across every resort,
+not resort-specific cash rates) — but avoid featuring those two resorts'
+specific estimated cash numbers in public posts regardless, since they carry
+real (±15-20%) uncertainty that's fine to show quietly in-app but riskier to
+state as fact to a public audience.
 
 **Where I help here:** this is the part worth turning into an actual
 recurring session with me — e.g. a weekly working session where we pull
