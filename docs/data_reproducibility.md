@@ -246,17 +246,77 @@ Each resort has its own room type IDs in `data.js`. When extracting MouseSavers 
 
 If MouseSavers doesn't list a room type (common for Club Concierge), omit it from `cashRates` — `getCashRateForDate()` returns null gracefully.
 
-### Non-WDW Resorts (no cash data)
+### Non-WDW Resorts
 
-These 5 resorts have **no built-in cash rates** because MouseSavers only covers WDW:
-- Aulani, Hilton Head, Vero Beach, Disneyland Hotel, Grand Californian
+MouseSavers only covers WDW, so none of these 5 resorts have MouseSavers-derived
+cash rates. Current coverage as of 2026-09-06, after the live-pricing pipeline and
+the estimated-rate work below:
 
-The app handles this with:
-- A "No cash rate data" note
-- A manual "Compare to your own rate" input
-- `getCashRateWithFallback()` which tries prior-year data for 2027 resorts
+- **Disneyland Hotel** — covered by the live pricing pipeline (real Disney
+  booking-API prices, see `docs/live_pricing_plan.md` and
+  `docs/nightly_pipeline_plan.md`). No static fallback needed.
+- **Grand Californian, Aulani** — no live pricing possible (no confirmed DVC-villa
+  booking API for either, see `docs/live_pricing_plan.md`). Now have **estimated**
+  static `cashRates` in `data.js`, flagged `estimatedCashRates: true` on the
+  resort object (`getCashRateWithFallback()` returns `isEstimate: true` when this
+  path is used) — see "Estimated Cash Rates" below for the methodology.
+- **Vero Beach, Hilton Head** — a live pricing path exists (same API as WDW
+  resorts) but has returned zero bookable rooms on every check since this
+  project started, across many dates and lead times. No defensible way to
+  estimate these two the way Grand Californian/Aulani were estimated, since
+  neither has a "regular hotel" at the same property to derive a villa-premium
+  ratio from. **Left with no cash data at all, deliberately** — the app's
+  "Compare to your own rate" manual input still covers this case, and the live
+  pipeline will pick up real data automatically if/when inventory ever appears.
 
-Potential future sources: Disney's booking site (requires browser automation), Touring Plans (paid), or manual price checks.
+### Estimated Cash Rates — Grand Californian & Aulani (added 2026-09-06)
+
+**These are estimates, not observed prices** — clearly distinct in kind from
+every other resort's cash data (MouseSavers-derived rack rates, or live
+Disney-booking-API prices). Built when a background research pass confirmed
+neither resort has a discoverable real cash-pricing path, but the user
+explicitly asked for a reasonable estimate rather than nothing.
+
+**Two real external anchors, everything else derived from data already in
+this repo:**
+- Grand Californian: one anchor, ~$870/night for the regular (non-DVC) hotel
+  room, 2026, from an aggregator-level source (not MouseSavers-grade — Anaheim
+  has no MouseSavers coverage at all).
+- Aulani: two anchors, $637/night (low season) to $1,012/night (Christmas
+  week), also 2026, similarly aggregator-sourced.
+- **Villa-premium ratio (~1.025x):** derived from one real comparable pair —
+  DVCalc's own live-sampled Beach Club Villas Deluxe Studio price vs.
+  MouseSavers' real Beach Club Resort (the same property's regular hotel)
+  rate, same dates. Applied to both anchors to get an estimated studio villa
+  rate.
+- **Seasonal shape:** each resort's own real, already-in-`data.js` **points**
+  cost curve across its own travel periods. Aulani specifically has a real
+  `hotelRoom` room type in its own points chart (a documented Aulani-only DVC
+  quirk — points can book its regular hotel rooms too), so its two real cash
+  anchors are interpolated directly along that resort's own points curve
+  rather than a generic scaling.
+- **Room-size scaling (studio → 1BR → 2BR → 3BR):** **not** derived from
+  points ratios — an earlier attempt did this and produced clearly-wrong
+  results (a $9,988/night 3-bedroom), because points cost scales much more
+  steeply between room sizes than real cash prices do. Fixed by using Old Key
+  West's real MouseSavers cash ratios instead (median across its 7 periods:
+  1BR ≈ 1.354x studio, 2BR ≈ 2.049x, 3BR ≈ 4.032x) — real observed cash
+  behavior from a comparable WDW deluxe-tier resort, not points-derived.
+- **Aulani's view-tier premiums** (Standard/Island Gardens/Poolside
+  Gardens/Ocean View) use a damped (square-root) version of Aulani's own
+  internal points ratio between view tiers, on the reasoning that points
+  likely overstate view-tier cash spread the same way they overstate
+  room-size spread, just less severely — this piece is the least externally
+  verified part of the whole estimate and the most likely to be off.
+
+**Confidence:** rough. The whole chain rests on one real external
+comparable-pair ratio (Beach Club) plus 1-2 real external dollar anchors —
+plausible error is realistically ±15-20%, more for the view-tier spread
+specifically. Worth refining with 1-2 more comparable pairs (Boardwalk
+Villas/Inn, Wilderness Lodge/Copper Creek, Grand Floridian regular/Villas) if
+these resorts' numbers ever need to hold up to real scrutiny. To reproduce or
+refine: see the Python computation this was built with, referenced in the
+git history for this change.
 
 ### Animal Kingdom Villas — fixed 2026-08-30
 

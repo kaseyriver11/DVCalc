@@ -615,10 +615,15 @@ const RESORTS = [
   // --- Aulani, Disney Vacation Club Villas ---
   // Views: S=Standard, I=Island Gardens, P=Poolside Gardens, O=Ocean View
   // Aulani uses a FLAT daily rate (same every day). sunThu/friSat set to same value.
+  // cashRates below are ESTIMATES, not observed prices -- see
+  // docs/data_reproducibility.md "Estimated cash rates" for the full
+  // methodology and confidence caveats. estimatedCashRates:true flags
+  // this for getCashRateWithFallback(), which returns isEstimate:true.
   {
     id: "aulani",
     name: "Aulani, Disney Vacation Club Villas, Ko Olina, Hawai'i",
     year: 2026,
+    estimatedCashRates: true,
     roomTypes: [
       { id: "hotelRoom", name: "Hotel Room", sleeps: 4 },
       { id: "dsS", name: "Deluxe Studio - Standard", sleeps: 4 },
@@ -643,12 +648,20 @@ const RESORTS = [
           sunThu: { hotelRoom:16, dsS:17, dsI:19, dsP:23, dsO:25, oneS:34, oneI:35, oneP:44, oneO:46, twoS:47, twoI:49, twoP:59, twoO:62, threeS:95, threeO:122 },
           friSat: { hotelRoom:16, dsS:17, dsI:19, dsP:23, dsO:25, oneS:34, oneI:35, oneP:44, oneO:46, twoS:47, twoI:49, twoP:59, twoO:62, threeS:95, threeO:122 },
         },
+        cashRates: {
+          sunThu: { hotelRoom:637, dsS:653, dsI:690, dsP:759, dsO:792, oneS:884, oneI:897, oneP:1006, oneO:1029, twoS:1338, twoI:1366, twoP:1499, twoO:1536, threeS:2632, threeO:2983 },
+          friSat: { hotelRoom:637, dsS:653, dsI:690, dsP:759, dsO:792, oneS:884, oneI:897, oneP:1006, oneO:1029, twoS:1338, twoI:1366, twoP:1499, twoO:1536, threeS:2632, threeO:2983 },
+        },
       },
       { name: "Regular", color: "#2196F3",
         dateRanges: [{ start: "2026-04-12", end: "2026-04-28" }, { start: "2026-05-06", end: "2026-06-28" }, { start: "2026-10-11", end: "2026-11-09" }],
         rates: {
           sunThu: { hotelRoom:17, dsS:19, dsI:21, dsP:24, dsO:26, oneS:37, oneI:44, oneP:46, oneO:50, twoS:51, twoI:59, twoP:62, twoO:69, threeS:103, threeO:134 },
           friSat: { hotelRoom:17, dsS:19, dsI:21, dsP:24, dsO:26, oneS:37, oneI:44, oneP:46, oneO:50, twoS:51, twoI:59, twoP:62, twoO:69, threeS:103, threeO:134 },
+        },
+        cashRates: {
+          sunThu: { hotelRoom:712, dsS:730, dsI:767, dsP:820, dsO:854, oneS:988, oneI:1078, oneP:1102, oneO:1149, twoS:1495, twoI:1608, twoP:1648, twoO:1739, threeS:2942, threeO:3356 },
+          friSat: { hotelRoom:712, dsS:730, dsI:767, dsP:820, dsO:854, oneS:988, oneI:1078, oneP:1102, oneO:1149, twoS:1495, twoI:1608, twoP:1648, twoO:1739, threeS:2942, threeO:3356 },
         },
       },
       { name: "Peak", color: "#FF9800",
@@ -657,12 +670,20 @@ const RESORTS = [
           sunThu: { hotelRoom:18, dsS:22, dsI:25, dsP:26, dsO:29, oneS:44, oneI:46, oneP:50, oneO:58, twoS:60, twoI:62, twoP:70, twoO:79, threeS:121, threeO:157 },
           friSat: { hotelRoom:18, dsS:22, dsI:25, dsP:26, dsO:29, oneS:44, oneI:46, oneP:50, oneO:58, twoS:60, twoI:62, twoP:70, twoO:79, threeS:121, threeO:157 },
         },
+        cashRates: {
+          sunThu: { hotelRoom:787, dsS:807, dsI:860, dsP:877, dsO:926, oneS:1093, oneI:1117, oneP:1165, oneO:1254, twoS:1653, twoI:1680, twoP:1785, twoO:1896, threeS:3252, threeO:3704 },
+          friSat: { hotelRoom:787, dsS:807, dsI:860, dsP:877, dsO:926, oneS:1093, oneI:1117, oneP:1165, oneO:1254, twoS:1653, twoI:1680, twoP:1785, twoO:1896, threeS:3252, threeO:3704 },
+        },
       },
       { name: "Premier", color: "#F44336",
         dateRanges: [{ start: "2026-01-01", end: "2026-01-03" }, { start: "2026-03-25", end: "2026-04-11" }, { start: "2026-06-29", end: "2026-08-09" }, { start: "2026-11-24", end: "2026-11-28" }, { start: "2026-12-18", end: "2026-12-31" }],
         rates: {
           sunThu: { hotelRoom:21, dsS:24, dsI:27, dsP:29, dsO:31, oneS:46, oneI:50, oneP:58, oneO:62, twoS:64, twoI:71, twoP:79, twoO:84, threeS:140, threeO:184 },
           friSat: { hotelRoom:21, dsS:24, dsI:27, dsP:29, dsO:31, oneS:46, oneI:50, oneP:58, oneO:62, twoS:64, twoI:71, twoP:79, twoO:84, threeS:140, threeO:184 },
+        },
+        cashRates: {
+          sunThu: { hotelRoom:1012, dsS:1037, dsI:1100, dsP:1140, dsO:1179, oneS:1405, oneI:1465, oneP:1578, oneO:1631, twoS:2125, twoI:2238, twoP:2361, twoO:2435, threeS:4182, threeO:4794 },
+          friSat: { hotelRoom:1012, dsS:1037, dsI:1100, dsP:1140, dsO:1179, oneS:1405, oneI:1465, oneP:1578, oneO:1631, twoS:2125, twoI:2238, twoP:2361, twoO:2435, threeS:4182, threeO:4794 },
         },
       },
     ],
@@ -834,10 +855,16 @@ const RESORTS = [
   },
 
   // --- The Villas at Disney's Grand Californian Hotel & Spa ---
+  // cashRates below are ESTIMATES, not observed prices -- see
+  // docs/data_reproducibility.md "Estimated cash rates" for the full
+  // methodology and confidence caveats (single external comparable-pair
+  // ratio, ±15-20% plausible error). estimatedCashRates:true flags this
+  // for getCashRateWithFallback(), which returns isEstimate:true here.
   {
     id: "grandCalifornian",
     name: "The Villas at Disney's Grand Californian Hotel & Spa",
     year: 2026,
+    estimatedCashRates: true,
     roomTypes: [
       { id: "deluxeStudio", name: "Deluxe Studio", sleeps: 4 },
       { id: "oneBedroom", name: "One-Bedroom Villa", sleeps: 5 },
@@ -851,12 +878,20 @@ const RESORTS = [
           sunThu: { deluxeStudio:17, oneBedroom:31, twoBedroom:46, threeBedroom:94 },
           friSat: { deluxeStudio:22, oneBedroom:40, twoBedroom:56, threeBedroom:119 },
         },
+        cashRates: {
+          sunThu: { deluxeStudio:758, oneBedroom:1027, twoBedroom:1553, threeBedroom:3056 },
+          friSat: { deluxeStudio:981, oneBedroom:1329, twoBedroom:2010, threeBedroom:3955 },
+        },
       },
       { name: "Regular", color: "#2196F3",
         dateRanges: [{ start: "2026-04-12", end: "2026-06-28" }, { start: "2026-10-02", end: "2026-11-23" }, { start: "2026-11-29", end: "2026-12-17" }],
         rates: {
           sunThu: { deluxeStudio:20, oneBedroom:39, twoBedroom:52, threeBedroom:106 },
           friSat: { deluxeStudio:24, oneBedroom:48, twoBedroom:65, threeBedroom:133 },
+        },
+        cashRates: {
+          sunThu: { deluxeStudio:892, oneBedroom:1208, twoBedroom:1827, threeBedroom:3595 },
+          friSat: { deluxeStudio:1070, oneBedroom:1449, twoBedroom:2192, threeBedroom:4314 },
         },
       },
       { name: "Peak", color: "#FF9800",
@@ -865,12 +900,20 @@ const RESORTS = [
           sunThu: { deluxeStudio:26, oneBedroom:52, twoBedroom:70, threeBedroom:152 },
           friSat: { deluxeStudio:32, oneBedroom:64, twoBedroom:88, threeBedroom:188 },
         },
+        cashRates: {
+          sunThu: { deluxeStudio:1159, oneBedroom:1570, twoBedroom:2375, threeBedroom:4674 },
+          friSat: { deluxeStudio:1427, oneBedroom:1932, twoBedroom:2923, threeBedroom:5752 },
+        },
       },
       { name: "Premier", color: "#F44336",
         dateRanges: [{ start: "2026-01-01", end: "2026-01-03" }, { start: "2026-03-27", end: "2026-04-11" }, { start: "2026-11-24", end: "2026-11-28" }, { start: "2026-12-18", end: "2026-12-31" }],
         rates: {
           sunThu: { deluxeStudio:30, oneBedroom:62, twoBedroom:86, threeBedroom:182 },
           friSat: { deluxeStudio:37, oneBedroom:76, twoBedroom:108, threeBedroom:224 },
+        },
+        cashRates: {
+          sunThu: { deluxeStudio:1338, oneBedroom:1812, twoBedroom:2740, threeBedroom:5393 },
+          friSat: { deluxeStudio:1650, oneBedroom:2234, twoBedroom:3380, threeBedroom:6651 },
         },
       },
     ],
@@ -1564,7 +1607,7 @@ function getCashRateWithFallback(resort, dateStr, roomTypeId) {
 
   // Try current year first
   const rate = getCashRateForDate(resort, dateStr, roomTypeId);
-  if (rate) return { rate, isPriorYear: false };
+  if (rate) return { rate, isPriorYear: false, isEstimate: !!resort.estimatedCashRates };
 
   // Check if resort has any cash data at all — if it does, the room type just isn't covered
   const period = getTravelPeriod(resort, dateStr);
@@ -1586,5 +1629,5 @@ function getCashRateWithFallback(resort, dateStr, roomTypeId) {
   const priorRate = priorPeriod.cashRates[dayType]?.[roomTypeId];
   if (!priorRate) return null;
 
-  return { rate: priorRate, isPriorYear: true, fallbackYear: priorYear };
+  return { rate: priorRate, isPriorYear: true, fallbackYear: priorYear, isEstimate: !!priorResort.estimatedCashRates };
 }

@@ -36397,11 +36397,11 @@
   },
   "veroBeach": {
     "resortSlug": "vero-beach-resort",
-    "preferredYear": 2027,
-    "fallbackYear": 2026,
+    "preferredYear": 2026,
+    "fallbackYear": 2027,
     "adults": 2,
     "children": 0,
-    "lastRunAt": "2026-08-31T12:48:49+00:00",
+    "lastRunAt": "2026-09-07T01:29:55+00:00",
     "periods": [
       {
         "period": "Value",
@@ -36423,9 +36423,9 @@
         "period": "Regular",
         "rangeIndex": 1,
         "roomTypes": {},
-        "rangeStart": "2027-11-27",
-        "rangeEnd": "2027-12-23",
-        "yearUsed": 2027
+        "rangeStart": "2026-11-28",
+        "rangeEnd": "2026-12-23",
+        "yearUsed": 2026
       },
       {
         "period": "Choice",
@@ -36447,9 +36447,9 @@
         "period": "Choice",
         "rangeIndex": 2,
         "roomTypes": {},
-        "rangeStart": "2027-11-24",
-        "rangeEnd": "2027-11-26",
-        "yearUsed": 2027
+        "rangeStart": "2026-11-25",
+        "rangeEnd": "2026-11-27",
+        "yearUsed": 2026
       },
       {
         "period": "Peak",
@@ -36479,19 +36479,19 @@
         "period": "Premier",
         "rangeIndex": 1,
         "roomTypes": {},
-        "rangeStart": "2027-12-24",
-        "rangeEnd": "2027-12-31",
-        "yearUsed": 2027
+        "rangeStart": "2026-12-24",
+        "rangeEnd": "2026-12-31",
+        "yearUsed": 2026
       }
     ]
   },
   "hiltonHead": {
     "resortSlug": "hilton-head-resort",
-    "preferredYear": 2027,
-    "fallbackYear": 2026,
+    "preferredYear": 2026,
+    "fallbackYear": 2027,
     "adults": 2,
     "children": 0,
-    "lastRunAt": "2026-08-31T12:48:49+00:00",
+    "lastRunAt": "2026-09-07T01:29:55+00:00",
     "periods": [
       {
         "period": "Value",
@@ -36505,9 +36505,9 @@
         "period": "Value",
         "rangeIndex": 1,
         "roomTypes": {},
-        "rangeStart": "2027-12-01",
-        "rangeEnd": "2027-12-17",
-        "yearUsed": 2027
+        "rangeStart": "2026-12-01",
+        "rangeEnd": "2026-12-17",
+        "yearUsed": 2026
       },
       {
         "period": "Regular",
@@ -36521,17 +36521,17 @@
         "period": "Regular",
         "rangeIndex": 1,
         "roomTypes": {},
-        "rangeStart": "2027-11-01",
-        "rangeEnd": "2027-11-30",
-        "yearUsed": 2027
+        "rangeStart": "2026-11-01",
+        "rangeEnd": "2026-11-30",
+        "yearUsed": 2026
       },
       {
         "period": "Regular",
         "rangeIndex": 2,
         "roomTypes": {},
-        "rangeStart": "2027-12-18",
-        "rangeEnd": "2027-12-31",
-        "yearUsed": 2027
+        "rangeStart": "2026-12-18",
+        "rangeEnd": "2026-12-31",
+        "yearUsed": 2026
       },
       {
         "period": "Peak",
