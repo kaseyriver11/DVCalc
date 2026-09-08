@@ -88,6 +88,31 @@ select, input, textarea, button {
   font-weight: 600;
 }
 
+/* Hamburger toggle -- hidden on desktop (.site-nav-links is always visible
+   there); shown and wired up only inside the mobile media query below,
+   where it collapses the whole link list instead of letting every group
+   wrap onto its own line. */
+.site-nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  margin-left: auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.site-nav-toggle span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: #4a148c;
+}
+
 .account-btn, .account-link-btn {
   font: inherit;
   font-size: 0.78rem;
@@ -1836,14 +1861,68 @@ select, input, textarea, button {
     overflow-x: auto;
   }
 
-  .site-nav {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  /* Collapsed by default: brand + toggle stay on one row, everything else
+     (.site-nav-links, #account-control) is display:none until .open --
+     when shown, each is width:100% so flex-wrap forces it onto its own
+     new line below the row, no extra positioning needed. This replaced an
+     earlier version that just stacked every nav group onto its own line
+     unconditionally -- on a real phone that alone pushed the calendar
+     itself almost entirely off the first screen (reported directly against
+     a live screenshot: nav + header banner together ate ~35-40% of the
+     viewport before any calendar content appeared). */
+  .site-nav-toggle {
+    display: flex;
   }
 
   .site-nav-links {
+    display: none;
+    /* .site-nav-links also has flex: 1 in the base (non-media) rule above,
+       which sets flex-basis: 0% -- that wins over a plain width:100% in
+       flex sizing, leaving this squeezed next to the toggle button instead
+       of wrapping onto its own row. flex: 0 0 100% overrides all three
+       shorthand parts so width:100% actually takes effect. Confirmed via a
+       real click-through, not just written and assumed correct. */
+    flex: 0 0 100%;
     width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+  }
+
+  .site-nav-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  #account-control {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .site-nav.open .site-nav-links,
+  .site-nav.open #account-control {
+    display: flex;
+  }
+  .site-nav.open #account-control {
+    display: block;
+  }
+
+  /* Header banner: shrunk specifically for narrow phones -- same reasoning
+     as the nav collapse above, this was reported as eating real vertical
+     space before any actual calendar content was visible. */
+  .header {
+    padding: 10px 20px;
+  }
+  .header h1 {
+    font-size: 1.05rem;
+  }
+  .header .subtitle {
+    font-size: 0.7rem;
   }
 
   .main-layout {
