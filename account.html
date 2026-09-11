@@ -292,6 +292,16 @@ body {
   margin-bottom: 10px;
 }
 
+.save-warning {
+  font-size: 0.8rem;
+  color: #8a6d00;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
 .reminder-row {
   display: flex;
   align-items: center;
@@ -476,7 +486,21 @@ function resortName(id) {
   return r ? r.name : id;
 }
 
+// Points a contract can actually spend this use year: the user-maintained
+// "remaining" balance (defaults to the full annual allotment until they've
+// customized it here) plus whatever they've banked in from last year or
+// borrowed in from next year. Mirrors app.js's copy of this same logic,
+// used there to show a stay's effect on the balance.
+function getAvailablePoints(c) {
+  const remaining = c.points_remaining ?? c.points_per_year;
+  return remaining + (c.points_banked || 0) + (c.points_borrowed || 0);
+}
+
 let editingId = null; // contract id currently being edited, or null for "adding new"
+// A non-blocking warning from the most recent save (e.g. the database is
+// missing a migration for one of the newer optional columns) -- shown once
+// above the contract list, same pattern as trips.html's pendingWarning.
+let pendingWarning = null;
 
 function renderGate() {
   pageContent.innerHTML = `
@@ -508,6 +532,7 @@ async function renderSignedIn() {
     <div class="section">
       <h2>Your Contracts</h2>
       <div class="section-sub">Own more than one? Add each separately -- DVCalc will combine what they unlock together.</div>
+      ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
       <div class="contract-list" id="contract-list"></div>
       <button type="button" class="add-btn" id="show-add-form">+ Add Contract</button>
       <div class="contract-form" id="contract-form">
@@ -532,6 +557,18 @@ async function renderSignedIn() {
           <div class="form-field">
             <label for="f-points">Points per Year</label>
             <input type="number" id="f-points" min="1" step="1" placeholder="e.g. 150">
+          </div>
+          <div class="form-field">
+            <label for="f-remaining">Points Remaining This Year</label>
+            <input type="number" id="f-remaining" min="0" step="1" placeholder="defaults to points/year">
+          </div>
+          <div class="form-field">
+            <label for="f-banked">Banked Points</label>
+            <input type="number" id="f-banked" min="0" step="1" placeholder="0">
+          </div>
+          <div class="form-field">
+            <label for="f-borrowed">Borrowed Points</label>
+            <input type="number" id="f-borrowed" min="0" step="1" placeholder="0">
           </div>
           <div class="form-field">
             <label>Purchase Type</label>
@@ -574,6 +611,7 @@ async function renderSignedIn() {
   `;
 
   renderContractList(contracts, resorts);
+  pendingWarning = null;
 
   document.getElementById("show-add-form").addEventListener("click", () => openForm(null));
   document.getElementById("cancel-contract").addEventListener("click", closeForm);
@@ -631,6 +669,7 @@ function renderContractList(contracts, resorts) {
           ${c.is_active ? "" : `<span class="badge badge-inactive">inactive</span>`}
         </div>
         ${deadline ? `<div class="contract-deadline">Next banking/borrowing deadline: <strong>${formatDeadlineDate(deadline.ms)}</strong> (${deadline.daysUntil} day${deadline.daysUntil === 1 ? "" : "s"})</div>` : ""}
+        <div class="contract-deadline">${getAvailablePoints(c).toLocaleString()} pts available this year${(c.points_banked || c.points_borrowed) ? ` (${(c.points_remaining ?? c.points_per_year).toLocaleString()} remaining + ${(c.points_banked || 0).toLocaleString()} banked + ${(c.points_borrowed || 0).toLocaleString()} borrowed)` : ""}</div>
       </div>
       <div class="contract-actions">
         <button type="button" class="small-btn" data-edit="${c.id}">Edit</button>
@@ -658,6 +697,9 @@ function openForm(contract) {
   document.getElementById("f-resort").value = contract?.home_resort_id || uniqueResorts()[0].id;
   document.getElementById("f-useyear").value = contract?.use_year || USE_YEARS[0];
   document.getElementById("f-points").value = contract?.points_per_year || "";
+  document.getElementById("f-remaining").value = contract?.points_remaining ?? "";
+  document.getElementById("f-banked").value = contract?.points_banked || "";
+  document.getElementById("f-borrowed").value = contract?.points_borrowed || "";
   document.getElementById("f-price").value = contract?.purchase_price || "";
   document.getElementById("f-date").value = contract?.purchase_date || "";
   setPurchaseType(contract?.purchase_type || "direct");
@@ -682,11 +724,16 @@ async function saveForm() {
     return;
   }
 
+  const remainingRaw = document.getElementById("f-remaining").value;
+
   const payload = {
     nickname: document.getElementById("f-nickname").value.trim() || null,
     home_resort_id: document.getElementById("f-resort").value,
     use_year: document.getElementById("f-useyear").value,
     points_per_year: points,
+    points_remaining: remainingRaw === "" ? null : parseInt(remainingRaw, 10),
+    points_banked: parseInt(document.getElementById("f-banked").value, 10) || 0,
+    points_borrowed: parseInt(document.getElementById("f-borrowed").value, 10) || 0,
     purchase_type: getSelectedPurchaseType(),
     purchase_price: document.getElementById("f-price").value ? parseFloat(document.getElementById("f-price").value) : null,
     purchase_date: document.getElementById("f-date").value || null,
@@ -702,6 +749,7 @@ async function saveForm() {
     return;
   }
 
+  pendingWarning = result.warning || null;
   closeForm();
   renderSignedIn();
 }

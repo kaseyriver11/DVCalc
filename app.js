@@ -1260,6 +1260,16 @@ function getSelectedContract() {
   return getActiveContracts().find(c => c.id === selectedContractId) || null;
 }
 
+// Points a contract can actually spend this use year: the user-maintained
+// "remaining" balance (defaults to the full annual allotment until they've
+// customized it in My Contracts) plus whatever they've banked in from last
+// year or borrowed in from next year. Mirrors account.html's copy of this
+// same logic, used there when editing a contract.
+function getAvailablePoints(c) {
+  const remaining = c.points_remaining ?? c.points_per_year;
+  return remaining + (c.points_banked || 0) + (c.points_borrowed || 0);
+}
+
 // How many months out someone can book a given resort under a single
 // contract: 11 (home resort), 7 (other resort this contract can reach), or
 // null (this contract can never book there -- see the resale-restriction
@@ -1721,18 +1731,29 @@ function buildContractCardHTML() {
       eligibilityHTML = `<div class="contract-eligibility contract-blocked">&times; Can't book ${resort.name} with this contract due to resale restrictions</div>`;
     }
 
+    const available = getAvailablePoints(contract);
+    const hasBankOrBorrow = (contract.points_banked || 0) > 0 || (contract.points_borrowed || 0) > 0;
+    const remainingBase = contract.points_remaining ?? contract.points_per_year;
+
     const stayDates = getStayDates();
     if (stayDates.length > 0 && !isSplitMode()) {
       const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
       if (totals.points != null) {
-        const over = totals.points > contract.points_per_year;
+        const leftover = available - totals.points;
+        const over = leftover < 0;
         eligibilityHTML += `
           <div class="contract-points${over ? " contract-points-over" : ""}">
-            ${totals.points.toLocaleString()} pts for this stay vs. ${contract.points_per_year.toLocaleString()} pts/year on this contract
-            ${over ? `&mdash; short by ${(totals.points - contract.points_per_year).toLocaleString()} pts (before any banked/borrowed points, which this doesn't track yet)` : ""}
+            ${totals.points.toLocaleString()} pts for this stay vs. ${available.toLocaleString()} pts available on this contract
+            ${over ? `&mdash; short by ${Math.abs(leftover).toLocaleString()} pts` : `&mdash; leaves ${leftover.toLocaleString()} pts after this trip`}
           </div>
         `;
       }
+    } else {
+      eligibilityHTML += `
+        <div class="contract-points">
+          ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${remainingBase.toLocaleString()} remaining + ${(contract.points_banked || 0).toLocaleString()} banked + ${(contract.points_borrowed || 0).toLocaleString()} borrowed)` : ""}
+        </div>
+      `;
     }
   }
 

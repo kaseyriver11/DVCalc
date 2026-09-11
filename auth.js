@@ -102,28 +102,65 @@ async function getContracts() {
   return data;
 }
 
-// contract: { home_resort_id, use_year, points_per_year, purchase_type,
-// purchase_price, purchase_date, nickname } -- user_id is filled in here,
-// not by the caller, since RLS requires it to match the authenticated user.
+// Columns from db/migrations/006_add_contract_points_tracking.sql -- may
+// not exist yet if that migration hasn't been run. isMissingColumnError is
+// declared further down (used by addTrip/updateTrip first), but function
+// declarations hoist, so it's available here too.
+const OPTIONAL_CONTRACT_COLUMNS = ["points_remaining", "points_banked", "points_borrowed"];
+
+// Strips whichever OPTIONAL_CONTRACT_COLUMNS key caused a "missing column"
+// error, or returns null if the error was about something else / none of
+// those keys are present in payload. Bounded by OPTIONAL_CONTRACT_COLUMNS'
+// length, so a caller retry-looping on this can't loop forever.
+function stripMissingContractColumn(payload, error) {
+  for (const col of OPTIONAL_CONTRACT_COLUMNS) {
+    if (col in payload && isMissingColumnError(error, col)) {
+      const rest = { ...payload };
+      delete rest[col];
+      return rest;
+    }
+  }
+  return null;
+}
+
+// contract: { home_resort_id, use_year, points_per_year, points_remaining,
+// points_banked, points_borrowed, purchase_type, purchase_price,
+// purchase_date, nickname } -- user_id is filled in here, not by the
+// caller, since RLS requires it to match the authenticated user.
 async function addContract(contract) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  const { data, error } = await supabase
-    .from("contracts")
-    .insert({ ...contract, user_id: currentSession.user.id })
-    .select()
-    .single();
-  return { data, error: error?.message };
+  let payload = { ...contract, user_id: currentSession.user.id };
+  let degraded = false;
+  for (let attempt = 0; attempt <= OPTIONAL_CONTRACT_COLUMNS.length; attempt++) {
+    const { data, error } = await supabase.from("contracts").insert(payload).select().single();
+    if (!error) {
+      return degraded
+        ? { data, warning: "Contract saved, but its points balance wasn't stored -- the database needs db/migrations/006_add_contract_points_tracking.sql run against it." }
+        : { data };
+    }
+    const stripped = stripMissingContractColumn(payload, error);
+    if (!stripped) return { error: error.message };
+    payload = stripped;
+    degraded = true;
+  }
 }
 
 async function updateContract(id, patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  const { data, error } = await supabase
-    .from("contracts")
-    .update(patch)
-    .eq("id", id)
-    .select()
-    .single();
-  return { data, error: error?.message };
+  let payload = patch;
+  let degraded = false;
+  for (let attempt = 0; attempt <= OPTIONAL_CONTRACT_COLUMNS.length; attempt++) {
+    const { data, error } = await supabase.from("contracts").update(payload).eq("id", id).select().single();
+    if (!error) {
+      return degraded
+        ? { data, warning: "Contract saved, but its points balance wasn't stored -- the database needs db/migrations/006_add_contract_points_tracking.sql run against it." }
+        : { data };
+    }
+    const stripped = stripMissingContractColumn(payload, error);
+    if (!stripped) return { error: error.message };
+    payload = stripped;
+    degraded = true;
+  }
 }
 
 async function deleteContract(id) {

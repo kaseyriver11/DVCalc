@@ -59,6 +59,13 @@ create table if not exists contracts (
   home_resort_id text not null,
   use_year text not null check (use_year in ('Feb','Mar','Apr','Jun','Aug','Sep','Oct','Dec')),
   points_per_year integer not null check (points_per_year > 0),
+  -- Manually-maintained points balance -- see
+  -- db/migrations/006_add_contract_points_tracking.sql for why these can't
+  -- be derived automatically. points_remaining null means "not customized
+  -- yet, treat as points_per_year".
+  points_remaining integer check (points_remaining is null or points_remaining >= 0),
+  points_banked integer not null default 0 check (points_banked >= 0),
+  points_borrowed integer not null default 0 check (points_borrowed >= 0),
   purchase_type text not null check (purchase_type in ('direct','resale')),
   purchase_price numeric(10,2),
   purchase_date date,
