@@ -1859,6 +1859,19 @@ select, input, textarea, button {
      needed horizontal scroll at all. */
   .calendar-grid-scroll {
     overflow-x: auto;
+    /* Explicit, not left to default: per the CSS Overflow Module interop
+       rule described above, overflow-x: auto forces overflow-y to compute
+       to auto as well if left unset -- turning this div into an
+       independently vertically-scrollable container even though its
+       height already just fits its content. On mobile, a couple of
+       fractional pixels of rounding (grid gaps, cell borders) is enough
+       for that phantom scroll container to register as "scrollable", so a
+       touch-scroll gesture starting over the calendar sometimes gets
+       consumed by this element's own scroll/rubber-band instead of the
+       page's, producing a visible blank gap where the legend below should
+       already be showing. overflow-y: hidden opts back out of the
+       interop pairing without affecting the intended horizontal scroll. */
+    overflow-y: hidden;
   }
 
   /* Collapsed by default: brand + toggle stay on one row, everything else
