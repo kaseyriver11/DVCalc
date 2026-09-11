@@ -164,6 +164,58 @@ body {
 }
 .contract-deadline strong { color: #4a148c; }
 
+.points-quick-edit {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.qe-field, .qe-total { display: flex; flex-direction: column; gap: 2px; }
+
+.qe-field label, .qe-total label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #999;
+  font-weight: 700;
+}
+
+.qe-field input {
+  width: 60px;
+  padding: 5px 6px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  text-align: center;
+}
+
+.qe-field input:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
+}
+
+.qe-total-value {
+  font-weight: 700;
+  color: #1a237e;
+  font-size: 0.92rem;
+  padding: 5px 10px;
+  background: #f3f0f8;
+  border-radius: 5px;
+  min-width: 34px;
+  text-align: center;
+}
+
+.qe-status {
+  font-size: 0.72rem;
+  color: #2e7d32;
+  min-width: 50px;
+}
+.qe-status.error { color: #c62828; }
+
 .badge {
   display: inline-block;
   font-size: 0.65rem;
@@ -559,18 +611,6 @@ async function renderSignedIn() {
             <input type="number" id="f-points" min="1" step="1" placeholder="e.g. 150">
           </div>
           <div class="form-field">
-            <label for="f-remaining">Points Remaining This Year</label>
-            <input type="number" id="f-remaining" min="0" step="1" placeholder="defaults to points/year">
-          </div>
-          <div class="form-field">
-            <label for="f-banked">Banked Points</label>
-            <input type="number" id="f-banked" min="0" step="1" placeholder="0">
-          </div>
-          <div class="form-field">
-            <label for="f-borrowed">Borrowed Points</label>
-            <input type="number" id="f-borrowed" min="0" step="1" placeholder="0">
-          </div>
-          <div class="form-field">
             <label>Purchase Type</label>
             <div class="purchase-type-toggle">
               <button type="button" id="f-type-direct" class="selected">Direct</button>
@@ -644,6 +684,23 @@ async function renderSignedIn() {
       }
     }
   });
+
+  // Quick-edit points boxes: live total on every keystroke, real save once
+  // the user leaves a field. Separate listeners (not the click delegate
+  // above) since number inputs fire "input"/"change", not "click".
+  document.getElementById("contract-list").addEventListener("input", (e) => {
+    const card = e.target.closest(".points-quick-edit");
+    if (!card || !e.target.matches(".qe-remaining, .qe-banked, .qe-borrowed")) return;
+    const contract = contracts.find(c => c.id === card.dataset.contractId);
+    if (contract) updateQuickEditTotal(card, contract.points_per_year);
+  });
+
+  document.getElementById("contract-list").addEventListener("change", (e) => {
+    const card = e.target.closest(".points-quick-edit");
+    if (!card || !e.target.matches(".qe-remaining, .qe-banked, .qe-borrowed")) return;
+    const contract = contracts.find(c => c.id === card.dataset.contractId);
+    if (contract) saveQuickEdit(card, contract);
+  });
 }
 
 function renderContractList(contracts, resorts) {
@@ -669,7 +726,25 @@ function renderContractList(contracts, resorts) {
           ${c.is_active ? "" : `<span class="badge badge-inactive">inactive</span>`}
         </div>
         ${deadline ? `<div class="contract-deadline">Next banking/borrowing deadline: <strong>${formatDeadlineDate(deadline.ms)}</strong> (${deadline.daysUntil} day${deadline.daysUntil === 1 ? "" : "s"})</div>` : ""}
-        <div class="contract-deadline">${getAvailablePoints(c).toLocaleString()} pts available this year${(c.points_banked || c.points_borrowed) ? ` (${(c.points_remaining ?? c.points_per_year).toLocaleString()} remaining + ${(c.points_banked || 0).toLocaleString()} banked + ${(c.points_borrowed || 0).toLocaleString()} borrowed)` : ""}</div>
+        <div class="points-quick-edit" data-contract-id="${c.id}">
+          <div class="qe-field">
+            <label for="qe-remaining-${c.id}">Remaining</label>
+            <input type="number" id="qe-remaining-${c.id}" class="qe-remaining" min="0" step="1" value="${c.points_remaining ?? c.points_per_year}">
+          </div>
+          <div class="qe-field">
+            <label for="qe-banked-${c.id}">Banked</label>
+            <input type="number" id="qe-banked-${c.id}" class="qe-banked" min="0" step="1" value="${c.points_banked || 0}">
+          </div>
+          <div class="qe-field">
+            <label for="qe-borrowed-${c.id}">Borrowed</label>
+            <input type="number" id="qe-borrowed-${c.id}" class="qe-borrowed" min="0" step="1" value="${c.points_borrowed || 0}">
+          </div>
+          <div class="qe-total">
+            <label>Total</label>
+            <div class="qe-total-value">${getAvailablePoints(c).toLocaleString()}</div>
+          </div>
+          <span class="qe-status"></span>
+        </div>
       </div>
       <div class="contract-actions">
         <button type="button" class="small-btn" data-edit="${c.id}">Edit</button>
@@ -679,6 +754,48 @@ function renderContractList(contracts, resorts) {
     </div>
   `;
   }).join("");
+}
+
+// Recomputes the total shown in a quick-edit widget from its three inputs'
+// current (possibly unsaved) values -- fires on every keystroke, purely
+// client-side, no network call.
+function updateQuickEditTotal(card, pointsPerYear) {
+  const remainingRaw = card.querySelector(".qe-remaining").value;
+  const remaining = remainingRaw === "" ? pointsPerYear : (parseInt(remainingRaw, 10) || 0);
+  const banked = parseInt(card.querySelector(".qe-banked").value, 10) || 0;
+  const borrowed = parseInt(card.querySelector(".qe-borrowed").value, 10) || 0;
+  card.querySelector(".qe-total-value").textContent = (remaining + banked + borrowed).toLocaleString();
+}
+
+// Saves a quick-edit widget's three fields as soon as the user leaves a
+// field (blur, Enter, or the number input's up/down arrows -- all fire
+// "change"), rather than requiring them to open the full Edit form. Updates
+// the in-memory `contract` object on success so it stays in sync with what
+// Edit would show if opened afterward, without re-rendering the whole list
+// (which would steal focus out from under a still-mid-edit user).
+async function saveQuickEdit(card, contract) {
+  const remainingRaw = card.querySelector(".qe-remaining").value;
+  const patch = {
+    points_remaining: remainingRaw === "" ? null : Math.max(0, parseInt(remainingRaw, 10) || 0),
+    points_banked: Math.max(0, parseInt(card.querySelector(".qe-banked").value, 10) || 0),
+    points_borrowed: Math.max(0, parseInt(card.querySelector(".qe-borrowed").value, 10) || 0),
+  };
+
+  const statusEl = card.querySelector(".qe-status");
+  statusEl.textContent = "Saving…";
+  statusEl.classList.remove("error");
+
+  const result = await window.DVCAuth.updateContract(contract.id, patch);
+  if (result.error) {
+    statusEl.textContent = "Not saved";
+    statusEl.classList.add("error");
+    return;
+  }
+
+  Object.assign(contract, patch);
+  updateQuickEditTotal(card, contract.points_per_year);
+  statusEl.textContent = result.warning ? "Saved (partial)" : "Saved";
+  setTimeout(() => { if (statusEl.textContent !== "Saving…") statusEl.textContent = ""; }, 1500);
 }
 
 function setPurchaseType(type) {
@@ -697,9 +814,6 @@ function openForm(contract) {
   document.getElementById("f-resort").value = contract?.home_resort_id || uniqueResorts()[0].id;
   document.getElementById("f-useyear").value = contract?.use_year || USE_YEARS[0];
   document.getElementById("f-points").value = contract?.points_per_year || "";
-  document.getElementById("f-remaining").value = contract?.points_remaining ?? "";
-  document.getElementById("f-banked").value = contract?.points_banked || "";
-  document.getElementById("f-borrowed").value = contract?.points_borrowed || "";
   document.getElementById("f-price").value = contract?.purchase_price || "";
   document.getElementById("f-date").value = contract?.purchase_date || "";
   setPurchaseType(contract?.purchase_type || "direct");
@@ -724,16 +838,11 @@ async function saveForm() {
     return;
   }
 
-  const remainingRaw = document.getElementById("f-remaining").value;
-
   const payload = {
     nickname: document.getElementById("f-nickname").value.trim() || null,
     home_resort_id: document.getElementById("f-resort").value,
     use_year: document.getElementById("f-useyear").value,
     points_per_year: points,
-    points_remaining: remainingRaw === "" ? null : parseInt(remainingRaw, 10),
-    points_banked: parseInt(document.getElementById("f-banked").value, 10) || 0,
-    points_borrowed: parseInt(document.getElementById("f-borrowed").value, 10) || 0,
     purchase_type: getSelectedPurchaseType(),
     purchase_price: document.getElementById("f-price").value ? parseFloat(document.getElementById("f-price").value) : null,
     purchase_date: document.getElementById("f-date").value || null,
