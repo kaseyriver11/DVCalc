@@ -59,13 +59,6 @@ create table if not exists contracts (
   home_resort_id text not null,
   use_year text not null check (use_year in ('Feb','Mar','Apr','Jun','Aug','Sep','Oct','Dec')),
   points_per_year integer not null check (points_per_year > 0),
-  -- Manually-maintained points balance -- see
-  -- db/migrations/006_add_contract_points_tracking.sql for why these can't
-  -- be derived automatically. points_remaining null means "not customized
-  -- yet, treat as points_per_year".
-  points_remaining integer check (points_remaining is null or points_remaining >= 0),
-  points_banked integer not null default 0 check (points_banked >= 0),
-  points_borrowed integer not null default 0 check (points_borrowed >= 0),
   purchase_type text not null check (purchase_type in ('direct','resale')),
   purchase_price numeric(10,2),
   purchase_date date,
@@ -96,6 +89,41 @@ $$;
 drop trigger if exists contracts_set_updated_at on contracts;
 create trigger contracts_set_updated_at
   before update on contracts
+  for each row execute function set_updated_at();
+
+-- ---------------------------------------------------------------------
+-- contract_year_points: a contract's manually-maintained points balance,
+-- one row per use-year cycle (use_year_label is the calendar year that
+-- cycle's points DEPOSIT in -- DVC's own labeling convention, confirmed
+-- against an official planDisney Q&A and community sources 2026-09-11).
+-- A separate row per year (rather than 3 flat columns on `contracts`,
+-- migration 006's now-superseded approach) lets an owner track/plan more
+-- than just the currently-active cycle -- e.g. banking they intend to do
+-- into next year, ahead of actually doing it.
+-- ---------------------------------------------------------------------
+create table if not exists contract_year_points (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  contract_id uuid not null references contracts(id) on delete cascade,
+  use_year_label integer not null check (use_year_label between 2000 and 2100),
+  points_remaining integer not null default 0 check (points_remaining >= 0),
+  points_banked integer not null default 0 check (points_banked >= 0),
+  points_borrowed integer not null default 0 check (points_borrowed >= 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (contract_id, use_year_label)
+);
+
+create index if not exists contract_year_points_contract_idx on contract_year_points(contract_id);
+
+alter table contract_year_points enable row level security;
+
+create policy "contract_year_points: full access to own rows" on contract_year_points
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop trigger if exists contract_year_points_set_updated_at on contract_year_points;
+create trigger contract_year_points_set_updated_at
+  before update on contract_year_points
   for each row execute function set_updated_at();
 
 -- ---------------------------------------------------------------------

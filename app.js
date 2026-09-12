@@ -1249,8 +1249,9 @@ function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {
 // sessionStorage for the index<->compare handoff (see saveStateToSession()
 // below), and contract data would go stale the moment it changes elsewhere.
 // This is a separate module-scope pair, refreshed on auth changes.
-let userContracts = [];       // every contract for the signed-in user (active + inactive)
-let selectedContractId = null; // which one the user is browsing "as", or null
+let userContracts = [];          // every contract for the signed-in user (active + inactive)
+let userContractYearPoints = []; // that user's contract_year_points rows, across all contracts
+let selectedContractId = null;   // which one the user is browsing "as", or null
 
 function getActiveContracts() {
   return userContracts.filter(c => c.is_active);
@@ -1260,14 +1261,35 @@ function getSelectedContract() {
   return getActiveContracts().find(c => c.id === selectedContractId) || null;
 }
 
-// Points a contract can actually spend this use year: the user-maintained
-// "remaining" balance (defaults to the full annual allotment until they've
-// customized it in My Contracts) plus whatever they've banked in from last
-// year or borrowed in from next year. Mirrors account.html's copy of this
-// same logic, used there when editing a contract.
+// 1-indexed deposit month for each use year -- mirrors account.html's copy
+// of this same table exactly. See that file's comment on
+// USE_YEAR_START_MONTH for why the label a use year's points carry is its
+// deposit year, not the year it later expires in.
+const USE_YEAR_START_MONTH = { Feb: 2, Mar: 3, Apr: 4, Jun: 6, Aug: 8, Sep: 9, Oct: 10, Dec: 12 };
+
+function currentUYYear(useYear) {
+  const today = new Date();
+  return today.getMonth() + 1 >= USE_YEAR_START_MONTH[useYear] ? today.getFullYear() : today.getFullYear() - 1;
+}
+
+// The currently-active use year's ledger row for a contract (see
+// account.html's contract_year_points table), or a default if the owner
+// hasn't customized that year in My Contracts yet -- same default the
+// ledger table itself shows for an untouched year.
+function getCurrentYearRow(c) {
+  const year = currentUYYear(c.use_year);
+  const row = userContractYearPoints.find(r => r.contract_id === c.id && r.use_year_label === year);
+  return row
+    ? { year, remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0 }
+    : { year, remaining: c.points_per_year, banked: 0, borrowed: 0 };
+}
+
+// Points a contract can actually spend right now: its currently-active use
+// year's remaining balance plus whatever's banked in from last year or
+// borrowed in from next year.
 function getAvailablePoints(c) {
-  const remaining = c.points_remaining ?? c.points_per_year;
-  return remaining + (c.points_banked || 0) + (c.points_borrowed || 0);
+  const { remaining, banked, borrowed } = getCurrentYearRow(c);
+  return remaining + banked + borrowed;
 }
 
 // How many months out someone can book a given resort under a single
@@ -1314,7 +1336,15 @@ function monthsFromTodayCutoff(months) {
 }
 
 async function refreshUserContracts() {
-  userContracts = window.DVCAuth ? await window.DVCAuth.getContracts() : [];
+  if (window.DVCAuth) {
+    [userContracts, userContractYearPoints] = await Promise.all([
+      window.DVCAuth.getContracts(),
+      window.DVCAuth.getContractYearPoints(),
+    ]);
+  } else {
+    userContracts = [];
+    userContractYearPoints = [];
+  }
   if (!getActiveContracts().some(c => c.id === selectedContractId)) selectedContractId = null;
   renderSummary();
   renderCalendar();
@@ -1340,6 +1370,7 @@ function initAccountPersonalization(attempts) {
         refreshUserItineraries();
       } else {
         userContracts = [];
+        userContractYearPoints = [];
         selectedContractId = null;
         userItineraries = [];
         renderSummary();
@@ -1731,9 +1762,9 @@ function buildContractCardHTML() {
       eligibilityHTML = `<div class="contract-eligibility contract-blocked">&times; Can't book ${resort.name} with this contract due to resale restrictions</div>`;
     }
 
-    const available = getAvailablePoints(contract);
-    const hasBankOrBorrow = (contract.points_banked || 0) > 0 || (contract.points_borrowed || 0) > 0;
-    const remainingBase = contract.points_remaining ?? contract.points_per_year;
+    const currentRow = getCurrentYearRow(contract);
+    const available = currentRow.remaining + currentRow.banked + currentRow.borrowed;
+    const hasBankOrBorrow = currentRow.banked > 0 || currentRow.borrowed > 0;
 
     const stayDates = getStayDates();
     if (stayDates.length > 0 && !isSplitMode()) {
@@ -1751,7 +1782,7 @@ function buildContractCardHTML() {
     } else {
       eligibilityHTML += `
         <div class="contract-points">
-          ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${remainingBase.toLocaleString()} remaining + ${(contract.points_banked || 0).toLocaleString()} banked + ${(contract.points_borrowed || 0).toLocaleString()} borrowed)` : ""}
+          ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${currentRow.remaining.toLocaleString()} remaining + ${currentRow.banked.toLocaleString()} banked + ${currentRow.borrowed.toLocaleString()} borrowed)` : ""}
         </div>
       `;
     }

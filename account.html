@@ -164,38 +164,50 @@ body {
 }
 .contract-deadline strong { color: #4a148c; }
 
-.points-quick-edit {
-  display: flex;
-  align-items: flex-end;
-  gap: 7px;
+/* Points ledger: one row per use-year cycle. use_year_label is the year a
+   cycle's points DEPOSIT in (see currentUYYear()'s comment) -- often not
+   the calendar year someone would guess at a glance, hence spelling the
+   year out per row instead of a static "Banked/Remaining/Borrowed" label. */
+.points-ledger {
+  border-collapse: collapse;
   margin-top: 8px;
-  flex-wrap: wrap;
+  font-size: 0.78rem;
 }
 
-.qe-field, .qe-total { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-
-.qe-total label {
+.points-ledger th {
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   color: #999;
   font-weight: 700;
+  text-align: center;
+  padding: 0 4px 3px;
+}
+.points-ledger th:first-child { text-align: left; }
+
+.points-ledger td { padding: 2px 4px; text-align: center; }
+
+.ledger-year { text-align: left; color: #666; font-weight: 600; white-space: nowrap; }
+.ledger-now {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #4a148c;
+  background: #ece1f7;
+  border-radius: 4px;
+  padding: 1px 4px;
+  vertical-align: middle;
 }
 
-/* Two-line label: the deposit year on top, the bucket name below it in
-   even smaller caps -- see currentUYYear() for why the year shown here
-   often isn't the calendar year someone would guess at a glance. */
-.qe-uy-label { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
-.qe-uy-year { font-size: 0.64rem; font-weight: 700; color: #999; }
-.qe-uy-word { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.3px; color: #aaa; font-weight: 600; }
-
-/* The bucket actually spendable right now -- called out so it doesn't get
-   lost among the other two, which are still-useful context but not what
+/* The row actually spendable right now -- called out so it doesn't get
+   lost among rows that are still-useful planning context but not what
    most bookings draw from day to day. */
-.qe-field.qe-current .qe-uy-year, .qe-field.qe-current .qe-uy-word { color: #4a148c; }
-.qe-field.qe-current input { border-color: #4a148c; background: #faf7fd; }
+tr.ledger-current .ledger-year { color: #4a148c; }
+tr.ledger-current input { border-color: #4a148c; background: #faf7fd; }
 
-.qe-field input {
+.points-ledger input {
   width: 42px;
   padding: 4px 3px;
   border: 1px solid #ccc;
@@ -205,27 +217,35 @@ body {
   text-align: center;
 }
 
-.qe-field input:focus {
+.points-ledger input:focus {
   outline: none;
   border-color: #4a148c;
   box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
 }
 
-.qe-total-value {
-  font-weight: 700;
-  color: #1a237e;
-  font-size: 0.85rem;
-  padding: 4px 8px;
-  background: #f3f0f8;
-  border-radius: 5px;
-  min-width: 28px;
-  text-align: center;
+.ledger-total { font-weight: 700; color: #1a237e; }
+
+.ledger-remove-year {
+  border: none;
+  background: none;
+  color: #bbb;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.ledger-remove-year:hover { color: #c62828; }
+
+.ledger-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .qe-status {
   font-size: 0.7rem;
   color: #2e7d32;
-  min-width: 46px;
 }
 .qe-status.error { color: #c62828; }
 
@@ -511,9 +531,9 @@ const DEADLINE_BY_USE_YEAR = {
 // DVC community sources (2026-09-11 research): a Dec-UY member's "2026
 // points" deposit Dec 1, 2026 and run through Nov 30, 2027, NOT the cycle
 // already underway in Sept 2026 (which is "2025 points", deposited Dec 1,
-// 2025). Points can only be banked one hop forward and borrowed from
-// exactly the next use year, so at most 3 labeled years are ever in play
-// at once: prior (banked in), current (remaining), next (borrowed in).
+// 2025). The points ledger table (see buildLedgerRows()) always shows the
+// current and next labeled year, plus however many further-future years
+// the owner has chosen to plan ahead for.
 const USE_YEAR_START_MONTH = { Feb: 2, Mar: 3, Apr: 4, Jun: 6, Aug: 8, Sep: 9, Oct: 10, Dec: 12 };
 
 // The calendar year label of the use-year cycle active right now -- the
@@ -570,21 +590,40 @@ function resortName(id) {
   return r ? r.name : id;
 }
 
-// Points a contract can actually spend this use year: the user-maintained
-// "remaining" balance (defaults to the full annual allotment until they've
-// customized it here) plus whatever they've banked in from last year or
-// borrowed in from next year. Mirrors app.js's copy of this same logic,
-// used there to show a stay's effect on the balance.
-function getAvailablePoints(c) {
-  const remaining = c.points_remaining ?? c.points_per_year;
-  return remaining + (c.points_banked || 0) + (c.points_borrowed || 0);
+// One year's balance for a contract, from its saved ledger row if one
+// exists, or a sensible default if the owner hasn't touched that year yet
+// (full annual allotment, nothing banked/borrowed -- same defaults the old
+// single-snapshot version used).
+function getYearPointsRow(yearPointsByContract, contractId, year, pointsPerYear) {
+  const found = (yearPointsByContract[contractId] || []).find(r => r.use_year_label === year);
+  return found
+    ? { points_remaining: found.points_remaining, points_banked: found.points_banked, points_borrowed: found.points_borrowed }
+    : { points_remaining: pointsPerYear, points_banked: 0, points_borrowed: 0 };
+}
+
+// Which year-rows to show for a contract's ledger: always the current and
+// next labeled use year, plus any further-future years the owner has
+// already saved a row for (from a previous "+ Add a year"). Capped at 3
+// rows total in the UI (see MAX_LEDGER_ROWS) -- Disney's own rules never
+// give you more than 3 labeled years in play at once (prior/current/next),
+// so beyond that a 4th "planning ahead" row is speculation, not tracking.
+const MAX_LEDGER_ROWS = 3;
+
+function buildLedgerRows(contract, yearPointsByContract, today) {
+  const uyYear = currentUYYear(contract.use_year, today);
+  const savedYears = (yearPointsByContract[contract.id] || []).map(r => r.use_year_label);
+  const years = [...new Set([uyYear, uyYear + 1, ...savedYears])].sort((a, b) => a - b);
+  return years.map(year => ({
+    year,
+    ...getYearPointsRow(yearPointsByContract, contract.id, year, contract.points_per_year),
+    // Only the current and immediate-next year are permanent fixtures --
+    // anything else is either a "+ Plan a year" extra or a stray leftover
+    // row from an earlier cycle, and either way the owner can clear it.
+    removable: year !== uyYear && year !== uyYear + 1,
+  }));
 }
 
 let editingId = null; // contract id currently being edited, or null for "adding new"
-// A non-blocking warning from the most recent save (e.g. the database is
-// missing a migration for one of the newer optional columns) -- shown once
-// above the contract list, same pattern as trips.html's pendingWarning.
-let pendingWarning = null;
 
 function renderGate() {
   pageContent.innerHTML = `
@@ -605,10 +644,16 @@ function renderUnconfigured() {
 }
 
 async function renderSignedIn() {
-  const [contracts, profile] = await Promise.all([
+  const [contracts, profile, yearPoints] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getProfile(),
+    window.DVCAuth.getContractYearPoints(),
   ]);
+
+  const yearPointsByContract = {};
+  for (const row of yearPoints) {
+    (yearPointsByContract[row.contract_id] ||= []).push(row);
+  }
 
   const resorts = uniqueResorts();
 
@@ -616,7 +661,6 @@ async function renderSignedIn() {
     <div class="section">
       <h2>Your Contracts</h2>
       <div class="section-sub">Own more than one? Add each separately -- DVCalc will combine what they unlock together.</div>
-      ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
       <div class="contract-list" id="contract-list"></div>
       <button type="button" class="add-btn" id="show-add-form">+ Add Contract</button>
       <div class="contract-form" id="contract-form">
@@ -682,8 +726,7 @@ async function renderSignedIn() {
     </div>
   `;
 
-  renderContractList(contracts, resorts);
-  pendingWarning = null;
+  renderContractList(contracts, resorts, yearPointsByContract);
 
   document.getElementById("show-add-form").addEventListener("click", () => openForm(null));
   document.getElementById("cancel-contract").addEventListener("click", closeForm);
@@ -715,27 +758,38 @@ async function renderSignedIn() {
         renderSignedIn();
       }
     }
+
+    const addYearBtn = e.target.closest("[data-add-year]");
+    if (addYearBtn) {
+      const c = contracts.find(c => c.id === addYearBtn.dataset.contractId);
+      if (c) await addLedgerYear(c, Number(addYearBtn.dataset.addYear), yearPointsByContract);
+    }
+
+    const removeYearBtn = e.target.closest("[data-remove-year]");
+    if (removeYearBtn) {
+      if (!confirm(`Remove the ${removeYearBtn.dataset.removeYear} row? Its saved points for that year will be deleted.`)) return;
+      await removeLedgerYear(removeYearBtn.dataset.contractId, Number(removeYearBtn.dataset.removeYear), yearPointsByContract);
+    }
   });
 
-  // Quick-edit points boxes: live total on every keystroke, real save once
-  // the user leaves a field. Separate listeners (not the click delegate
-  // above) since number inputs fire "input"/"change", not "click".
+  // Ledger table inputs: live per-row total on every keystroke, real save
+  // once the user leaves a field. Separate listeners (not the click
+  // delegate above) since number inputs fire "input"/"change", not "click".
   document.getElementById("contract-list").addEventListener("input", (e) => {
-    const card = e.target.closest(".points-quick-edit");
-    if (!card || !e.target.matches(".qe-remaining, .qe-banked, .qe-borrowed")) return;
-    const contract = contracts.find(c => c.id === card.dataset.contractId);
-    if (contract) updateQuickEditTotal(card, contract.points_per_year);
+    const row = e.target.closest("tr[data-year]");
+    if (!row || !e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed")) return;
+    updateLedgerRowTotal(row);
   });
 
   document.getElementById("contract-list").addEventListener("change", (e) => {
-    const card = e.target.closest(".points-quick-edit");
-    if (!card || !e.target.matches(".qe-remaining, .qe-banked, .qe-borrowed")) return;
-    const contract = contracts.find(c => c.id === card.dataset.contractId);
-    if (contract) saveQuickEdit(card, contract);
+    const row = e.target.closest("tr[data-year]");
+    if (!row || !e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed")) return;
+    const table = row.closest(".points-ledger");
+    saveLedgerRow(row, table.dataset.contractId, Number(row.dataset.year), yearPointsByContract);
   });
 }
 
-function renderContractList(contracts, resorts) {
+function renderContractList(contracts, resorts, yearPointsByContract) {
   const list = document.getElementById("contract-list");
   if (contracts.length === 0) {
     list.innerHTML = `<div class="empty-note">No contracts yet -- add your first one below.</div>`;
@@ -745,6 +799,9 @@ function renderContractList(contracts, resorts) {
   list.innerHTML = contracts.map(c => {
     const deadline = c.is_active ? nextDeadlineForUseYear(c.use_year, today) : null;
     const uyYear = currentUYYear(c.use_year, today);
+    const rows = buildLedgerRows(c, yearPointsByContract, today);
+    const canAddYear = rows.length < MAX_LEDGER_ROWS;
+    const nextAddableYear = rows[rows.length - 1].year + 1;
     return `
     <div class="contract-card ${c.is_active ? "" : "inactive"}">
       <div class="contract-main">
@@ -759,24 +816,28 @@ function renderContractList(contracts, resorts) {
           ${c.is_active ? "" : `<span class="badge badge-inactive">inactive</span>`}
         </div>
         ${deadline ? `<div class="contract-deadline">Next banking/borrowing deadline: <strong>${formatDeadlineDate(deadline.ms)}</strong> (${deadline.daysUntil} day${deadline.daysUntil === 1 ? "" : "s"})</div>` : ""}
-        <div class="points-quick-edit" data-contract-id="${c.id}" data-points-per-year="${c.points_per_year}">
-          <div class="qe-field">
-            <label for="qe-banked-${c.id}" class="qe-uy-label"><span class="qe-uy-year">${uyYear - 1}</span><span class="qe-uy-word">Banked</span></label>
-            <input type="number" id="qe-banked-${c.id}" class="qe-banked" min="0" step="1" value="${c.points_banked || 0}">
-          </div>
-          <div class="qe-field qe-current">
-            <label for="qe-remaining-${c.id}" class="qe-uy-label"><span class="qe-uy-year">${uyYear}</span><span class="qe-uy-word">Remaining</span></label>
-            <input type="number" id="qe-remaining-${c.id}" class="qe-remaining" min="0" step="1" value="${c.points_remaining ?? c.points_per_year}">
-          </div>
-          <div class="qe-field">
-            <label for="qe-borrowed-${c.id}" class="qe-uy-label"><span class="qe-uy-year">${uyYear + 1}</span><span class="qe-uy-word">Borrowed</span></label>
-            <input type="number" id="qe-borrowed-${c.id}" class="qe-borrowed" min="0" step="1" value="${c.points_borrowed || 0}">
-          </div>
-          <div class="qe-total">
-            <label>Total</label>
-            <div class="qe-total-value">${getAvailablePoints(c).toLocaleString()}</div>
-          </div>
-          <span class="qe-status"></span>
+        <table class="points-ledger" data-contract-id="${c.id}">
+          <thead>
+            <tr>
+              <th>Use Year</th><th>Remaining</th><th>Banked</th><th>Borrowed</th><th>Total</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr data-year="${row.year}" class="${row.year === uyYear ? "ledger-current" : ""}">
+                <td class="ledger-year">${row.year}${row.year === uyYear ? '<span class="ledger-now">now</span>' : ""}</td>
+                <td><input type="number" class="ledger-remaining" min="0" step="1" value="${row.points_remaining}"></td>
+                <td><input type="number" class="ledger-banked" min="0" step="1" value="${row.points_banked}"></td>
+                <td><input type="number" class="ledger-borrowed" min="0" step="1" value="${row.points_borrowed}"></td>
+                <td class="ledger-total">${(row.points_remaining + row.points_banked + row.points_borrowed).toLocaleString()}</td>
+                <td>${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        <div class="ledger-footer">
+          ${canAddYear ? `<button type="button" class="small-btn" data-add-year="${nextAddableYear}" data-contract-id="${c.id}">+ Plan ${nextAddableYear}</button>` : ""}
+          <span class="qe-status" data-status-for="${c.id}"></span>
         </div>
       </div>
       <div class="contract-actions">
@@ -789,46 +850,83 @@ function renderContractList(contracts, resorts) {
   }).join("");
 }
 
-// Recomputes the total shown in a quick-edit widget from its three inputs'
-// current (possibly unsaved) values -- fires on every keystroke, purely
+// Recomputes one ledger row's total from its three inputs' current
+// (possibly unsaved) values -- fires on every keystroke, purely
 // client-side, no network call.
-function updateQuickEditTotal(card, pointsPerYear) {
-  const remainingRaw = card.querySelector(".qe-remaining").value;
-  const remaining = remainingRaw === "" ? pointsPerYear : (parseInt(remainingRaw, 10) || 0);
-  const banked = parseInt(card.querySelector(".qe-banked").value, 10) || 0;
-  const borrowed = parseInt(card.querySelector(".qe-borrowed").value, 10) || 0;
-  card.querySelector(".qe-total-value").textContent = (remaining + banked + borrowed).toLocaleString();
+function updateLedgerRowTotal(row) {
+  const remaining = parseInt(row.querySelector(".ledger-remaining").value, 10) || 0;
+  const banked = parseInt(row.querySelector(".ledger-banked").value, 10) || 0;
+  const borrowed = parseInt(row.querySelector(".ledger-borrowed").value, 10) || 0;
+  row.querySelector(".ledger-total").textContent = (remaining + banked + borrowed).toLocaleString();
 }
 
-// Saves a quick-edit widget's three fields as soon as the user leaves a
-// field (blur, Enter, or the number input's up/down arrows -- all fire
-// "change"), rather than requiring them to open the full Edit form. Updates
-// the in-memory `contract` object on success so it stays in sync with what
-// Edit would show if opened afterward, without re-rendering the whole list
-// (which would steal focus out from under a still-mid-edit user).
-async function saveQuickEdit(card, contract) {
-  const remainingRaw = card.querySelector(".qe-remaining").value;
+function ledgerStatusEl(contractId) {
+  return document.querySelector(`[data-status-for="${contractId}"]`);
+}
+
+// Saves one ledger row as soon as the user leaves a field (blur, Enter, or
+// the number input's up/down arrows -- all fire "change"). Updates the
+// in-memory yearPointsByContract map on success so a later re-render (e.g.
+// "+ Plan a year") reflects it without a refetch, but doesn't itself
+// re-render the list -- that would steal focus out from under a
+// still-mid-edit user.
+async function saveLedgerRow(row, contractId, year, yearPointsByContract) {
   const patch = {
-    points_remaining: remainingRaw === "" ? null : Math.max(0, parseInt(remainingRaw, 10) || 0),
-    points_banked: Math.max(0, parseInt(card.querySelector(".qe-banked").value, 10) || 0),
-    points_borrowed: Math.max(0, parseInt(card.querySelector(".qe-borrowed").value, 10) || 0),
+    contract_id: contractId,
+    use_year_label: year,
+    points_remaining: Math.max(0, parseInt(row.querySelector(".ledger-remaining").value, 10) || 0),
+    points_banked: Math.max(0, parseInt(row.querySelector(".ledger-banked").value, 10) || 0),
+    points_borrowed: Math.max(0, parseInt(row.querySelector(".ledger-borrowed").value, 10) || 0),
   };
 
-  const statusEl = card.querySelector(".qe-status");
+  const statusEl = ledgerStatusEl(contractId);
   statusEl.textContent = "Saving…";
   statusEl.classList.remove("error");
 
-  const result = await window.DVCAuth.updateContract(contract.id, patch);
+  const result = await window.DVCAuth.upsertContractYearPoints(patch);
   if (result.error) {
     statusEl.textContent = "Not saved";
     statusEl.classList.add("error");
     return;
   }
 
-  Object.assign(contract, patch);
-  updateQuickEditTotal(card, contract.points_per_year);
-  statusEl.textContent = result.warning ? "Saved (partial)" : "Saved";
+  const rows = (yearPointsByContract[contractId] ||= []);
+  const existing = rows.find(r => r.use_year_label === year);
+  if (existing) Object.assign(existing, result.data);
+  else rows.push(result.data);
+
+  updateLedgerRowTotal(row);
+  statusEl.textContent = "Saved";
   setTimeout(() => { if (statusEl.textContent !== "Saving…") statusEl.textContent = ""; }, 1500);
+}
+
+// "+ Plan a year": creates a zeroed row for the next year up front (rather
+// than waiting for the user to type something) so it immediately appears
+// as an editable table row, same as any other year.
+async function addLedgerYear(contract, year, yearPointsByContract) {
+  const result = await window.DVCAuth.upsertContractYearPoints({
+    contract_id: contract.id,
+    use_year_label: year,
+    points_remaining: contract.points_per_year,
+    points_banked: 0,
+    points_borrowed: 0,
+  });
+  if (result.error) {
+    alert(`Couldn't add ${year}: ${result.error}`);
+    return;
+  }
+  (yearPointsByContract[contract.id] ||= []).push(result.data);
+  renderSignedIn();
+}
+
+async function removeLedgerYear(contractId, year, yearPointsByContract) {
+  const rows = yearPointsByContract[contractId] || [];
+  const row = rows.find(r => r.use_year_label === year);
+  if (row) {
+    await window.DVCAuth.deleteContractYearPoints(row.id);
+    yearPointsByContract[contractId] = rows.filter(r => r.id !== row.id);
+  }
+  renderSignedIn();
 }
 
 function setPurchaseType(type) {
