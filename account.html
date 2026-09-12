@@ -167,27 +167,40 @@ body {
 .points-quick-edit {
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 7px;
   margin-top: 8px;
   flex-wrap: wrap;
 }
 
-.qe-field, .qe-total { display: flex; flex-direction: column; gap: 2px; }
+.qe-field, .qe-total { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 
-.qe-field label, .qe-total label {
-  font-size: 0.62rem;
+.qe-total label {
+  font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   color: #999;
   font-weight: 700;
 }
 
+/* Two-line label: the deposit year on top, the bucket name below it in
+   even smaller caps -- see currentUYYear() for why the year shown here
+   often isn't the calendar year someone would guess at a glance. */
+.qe-uy-label { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.qe-uy-year { font-size: 0.64rem; font-weight: 700; color: #999; }
+.qe-uy-word { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.3px; color: #aaa; font-weight: 600; }
+
+/* The bucket actually spendable right now -- called out so it doesn't get
+   lost among the other two, which are still-useful context but not what
+   most bookings draw from day to day. */
+.qe-field.qe-current .qe-uy-year, .qe-field.qe-current .qe-uy-word { color: #4a148c; }
+.qe-field.qe-current input { border-color: #4a148c; background: #faf7fd; }
+
 .qe-field input {
-  width: 60px;
-  padding: 5px 6px;
+  width: 42px;
+  padding: 4px 3px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-family: inherit;
   text-align: center;
 }
@@ -201,18 +214,18 @@ body {
 .qe-total-value {
   font-weight: 700;
   color: #1a237e;
-  font-size: 0.92rem;
-  padding: 5px 10px;
+  font-size: 0.85rem;
+  padding: 4px 8px;
   background: #f3f0f8;
   border-radius: 5px;
-  min-width: 34px;
+  min-width: 28px;
   text-align: center;
 }
 
 .qe-status {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #2e7d32;
-  min-width: 50px;
+  min-width: 46px;
 }
 .qe-status.error { color: #c62828; }
 
@@ -492,6 +505,25 @@ const DEADLINE_BY_USE_YEAR = {
   Dec: { month: 7, day: 31 },  // Jul 31
 };
 
+// 1-indexed deposit month for each use year (Jan=1). DVC labels a use
+// year's points by the calendar year they DEPOSIT in, not the year they
+// expire in -- confirmed against an official planDisney Q&A and multiple
+// DVC community sources (2026-09-11 research): a Dec-UY member's "2026
+// points" deposit Dec 1, 2026 and run through Nov 30, 2027, NOT the cycle
+// already underway in Sept 2026 (which is "2025 points", deposited Dec 1,
+// 2025). Points can only be banked one hop forward and borrowed from
+// exactly the next use year, so at most 3 labeled years are ever in play
+// at once: prior (banked in), current (remaining), next (borrowed in).
+const USE_YEAR_START_MONTH = { Feb: 2, Mar: 3, Apr: 4, Jun: 6, Aug: 8, Sep: 9, Oct: 10, Dec: 12 };
+
+// The calendar year label of the use-year cycle active right now -- the
+// most recent deposit that's already happened. If this year's deposit
+// month hasn't arrived yet, the active cycle is still last year's.
+function currentUYYear(useYear, today) {
+  const startMonth = USE_YEAR_START_MONTH[useYear];
+  return today.month >= startMonth ? today.year : today.year - 1;
+}
+
 // "Today" as a calendar date in Eastern time, independent of the
 // visitor's own timezone -- otherwise someone browsing from a timezone
 // hours ahead/behind ET could see a deadline flip a day early or late
@@ -712,6 +744,7 @@ function renderContractList(contracts, resorts) {
   const today = todayInEastern();
   list.innerHTML = contracts.map(c => {
     const deadline = c.is_active ? nextDeadlineForUseYear(c.use_year, today) : null;
+    const uyYear = currentUYYear(c.use_year, today);
     return `
     <div class="contract-card ${c.is_active ? "" : "inactive"}">
       <div class="contract-main">
@@ -726,17 +759,17 @@ function renderContractList(contracts, resorts) {
           ${c.is_active ? "" : `<span class="badge badge-inactive">inactive</span>`}
         </div>
         ${deadline ? `<div class="contract-deadline">Next banking/borrowing deadline: <strong>${formatDeadlineDate(deadline.ms)}</strong> (${deadline.daysUntil} day${deadline.daysUntil === 1 ? "" : "s"})</div>` : ""}
-        <div class="points-quick-edit" data-contract-id="${c.id}">
+        <div class="points-quick-edit" data-contract-id="${c.id}" data-points-per-year="${c.points_per_year}">
           <div class="qe-field">
-            <label for="qe-remaining-${c.id}">Remaining</label>
+            <label for="qe-banked-${c.id}" class="qe-uy-label"><span class="qe-uy-year">${uyYear - 1}</span><span class="qe-uy-word">Banked</span></label>
+            <input type="number" id="qe-banked-${c.id}" class="qe-banked" min="0" step="1" value="${c.points_banked || 0}">
+          </div>
+          <div class="qe-field qe-current">
+            <label for="qe-remaining-${c.id}" class="qe-uy-label"><span class="qe-uy-year">${uyYear}</span><span class="qe-uy-word">Remaining</span></label>
             <input type="number" id="qe-remaining-${c.id}" class="qe-remaining" min="0" step="1" value="${c.points_remaining ?? c.points_per_year}">
           </div>
           <div class="qe-field">
-            <label for="qe-banked-${c.id}">Banked</label>
-            <input type="number" id="qe-banked-${c.id}" class="qe-banked" min="0" step="1" value="${c.points_banked || 0}">
-          </div>
-          <div class="qe-field">
-            <label for="qe-borrowed-${c.id}">Borrowed</label>
+            <label for="qe-borrowed-${c.id}" class="qe-uy-label"><span class="qe-uy-year">${uyYear + 1}</span><span class="qe-uy-word">Borrowed</span></label>
             <input type="number" id="qe-borrowed-${c.id}" class="qe-borrowed" min="0" step="1" value="${c.points_borrowed || 0}">
           </div>
           <div class="qe-total">
