@@ -189,11 +189,14 @@ body {
 
 .ledger-year { text-align: left; color: #666; font-weight: 600; white-space: nowrap; }
 
-/* The row actually spendable right now -- a full-row tint plus bolder year
-   text, since a "NOW" badge next to the year threw off the column's
-   vertical alignment with the other rows. */
-tr.ledger-current { background: #faf7fd; }
-tr.ledger-current .ledger-year { color: #4a148c; }
+/* The row actually spendable right now -- a full-row tint plus a left
+   accent stripe and bolder year text, since a "NOW" badge next to the year
+   threw off the column's vertical alignment with the other rows. The
+   stripe is an inset box-shadow on the first cell (not the <tr> itself) --
+   box-shadow on table rows paints unreliably under border-collapse. */
+tr.ledger-current { background: #ece1f7; }
+tr.ledger-current td:first-child { box-shadow: inset 3px 0 0 #4a148c; }
+tr.ledger-current .ledger-year { color: #4a148c; font-weight: 700; }
 tr.ledger-current input { border-color: #4a148c; background: white; }
 
 .points-ledger input {
@@ -213,6 +216,8 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
 }
 
 .ledger-total { font-weight: 700; color: #1a237e; }
+
+.ledger-expires { color: #888; font-size: 0.74rem; white-space: nowrap; }
 
 .ledger-remove-year {
   border: none;
@@ -401,6 +406,16 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
   gap: 6px;
 }
 
+/* Recolors the native checkbox to the app's purple instead of the
+   browser-default blue, which read as a mismatched, generic-looking
+   "boxy" control against the rest of the page's crisp purple styling. */
+.reminder-bar-check input[type="checkbox"] {
+  accent-color: #4a148c;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
 .reminder-bar input[type="number"] {
   width: 48px;
   padding: 3px 6px;
@@ -563,8 +578,15 @@ function nextDeadlineForUseYear(useYear, today) {
   return { ms: candidateMs, daysUntil: Math.round((candidateMs - todayMs) / 86400000) };
 }
 
+// timeZone: "UTC" is required, not cosmetic -- ms is always a UTC-midnight
+// marker for a plain calendar date (built via dateOnlyUTC()), with no
+// real time-of-day meaning. Without pinning the format to UTC,
+// toLocaleDateString re-renders it in the *viewer's* local timezone, which
+// silently shows one day earlier for anyone west of UTC (i.e. the entire
+// US) -- a real bug caught while adding the ledger's "To Be Used By"
+// column, whose dates come from this same helper.
 function formatDeadlineDate(ms) {
-  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 // Unique resorts (data.js has one entry per resort per year -- dedupe by id).
@@ -595,6 +617,17 @@ function getYearPointsRow(yearPointsByContract, contractId, year, pointsPerYear)
     : { points_remaining: pointsPerYear, points_banked: 0, points_borrowed: 0 };
 }
 
+// The last date a use year's points -- remaining, banked-in, or
+// borrowed-in, all three alike -- are still usable for a stay, regardless
+// of which of those three buckets they're sitting in or where they
+// originally came from. That's the day before the NEXT use year's deposit
+// date, so this is really just "the day before currentUYYear(useYear,
+// {year: uyLabel+1, month: startMonth, day: 1})'s cycle begins" -- e.g. a
+// Dec-UY row labeled 2025 is usable through Nov 30, 2026.
+function useYearExpiration(useYear, uyLabel) {
+  return dateOnlyUTC(uyLabel + 1, USE_YEAR_START_MONTH[useYear], 0);
+}
+
 // Which year-rows to show for a contract's ledger: always the current and
 // next labeled use year, plus any further-future years the owner has
 // already saved a row for (from a previous "+ Add a year"). Capped at 3
@@ -610,6 +643,7 @@ function buildLedgerRows(contract, yearPointsByContract, today) {
   return years.map(year => ({
     year,
     ...getYearPointsRow(yearPointsByContract, contract.id, year, contract.points_per_year),
+    expiresMs: useYearExpiration(contract.use_year, year),
     // Only the current and immediate-next year are permanent fixtures --
     // anything else is either a "+ Plan a year" extra or a stray leftover
     // row from an earlier cycle, and either way the owner can clear it.
@@ -810,7 +844,7 @@ function renderContractList(contracts, resorts, yearPointsByContract) {
         <table class="points-ledger" data-contract-id="${c.id}">
           <thead>
             <tr>
-              <th>Use Year</th><th>Remaining</th><th>Banked</th><th>Borrowed</th><th>Total</th><th></th>
+              <th>Use Year</th><th>Remaining</th><th>Banked</th><th>Borrowed</th><th>Total</th><th>To Be Used By</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -821,6 +855,7 @@ function renderContractList(contracts, resorts, yearPointsByContract) {
                 <td><input type="number" class="ledger-banked" min="0" step="1" value="${row.points_banked}"></td>
                 <td><input type="number" class="ledger-borrowed" min="0" step="1" value="${row.points_borrowed}"></td>
                 <td class="ledger-total">${(row.points_remaining + row.points_banked + row.points_borrowed).toLocaleString()}</td>
+                <td class="ledger-expires">${formatDeadlineDate(row.expiresMs)}</td>
                 <td>${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}</td>
               </tr>
             `).join("")}
