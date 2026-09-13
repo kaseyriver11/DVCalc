@@ -188,28 +188,17 @@ body {
 .points-ledger td { padding: 2px 4px; text-align: center; }
 
 .ledger-year { text-align: left; color: #666; font-weight: 600; white-space: nowrap; }
-.ledger-now {
-  display: inline-block;
-  margin-left: 5px;
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: #4a148c;
-  background: #ece1f7;
-  border-radius: 4px;
-  padding: 1px 4px;
-  vertical-align: middle;
-}
 
-/* The row actually spendable right now -- called out so it doesn't get
-   lost among rows that are still-useful planning context but not what
-   most bookings draw from day to day. */
+/* The row actually spendable right now -- a full-row tint plus bolder year
+   text, since a "NOW" badge next to the year threw off the column's
+   vertical alignment with the other rows. */
+tr.ledger-current { background: #faf7fd; }
 tr.ledger-current .ledger-year { color: #4a148c; }
-tr.ledger-current input { border-color: #4a148c; background: #faf7fd; }
+tr.ledger-current input { border-color: #4a148c; background: white; }
 
 .points-ledger input {
-  width: 42px;
-  padding: 4px 3px;
+  width: 56px;
+  padding: 4px 2px;
   border: 1px solid #ccc;
   border-radius: 5px;
   font-size: 0.78rem;
@@ -387,32 +376,37 @@ tr.ledger-current input { border-color: #4a148c; background: #faf7fd; }
   margin-bottom: 12px;
 }
 
-.reminder-row {
+/* A slim status strip rather than its own boxed section -- previously a
+   full card at the bottom of the page, so whether reminders were even on
+   wasn't visible without scrolling past every contract first. Living here
+   at the top keeps that visible on load without competing for attention
+   with the contracts themselves. */
+.reminder-bar {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: #666;
+  padding: 8px 4px 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #eee;
 }
 
-.reminder-row label {
-  font-size: 0.88rem;
-  color: #444;
+.reminder-bar-icon { font-size: 0.95rem; }
+
+.reminder-bar-check, .reminder-bar-lead {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.reminder-row input[type="number"] {
-  width: 60px;
-  padding: 5px 8px;
+.reminder-bar input[type="number"] {
+  width: 48px;
+  padding: 3px 6px;
   border: 1px solid #ccc;
   border-radius: 5px;
-}
-
-.reminder-note {
-  font-size: 0.78rem;
-  color: #999;
-  margin-top: 8px;
+  font-size: 0.8rem;
 }
 
 .danger-zone {
@@ -658,6 +652,13 @@ async function renderSignedIn() {
   const resorts = uniqueResorts();
 
   pageContent.innerHTML = `
+    <div class="reminder-bar">
+      <span class="reminder-bar-icon">${profile?.reminder_opt_in ? "🔔" : "🔕"}</span>
+      <label class="reminder-bar-check"><input type="checkbox" id="r-opt-in" ${profile?.reminder_opt_in ? "checked" : ""}> Email reminders before banking/borrowing deadlines</label>
+      <label class="reminder-bar-lead">Lead time <input type="number" id="r-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days</label>
+      <button type="button" class="small-btn" id="save-reminders">Save</button>
+    </div>
+
     <div class="section">
       <h2>Your Contracts</h2>
       <div class="section-sub">Own more than one? Add each separately -- DVCalc will combine what they unlock together.</div>
@@ -707,16 +708,6 @@ async function renderSignedIn() {
           <button type="button" class="cancel-btn" id="cancel-contract">Cancel</button>
         </div>
       </div>
-    </div>
-
-    <div class="section">
-      <h2>Deadline Reminders</h2>
-      <div class="reminder-row">
-        <label><input type="checkbox" id="r-opt-in" ${profile?.reminder_opt_in ? "checked" : ""}> Email me before banking/borrowing deadlines</label>
-        <label>Lead time: <input type="number" id="r-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days</label>
-        <button type="button" class="small-btn" id="save-reminders">Save</button>
-      </div>
-      <div class="reminder-note">Emails send automatically once you're within your lead time of a deadline.</div>
     </div>
 
     <div class="section danger-zone">
@@ -825,7 +816,7 @@ function renderContractList(contracts, resorts, yearPointsByContract) {
           <tbody>
             ${rows.map(row => `
               <tr data-year="${row.year}" class="${row.year === uyYear ? "ledger-current" : ""}">
-                <td class="ledger-year">${row.year}${row.year === uyYear ? '<span class="ledger-now">now</span>' : ""}</td>
+                <td class="ledger-year">${row.year}</td>
                 <td><input type="number" class="ledger-remaining" min="0" step="1" value="${row.points_remaining}"></td>
                 <td><input type="number" class="ledger-banked" min="0" step="1" value="${row.points_banked}"></td>
                 <td><input type="number" class="ledger-borrowed" min="0" step="1" value="${row.points_borrowed}"></td>
