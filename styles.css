@@ -515,6 +515,12 @@ select, input, textarea, button {
   border-radius: 999px;
 }
 
+.day-cell .day-event {
+  position: relative;
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
 /* ---- Crowd level color scale (Undercover Tourist, 1-10) ---- */
 .crowd-pill {
   display: inline-block;
@@ -674,6 +680,47 @@ select, input, textarea, button {
 }
 
 .crowd-tooltip-footer {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 0.55rem;
+  color: #aaa;
+  text-align: right;
+}
+
+/* ---- Event Tooltip (calendar cell special-event hover) ---- */
+.event-tooltip {
+  width: 220px;
+}
+
+.event-tooltip-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #333;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+.event-tooltip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-tooltip-item-name {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.event-tooltip-item-desc {
+  font-size: 0.64rem;
+  color: #777;
+  margin-top: 2px;
+}
+
+.event-tooltip-footer {
   margin-top: 8px;
   padding-top: 6px;
   border-top: 1px solid #f0f0f0;
@@ -1060,6 +1107,11 @@ select, input, textarea, button {
   height: 12px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+
+.legend-note {
+  font-size: 0.68rem;
+  color: #888;
 }
 
 .source-link {
@@ -1458,6 +1510,60 @@ select, input, textarea, button {
   padding: 8px 4px;
   text-align: left;
   font-size: 0.72rem;
+}
+
+/* ---- Resort Alerts (construction/refurbishment) ---- */
+.resort-alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resort-alert {
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #f7f7f7;
+}
+
+.resort-alert.overlaps-stay {
+  background: #fff3e0;
+  border-left: 3px solid #ef6c00;
+}
+
+.resort-alert-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #ef6c00;
+  margin-bottom: 3px;
+}
+
+.resort-alert-location {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.resort-alert-dates {
+  font-size: 0.66rem;
+  color: #888;
+  margin-top: 1px;
+}
+
+.resort-alert-desc {
+  font-size: 0.72rem;
+  color: #555;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.resort-alert-footer {
+  margin-top: 8px;
+  font-size: 0.6rem;
+  color: #aaa;
+  text-align: right;
 }
 
 /* ---- Value Score ---- */

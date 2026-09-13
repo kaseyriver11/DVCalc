@@ -68,6 +68,8 @@ For detailed data documentation, reproducibility audit, and update instructions,
 | Cash rack rates | MouseSavers.com (WDW only) | Scrape rate tables, map to DVC periods, add as `cashRates` in `wdwPeriods()` |
 | Annual dues | dvcresalemarket.com | Update `DUES_PER_POINT` in `data.js` |
 | Rental rates | Market observation | Slider is user-configurable ($15-$25/pt) |
+| Hotel construction/refurbishment | Disney Food Blog's DFB Disney World Calendar PDF | Re-read the latest PDF, update `data/resort_construction.js` |
+| Special events (festivals, hard-ticket parties, runDisney) | Disney Food Blog's DFB Disney World Calendar PDF | Re-read the latest PDF, update `data/disney_events.js` |
 
 ---
 
@@ -94,6 +96,8 @@ For detailed data documentation, reproducibility audit, and update instructions,
 - Calendar renders a 7-column grid with points, cash rate, and day type per cell
 - Summary panel shows totals with conditional sections based on available data
 - Year-aware: `getResort()` filters by both `resortId` and `year`
+- Calendar cells show a 🎉 badge (via `getEventsForDate()` in `data/disney_events.js`) for days with an EPCOT festival, hard-ticket party, or runDisney weekend, with a hover tooltip listing them — credited to Disney Food Blog
+- The summary panel shows a "Resort Alerts" card (`buildResortAlertsHTML()`, sourced from `data/resort_construction.js`) whenever the selected resort has known ongoing/upcoming construction or refurbishment; entries overlapping the selected stay dates are called out with a "During your stay" badge
 
 ### changes.html (self-contained)
 - Week navigator (prev/next) replaces the old 52-row table
@@ -126,3 +130,7 @@ Sourced from DVC community forums (DISboards, DVCNews, Reddit r/dvcmember). Roug
 | 12 | Saved trips / itineraries | Save a planned stay (single or split) from the calendar and reload it later | Done |
 | 13 | Itinerary comparison | Compare up to 3 saved itineraries side by side: points, nights, cash value, $/point, crowd level | Done |
 | 14 | Contract Value ("which resort should I buy") | Ranks all 17 resorts by long-term vacation value per dollar spent, given points/purchase type/years/growth-rate assumptions -- real resale &amp; direct pricing (`data/resort_investment.js`) and contract expiration dates, dues growth defaulting to each resort's own historical trend | Done |
+| 15 | Hotel construction/refurbishment alerts | "Resort Alerts" card in the summary panel (`buildResortAlertsHTML()` in `app.js`, data in `data/resort_construction.js`) flags ongoing/upcoming construction for the selected resort, calling out entries that overlap the selected stay dates. Sourced from Disney Food Blog's DFB Disney World Calendar PDF, transcribed 2026-09-13 | Done |
+| 16 | Special events overlay (festivals, hard-ticket parties, runDisney weekends) | 🎉 badge on calendar days with an active EPCOT festival, Halloween/Christmas party, or race weekend, with a hover tooltip (`getEventsForDate()` in `data/disney_events.js`). Sourced from the same DFB PDF as #15; only events with an explicit date range in the source were included | Done |
+| 17 | High Crowds / Holiday Weekend flags | DFB's PDF also flags "High Crowds"/"Holiday Weekend" days inline on its calendar grid, separate from the Undercover Tourist crowd scores DVCalc already shows (#6 area). Skipped for now since it'd likely be redundant with the existing 1-10 crowd calendar | Not planned |
+| 18 | "What's New" / permanently-closed park news | DFB's PDF has a "What Opened in [Year]" / "Permanently Closed in [Year]" editorial section (new attractions, lands, restaurants, store closures) by park/hotel. Skipped as out of scope for a points calculator — it's not date/booking-decision-relevant, and DFB's own guide would stay more current than a copy we'd have to keep re-syncing | Not planned |
