@@ -1762,7 +1762,10 @@ function resortNameForId(id) {
 // dates are picked, otherwise entries overlapping the calendar's currently
 // viewed month -- so browsing Dec 2027 doesn't surface a refurbishment that
 // only ran in 2026. Purely additive -- resorts/periods with no tracked work
-// render nothing.
+// render nothing. Placement matters here: while browsing (no dates yet)
+// it's rendered ahead of "Your Stay" as a "consider this while picking a
+// date" prompt, but once dates are picked it's rendered *after* "Your
+// Stay" so it reads as supporting context rather than the headline card.
 function buildResortAlertsHTML(resort, stayDates) {
   if (typeof getResortConstruction !== "function") return "";
   const hasStay = stayDates.length > 0;
@@ -2022,7 +2025,6 @@ function renderSummary() {
   summaryContainer.innerHTML = `
     ${buildItineraryLoadHTML()}
     ${!inSplitMode ? buildContractCardHTML() : ""}
-    ${!inSplitMode ? buildResortAlertsHTML(resort, stayDates) : ""}
     <div class="summary-card${inSplitMode ? " wide" : ""}">
       <h3>${inSplitMode ? "Split Stay" : "Your Stay"}</h3>
 
@@ -2055,6 +2057,8 @@ function renderSummary() {
         </div>
       </div>
     </div>
+
+    ${!inSplitMode ? buildResortAlertsHTML(resort, stayDates) : ""}
 
     ${!inSplitMode
       ? buildAvailabilityHTML(state.resortId, state.roomTypeId, stayDates)
