@@ -1757,25 +1757,26 @@ function resortNameForId(id) {
   return r ? r.name : id;
 }
 
-// Construction/refurbishment alerts for the selected resort. Shows nothing
-// unless RESORT_CONSTRUCTION has (non-past) entries for this resort. When
-// stay dates are selected, entries overlapping the stay are called out and
-// sorted first; other still-relevant entries for the resort are shown below
-// as general context. Purely additive -- resorts with no tracked work render
-// nothing.
+// Construction/refurbishment alerts for the selected resort, scoped to
+// what's actually on screen: entries overlapping the selected stay when
+// dates are picked, otherwise entries overlapping the calendar's currently
+// viewed month -- so browsing Dec 2027 doesn't surface a refurbishment that
+// only ran in 2026. Purely additive -- resorts/periods with no tracked work
+// render nothing.
 function buildResortAlertsHTML(resort, stayDates) {
   if (typeof getResortConstruction !== "function") return "";
-  const stayStart = stayDates.length > 0 ? stayDates[0] : null;
-  const stayEnd = stayDates.length > 0 ? dateStrPlusDays(stayDates[stayDates.length - 1], 1) : null;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const entries = getResortConstruction(resort.id, stayStart, stayEnd, todayStr)
-    .sort((a, b) => (b.overlapsStay ? 1 : 0) - (a.overlapsStay ? 1 : 0));
+  const hasStay = stayDates.length > 0;
+  const rangeStart = hasStay ? stayDates[0] : formatDate(state.year, state.month, 1);
+  const rangeEnd = hasStay
+    ? dateStrPlusDays(stayDates[stayDates.length - 1], 1)
+    : (state.month === 11 ? formatDate(state.year + 1, 0, 1) : formatDate(state.year, state.month + 1, 1));
 
+  const entries = getResortConstruction(resort.id, rangeStart, rangeEnd);
   if (entries.length === 0) return "";
 
   const itemsHTML = entries.map(e => `
-    <div class="resort-alert${e.overlapsStay ? " overlaps-stay" : ""}">
-      ${e.overlapsStay ? `<div class="resort-alert-badge">During your stay</div>` : ""}
+    <div class="resort-alert${hasStay ? " overlaps-stay" : ""}">
+      ${hasStay ? `<div class="resort-alert-badge">During your stay</div>` : ""}
       <div class="resort-alert-location">${e.location}</div>
       <div class="resort-alert-dates">${e.dateRangeLabel}</div>
       <div class="resort-alert-desc">${e.description}</div>
@@ -2276,6 +2277,7 @@ prevBtn.addEventListener("click", () => {
     }
   }
   renderCalendar();
+  renderSummary();
 });
 
 nextBtn.addEventListener("click", () => {
@@ -2297,6 +2299,7 @@ nextBtn.addEventListener("click", () => {
     }
   }
   renderCalendar();
+  renderSummary();
 });
 
 // Year selector

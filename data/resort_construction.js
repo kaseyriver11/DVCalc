@@ -219,22 +219,14 @@ const RESORT_CONSTRUCTION = [
   },
 ];
 
-// Returns construction/refurbishment entries for a DVCalc resort id, each
-// annotated with `overlapsStay` (true if it overlaps the given [checkIn,
-// checkOut) range) and `isPast` (true if it's already fully resolved as of
-// `today`). Pass stayStart/stayEnd as null to skip the overlap check.
-function getResortConstruction(resortId, stayStart, stayEnd, today) {
-  const todayStr = today || new Date().toISOString().slice(0, 10);
+// Returns construction/refurbishment entries for a DVCalc resort id that
+// overlap the given [rangeStart, rangeEnd) window -- callers pass either the
+// selected stay dates or the currently-viewed calendar month, so an entry
+// only shows up when it's actually relevant to what's on screen.
+function getResortConstruction(resortId, rangeStart, rangeEnd) {
   return RESORT_CONSTRUCTION
     .filter((entry) => entry.resortIds.includes(resortId))
-    .map((entry) => {
-      const overlapsStay = !!(stayStart && stayEnd) && dateRangesOverlap(
-        entry.startDate, entry.endDate, stayStart, stayEnd
-      );
-      const isPast = !!entry.endDate && entry.endDate < todayStr;
-      return { ...entry, overlapsStay, isPast };
-    })
-    .filter((entry) => !entry.isPast || entry.overlapsStay);
+    .filter((entry) => dateRangesOverlap(entry.startDate, entry.endDate, rangeStart, rangeEnd));
 }
 
 // Null start/end are treated as open-ended (-Infinity / +Infinity).
