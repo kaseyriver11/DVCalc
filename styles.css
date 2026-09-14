@@ -170,6 +170,14 @@ select, input, textarea, button {
   gap: 3px;
 }
 
+/* Hidden by default -- app.js reveals these once there's account data to
+   show (a contract to book as, or a saved itinerary to load), so a signed-
+   out visitor never sees an empty "Booking As" slot in the control bar. */
+#booking-as-control,
+#itinerary-load-control {
+  display: none;
+}
+
 .control-group label {
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -401,6 +409,146 @@ select, input, textarea, button {
   flex-shrink: 0;
   position: sticky;
   top: 16px;
+}
+
+/* ---- Review mode: a complete stay collapses the calendar into a trip
+   rail and lets the summary side expand into a wider insights grid. See
+   renderLayoutMode() in app.js. ---- */
+.calendar-side.collapsed {
+  flex: 0 0 270px;
+}
+
+.summary-side.expanded {
+  width: auto;
+  flex: 1;
+}
+
+.insights-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+/* ---- Trip Rail (collapsed calendar in review mode) ---- */
+.trip-card {
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.trip-resort-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.5px;
+}
+
+.trip-resort-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #333;
+  margin-top: 2px;
+}
+
+.trip-room-name {
+  font-size: 0.72rem;
+  color: #777;
+  margin-top: 1px;
+}
+
+.trip-dates {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.trip-date-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+}
+
+.trip-date-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #333;
+  margin-top: 1px;
+}
+
+.trip-arrow {
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.trip-strip {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.trip-strip-day {
+  flex: 1;
+  border-left: 3px solid #999;
+  border-radius: 4px;
+  padding: 5px 2px;
+  text-align: center;
+}
+
+.trip-strip-num {
+  font-size: 0.58rem;
+  color: #888;
+}
+
+.trip-strip-pts {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.trip-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.trip-total-label {
+  font-size: 0.72rem;
+  color: #666;
+}
+
+.trip-total-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.edit-dates-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 8px;
+  background: white;
+  border: 1px solid #4a148c;
+  color: #4a148c;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.edit-dates-btn:hover {
+  background: #f3e5f5;
 }
 
 /* ---- Selection Hint ---- */

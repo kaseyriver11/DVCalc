@@ -578,6 +578,7 @@ function handleDateClick(dateStr) {
       state.checkOut = null;
     } else {
       state.checkOut = dateStr;
+      forceExpandCalendar = false; // a freshly-completed stay collapses into review mode
     }
   }
   updateHint();
@@ -1239,6 +1240,7 @@ function renderAlternativesModal() {
 }
 
 function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {
+  forceExpandCalendar = false;
   const year = Number(checkInStr.split("-")[0]);
   if (year !== state.year) {
     state.year = year;
@@ -1363,12 +1365,14 @@ async function refreshUserContracts() {
     userContractYearPoints = [];
   }
   if (!getActiveContracts().some(c => c.id === selectedContractId)) selectedContractId = null;
+  renderBookingAsControl();
   renderSummary();
   renderCalendar();
 }
 
 function setSelectedContract(id) {
   selectedContractId = id || null;
+  renderBookingAsControl();
   renderSummary();
   renderCalendar();
 }
@@ -1390,6 +1394,8 @@ function initAccountPersonalization(attempts) {
         userContractYearPoints = [];
         selectedContractId = null;
         userItineraries = [];
+        renderBookingAsControl();
+        renderItineraryLoadControl();
         renderSummary();
         renderCalendar();
       }
@@ -1409,7 +1415,7 @@ let userItineraries = []; // for the "load a saved itinerary" dropdown
 
 async function refreshUserItineraries() {
   userItineraries = window.DVCAuth ? await window.DVCAuth.getItineraries() : [];
-  renderSummary();
+  renderItineraryLoadControl();
 }
 
 // Applies a saved itinerary straight into the live calendar state -- no
@@ -1419,6 +1425,7 @@ async function refreshUserItineraries() {
 // unpacking logic as that handoff: the last segment becomes the active
 // selection, everything before it becomes completed split-stay segments.
 function loadItineraryIntoCalendar(itinerary) {
+  forceExpandCalendar = false;
   const segs = itinerary.segments;
   if (!segs || !segs.length) return;
   const last = segs[segs.length - 1];
@@ -1513,6 +1520,94 @@ async function confirmSaveItinerary() {
     itinerarySaveStatus = null;
     renderSummary();
   }, 1500);
+}
+
+// Once a complete single-resort stay is picked, the full calendar collapses
+// into a compact trip-rail card and the summary panel expands into a wider
+// insights grid (see renderLayoutMode()) -- "review mode". This flag is the
+// escape hatch: clicking "Edit dates" on the trip rail forces the full
+// calendar back open without losing the current selection. It resets
+// whenever a fresh stay gets completed (handleDateClick) or cleared
+// (clearSelection), so review mode kicks back in the next time a complete
+// range is picked. Deliberately NOT part of `state` -- purely a UI-layout
+// toggle, not something worth persisting across the index<->compare handoff.
+let forceExpandCalendar = false;
+
+function isReviewMode() {
+  return !isSplitMode() && getStayDates().length > 0 && !forceExpandCalendar;
+}
+
+function expandCalendarForEditing() {
+  forceExpandCalendar = true;
+  renderCalendar();
+  renderSummary();
+}
+
+// Toggles which calendar-side view is visible (full grid vs. trip rail) and
+// whether the summary-side is in its narrow single-column or wide grid
+// layout. Called from the tail of renderCalendar()/renderSummary() rather
+// than threaded through every caller of those two.
+function renderLayoutMode() {
+  const reviewMode = isReviewMode();
+  const fullCalendarEl = document.getElementById("full-calendar-view");
+  const tripRailEl = document.getElementById("trip-rail-view");
+  if (fullCalendarEl) fullCalendarEl.style.display = reviewMode ? "none" : "";
+  if (tripRailEl) tripRailEl.style.display = reviewMode ? "" : "none";
+  document.querySelector(".calendar-side")?.classList.toggle("collapsed", reviewMode);
+  document.querySelector(".summary-side")?.classList.toggle("expanded", reviewMode);
+  if (reviewMode) renderTripRail();
+}
+
+// Compact "trip rail" card that replaces the full calendar grid in review
+// mode -- resort/room, dates, a mini per-night points strip (same period
+// colors as the real grid), and an Edit dates button back to the full view.
+function renderTripRail() {
+  const el = document.getElementById("trip-rail-view");
+  if (!el) return;
+  const totals = calcCurrentSegmentTotals();
+  if (!totals) { el.innerHTML = ""; return; }
+
+  const resort = totals.resort;
+  const stripHTML = totals.breakdown.map(n => {
+    const period = getTravelPeriod(resort, n.date);
+    const color = period ? period.color : "#999";
+    const dayNum = parseInt(n.date.slice(8, 10), 10);
+    return `
+      <div class="trip-strip-day" style="background: ${color}20; border-left-color: ${color};">
+        <div class="trip-strip-num">${dayNum}</div>
+        <div class="trip-strip-pts" style="color: ${color};">${n.points ?? "—"}</div>
+      </div>
+    `;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="trip-card">
+      <div class="trip-resort-label">Your Stay</div>
+      <div class="trip-resort-name">${resort.name}</div>
+      <div class="trip-room-name">${totals.roomType ? totals.roomType.name : ""}</div>
+
+      <div class="trip-dates">
+        <div class="trip-date-block">
+          <div class="trip-date-label">Check-in</div>
+          <div class="trip-date-value">${formatDisplayDate(totals.checkIn)}</div>
+        </div>
+        <span class="trip-arrow">&rarr;</span>
+        <div class="trip-date-block">
+          <div class="trip-date-label">Check-out</div>
+          <div class="trip-date-value">${formatDisplayDate(totals.checkOut)}</div>
+        </div>
+      </div>
+
+      <div class="trip-strip">${stripHTML}</div>
+
+      <div class="trip-total">
+        <span class="trip-total-label">${totals.dates.length} night${totals.dates.length !== 1 ? "s" : ""}</span>
+        <span class="trip-total-value">${totals.totalPoints.toLocaleString()} pts</span>
+      </div>
+
+      <button class="edit-dates-btn" onclick="expandCalendarForEditing()">Edit dates</button>
+    </div>
+  `;
 }
 
 function renderCalendar() {
@@ -1795,103 +1890,117 @@ function buildResortAlertsHTML(resort, stayDates) {
   `;
 }
 
-// Card letting a signed-in user pick which of their contracts to "book as" --
-// drives the calendar dimming in renderCalendar() and the eligibility/points
-// check below. Empty string (renders nothing) if signed out or no contracts,
-// so this is purely additive for anyone not using the account features.
-function buildContractCardHTML() {
+// Renders the "Booking As" contract picker into the top control bar
+// (#booking-as-control, next to Resort/Room Type/Points Year) rather than
+// the summary panel -- it's a persistent per-session setting like those
+// other dropdowns, not stay-specific output. Hides the whole control-group
+// if signed out or there are no active contracts, so this is purely
+// additive for anyone not using the account features. The per-stay
+// eligibility/points feedback this used to render lives in
+// buildContractEligibilityHTML() instead, embedded in the "Your Stay" card.
+function renderBookingAsControl() {
+  const el = document.getElementById("booking-as-control");
+  if (!el) return;
   const contracts = getActiveContracts();
-  if (contracts.length === 0) return "";
+  if (contracts.length === 0) {
+    el.style.display = "none";
+    el.innerHTML = "";
+    return;
+  }
 
-  const resort = getResort();
   const options = contracts.map(c => {
     const label = `${c.nickname || resortNameForId(c.home_resort_id)} (${c.use_year} UY, ${c.points_per_year.toLocaleString()} pts)`;
     return `<option value="${c.id}" ${c.id === selectedContractId ? "selected" : ""}>${label}</option>`;
   }).join("");
 
-  let eligibilityHTML = "";
+  el.style.display = "flex";
+  el.innerHTML = `
+    <label for="contract-select">Booking As</label>
+    <select id="contract-select" class="contract-select">
+      <option value="">Just browsing (no contract)</option>
+      ${options}
+    </select>
+  `;
+  document.getElementById("contract-select").addEventListener("change", (e) => setSelectedContract(e.target.value));
+}
+
+// Per-stay eligibility ("home resort, bookable 11 months out" / "resale-
+// restricted") and points-remaining feedback for the contract selected in
+// the top-bar "Booking As" control, embedded inside the "Your Stay" card.
+// Empty string if no contract is selected -- purely additive.
+function buildContractEligibilityHTML(resort, stayDates) {
   const contract = getSelectedContract();
-  if (contract) {
-    const months = getContractWindowMonths(contract, resort.id);
-    if (months === 11) {
-      eligibilityHTML = `<div class="contract-eligibility contract-ok">&check; Home resort &mdash; bookable up to 11 months out</div>`;
-    } else if (months === 7) {
-      eligibilityHTML = `<div class="contract-eligibility contract-ok">&check; Bookable up to 7 months out with this contract</div>`;
-    } else if (contractIsHomeOnly(contract)) {
-      eligibilityHTML = `<div class="contract-eligibility contract-blocked">&times; This contract can't book ${resort.name} &mdash; resale-restricted to ${resortNameForId(contract.home_resort_id)} only</div>`;
-    } else {
-      eligibilityHTML = `<div class="contract-eligibility contract-blocked">&times; Can't book ${resort.name} with this contract due to resale restrictions</div>`;
-    }
+  if (!contract) return "";
 
-    const currentRow = getCurrentYearRow(contract);
-    const available = currentRow.remaining + currentRow.banked + currentRow.borrowed;
-    const hasBankOrBorrow = currentRow.banked > 0 || currentRow.borrowed > 0;
+  let html = "";
+  const months = getContractWindowMonths(contract, resort.id);
+  if (months === 11) {
+    html = `<div class="contract-eligibility contract-ok">&check; Home resort &mdash; bookable up to 11 months out</div>`;
+  } else if (months === 7) {
+    html = `<div class="contract-eligibility contract-ok">&check; Bookable up to 7 months out with this contract</div>`;
+  } else if (contractIsHomeOnly(contract)) {
+    html = `<div class="contract-eligibility contract-blocked">&times; This contract can't book ${resort.name} &mdash; resale-restricted to ${resortNameForId(contract.home_resort_id)} only</div>`;
+  } else {
+    html = `<div class="contract-eligibility contract-blocked">&times; Can't book ${resort.name} with this contract due to resale restrictions</div>`;
+  }
 
-    const stayDates = getStayDates();
-    if (stayDates.length > 0 && !isSplitMode()) {
-      const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
-      if (totals.points != null) {
-        const leftover = available - totals.points;
-        const over = leftover < 0;
-        eligibilityHTML += `
-          <div class="contract-points${over ? " contract-points-over" : ""}">
-            ${totals.points.toLocaleString()} pts for this stay vs. ${available.toLocaleString()} pts available on this contract
-            ${over ? `&mdash; short by ${Math.abs(leftover).toLocaleString()} pts` : `&mdash; leaves ${leftover.toLocaleString()} pts after this trip`}
-          </div>
-        `;
-      }
-    } else {
-      eligibilityHTML += `
-        <div class="contract-points">
-          ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${currentRow.remaining.toLocaleString()} remaining + ${currentRow.banked.toLocaleString()} banked + ${currentRow.borrowed.toLocaleString()} borrowed)` : ""}
+  const currentRow = getCurrentYearRow(contract);
+  const available = currentRow.remaining + currentRow.banked + currentRow.borrowed;
+  const hasBankOrBorrow = currentRow.banked > 0 || currentRow.borrowed > 0;
+
+  if (stayDates.length > 0 && !isSplitMode()) {
+    const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
+    if (totals.points != null) {
+      const leftover = available - totals.points;
+      const over = leftover < 0;
+      html += `
+        <div class="contract-points${over ? " contract-points-over" : ""}">
+          ${totals.points.toLocaleString()} pts for this stay vs. ${available.toLocaleString()} pts available on this contract
+          ${over ? `&mdash; short by ${Math.abs(leftover).toLocaleString()} pts` : `&mdash; leaves ${leftover.toLocaleString()} pts after this trip`}
         </div>
       `;
     }
+  } else {
+    html += `
+      <div class="contract-points">
+        ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${currentRow.remaining.toLocaleString()} remaining + ${currentRow.banked.toLocaleString()} banked + ${currentRow.borrowed.toLocaleString()} borrowed)` : ""}
+      </div>
+    `;
   }
 
-  return `
-    <div class="summary-card" id="contract-card">
-      <h3>Booking As</h3>
-      <select id="contract-select" class="contract-select">
-        <option value="">Just browsing (no contract)</option>
-        ${options}
-      </select>
-      ${eligibilityHTML}
-    </div>
-  `;
+  return `<div class="summary-divider"></div>${html}`;
 }
 
-function attachContractSelectListener() {
-  const sel = document.getElementById("contract-select");
-  if (sel) sel.addEventListener("change", (e) => setSelectedContract(e.target.value));
-}
+// Renders the "Load Trip" saved-itinerary picker into the top control bar
+// (#itinerary-load-control) rather than the summary panel -- same
+// reasoning as renderBookingAsControl() above. Hidden entirely if signed
+// out or nothing saved yet. Selecting an option applies it immediately and
+// the dropdown resets to the placeholder -- it's a one-shot action
+// trigger, not a persistent "currently loaded" indicator, since the
+// calendar's real state (resort/dates/segments) is what actually reflects
+// what's loaded.
+function renderItineraryLoadControl() {
+  const el = document.getElementById("itinerary-load-control");
+  if (!el) return;
+  if (!isSignedIn || userItineraries.length === 0) {
+    el.style.display = "none";
+    el.innerHTML = "";
+    return;
+  }
 
-// Hidden entirely if signed out or nothing saved yet -- same "purely
-// additive" pattern as buildContractCardHTML() above. Selecting an option
-// applies it immediately and the dropdown resets to the placeholder --
-// it's a one-shot action trigger, not a persistent "currently loaded"
-// indicator, since the calendar's real state (resort/dates/segments) is
-// what actually reflects what's loaded.
-function buildItineraryLoadHTML() {
-  if (!isSignedIn || userItineraries.length === 0) return "";
   const options = userItineraries.map(itin =>
     `<option value="${itin.id}">${itin.name}</option>`
   ).join("");
-  return `
-    <div class="summary-card">
-      <h3>Saved Itineraries</h3>
-      <select id="itinerary-load-select" class="contract-select">
-        <option value="">Load a saved itinerary&hellip;</option>
-        ${options}
-      </select>
-    </div>
-  `;
-}
 
-function attachItineraryLoadListener() {
-  const sel = document.getElementById("itinerary-load-select");
-  if (!sel) return;
-  sel.addEventListener("change", (e) => {
+  el.style.display = "flex";
+  el.innerHTML = `
+    <label for="itinerary-load-select">Load Trip</label>
+    <select id="itinerary-load-select" class="contract-select">
+      <option value="">Load a saved itinerary&hellip;</option>
+      ${options}
+    </select>
+  `;
+  document.getElementById("itinerary-load-select").addEventListener("change", (e) => {
     const id = e.target.value;
     if (!id) return;
     const itin = userItineraries.find(i => i.id === id);
@@ -1908,18 +2017,16 @@ function renderSummary() {
   if (stayDates.length === 0 && !inSplitMode) {
     actionButtons.innerHTML = "";
     summaryContainer.innerHTML = `
-      ${buildItineraryLoadHTML()}
-      ${buildContractCardHTML()}
       ${buildResortAlertsHTML(resort, [])}
       <div class="summary-card">
         <h3>Your Stay</h3>
         <div class="summary-empty">
           Select check-in and check-out dates on the calendar
         </div>
+        ${buildContractEligibilityHTML(resort, [])}
       </div>
     `;
-    attachContractSelectListener();
-    attachItineraryLoadListener();
+    renderLayoutMode();
     return;
   }
 
@@ -1954,6 +2061,7 @@ function renderSummary() {
         <button class="summary-clear" onclick="clearSelection()">Clear All</button>
       </div>
     `;
+    renderLayoutMode();
     return;
   }
 
@@ -2022,9 +2130,7 @@ function renderSummary() {
 
   const useCustomRate = !inSplitMode && !resortHasCashData && !hasFallbackCash && state.customCashRate;
 
-  summaryContainer.innerHTML = `
-    ${buildItineraryLoadHTML()}
-    ${!inSplitMode ? buildContractCardHTML() : ""}
+  const yourStayCardHTML = `
     <div class="summary-card${inSplitMode ? " wide" : ""}">
       <h3>${inSplitMode ? "Split Stay" : "Your Stay"}</h3>
 
@@ -2056,19 +2162,22 @@ function renderSummary() {
           <span class="row-value">${totalPoints.toLocaleString()}</span>
         </div>
       </div>
+
+      ${!inSplitMode ? buildContractEligibilityHTML(resort, stayDates) : ""}
     </div>
+  `;
 
-    ${!inSplitMode ? buildResortAlertsHTML(resort, stayDates) : ""}
+  const resortAlertsHTML = !inSplitMode ? buildResortAlertsHTML(resort, stayDates) : "";
 
-    ${!inSplitMode
-      ? buildAvailabilityHTML(state.resortId, state.roomTypeId, stayDates)
-      : buildSplitAvailabilityHTML(state.segments, state.resortId, state.roomTypeId, stayDates)
-    }
+  const availabilityHTML = !inSplitMode
+    ? buildAvailabilityHTML(state.resortId, state.roomTypeId, stayDates)
+    : buildSplitAvailabilityHTML(state.segments, state.resortId, state.roomTypeId, stayDates);
 
-    ${buildCrowdSummaryHTML(stayDates)}
+  const crowdHTML = buildCrowdSummaryHTML(stayDates);
 
-    ${!inSplitMode ? buildStayInsightsHTML(resort, state.roomTypeId, stayDates) : ""}
+  const stayInsightsHTML = !inSplitMode ? buildStayInsightsHTML(resort, state.roomTypeId, stayDates) : "";
 
+  const costComparisonHTML = `
     <div class="summary-card wide">
       <h3>Cost Comparison</h3>
 
@@ -2118,9 +2227,33 @@ function renderSummary() {
         ` : ""}
       </div>
     </div>
-
-    <button class="summary-clear" onclick="clearSelection()">Clear ${inSplitMode ? "All" : "Selection"}</button>
   `;
+
+  const clearButtonHTML = `<button class="summary-clear" onclick="clearSelection()">Clear ${inSplitMode ? "All" : "Selection"}</button>`;
+
+  // Review mode (a complete single-resort stay, calendar collapsed to the
+  // trip rail -- see renderLayoutMode()) gets more horizontal room, so it
+  // leads with the "answer" (Cost Comparison) and pairs the rest into a
+  // 2-column grid instead of stacking everything single-file.
+  if (isReviewMode()) {
+    summaryContainer.innerHTML = `
+      ${costComparisonHTML}
+      <div class="insights-grid-2">${yourStayCardHTML}${resortAlertsHTML}</div>
+      <div class="insights-grid-2">${availabilityHTML}${crowdHTML}</div>
+      ${stayInsightsHTML}
+      ${clearButtonHTML}
+    `;
+  } else {
+    summaryContainer.innerHTML = `
+      ${yourStayCardHTML}
+      ${resortAlertsHTML}
+      ${availabilityHTML}
+      ${crowdHTML}
+      ${stayInsightsHTML}
+      ${costComparisonHTML}
+      ${clearButtonHTML}
+    `;
+  }
 
   // Render action buttons between settings and summary
   const hasCompleteDates = state.checkIn && state.checkOut;
@@ -2195,8 +2328,7 @@ function renderSummary() {
     });
   }
 
-  attachContractSelectListener();
-  attachItineraryLoadListener();
+  renderLayoutMode();
 }
 
 function clearSelection() {
@@ -2207,6 +2339,7 @@ function clearSelection() {
   showingItinerarySaveForm = false;
   itineraryNameDraft = null;
   itinerarySaveStatus = null;
+  forceExpandCalendar = false;
   updateHint();
   renderCalendar();
   renderSummary();

@@ -90,34 +90,39 @@
         <div class="custom-select-dropdown"></div>
       </div>
     </div>
+    <div class="control-group" id="booking-as-control"></div>
+    <div class="control-group" id="itinerary-load-control"></div>
   </div>
 
   <div class="main-layout">
     <div class="calendar-side">
-      <div class="month-nav">
-        <button id="prev-month">&larr;</button>
-        <span id="month-label" class="month-label"></span>
-        <button id="next-month">&rarr;</button>
+      <div id="full-calendar-view">
+        <div class="month-nav">
+          <button id="prev-month">&larr;</button>
+          <span id="month-label" class="month-label"></span>
+          <button id="next-month">&rarr;</button>
+        </div>
+        <div class="selection-hint" id="selection-hint">Click a check-in date</div>
+        <div class="calendar-grid-scroll">
+          <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
+        <div class="legend">
+          <span class="legend-title">Travel Period:</span>
+          <div id="legend-items" class="legend-items"></div>
+          <a class="source-link" href="https://disneyvacationclub.disney.go.com/vacation-planning/points-charts/" target="_blank" rel="noopener">Source: DVC Points Charts</a>
+        </div>
+        <div class="legend">
+          <span class="legend-title">Crowd Level:</span>
+          <div id="crowd-legend-items" class="legend-items"></div>
+          <a class="source-link" href="https://www.undercovertourist.com/orlando/crowd-calendar/" target="_blank" rel="noopener">Source: Undercover Tourist</a>
+        </div>
+        <div class="legend">
+          <span class="legend-title">Special Events:</span>
+          <span class="legend-note">🎉 marks festivals, holiday parties, and runDisney weekends</span>
+          <a class="source-link" href="https://www.disneyfoodblog.com/disney-world-calendar/" target="_blank" rel="noopener">Source: Disney Food Blog</a>
+        </div>
       </div>
-      <div class="selection-hint" id="selection-hint">Click a check-in date</div>
-      <div class="calendar-grid-scroll">
-        <div id="calendar-grid" class="calendar-grid"></div>
-      </div>
-      <div class="legend">
-        <span class="legend-title">Travel Period:</span>
-        <div id="legend-items" class="legend-items"></div>
-        <a class="source-link" href="https://disneyvacationclub.disney.go.com/vacation-planning/points-charts/" target="_blank" rel="noopener">Source: DVC Points Charts</a>
-      </div>
-      <div class="legend">
-        <span class="legend-title">Crowd Level:</span>
-        <div id="crowd-legend-items" class="legend-items"></div>
-        <a class="source-link" href="https://www.undercovertourist.com/orlando/crowd-calendar/" target="_blank" rel="noopener">Source: Undercover Tourist</a>
-      </div>
-      <div class="legend">
-        <span class="legend-title">Special Events:</span>
-        <span class="legend-note">🎉 marks festivals, holiday parties, and runDisney weekends</span>
-        <a class="source-link" href="https://www.disneyfoodblog.com/disney-world-calendar/" target="_blank" rel="noopener">Source: Disney Food Blog</a>
-      </div>
+      <div id="trip-rail-view" style="display: none;"></div>
     </div>
     <div class="summary-side">
       <div id="action-buttons"></div>
