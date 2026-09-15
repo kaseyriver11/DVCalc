@@ -2396,9 +2396,10 @@ function renderSummary() {
       ${costComparisonHTML}
       ${stayInsightsHTML}
       <div class="insights-columns">
-        <div class="insights-col">${availabilityHTML}${resortAlertsHTML}</div>
+        <div class="insights-col">${availabilityHTML}</div>
         <div class="insights-col">${crowdHTML}</div>
       </div>
+      ${resortAlertsHTML}
     `;
   } else {
     summaryContainer.innerHTML = `

@@ -423,14 +423,15 @@ select, input, textarea, button {
   flex: 1;
 }
 
-/* Two INDEPENDENT columns, not a shared grid row -- a tall card in one
-   column (Resort Alerts with several entries) must never push the next
-   card in the other column down to match it. Each column just stacks its
-   own cards with a normal gap. */
+/* Booking Outlook and Crowd Forecast, side by side and stretched to match
+   each other's height -- each column holds exactly one card (Resort Alerts
+   moved out to its own full-width row below, since its entry count varies
+   and would otherwise fight this stretch), so equal height is always safe
+   here. */
 .insights-columns {
   display: flex;
   gap: 16px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .insights-col {
@@ -439,6 +440,10 @@ select, input, textarea, button {
   gap: 16px;
   flex: 1;
   min-width: 0;
+}
+
+.insights-col > .summary-card {
+  flex: 1;
 }
 
 /* ---- Trip Rail (collapsed calendar in review mode) ---- */
@@ -1812,9 +1817,13 @@ select, input, textarea, button {
 }
 
 /* ---- Resort Alerts (construction/refurbishment) ---- */
+/* auto-fit so entries sit two-up once the card is wide enough (it spans
+   the full Booking Outlook + Crowd Forecast width in review mode) and
+   collapse to a single column in narrower layouts (before a stay is
+   picked, or in split-stay mode) without a separate rule per layout. */
 .resort-alert-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 8px;
 }
 
