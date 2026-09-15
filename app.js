@@ -38,6 +38,7 @@ const state = {
   compareMonthStart: null, // 0-11 or null — restricts Stay Insights / the alternatives modal to a travel window
   compareMonthEnd: null,   // 0-11 or null; start > end wraps across the year boundary (e.g. Dec–Apr)
   altCrossResort: false,   // "Find a Better Stay" modal: also search other resorts, not just the current one
+  altWdwOnly: false,       // same modal, cross-resort mode: restrict candidates to WDW (Orlando) resorts
 };
 
 // ---- DOM References ----
@@ -1122,10 +1123,11 @@ function getRoomTypesForCategory(resort, category) {
 // Builds a same-length-stay candidate pool across every resort offering the given room
 // category (one room type per resort — the first match), tagged with resort/room info
 // so alternatives can point at a different resort, not just a different date.
-function buildCrossResortCandidates(category, nights, todayStr) {
+function buildCrossResortCandidates(category, nights, todayStr, wdwOnly) {
   const resortIds = [...new Set(RESORTS.map(r => r.id))];
   let candidates = [];
   for (const resortId of resortIds) {
+    if (wdwOnly && NON_WDW_RESORT_IDS.has(resortId)) continue;
     // Prefer the year currently being browsed; fall back to the resort's most recent year.
     const yearVariant = RESORTS.find(r => r.id === resortId && r.year === state.year)
       || RESORTS.filter(r => r.id === resortId).sort((a, b) => b.year - a.year)[0];
@@ -1239,6 +1241,11 @@ function setAltCrossResort(checked) {
   renderAlternativesModal();
 }
 
+function setAltWdwOnly(checked) {
+  state.altWdwOnly = checked;
+  renderAlternativesModal();
+}
+
 function renderAlternativesModal() {
   const resort = getResort();
   const stayDates = getStayDates();
@@ -1254,7 +1261,7 @@ function renderAlternativesModal() {
   let candidates;
   if (state.altCrossResort) {
     const category = getCategoryFromRoomType();
-    candidates = buildCrossResortCandidates(category, nights, todayStr)
+    candidates = buildCrossResortCandidates(category, nights, todayStr, state.altWdwOnly)
       .filter(c => !(c.resortId === resort.id && c.roomTypeId === state.roomTypeId && c.checkIn === stayDates[0]));
   } else {
     candidates = stats
@@ -1278,11 +1285,18 @@ function renderAlternativesModal() {
       <input type="checkbox" id="alt-cross-resort" ${state.altCrossResort ? "checked" : ""}>
       Also check other resorts
     </label>
+    ${state.altCrossResort ? `
+    <label class="alt-cross-toggle">
+      <input type="checkbox" id="alt-wdw-only" ${state.altWdwOnly ? "checked" : ""}>
+      WDW (Orlando) only
+    </label>
+    ` : ""}
     <div class="dist-subtitle">vs. every other ${nights}-night stay ${state.altCrossResort ? "across resorts offering this room type" : `at ${resort.name}`} ${rangeLabel}</div>
     ${body}
   `;
 
   document.getElementById("alt-cross-resort").addEventListener("change", (e) => setAltCrossResort(e.target.checked));
+  document.getElementById("alt-wdw-only")?.addEventListener("change", (e) => setAltWdwOnly(e.target.checked));
 }
 
 function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {

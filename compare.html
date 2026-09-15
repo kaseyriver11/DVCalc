@@ -360,6 +360,25 @@ body {
   font-weight: 600;
 }
 
+/* Column-header explanations -- wider and left-aligned since these are full
+   sentences, not the short status labels the base .tooltip-card is sized for. */
+.header-tooltip-anchor {
+  display: inline-block;
+  border-bottom: 1px dotted #999;
+}
+
+.header-tooltip {
+  width: 210px;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: none;
+  white-space: normal;
+  letter-spacing: normal;
+  color: #555;
+  line-height: 1.4;
+}
+
 .editable-cash span { cursor: pointer; }
 .editable-cash span:hover { text-decoration: underline; }
 
@@ -651,10 +670,23 @@ const ownerDuesLabel = document.getElementById("owner-dues-label");
 // for price & points, biggest savings first for percentages — "click once,
 // see the best deal" rather than making the user flip it every time).
 const SORT_COLUMNS = {
-  cash: { label: "Cash Price", accessor: r => r.totalCash, defaultDir: "asc" },
-  points: { label: "Points", accessor: r => r.totalPoints, defaultDir: "asc" },
-  rentalSavingsPct: { label: "Savings (Renting)", accessor: r => r.rentalSavingsPct, defaultDir: "desc" },
-  ownerSavingsPct: { label: "Savings (Owning)", accessor: r => r.ownerSavingsPct, defaultDir: "desc" },
+  cash: {
+    label: "Cash Price", accessor: r => r.totalCash, defaultDir: "asc",
+    tooltip: "What Disney would charge to book this stay directly, at its published cash (rack) rate.",
+  },
+  points: {
+    label: "Points", accessor: r => r.totalPoints, defaultDir: "asc",
+    tooltip: "Total DVC points required for this stay, from the room type's points chart.",
+  },
+  rentalSavingsPct: {
+    label: "Savings (Renting)", accessor: r => r.rentalSavingsPct, defaultDir: "desc",
+    tooltip: "How much cheaper renting these points from a DVC owner is than paying Disney's cash rate for the same stay.",
+  },
+  ownerSavingsPct: {
+    label: "Savings (Owning)", accessor: r => r.ownerSavingsPct, defaultDir: "desc",
+    tooltip: "How much cheaper using owned points (paying only their annual dues) is than paying Disney's cash rate.",
+    align: "tooltip-align-right",
+  },
 };
 
 function setSortBy(key) {
@@ -667,11 +699,18 @@ function setSortBy(key) {
   render();
 }
 
+// Wraps a column header's label in the shared tooltip-anchor/tooltip-card
+// hover component so every header explains itself the same way a crowd/value
+// hover does elsewhere in the app, rather than a native title="" tooltip.
+function headerTooltipHTML(label, desc, align = "") {
+  return `<span class="tooltip-anchor header-tooltip-anchor ${align}">${label}<div class="tooltip-card header-tooltip">${desc}</div></span>`;
+}
+
 function sortHeaderHTML(key) {
   const col = SORT_COLUMNS[key];
   const active = state.sortBy === key;
   const arrow = active ? `<span class="sort-arrow">${state.sortDir === "asc" ? "&#9650;" : "&#9660;"}</span>` : "";
-  return `<th class="num sortable${active ? " sort-active" : ""}" data-sort="${key}">${col.label}${arrow}</th>`;
+  return `<th class="num sortable${active ? " sort-active" : ""}" data-sort="${key}">${headerTooltipHTML(col.label, col.tooltip, col.align)}${arrow}</th>`;
 }
 
 // ---- Helpers ----
@@ -945,12 +984,12 @@ function render() {
       <tr>
         <th>#</th>
         <th>Resort</th>
-        <th>Booking Outlook <span class="outlook-header-sub">11&rarr;1mo</span></th>
+        <th>${headerTooltipHTML("Booking Outlook", "How hard this stay has historically been to book, checked at each window from 11 months out down to 1 month out. Hover a dot below for that window's status.", "tooltip-align-left")} <span class="outlook-header-sub">11&rarr;1mo</span></th>
         ${sortHeaderHTML("cash")}
         ${sortHeaderHTML("points")}
-        ${rentalCol ? `<th class="num">Rental Cost</th>` : ""}
+        ${rentalCol ? `<th class="num">${headerTooltipHTML("Rental Cost", "Estimated cost to rent these points from a DVC owner, at the rental rate set above.")}</th>` : ""}
         ${rentalCol ? sortHeaderHTML("rentalSavingsPct") : ""}
-        ${ownerCol ? `<th class="num">Dues Cost</th>` : ""}
+        ${ownerCol ? `<th class="num">${headerTooltipHTML("Dues Cost", "What an owner would pay in annual dues for the points this stay requires, at the selected resort's per-point dues rate.")}</th>` : ""}
         ${ownerCol ? sortHeaderHTML("ownerSavingsPct") : ""}
         <th></th>
       </tr>
