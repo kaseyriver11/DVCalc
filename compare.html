@@ -312,7 +312,7 @@ body {
 .outlook-very-low { background: #b71c1c; }
 
 /* Generic hover tooltip, reused for the outlook dots */
-.tooltip-anchor { position: relative; }
+.tooltip-anchor { position: relative; cursor: pointer; user-select: none; }
 
 .tooltip-card {
   position: absolute;
@@ -529,6 +529,8 @@ body {
       document.body.appendChild(s);
     });
   </script>
+  <link rel="preconnect" href="https://esm.sh">
+  <link rel="preconnect" href="https://afqhmtqwjtjkjahepqxv.supabase.co">
   <script type="module" src="auth.js"></script>
   <script src="nav.js"></script>
 </head>
@@ -593,16 +595,13 @@ body {
 
   <div class="settings-bar">
     <label class="toggle-label">
-      <input type="checkbox" id="rental-toggle" checked> Show rental cost
+      <input type="checkbox" id="wdw-only-toggle"> WDW (Orlando) only
     </label>
     <span class="rental-settings" id="rental-settings">
-      <label>Rate: <strong>$<span id="rental-rate-val">20</span></strong>/pt
+      <label>Rental rate: <strong>$<span id="rental-rate-val">20</span></strong>/pt
         <input type="range" id="rental-rate" min="15" max="25" step="0.5" value="20">
       </label>
     </span>
-    <label class="toggle-label">
-      <input type="checkbox" id="owner-toggle" checked> Show owner cost
-    </label>
     <label>
       Home resort:
       <select id="owner-resort"></select>
@@ -626,9 +625,8 @@ const state = {
   checkIn: null,
   checkOut: null,
   category: "studio",
+  wdwOnly: false,
   rentalRate: DEFAULT_RENTAL_RATE,
-  rentalEnabled: true,
-  ownerEnabled: true,
   ownerResortId: "saratogaSprings",
   customCashRates: {}, // key: "resortId_roomId", value: total cash price
   sortBy: "points", // "points" | "cash" | "rentalSavingsPct" | "ownerSavingsPct"
@@ -643,9 +641,7 @@ const staySummary = document.getElementById("stay-summary");
 const resultsContainer = document.getElementById("results");
 const rentalSlider = document.getElementById("rental-rate");
 const rentalLabel = document.getElementById("rental-rate-val");
-const rentalToggle = document.getElementById("rental-toggle");
-const rentalSettings = document.getElementById("rental-settings");
-const ownerToggle = document.getElementById("owner-toggle");
+const wdwOnlyToggle = document.getElementById("wdw-only-toggle");
 const ownerResortSelect = document.getElementById("owner-resort");
 const ownerDuesLabel = document.getElementById("owner-dues-label");
 
@@ -882,6 +878,7 @@ function render() {
   for (const resort of yearResorts) {
     if (seen.has(resort.id)) continue;
     seen.add(resort.id);
+    if (state.wdwOnly && NON_WDW_RESORT_IDS.has(resort.id)) continue;
 
     const roomTypes = getRoomTypesForCategory(resort, state.category);
     if (roomTypes.length === 0) continue;
@@ -925,15 +922,6 @@ function render() {
   const withCash = rows.filter(r => r.totalCash !== null);
   const withoutCash = rows.filter(r => r.totalCash === null);
 
-  // A savings-% sort only makes sense when that column is actually visible and
-  // has data (a resort with no cash rate has no savings figure either) — fall
-  // back to points rather than silently sorting by something the user can't see.
-  if ((state.sortBy === "rentalSavingsPct" && !state.rentalEnabled) ||
-      (state.sortBy === "ownerSavingsPct" && !state.ownerEnabled)) {
-    state.sortBy = "points";
-    state.sortDir = SORT_COLUMNS.points.defaultDir;
-  }
-
   // Sort by whichever column is active, in the active direction. The "no cash
   // data" group can only ever sort by points, since it has neither a cash
   // price nor any savings figure.
@@ -947,9 +935,10 @@ function render() {
     return;
   }
 
-  // Build table
-  const ownerCol = state.ownerEnabled;
-  const rentalCol = state.rentalEnabled;
+  // Build table -- owner and rental columns always show now (an owner might
+  // still rent out points, or vice versa, so there's no reason to hide either).
+  const ownerCol = true;
+  const rentalCol = true;
   const colCount = 5 + (rentalCol ? 2 : 0) + (ownerCol ? 2 : 0);
   let html = `<table class="compare-table">
     <thead>
@@ -1116,14 +1105,8 @@ rentalSlider.addEventListener("input", (e) => {
   render();
 });
 
-rentalToggle.addEventListener("change", (e) => {
-  state.rentalEnabled = e.target.checked;
-  rentalSettings.style.display = state.rentalEnabled ? "" : "none";
-  render();
-});
-
-ownerToggle.addEventListener("change", (e) => {
-  state.ownerEnabled = e.target.checked;
+wdwOnlyToggle.addEventListener("change", (e) => {
+  state.wdwOnly = e.target.checked;
   render();
 });
 

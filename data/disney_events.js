@@ -1,7 +1,7 @@
 // Disney World Special Events Calendar (festivals, hard-ticket parties,
 // runDisney weekends, seasonal windows)
 // Source: Disney Food Blog's "DFB Disney World Calendar" (v26.10)
-// https://www.disneyfoodblog.com/disney-world-calendar/
+// https://www.disneyfoodblog.com/wdwcalendar
 // Transcribed 2026-09-13. Only events with an explicit date range stated in
 // the guide's monthly write-ups are included — anything the guide itself
 // marked "TBD" or "dates not confirmed" was left out rather than guessed.

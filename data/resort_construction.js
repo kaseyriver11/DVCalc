@@ -1,6 +1,6 @@
 // Disney Hotel Construction & Refurbishment Tracker
 // Source: Disney Food Blog's "DFB Disney World Calendar" (v26.10)
-// https://www.disneyfoodblog.com/disney-world-calendar/
+// https://www.disneyfoodblog.com/wdwcalendar
 // Transcribed from the PDF's "Disney Hotel Construction" section 2026-09-13.
 //
 // Each entry: resortIds (DVCalc resort id(s) affected), location (building/area

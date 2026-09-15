@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DVC Points Calendar</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- Booking As / Load Trip in the top bar wait on auth.js's Supabase
+       session check, which first has to fetch the supabase-js library
+       itself from esm.sh -- starting that connection now (in parallel with
+       everything else) shaves the DNS+TLS handshake off the critical path,
+       so those two controls appear sooner instead of visibly lagging
+       behind Resort/Room Type, which need no network round trip at all. -->
+  <link rel="preconnect" href="https://esm.sh">
+  <link rel="preconnect" href="https://afqhmtqwjtjkjahepqxv.supabase.co">
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
     // analytics load can never hold up the page's own load/spinner state -- a
@@ -79,10 +87,10 @@
         <div class="custom-select-dropdown"></div>
       </div>
     </div>
-    <div class="control-group">
-      <label for="year-select">Points Year</label>
-      <div class="custom-select custom-select-narrow">
-        <select id="year-select" class="native-select"></select>
+    <div class="control-group" id="booking-as-control">
+      <label for="contract-select">Booking As</label>
+      <div class="custom-select">
+        <select id="contract-select" class="native-select"></select>
         <button type="button" class="custom-select-trigger">
           <span class="custom-select-value"></span>
           <span class="custom-select-arrow"></span>
@@ -90,8 +98,17 @@
         <div class="custom-select-dropdown"></div>
       </div>
     </div>
-    <div class="control-group" id="booking-as-control"></div>
-    <div class="control-group" id="itinerary-load-control"></div>
+    <div class="control-group" id="itinerary-load-control">
+      <label for="itinerary-load-select">Load Trip</label>
+      <div class="custom-select custom-select-narrow">
+        <select id="itinerary-load-select" class="native-select"></select>
+        <button type="button" class="custom-select-trigger">
+          <span class="custom-select-value"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
+        <div class="custom-select-dropdown"></div>
+      </div>
+    </div>
   </div>
 
   <div class="main-layout">
@@ -119,7 +136,7 @@
         <div class="legend">
           <span class="legend-title">Special Events:</span>
           <span class="legend-note">🎉 marks festivals, holiday parties, and runDisney weekends</span>
-          <a class="source-link" href="https://www.disneyfoodblog.com/disney-world-calendar/" target="_blank" rel="noopener">Source: Disney Food Blog</a>
+          <a class="source-link" href="https://www.disneyfoodblog.com/wdwcalendar" target="_blank" rel="noopener">Source: Disney Food Blog</a>
         </div>
       </div>
       <div id="trip-rail-view" style="display: none;"></div>

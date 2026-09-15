@@ -423,12 +423,22 @@ select, input, textarea, button {
   flex: 1;
 }
 
-.insights-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* Two INDEPENDENT columns, not a shared grid row -- a tall card in one
+   column (Resort Alerts with several entries) must never push the next
+   card in the other column down to match it. Each column just stacks its
+   own cards with a normal gap. */
+.insights-columns {
+  display: flex;
   gap: 16px;
-  align-items: start;
-  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.insights-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ---- Trip Rail (collapsed calendar in review mode) ---- */
@@ -488,18 +498,93 @@ select, input, textarea, button {
   font-size: 1rem;
 }
 
+/* A real 7-column grid, like the full calendar -- fixed equal-width
+   columns regardless of row fill (a flex-wrap approach lets a partial
+   last row's items stretch to fill it), with leading empty cells so each
+   column consistently represents the same day of the week. */
+.trip-strip-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 10px;
+}
+
+.trip-strip-dow {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #999;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .trip-strip {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 4px;
-  margin-top: 14px;
+  margin-top: 4px;
 }
 
 .trip-strip-day {
-  flex: 1;
+  min-width: 0;
   border-left: 3px solid #999;
   border-radius: 4px;
   padding: 5px 2px;
   text-align: center;
+}
+
+.trip-strip-day.empty {
+  border-left: none;
+}
+
+/* Context days just outside the stay -- dimmed and dashed so they read as
+   "not part of this stay yet" rather than a real night; clicking one
+   extends check-in/check-out to include it (adjustTripEdge() in app.js).
+   The dimming is applied to just the number/points text, NOT the chip
+   itself -- opacity on the chip would also wash out its .trip-tooltip
+   child (opacity applies to the whole rendered subtree, including a
+   tooltip that's separately set to opacity:1 when shown), making the
+   hover label hard to read. */
+.trip-strip-day.context {
+  border-left-style: dashed;
+  cursor: pointer;
+}
+
+.trip-strip-day.context .trip-strip-num,
+.trip-strip-day.context .trip-strip-pts {
+  opacity: 0.5;
+}
+
+.trip-strip-day.context:hover .trip-strip-num,
+.trip-strip-day.context:hover .trip-strip-pts {
+  opacity: 0.85;
+}
+
+/* The first/last real night -- still a normal-looking night, just
+   clickable to shrink the stay by removing it. */
+.trip-strip-day.editable {
+  cursor: pointer;
+}
+
+.trip-strip-day.editable:hover {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Compact variant of .tooltip-card for the trip-strip chips -- hugs a
+   short "Add this night" / "Remove this night" label instead of the
+   crowd/event tooltips' fixed 210px width. */
+.trip-tooltip {
+  width: auto;
+  white-space: nowrap;
+  padding: 6px 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.trip-strip-hint {
+  font-size: 0.58rem;
+  color: #aaa;
+  text-align: center;
+  margin-top: 6px;
 }
 
 .trip-strip-num {
@@ -522,8 +607,9 @@ select, input, textarea, button {
 }
 
 .trip-total-label {
-  font-size: 0.72rem;
-  color: #666;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #444;
 }
 
 .trip-total-value {
@@ -686,9 +772,17 @@ select, input, textarea, button {
 .crowd-heavy { background: #d84315; }
 .crowd-extreme { background: #b71c1c; }
 
-/* ---- Hover Tooltip (generic rich hover card, used by crowd/value/distribution hovers) ---- */
+/* ---- Hover Tooltip (generic rich hover card, used by crowd/value/distribution hovers) ----
+   cursor + user-select live here (not per-element) so every hover trigger in the
+   app looks and behaves identically -- otherwise a bare span/div with text or an
+   emoji directly inside it (a crowd number, a 🎉, a value-score badge) falls back
+   to the browser's default text-select (I-beam) cursor on the glyph itself, even
+   with a pointer-cursor ancestor, since "auto" resolves per-content rather than by
+   inheritance. */
 .tooltip-anchor {
   position: relative;
+  cursor: pointer;
+  user-select: none;
 }
 
 .tooltip-card {
@@ -836,6 +930,49 @@ select, input, textarea, button {
   font-size: 0.55rem;
   color: #aaa;
   text-align: right;
+}
+
+/* ---- Crowd Forecast (compact single-line card) ---- */
+.crowd-forecast-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.crowd-forecast-avg,
+.crowd-forecast-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.crowd-forecast-range {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.crowd-forecast-sep {
+  color: #ccc;
+}
+
+.crowd-tooltip-days {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.crowd-tooltip-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.68rem;
+  color: #555;
 }
 
 /* ---- Event Tooltip (calendar cell special-event hover) ---- */
@@ -1097,6 +1234,26 @@ select, input, textarea, button {
 }
 
 /* ---- Find Alternatives button + modal ---- */
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Beats the later, equal-specificity `.summary-card h3` rule (source order
+   would otherwise let that one win and re-add its own border-bottom under
+   just the "Stay Insights" text, on top of .card-header-row's own border
+   under the whole row -- two gray lines instead of one). */
+.summary-card .card-header-row h3 {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .find-alt-btn {
   width: 100%;
   margin-top: 10px;
@@ -1108,6 +1265,14 @@ select, input, textarea, button {
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.card-header-row .find-alt-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 14px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .find-alt-btn:hover {
@@ -1437,7 +1602,7 @@ select, input, textarea, button {
   font-size: 0.65rem;
   text-transform: uppercase;
   font-weight: 600;
-  color: #aaa;
+  color: #777;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
@@ -1453,7 +1618,7 @@ select, input, textarea, button {
 
 .cost-tile-sub {
   font-size: 0.68rem;
-  color: #888;
+  color: #666;
   margin-top: 2px;
 }
 
@@ -1609,22 +1774,6 @@ select, input, textarea, button {
 }
 
 /* ---- Booking As (contract personalization) ---- */
-.contract-select {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-family: inherit;
-  background: white;
-}
-
-.contract-select:focus {
-  outline: none;
-  border-color: #4a148c;
-  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
-}
-
 .contract-eligibility {
   font-size: 0.8rem;
   margin-top: 10px;
@@ -1710,10 +1859,17 @@ select, input, textarea, button {
 }
 
 .resort-alert-footer {
+  display: block;
   margin-top: 8px;
   font-size: 0.6rem;
   color: #aaa;
   text-align: right;
+  text-decoration: none;
+}
+
+.resort-alert-footer:hover {
+  color: #4a148c;
+  text-decoration: underline;
 }
 
 /* ---- Value Score ---- */
@@ -1793,48 +1949,6 @@ select, input, textarea, button {
   font-style: italic;
 }
 
-.custom-cash-input {
-  margin-top: 8px;
-}
-
-.custom-cash-row {
-  margin-top: 6px;
-}
-
-.custom-cash-row label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #666;
-}
-
-.custom-cash-field {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.custom-cash-field .cash-prefix,
-.custom-cash-field .cash-suffix {
-  font-size: 0.8rem;
-  color: #888;
-  font-weight: 600;
-}
-
-.custom-cash-field input {
-  width: 80px;
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  text-align: right;
-}
-
-.custom-cash-field input:focus {
-  outline: none;
-  border-color: #4a148c;
-  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
-}
 
 .summary-compare {
   display: block;
@@ -2263,12 +2377,6 @@ select, input, textarea, button {
 
 /* ---- Availability Outlook ---- */
 .availability-outlook {
-}
-
-.availability-outlook h3 {
-  border-bottom: none !important;
-  margin-bottom: 6px !important;
-  padding-bottom: 0 !important;
 }
 
 .avail-stay-length {

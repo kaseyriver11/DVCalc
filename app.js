@@ -45,7 +45,8 @@ const resortSearch = document.getElementById("resort-search");
 const resortDropdown = document.getElementById("resort-dropdown");
 const resortWrapper = document.getElementById("resort-select-wrapper");
 const roomSelect = document.getElementById("room-select");
-const yearSelect = document.getElementById("year-select");
+const contractSelect = document.getElementById("contract-select");
+const itineraryLoadSelect = document.getElementById("itinerary-load-select");
 const monthLabel = document.getElementById("month-label");
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
@@ -104,7 +105,7 @@ document.addEventListener("click", (e) => {
 // Called from renderCalendar(), which already runs after every action that can
 // change room type or points year.
 function syncCustomSelects() {
-  [roomSelect, yearSelect].forEach(sel => sel._customSelectRender && sel._customSelectRender());
+  [roomSelect, contractSelect, itineraryLoadSelect].forEach(sel => sel._customSelectRender && sel._customSelectRender());
 }
 
 // ---- Helpers ----
@@ -569,6 +570,21 @@ function handleDateClick(dateStr) {
     return;
   }
 
+  // Clicking the current check-in again while a complete range is showing
+  // (e.g. after "Edit dates") is a "start over" gesture -- clear both
+  // dates instead of re-priming checkIn to the same value, which would
+  // silently turn the *next* click into a checkout instead of a fresh
+  // check-in.
+  if (dateStr === state.checkIn && state.checkOut) {
+    state.checkIn = null;
+    state.checkOut = null;
+    forceExpandCalendar = false;
+    updateHint();
+    renderCalendar();
+    renderSummary();
+    return;
+  }
+
   if (!state.checkIn || state.checkOut) {
     state.checkIn = dateStr;
     state.checkOut = null;
@@ -663,28 +679,57 @@ function buildEventTooltipHTML(dateStr, events) {
 }
 
 function buildCrowdSummaryHTML(dates) {
-  const entries = dates.map(getCrowdForDate).filter(Boolean);
-  if (entries.length === 0) return "";
+  const dayEntries = dates.map(d => ({ date: d, crowd: getCrowdForDate(d) })).filter(e => e.crowd);
+  if (dayEntries.length === 0) return "";
 
-  const avg = Math.round(entries.reduce((sum, e) => sum + e.crowd, 0) / entries.length);
-  const min = Math.min(...entries.map(e => e.crowd));
-  const max = Math.max(...entries.map(e => e.crowd));
-  const avgLabel = entries.find(e => e.crowd === avg)?.label
-    || entries.slice().sort((a, b) => Math.abs(a.crowd - avg) - Math.abs(b.crowd - avg))[0].label;
+  const crowdValues = dayEntries.map(e => e.crowd.crowd);
+  const avgExact = crowdValues.reduce((sum, c) => sum + c, 0) / crowdValues.length;
+  const avg = Math.round(avgExact);
+  const min = Math.min(...crowdValues);
+  const max = Math.max(...crowdValues);
+  const avgLabel = dayEntries.find(e => e.crowd.crowd === avg)?.crowd.label
+    || dayEntries.slice().sort((a, b) => Math.abs(a.crowd.crowd - avg) - Math.abs(b.crowd.crowd - avg))[0].crowd.label;
+
+  // Two hovers, two different questions: the average pill answers "what's
+  // typical," the range answers "which specific nights are busier" -- so
+  // each gets its own tooltip rather than a static two-row layout that
+  // stated both numbers but explained neither.
+  const avgTooltipHTML = `
+    <div class="crowd-avg-tooltip tooltip-card">
+      <div class="crowd-tooltip-header">Stay Average</div>
+      <div class="crowd-tooltip-sub">${avgExact.toFixed(1)} avg across ${crowdValues.length} night${crowdValues.length !== 1 ? "s" : ""}</div>
+    </div>
+  `;
+
+  const dayRowsHTML = dayEntries.map(e => `
+    <div class="crowd-tooltip-day-row">
+      <span>${formatShortDate(e.date)}</span>
+      <span class="crowd-pill ${crowdClass(e.crowd.label)}">${e.crowd.crowd}</span>
+    </div>
+  `).join("");
+
+  const rangeTooltipHTML = min !== max ? `
+    <div class="crowd-range-tooltip tooltip-card">
+      <div class="crowd-tooltip-header">Each Night</div>
+      <div class="crowd-tooltip-days">${dayRowsHTML}</div>
+    </div>
+  ` : "";
 
   return `
     <div class="summary-card">
       <h3>Crowd Forecast</h3>
-      <div class="summary-stats">
-        <div class="summary-row">
-          <span class="row-label">Stay average</span>
-          <span class="row-value"><span class="crowd-pill ${crowdClass(avgLabel)}">${avg}</span> ${avgLabel}</span>
-        </div>
+      <div class="crowd-forecast-line">
+        <span class="crowd-forecast-avg tooltip-anchor tooltip-align-left">
+          <span class="crowd-pill ${crowdClass(avgLabel)}">${avg}</span> ${avgLabel}
+          ${avgTooltipHTML}
+        </span>
         ${min !== max ? `
-        <div class="summary-row">
-          <span class="row-label">Range</span>
-          <span class="row-value">${min} – ${max}</span>
-        </div>` : ""}
+        <span class="crowd-forecast-sep">&middot;</span>
+        <span class="crowd-forecast-range tooltip-anchor tooltip-align-right">
+          Range ${min}&ndash;${max}
+          ${rangeTooltipHTML}
+        </span>
+        ` : ""}
       </div>
       <a class="source-link" href="https://www.undercovertourist.com/orlando/crowd-calendar/" target="_blank" rel="noopener">Source: Undercover Tourist Crowd Calendar</a>
     </div>
@@ -1162,14 +1207,15 @@ function buildStayInsightsHTML(resort, roomTypeId, stayDates) {
 
   return `
     <div class="summary-card wide">
-      <h3>Stay Insights</h3>
+      <div class="card-header-row">
+        <h3>Stay Insights</h3>
+        <button class="find-alt-btn" onclick="openAlternativesModal()">🔍 Find Alternatives</button>
+      </div>
       <div class="dist-subtitle">vs. every other ${nights}-night stay at ${resort.name} ${rangeLabel}</div>
 
       ${valueScoreHTML}
 
       ${distContent.length ? `<div class="dist-grid">${distContent.join("")}</div>` : ""}
-
-      <button class="find-alt-btn" onclick="openAlternativesModal()">🔍 Find Alternatives</button>
     </div>
   `;
 }
@@ -1244,7 +1290,6 @@ function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {
   const year = Number(checkInStr.split("-")[0]);
   if (year !== state.year) {
     state.year = year;
-    yearSelect.value = year;
   }
   if (resortId && resortId !== state.resortId) {
     state.resortId = resortId;
@@ -1443,8 +1488,6 @@ function loadItineraryIntoCalendar(itinerary) {
   itinerarySaveStatus = null;
 
   resortSearch.value = getResort().name;
-  populateYears();
-  yearSelect.value = state.year;
   populateRoomTypes();
   roomSelect.value = state.roomTypeId;
   updateHint();
@@ -1568,16 +1611,65 @@ function renderTripRail() {
   if (!totals) { el.innerHTML = ""; return; }
 
   const resort = totals.resort;
-  const stripHTML = totals.breakdown.map(n => {
-    const period = getTravelPeriod(resort, n.date);
+
+  // A couple of days on either side of the stay, shown dimmed/dashed --
+  // clicking one extends check-in/check-out to include it (adjustTripEdge()
+  // below). Clicking the first or last *real* night shrinks the stay
+  // instead. Interior nights aren't clickable -- removing one would split
+  // the stay into two ranges, which the check-in/check-out model can't
+  // represent.
+  const CONTEXT_DAYS = 2;
+  const firstNight = totals.breakdown[0].date;
+  const lastNight = totals.breakdown[totals.breakdown.length - 1].date;
+  const beforeDates = [];
+  for (let i = CONTEXT_DAYS; i >= 1; i--) beforeDates.push(dateStrPlusDays(firstNight, -i));
+  const afterDates = [];
+  for (let i = 0; i < CONTEXT_DAYS; i++) afterDates.push(dateStrPlusDays(totals.checkOut, i));
+
+  function buildChip(dateStr, { isContext, isEdge }) {
+    const dateResort = getResortForStayDate(resort.id, dateStr, resort);
+    const period = getTravelPeriod(dateResort, dateStr);
+    const points = getPointsForDate(dateResort, dateStr, totals.roomType ? totals.roomType.id : state.roomTypeId);
     const color = period ? period.color : "#999";
-    const dayNum = parseInt(n.date.slice(8, 10), 10);
+    const dayNum = parseInt(dateStr.slice(8, 10), 10);
+    const clickable = isContext || isEdge;
+    // Same instant app-styled tooltip as the main calendar's day cells
+    // (tooltip-anchor/tooltip-card), not the native title="" attribute --
+    // that has a browser-default hover delay and looks like every other
+    // OS tooltip instead of matching the app. Same left/right edge-align
+    // logic as the main grid so it doesn't get clipped in column 0/1 or 5/6.
+    const dow = new Date(dateStr + "T12:00:00").getDay();
+    const tooltipAlign = dow <= 1 ? "tooltip-align-left" : dow >= 5 ? "tooltip-align-right" : "";
+    const tooltipHTML = clickable ? `
+      <div class="trip-tooltip tooltip-card ${tooltipAlign}">${isContext ? "Add this night" : "Remove this night"}</div>
+    ` : "";
     return `
-      <div class="trip-strip-day" style="background: ${color}20; border-left-color: ${color};">
+      <div class="trip-strip-day${isContext ? " context" : ""}${isEdge ? " editable" : ""}${clickable ? " tooltip-anchor" : ""}"
+        style="background: ${color}20; border-left-color: ${color};"
+        ${clickable ? `onclick="adjustTripEdge('${dateStr}')" tabindex="0"` : ""}>
         <div class="trip-strip-num">${dayNum}</div>
-        <div class="trip-strip-pts" style="color: ${color};">${n.points ?? "—"}</div>
+        <div class="trip-strip-pts" style="color: ${color};">${points ?? "—"}</div>
+        ${tooltipHTML}
       </div>
     `;
+  }
+
+  // A real 7-column grid (like the full calendar), not a flex-wrap strip --
+  // flex-wrap items on a partial last row stretch to fill it (a 13-night
+  // stay's lone 13th night would balloon to full width), and without empty
+  // leading cells, wrapped rows don't line up by day-of-week at all (May 7
+  // would sit directly under May 1 even though they're different weekdays).
+  // Leading blanks align the first shown day (a "before" context day, if
+  // any) to its real weekday column.
+  const firstShownDate = beforeDates[0] || firstNight;
+  const firstDow = new Date(firstShownDate + "T12:00:00").getDay();
+  const headerHTML = DAY_HEADERS.map(d => `<div class="trip-strip-dow">${d[0]}</div>`).join("");
+  const blanksHTML = `<div class="trip-strip-day empty"></div>`.repeat(firstDow);
+  const beforeHTML = beforeDates.map(d => buildChip(d, { isContext: true, isEdge: false })).join("");
+  const afterHTML = afterDates.map(d => buildChip(d, { isContext: true, isEdge: false })).join("");
+  const stripHTML = totals.breakdown.map((n, i) => {
+    const isEdge = i === 0 || i === totals.breakdown.length - 1;
+    return buildChip(n.date, { isContext: false, isEdge });
   }).join("");
 
   el.innerHTML = `
@@ -1598,16 +1690,54 @@ function renderTripRail() {
         </div>
       </div>
 
-      <div class="trip-strip">${stripHTML}</div>
+      <div class="trip-strip-header">${headerHTML}</div>
+      <div class="trip-strip">${blanksHTML}${beforeHTML}${stripHTML}${afterHTML}</div>
+      <div class="trip-strip-hint">Click a shaded day to add it, or an end night to remove it</div>
 
       <div class="trip-total">
         <span class="trip-total-label">${totals.dates.length} night${totals.dates.length !== 1 ? "s" : ""}</span>
         <span class="trip-total-value">${totals.totalPoints.toLocaleString()} pts</span>
       </div>
 
+      ${buildContractEligibilityHTML(resort, totals.dates)}
+
       <button class="edit-dates-btn" onclick="expandCalendarForEditing()">Edit dates</button>
+      <button class="summary-clear" onclick="clearSelection()">Clear Selection</button>
+      ${buildStayActionButtonsHTML(false, totals.checkIn, totals.checkOut)}
     </div>
   `;
+  attachStayActionButtonListeners();
+}
+
+// Handles a click on any of the trip rail's edge-adjacent chips (the
+// dimmed "context" days just outside the stay, or the first/last real
+// night). Extends check-in/check-out to include a context day, or shrinks
+// the stay by one night from whichever end was clicked; clicking the only
+// night of a 1-night stay clears the selection entirely rather than trying
+// to produce a zero-night range.
+function adjustTripEdge(dateStr) {
+  const checkIn = state.checkIn, checkOut = state.checkOut;
+  if (!checkIn || !checkOut) return;
+
+  if (dateStr < checkIn) {
+    state.checkIn = dateStr;
+  } else if (dateStr >= checkOut) {
+    state.checkOut = dateStrPlusDays(dateStr, 1);
+  } else if (dateStr === checkIn) {
+    const newCheckIn = dateStrPlusDays(dateStr, 1);
+    if (newCheckIn >= checkOut) { clearSelection(); return; }
+    state.checkIn = newCheckIn;
+  } else if (dateStr === dateStrPlusDays(checkOut, -1)) {
+    const newCheckOut = dateStrPlusDays(checkOut, -1);
+    if (newCheckOut <= checkIn) { clearSelection(); return; }
+    state.checkOut = newCheckOut;
+  } else {
+    return; // an interior night -- not clickable, shouldn't reach here
+  }
+
+  updateHint();
+  renderCalendar();
+  renderSummary();
 }
 
 function renderCalendar() {
@@ -1885,7 +2015,7 @@ function buildResortAlertsHTML(resort, stayDates) {
     <div class="summary-card">
       <h3>Resort Alerts</h3>
       <div class="resort-alert-list">${itemsHTML}</div>
-      <div class="resort-alert-footer">Disney Food Blog</div>
+      <a class="resort-alert-footer" href="https://www.disneyfoodblog.com/wdwcalendar" target="_blank" rel="noopener">Disney Food Blog</a>
     </div>
   `;
 }
@@ -1904,24 +2034,16 @@ function renderBookingAsControl() {
   const contracts = getActiveContracts();
   if (contracts.length === 0) {
     el.style.display = "none";
-    el.innerHTML = "";
     return;
   }
 
-  const options = contracts.map(c => {
-    const label = `${c.nickname || resortNameForId(c.home_resort_id)} (${c.use_year} UY, ${c.points_per_year.toLocaleString()} pts)`;
-    return `<option value="${c.id}" ${c.id === selectedContractId ? "selected" : ""}>${label}</option>`;
-  }).join("");
-
   el.style.display = "flex";
-  el.innerHTML = `
-    <label for="contract-select">Booking As</label>
-    <select id="contract-select" class="contract-select">
-      <option value="">Just browsing (no contract)</option>
-      ${options}
-    </select>
-  `;
-  document.getElementById("contract-select").addEventListener("change", (e) => setSelectedContract(e.target.value));
+  contractSelect.innerHTML = `<option value="">Just browsing (no contract)</option>` + contracts.map(c => {
+    const label = `${c.nickname || resortNameForId(c.home_resort_id)} (${c.use_year} UY, ${c.points_per_year.toLocaleString()} pts)`;
+    return `<option value="${c.id}">${label}</option>`;
+  }).join("");
+  contractSelect.value = selectedContractId || "";
+  if (contractSelect._customSelectRender) contractSelect._customSelectRender();
 }
 
 // Per-stay eligibility ("home resort, bookable 11 months out" / "resale-
@@ -1971,6 +2093,49 @@ function buildContractEligibilityHTML(resort, stayDates) {
   return `<div class="summary-divider"></div>${html}`;
 }
 
+// Shared "stay actions" cluster (+ Add Another Resort, Compare All Resorts,
+// Save Itinerary) -- used both in the normal top-of-panel spot
+// (#action-buttons, non-review layouts) and inside the trip rail in review
+// mode, since there it reads as part of the trip card rather than a
+// separate floating block. Always call attachStayActionButtonListeners()
+// right after inserting this HTML into the DOM.
+function buildStayActionButtonsHTML(inSplitMode, overallCheckIn, overallCheckOut) {
+  let saveItineraryHTML = "";
+  if (isSignedIn) {
+    if (showingItinerarySaveForm) {
+      const draftName = itineraryNameDraft != null ? itineraryNameDraft : suggestItineraryName();
+      const savingNow = itinerarySaveStatus === "saving";
+      const savedOk = itinerarySaveStatus === "saved";
+      saveItineraryHTML = `
+        <div class="itinerary-save-form">
+          <input type="text" id="itinerary-name-input" value="${draftName.replace(/"/g, "&quot;")}" placeholder="Name this itinerary" ${savingNow || savedOk ? "disabled" : ""}>
+          <button class="itinerary-save-confirm" onclick="confirmSaveItinerary()" ${savingNow || savedOk ? "disabled" : ""}>${savingNow ? "Saving…" : savedOk ? "Saved!" : "Save"}</button>
+          ${!savedOk ? `<button class="itinerary-save-cancel" onclick="closeItinerarySaveForm()" title="Cancel">&times;</button>` : ""}
+        </div>
+        ${itinerarySaveStatus === "error" ? `<div class="itinerary-save-error">Couldn't save -- try again.</div>` : ""}
+      `;
+    } else {
+      saveItineraryHTML = `<button class="summary-save-itinerary" onclick="openItinerarySaveForm()">&#128190; Save Itinerary</button>`;
+    }
+  }
+  return `
+    <button class="summary-add-segment" onclick="addSegment()">+ Add Another Resort</button>
+    ${!inSplitMode ? `<a class="summary-compare" href="compare.html?checkin=${overallCheckIn}&checkout=${overallCheckOut}&category=${getCategoryFromRoomType()}">Compare All Resorts</a>` : ""}
+    ${saveItineraryHTML}
+  `;
+}
+
+function attachStayActionButtonListeners() {
+  const itineraryNameInput = document.getElementById("itinerary-name-input");
+  if (itineraryNameInput) {
+    itineraryNameInput.addEventListener("input", (e) => { itineraryNameDraft = e.target.value; });
+    itineraryNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") confirmSaveItinerary();
+      if (e.key === "Escape") closeItinerarySaveForm();
+    });
+  }
+}
+
 // Renders the "Load Trip" saved-itinerary picker into the top control bar
 // (#itinerary-load-control) rather than the summary panel -- same
 // reasoning as renderBookingAsControl() above. Hidden entirely if signed
@@ -1984,28 +2149,14 @@ function renderItineraryLoadControl() {
   if (!el) return;
   if (!isSignedIn || userItineraries.length === 0) {
     el.style.display = "none";
-    el.innerHTML = "";
     return;
   }
 
-  const options = userItineraries.map(itin =>
-    `<option value="${itin.id}">${itin.name}</option>`
-  ).join("");
-
   el.style.display = "flex";
-  el.innerHTML = `
-    <label for="itinerary-load-select">Load Trip</label>
-    <select id="itinerary-load-select" class="contract-select">
-      <option value="">Load a saved itinerary&hellip;</option>
-      ${options}
-    </select>
-  `;
-  document.getElementById("itinerary-load-select").addEventListener("change", (e) => {
-    const id = e.target.value;
-    if (!id) return;
-    const itin = userItineraries.find(i => i.id === id);
-    if (itin) loadItineraryIntoCalendar(itin);
-  });
+  itineraryLoadSelect.innerHTML = `<option value="">Load a saved itinerary&hellip;</option>` +
+    userItineraries.map(itin => `<option value="${itin.id}">${itin.name}</option>`).join("");
+  itineraryLoadSelect.value = "";
+  if (itineraryLoadSelect._customSelectRender) itineraryLoadSelect._customSelectRender();
 }
 
 function renderSummary() {
@@ -2177,31 +2328,33 @@ function renderSummary() {
 
   const stayInsightsHTML = !inSplitMode ? buildStayInsightsHTML(resort, state.roomTypeId, stayDates) : "";
 
+  // Whether we need to offer a custom-rate input at all (no real cash data
+  // for this resort). When true, the Disney tile always renders -- as the
+  // input itself before a rate's been entered, then as the computed value
+  // once it has -- same as showCustomRateInput ? true.
+  const showCustomRateInput = !inSplitMode && !resortHasCashData && !hasFallbackCash;
+  const showDisneyTile = hasCashData || showCustomRateInput;
+
   const costComparisonHTML = `
     <div class="summary-card wide">
       <h3>Cost Comparison</h3>
 
-      ${!inSplitMode && !resortHasCashData && !hasFallbackCash ? `
-      <div class="custom-cash-input">
-        <div class="no-cash-note">No cash rate data for non-WDW resorts.</div>
-        <div class="custom-cash-row">
-          <label for="custom-cash-rate">Compare to your own rate</label>
-          <div class="custom-cash-field">
-            <span class="cash-prefix">$</span>
-            <input type="number" id="custom-cash-rate" placeholder="e.g. 650" min="0" step="1" value="${state.customCashRate || ''}">
-            <span class="cash-suffix">/night</span>
-          </div>
-        </div>
-      </div>
-      ` : ""}
-
       <div class="cost-tiles">
-        ${hasCashData ? `
+        ${showDisneyTile ? `
         <div class="cost-tile">
           <div class="cost-tile-label">${useCustomRate ? 'Your cash rate' : 'If booking through Disney'}</div>
+          ${showCustomRateInput ? `
+          <div class="cost-tile-rate-input">
+            <span>$</span><input type="number" id="custom-cash-rate" placeholder="e.g. 650" min="0" step="1" value="${state.customCashRate || ''}"><span>/night</span>
+          </div>
+          ` : ""}
+          ${hasCashData ? `
           <div class="cost-tile-value rack">$${totalDisneyCash.toLocaleString()}</div>
           <div class="cost-tile-sub">${useCustomRate ? `${stayDates.length} nights × $${state.customCashRate}/night` : `$${(totalDisneyCash / totalPoints).toFixed(2)}/pt`}</div>
           ${anyIsPriorYear ? `<div class="prior-year-note">* Some cash rates based on prior year pricing</div>` : ""}
+          ` : `
+          <div class="cost-tile-sub no-cash-note">No cash rate data for non-WDW resorts</div>
+          `}
         </div>
         ` : ""}
 
@@ -2233,15 +2386,19 @@ function renderSummary() {
 
   // Review mode (a complete single-resort stay, calendar collapsed to the
   // trip rail -- see renderLayoutMode()) gets more horizontal room, so it
-  // leads with the "answer" (Cost Comparison) and pairs the rest into a
-  // 2-column grid instead of stacking everything single-file.
+  // leads with the "answer" (Cost Comparison), then Stay Insights full-width
+  // right under it, then splits the rest into two independently-packed
+  // columns (insights-columns, not a shared grid row) instead of stacking
+  // everything single-file. "Your Stay" and Clear Selection are skipped
+  // here -- the trip rail already covers both.
   if (isReviewMode()) {
     summaryContainer.innerHTML = `
       ${costComparisonHTML}
-      <div class="insights-grid-2">${yourStayCardHTML}${resortAlertsHTML}</div>
-      <div class="insights-grid-2">${availabilityHTML}${crowdHTML}</div>
       ${stayInsightsHTML}
-      ${clearButtonHTML}
+      <div class="insights-columns">
+        <div class="insights-col">${availabilityHTML}${resortAlertsHTML}</div>
+        <div class="insights-col">${crowdHTML}</div>
+      </div>
     `;
   } else {
     summaryContainer.innerHTML = `
@@ -2255,40 +2412,14 @@ function renderSummary() {
     `;
   }
 
-  // Render action buttons between settings and summary
+  // Render action buttons between settings and summary -- except in review
+  // mode, where they render inside the trip rail instead (renderTripRail())
+  // since that reads as "part of the trip card" rather than a floating
+  // block disconnected from it.
   const hasCompleteDates = state.checkIn && state.checkOut;
-  if (hasCompleteDates) {
-    let saveItineraryHTML = "";
-    if (isSignedIn) {
-      if (showingItinerarySaveForm) {
-        const draftName = itineraryNameDraft != null ? itineraryNameDraft : suggestItineraryName();
-        const savingNow = itinerarySaveStatus === "saving";
-        const savedOk = itinerarySaveStatus === "saved";
-        saveItineraryHTML = `
-          <div class="itinerary-save-form">
-            <input type="text" id="itinerary-name-input" value="${draftName.replace(/"/g, "&quot;")}" placeholder="Name this itinerary" ${savingNow || savedOk ? "disabled" : ""}>
-            <button class="itinerary-save-confirm" onclick="confirmSaveItinerary()" ${savingNow || savedOk ? "disabled" : ""}>${savingNow ? "Saving…" : savedOk ? "Saved!" : "Save"}</button>
-            ${!savedOk ? `<button class="itinerary-save-cancel" onclick="closeItinerarySaveForm()" title="Cancel">&times;</button>` : ""}
-          </div>
-          ${itinerarySaveStatus === "error" ? `<div class="itinerary-save-error">Couldn't save -- try again.</div>` : ""}
-        `;
-      } else {
-        saveItineraryHTML = `<button class="summary-save-itinerary" onclick="openItinerarySaveForm()">&#128190; Save Itinerary</button>`;
-      }
-    }
-    actionButtons.innerHTML = `
-      <button class="summary-add-segment" onclick="addSegment()">+ Add Another Resort</button>
-      ${!inSplitMode ? `<a class="summary-compare" href="compare.html?checkin=${overallCheckIn}&checkout=${overallCheckOut}&category=${getCategoryFromRoomType()}">Compare All Resorts</a>` : ""}
-      ${saveItineraryHTML}
-    `;
-    const itineraryNameInput = document.getElementById("itinerary-name-input");
-    if (itineraryNameInput) {
-      itineraryNameInput.addEventListener("input", (e) => { itineraryNameDraft = e.target.value; });
-      itineraryNameInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") confirmSaveItinerary();
-        if (e.key === "Escape") closeItinerarySaveForm();
-      });
-    }
+  if (hasCompleteDates && !isReviewMode()) {
+    actionButtons.innerHTML = buildStayActionButtonsHTML(inSplitMode, overallCheckIn, overallCheckOut);
+    attachStayActionButtonListeners();
   } else {
     actionButtons.innerHTML = "";
   }
@@ -2395,6 +2526,17 @@ roomSelect.addEventListener("change", (e) => {
   renderSummary();
 });
 
+contractSelect.addEventListener("change", (e) => setSelectedContract(e.target.value));
+
+itineraryLoadSelect.addEventListener("change", (e) => {
+  const id = e.target.value;
+  if (!id) return;
+  const itin = userItineraries.find(i => i.id === id);
+  if (itin) loadItineraryIntoCalendar(itin);
+  itineraryLoadSelect.value = "";
+  if (itineraryLoadSelect._customSelectRender) itineraryLoadSelect._customSelectRender();
+});
+
 prevBtn.addEventListener("click", () => {
   state.month--;
   if (state.month < 0) {
@@ -2402,7 +2544,6 @@ prevBtn.addEventListener("click", () => {
     if (AVAILABLE_YEARS.includes(prevYear)) {
       state.month = 11;
       state.year = prevYear;
-      yearSelect.value = state.year;
       // Keep same resort in new year
       const resort = getResort();
       if (resort) {
@@ -2424,7 +2565,6 @@ nextBtn.addEventListener("click", () => {
     if (AVAILABLE_YEARS.includes(nextYear)) {
       state.month = 0;
       state.year = nextYear;
-      yearSelect.value = state.year;
       // Keep same resort in new year
       const resort = getResort();
       if (resort) {
@@ -2438,39 +2578,6 @@ nextBtn.addEventListener("click", () => {
   renderCalendar();
   renderSummary();
 });
-
-// Year selector
-yearSelect.addEventListener("change", (e) => {
-  state.year = parseInt(e.target.value);
-  state.checkIn = null;
-  state.checkOut = null;
-  // Keep the same resort if it exists in the new year, otherwise pick the first
-  const yearResorts = resortsForYear(state.year);
-  const sameResort = yearResorts.find(r => r.id === state.resortId);
-  if (sameResort) {
-    state.resortId = sameResort.id;
-  } else {
-    state.resortId = yearResorts[0].id;
-  }
-  const resort = getResort();
-  resortSearch.value = resort.name;
-  populateRoomTypes();
-  updateHint();
-  renderCalendar();
-  renderLegend();
-  renderSummary();
-});
-
-function populateYears() {
-  yearSelect.innerHTML = "";
-  for (const year of AVAILABLE_YEARS) {
-    const opt = document.createElement("option");
-    opt.value = year;
-    opt.textContent = year;
-    yearSelect.appendChild(opt);
-  }
-  yearSelect.value = state.year;
-}
 
 // Unique resorts (deduplicated by id — dues don't change by year), sorted by name,
 // for the owner-resort <select> rendered inline inside the Cost Comparison card.
@@ -2537,12 +2644,11 @@ if (savedState) {
 }
 
 resortSearch.value = getResort().name;
-populateYears();
-yearSelect.value = state.year;
 populateRoomTypes();
 roomSelect.value = state.roomTypeId;
 initCustomSelect(roomSelect);
-initCustomSelect(yearSelect);
+initCustomSelect(contractSelect);
+initCustomSelect(itineraryLoadSelect);
 updateHint();
 renderCalendar();
 renderLegend();

@@ -39,6 +39,15 @@ from build_live_cash_rates import RESORT_CONFIGS  # noqa: E402
 STATE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", ".watchdog_state.json")
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
+# DFB republishes their Disney World Calendar PDF roughly every 3-4 weeks
+# (10 editions -- v26.1 through v26.10 -- surfaced across the first ~8.5
+# months of 2026). See check_dfb_calendar_freshness() for why this is a
+# time-based reminder instead of a scrapable-link check like
+# check_points_chart_pdfs().
+DFB_EVENTS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "disney_events.js")
+DFB_CONSTRUCTION_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "resort_construction.js")
+DFB_STALENESS_DAYS = 21
+
 # Pages checked by content-hash diff. No structured API exists for any of
 # these -- a hash diff is the cheapest reliable "did this change" signal
 # without attempting to parse and risk misreading an actual number.
@@ -172,6 +181,63 @@ def check_points_chart_pdfs(state, results):
         state["knownPdfUrls"] = urls
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as e:
         results.append(("error", f"points chart PDFs: fetch/parse failed -- {e}"))
+
+
+def _extract_transcribed_date(path):
+    """Pulls the 'Transcribed <date>' comment already at the top of
+    disney_events.js/resort_construction.js -- the source-of-truth for
+    when each was last checked against the DFB PDF, so there's no separate
+    date to keep in sync in watchdog state."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            head = f.read(2000)
+    except FileNotFoundError:
+        return None
+    idx = head.find("Transcribed")
+    if idx == -1:
+        return None
+    m = re.search(r"\d{4}-\d{2}-\d{2}", head[idx:idx + 200])
+    return m.group(0) if m else None
+
+
+def check_dfb_calendar_freshness(state, results):
+    # Can't do a scrapable-link check like check_points_chart_pdfs() above --
+    # confirmed 2026-09-14 that https://www.disneyfoodblog.com/wdwcalendar
+    # never contains a real .pdf URL in its static HTML; the actual download
+    # link is only generated after an email-gate form submit (a lead-gen
+    # plugin's own placeholder example text -- "Jane-Doe.pdf" -- is the only
+    # thing that string-matches ".pdf" on the page). So instead: a
+    # time-based reminder off the "Transcribed <date>" comment already in
+    # both files DFB data feeds, since DFB republishes roughly every 3-4
+    # weeks and there's no other reliable automated signal.
+    import datetime
+    dates = [d for d in (
+        _extract_transcribed_date(DFB_EVENTS_FILE),
+        _extract_transcribed_date(DFB_CONSTRUCTION_FILE),
+    ) if d]
+    if not dates:
+        results.append((
+            "error",
+            "DFB calendar freshness: couldn't find a 'Transcribed' date comment in "
+            "data/disney_events.js or data/resort_construction.js",
+        ))
+        return
+
+    oldest = min(dates)
+    age_days = (datetime.date.today() - datetime.date.fromisoformat(oldest)).days
+
+    if age_days >= DFB_STALENESS_DAYS:
+        results.append((
+            "review",
+            f"DFB calendar data: {age_days} days since last transcribed ({oldest}). DFB "
+            f"typically republishes their Disney World Calendar PDF every 3-4 weeks -- "
+            f"https://www.disneyfoodblog.com/wdwcalendar (email-gated, so this can't check "
+            f"the PDF itself automatically). Worth re-reading the latest edition and "
+            f"updating data/disney_events.js and data/resort_construction.js if there's a "
+            f"newer one.",
+        ))
+    else:
+        results.append(("ok", f"DFB calendar data: last transcribed {oldest}, {age_days} days ago"))
 
 
 def check_undercover_tourist_season(state, results):
@@ -383,6 +449,7 @@ def main():
 
     check_points_chart_pdfs(state, results)
     check_page_hashes(state, results)
+    check_dfb_calendar_freshness(state, results)
     check_undercover_tourist_season(state, results)
     check_live_pricing(state, results)
 
