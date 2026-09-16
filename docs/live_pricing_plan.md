@@ -100,6 +100,18 @@ the tax on a real quote here came out to ~17% (Anaheim's hotel tax rate), not WD
 rate -- irrelevant to what's stored (pre-tax subtotal, like every other resort) but relevant
 if the app ever computes a with-tax total for this resort specifically.
 
+**Cross-year borrowing (added 2026-09-15):** Disneyland Hotel has no static `cashRates` fallback
+in `data.js` at all -- it's 100% dependent on live samples. Since the nightly pipeline samples
+whatever part of the booking calendar is currently reachable (it had built up full 2027
+coverage by this date, but zero 2026), a 2026 stay was showing no cash price at all despite
+2027 having a real number for the same time of year. `getLiveCashRate()` now falls back to
+matching by calendar month/day across *any* sampled year (not just `resort.year`) when the
+viewed year has no sample, in either direction (older or newer) -- reusing the existing
+`isPriorYear`/`fallbackYear` fields from the static prior-year fallback below, since it's the
+same "this number isn't native to the year being viewed" concept. Display text was changed
+from a hardcoded "prior year"/`year - 1` assumption to read the actual `fallbackYear`, since
+this path can go forward (2026 borrowing 2027) as easily as backward.
+
 **Grand Californian: couldn't confirm a DVC-specific mapping, so left it out rather than guess.**
 The Villas at Disney's Grand Californian Hotel & Spa is a real, currently-active DVC resort
 (`data.js` has full points/cash data for it), but there's no "Villas at Grand Californian" page

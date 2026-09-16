@@ -249,25 +249,24 @@ If MouseSavers doesn't list a room type (common for Club Concierge), omit it fro
 ### Non-WDW Resorts
 
 MouseSavers only covers WDW, so none of these 5 resorts have MouseSavers-derived
-cash rates. Current coverage as of 2026-09-06, after the live-pricing pipeline and
+cash rates. Current coverage as of 2026-09-15, after the live-pricing pipeline and
 the estimated-rate work below:
 
 - **Disneyland Hotel** — covered by the live pricing pipeline (real Disney
   booking-API prices, see `docs/live_pricing_plan.md` and
   `docs/nightly_pipeline_plan.md`). No static fallback needed.
-- **Grand Californian, Aulani** — no live pricing possible (no confirmed DVC-villa
-  booking API for either, see `docs/live_pricing_plan.md`). Now have **estimated**
-  static `cashRates` in `data.js`, flagged `estimatedCashRates: true` on the
-  resort object (`getCashRateWithFallback()` returns `isEstimate: true` when this
-  path is used) — see "Estimated Cash Rates" below for the methodology.
-- **Vero Beach, Hilton Head** — a live pricing path exists (same API as WDW
-  resorts) but has returned zero bookable rooms on every check since this
-  project started, across many dates and lead times. No defensible way to
-  estimate these two the way Grand Californian/Aulani were estimated, since
-  neither has a "regular hotel" at the same property to derive a villa-premium
-  ratio from. **Left with no cash data at all, deliberately** — the app's
-  "Compare to your own rate" manual input still covers this case, and the live
-  pipeline will pick up real data automatically if/when inventory ever appears.
+- **Grand Californian, Aulani, Vero Beach, Hilton Head** — no live pricing
+  possible for GCV/Aulani (no confirmed DVC-villa booking API for either, see
+  `docs/live_pricing_plan.md`); a live pricing path exists for Vero
+  Beach/Hilton Head (same API as WDW resorts) but has returned zero bookable
+  rooms on every check since this project started, across many dates and lead
+  times. All four now have **estimated** static `cashRates` in `data.js`,
+  flagged `estimatedCashRates: true` on the resort object
+  (`getCashRateWithFallback()` returns `isEstimate: true` when this path is
+  used, and the app surfaces a "(!)" hover badge — `estimateBadgeHTML()` in
+  `app.js`/`compare.html` — next to the resort name and the Cost Comparison
+  tile wherever one of these rates is shown) — see "Estimated Cash Rates"
+  below for the methodology on each pair.
 
 ### Estimated Cash Rates — Grand Californian & Aulani (added 2026-09-06)
 
@@ -317,6 +316,42 @@ Villas/Inn, Wilderness Lodge/Copper Creek, Grand Floridian regular/Villas) if
 these resorts' numbers ever need to hold up to real scrutiny. To reproduce or
 refine: see the Python computation this was built with, referenced in the
 git history for this change.
+
+### Estimated Cash Rates — Vero Beach & Hilton Head (added 2026-09-15)
+
+Same rationale and same "estimate, not observed price" caveat as Grand
+Californian/Aulani above, but a **different anchoring method** — neither
+resort has a regular (non-DVC) hotel at the same property, so there's no
+villa-premium ratio to derive the way Beach Club Villas/Beach Club Resort
+gave one for GCV/Aulani. Anchored directly off an aggregator-observed
+studio-tier nightly rate instead:
+
+- **Hilton Head:** one anchor, $310/night (Deluxe Studio, "Peak" season,
+  aggregator-observed 2026 rate). A single $/point multiplier
+  (310 ÷ 14 pts ≈ $22.14) derived from that anchor is applied directly to the
+  resort's own points chart to get every other period/day-type's Deluxe
+  Studio rate — the same "own points curve gives the seasonal shape" idea
+  GCV/Aulani used, just starting from a studio anchor instead of a
+  hotel-room anchor scaled up by a villa premium.
+- **Vero Beach:** one anchor, $260/night (its cheapest room tier, "Value"
+  season, aggregator-observed 2026 rate) for `innStandard`, the resort's most
+  basic Inn room. Same single-multiplier approach (260 ÷ 16 pts = $16.25) for
+  `innStandard`'s own seasonal shape. Vero Beach uniquely has *three*
+  same-size room tiers (`innStandard`/`deluxeStudio`/`innOcean`) rather than
+  one studio type — `deluxeStudio` and `innOcean` in each period/day-type are
+  priced off `innStandard` using a **damped (square-root) points ratio**
+  between the two, the same technique Aulani's view-tier premiums used, on
+  the same reasoning (points likely overstate same-size view/style spread,
+  just less severely than they overstate room-size spread).
+- **Room-size scaling (studio → 1BR → 2BR → 3BR)** for both resorts: Old Key
+  West's real cash ratios (1BR ≈ 1.354x studio, 2BR ≈ 2.049x, 3BR ≈ 4.032x),
+  identical to the GCV/Aulani method and for the identical reason (points
+  ratios overstate room-size cash spread).
+
+**Confidence:** rough, same order as GCV/Aulani (±15-20% plausible error) —
+each resort rests on a single real external anchor plus its own points curve
+for shape. Vero Beach's `deluxeStudio`/`innOcean` view-tier split is the
+least-verified piece, same caveat as Aulani's view tiers.
 
 ### Animal Kingdom Villas — fixed 2026-08-30
 

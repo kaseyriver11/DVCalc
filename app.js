@@ -129,6 +129,15 @@ function formatDisplayDate(dateStr) {
   });
 }
 
+// Small "(!)" hover badge for resorts whose cash rates are estimated rather
+// than observed (Aulani, Grand Californian, Vero Beach, Hilton Head -- see
+// estimatedCashRates in data.js). Shared by the Cost Comparison tile and the
+// trip rail's resort name so the caveat shows up everywhere a cash number
+// derived from an estimate is displayed, not just one place.
+function estimateBadgeHTML(align = "") {
+  return `<span class="tooltip-anchor estimate-badge ${align}">(!)<div class="tooltip-card estimate-tooltip">Cash prices for this resort are estimated, not observed rates, and may not be fully accurate.</div></span>`;
+}
+
 function formatShortDate(dateStr) {
   const date = new Date(dateStr + "T12:00:00");
   return date.toLocaleDateString("en-US", {
@@ -380,13 +389,16 @@ function calcSegmentTotals(seg) {
   let totalPoints = 0, totalCash = 0;
   let hasCash = false;
   let isPriorYearCash = false;
+  let fallbackYear = null;
+  let isEstimateCash = false;
   const breakdown = [];
   for (const dateStr of dates) {
     const dateResort = getResortForStayDate(resort.id, dateStr, resort);
     const pts = getPointsForDate(dateResort, dateStr, seg.roomTypeId);
     const cashResult = getCashRateWithFallback(dateResort, dateStr, seg.roomTypeId);
     const cashRate = cashResult ? cashResult.rate : null;
-    if (cashResult && cashResult.isPriorYear) isPriorYearCash = true;
+    if (cashResult && cashResult.isPriorYear) { isPriorYearCash = true; fallbackYear = cashResult.fallbackYear; }
+    if (cashResult && cashResult.isEstimate) isEstimateCash = true;
     const dayOfWeek = new Date(dateStr + "T12:00:00").getDay();
     if (pts) totalPoints += pts;
     if (cashRate) { totalCash += cashRate; hasCash = true; }
@@ -398,7 +410,7 @@ function calcSegmentTotals(seg) {
     });
   }
   const roomType = resort.roomTypes.find(rt => rt.id === seg.roomTypeId);
-  return { resort, roomType, dates, totalPoints, totalCash: hasCash ? totalCash : 0, hasCash, isPriorYearCash, breakdown };
+  return { resort, roomType, dates, totalPoints, totalCash: hasCash ? totalCash : 0, hasCash, isPriorYearCash, fallbackYear, isEstimateCash, breakdown };
 }
 
 function isSplitMode() {
@@ -1689,7 +1701,7 @@ function renderTripRail() {
   el.innerHTML = `
     <div class="trip-card">
       <div class="trip-resort-label">Your Stay</div>
-      <div class="trip-resort-name">${resort.name}</div>
+      <div class="trip-resort-name">${resort.name}${resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
       <div class="trip-room-name">${totals.roomType ? totals.roomType.name : ""}</div>
 
       <div class="trip-dates">
@@ -1906,6 +1918,8 @@ function calcCurrentSegmentTotals() {
   let totalPoints = 0, totalCash = 0;
   let hasCash = false;
   let isPriorYearCash = false;
+  let fallbackYear = null;
+  let isEstimateCash = false;
   const resortHasCashData = resort.travelPeriods.some(p => p.cashRates);
   const breakdown = [];
 
@@ -1914,7 +1928,8 @@ function calcCurrentSegmentTotals() {
     const pts = getPointsForDate(dateResort, dateStr, state.roomTypeId);
     const cashResult = getCashRateWithFallback(dateResort, dateStr, state.roomTypeId);
     const cashRate = cashResult ? cashResult.rate : null;
-    if (cashResult && cashResult.isPriorYear) isPriorYearCash = true;
+    if (cashResult && cashResult.isPriorYear) { isPriorYearCash = true; fallbackYear = cashResult.fallbackYear; }
+    if (cashResult && cashResult.isEstimate) isEstimateCash = true;
     const dayOfWeek = new Date(dateStr + "T12:00:00").getDay();
     if (pts) totalPoints += pts;
     if (cashRate) { totalCash += cashRate; hasCash = true; }
@@ -1930,7 +1945,7 @@ function calcCurrentSegmentTotals() {
   return {
     resort, roomType, dates: stayDates,
     totalPoints, totalCash: hasCash ? totalCash : 0,
-    hasCash, isPriorYearCash, resortHasCashData, breakdown,
+    hasCash, isPriorYearCash, fallbackYear, isEstimateCash, resortHasCashData, breakdown,
     checkIn: state.checkIn, checkOut: state.checkOut,
   };
 }
@@ -2245,13 +2260,16 @@ function renderSummary() {
   let totalPoints = 0, totalDisneyCash = 0, totalNights = 0;
   let anyHasCash = false;
   let anyIsPriorYear = false;
+  let priorYearFallbackYear = null;
+  let anyIsEstimate = false;
   let anyMissingCash = false;
 
   for (const t of allSegmentTotals) {
     totalPoints += t.totalPoints;
     totalNights += t.dates.length;
     if (t.hasCash || t.totalCash > 0) { totalDisneyCash += t.totalCash; anyHasCash = true; }
-    if (t.isPriorYearCash) anyIsPriorYear = true;
+    if (t.isPriorYearCash) { anyIsPriorYear = true; priorYearFallbackYear = t.fallbackYear; }
+    if (t.isEstimateCash) anyIsEstimate = true;
     if (!t.hasCash && !(t.resortHasCashData)) anyMissingCash = true;
   }
 
@@ -2356,7 +2374,7 @@ function renderSummary() {
       <div class="cost-tiles">
         ${showDisneyTile ? `
         <div class="cost-tile">
-          <div class="cost-tile-label">${useCustomRate ? 'Your cash rate' : 'If booking through Disney'}</div>
+          <div class="cost-tile-label">${useCustomRate ? 'Your cash rate' : 'If booking through Disney'}${!useCustomRate && anyIsEstimate ? estimateBadgeHTML() : ""}</div>
           ${showCustomRateInput ? `
           <div class="cost-tile-rate-input">
             <span>$</span><input type="number" id="custom-cash-rate" placeholder="e.g. 650" min="0" step="1" value="${state.customCashRate || ''}"><span>/night</span>
@@ -2365,7 +2383,7 @@ function renderSummary() {
           ${hasCashData ? `
           <div class="cost-tile-value rack">$${totalDisneyCash.toLocaleString()}</div>
           <div class="cost-tile-sub">${useCustomRate ? `${stayDates.length} nights × $${state.customCashRate}/night` : `$${(totalDisneyCash / totalPoints).toFixed(2)}/pt`}</div>
-          ${anyIsPriorYear ? `<div class="prior-year-note">* Some cash rates based on prior year pricing</div>` : ""}
+          ${anyIsPriorYear ? `<div class="prior-year-note">* Some cash rates based on ${priorYearFallbackYear || ''} pricing</div>` : ""}
           ` : `
           <div class="cost-tile-sub no-cash-note">No cash rate data for non-WDW resorts</div>
           `}

@@ -379,6 +379,28 @@ body {
   line-height: 1.4;
 }
 
+/* "(!)" flag next to a resort name with estimated (not observed) cash rates --
+   see estimateBadgeHTML() above. .resort-name prefix keeps its color from
+   being overridden by .resort-name-select:hover's higher-specificity rule. */
+.resort-name .estimate-badge {
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 700;
+  color: #ef6c00;
+}
+
+.estimate-tooltip {
+  width: 200px;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  letter-spacing: normal;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #555;
+  line-height: 1.4;
+}
+
 .editable-cash span { cursor: pointer; }
 .editable-cash span:hover { text-decoration: underline; }
 
@@ -706,6 +728,14 @@ function headerTooltipHTML(label, desc, align = "") {
   return `<span class="tooltip-anchor header-tooltip-anchor ${align}">${label}<div class="tooltip-card header-tooltip">${desc}</div></span>`;
 }
 
+// "(!)" flag next to a resort name whose cash rates are estimated rather
+// than observed (Aulani, Grand Californian, Vero Beach, Hilton Head -- see
+// estimatedCashRates in data.js) -- same component and caveat text as
+// estimateBadgeHTML() in app.js.
+function estimateBadgeHTML() {
+  return `<span class="tooltip-anchor estimate-badge">(!)<div class="tooltip-card estimate-tooltip">Cash prices for this resort are estimated, not observed rates, and may not be fully accurate.</div></span>`;
+}
+
 function sortHeaderHTML(key) {
   const col = SORT_COLUMNS[key];
   const active = state.sortBy === key;
@@ -757,15 +787,16 @@ function calcStay(resort, roomTypeId, stayDates) {
   let totalCash = 0;
   let hasCash = false;
   let isPriorYearCash = false;
+  let fallbackYear = null;
   for (const dateStr of stayDates) {
     const pts = getPointsForDate(resort, dateStr, roomTypeId);
     const cashResult = getCashRateWithFallback(resort, dateStr, roomTypeId);
     const cash = cashResult ? cashResult.rate : null;
-    if (cashResult && cashResult.isPriorYear) isPriorYearCash = true;
+    if (cashResult && cashResult.isPriorYear) { isPriorYearCash = true; fallbackYear = cashResult.fallbackYear; }
     if (pts) totalPoints += pts;
     if (cash) { totalCash += cash; hasCash = true; }
   }
-  return { totalPoints, totalCash: hasCash ? totalCash : null, isPriorYearCash };
+  return { totalPoints, totalCash: hasCash ? totalCash : null, isPriorYearCash, fallbackYear };
 }
 
 // ---- Booking Outlook (ported from app.js — same historical-availability model,
@@ -944,6 +975,7 @@ function render() {
         totalCash: effectiveCash,
         isCustomCash: isCustom,
         isPriorYearCash: result.isPriorYearCash && !isCustom,
+        fallbackYear: result.fallbackYear,
         hasBuiltInCash: result.totalCash !== null,
         rentalCost,
         ownerCost,
@@ -1002,11 +1034,11 @@ function render() {
     const rank = i + 1;
     const priorYearMark = row.isPriorYearCash ? '*' : '';
     const cashClass = row.isCustomCash ? 'cash-value custom' : row.isPriorYearCash ? 'cash-value prior-year' : 'cash-value';
-    const cashDisplay = `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${year - 1} rates` : 'Click to edit'}">$${row.totalCash.toLocaleString()}${priorYearMark}</span>`;
+    const cashDisplay = `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${row.fallbackYear} rates` : 'Click to edit'}">$${row.totalCash.toLocaleString()}${priorYearMark}</span>`;
     html += `<tr>
       <td class="rank-num ${rank === 1 ? 'top' : ''}">${rank}</td>
       <td>
-        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}</div>
+        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}${row.resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
         <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
       </td>
       <td>${row.outlookHTML}</td>
@@ -1027,7 +1059,7 @@ function render() {
       html += `<tr class="no-cash-row">
         <td class="rank-num">—</td>
         <td>
-          <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}</div>
+          <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}${row.resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
           <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
         </td>
         <td>${row.outlookHTML}</td>
@@ -1044,7 +1076,9 @@ function render() {
 
   html += `</tbody></table>`;
   if (anyPriorYear) {
-    html += `<div class="prior-year-footnote">* Cash rates based on ${year - 1} pricing</div>`;
+    const fallbackYears = [...new Set(withCash.filter(r => r.isPriorYearCash).map(r => r.fallbackYear))];
+    const yearsLabel = fallbackYears.length === 1 ? `${fallbackYears[0]} pricing` : "a different year's pricing";
+    html += `<div class="prior-year-footnote">* Cash rates based on ${yearsLabel}</div>`;
   }
   resultsContainer.innerHTML = html;
 

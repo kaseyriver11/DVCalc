@@ -49,7 +49,7 @@ pdfs/{resort}_archive/          # Downloaded historical PDFs for all 17 resorts 
 14. Defaults to current month
 
 ## Resorts
-All 17 DVC resorts are selectable for 2026 and 2027, and `data.js` now defines all 17 (Animal Kingdom Villas was added 2026-08-30 — see below). Cash rates cover 12 resorts (all WDW resorts); the 5 non-WDW resorts still have none since MouseSavers is WDW-only.
+All 17 DVC resorts are selectable for 2026 and 2027, and `data.js` now defines all 17 (Animal Kingdom Villas was added 2026-08-30 — see below). Cash rates now cover all 17: the 12 WDW resorts from MouseSavers, Disneyland Hotel from the live pricing pipeline, and Aulani/Grand Californian/Vero Beach/Hilton Head from rough manual estimates (`estimatedCashRates: true` in `data.js` — see `docs/data_reproducibility.md` "Estimated Cash Rates" for methodology and confidence caveats). Every estimated-rate resort gets a "(!)" hover badge (`estimateBadgeHTML()` in `app.js`/`compare.html`) next to its name and on the Cost Comparison tile, explaining the price isn't an observed rate.
 
 **Animal Kingdom Villas** points/cash rates live directly in `data.js` for 2026 only (Jambo House + Kidani Village MouseSavers pages, averaged where both buildings share a view). 2027 has no `data.js` entry — it still comes from the generated `data_historical.js` for points, and falls back to 2026's cash rates via `getCashRateWithFallback()` (same prior-year fallback other resorts use), since MouseSavers' 2027 AKV pages don't yet publish December rates.
 

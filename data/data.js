@@ -690,10 +690,18 @@ const RESORTS = [
   },
 
   // --- Disney's Hilton Head Island Resort ---
+  // cashRates below are ESTIMATES, not observed prices -- see
+  // docs/data_reproducibility.md "Estimated cash rates" for the full
+  // methodology and confidence caveats. Unlike Grand Californian/Aulani,
+  // there's no regular (non-DVC) hotel at the same property to derive a
+  // villa-premium ratio from, so this anchors directly off an aggregator-
+  // observed studio-tier nightly rate instead. estimatedCashRates:true
+  // flags this for getCashRateWithFallback(), which returns isEstimate:true.
   {
     id: "hiltonHead",
     name: "Disney's Hilton Head Island Resort",
     year: 2026,
+    estimatedCashRates: true,
     roomTypes: [
       { id: "deluxeStudio", name: "Deluxe Studio", sleeps: 4 },
       { id: "oneBedroom", name: "One-Bedroom Villa", sleeps: 5 },
@@ -707,12 +715,20 @@ const RESORTS = [
           sunThu: { deluxeStudio:6, oneBedroom:14, twoBedroom:20, threeBedroom:27 },
           friSat: { deluxeStudio:12, oneBedroom:19, twoBedroom:23, threeBedroom:39 },
         },
+        cashRates: {
+          sunThu: { deluxeStudio:133, oneBedroom:180, twoBedroom:273, threeBedroom:536 },
+          friSat: { deluxeStudio:266, oneBedroom:360, twoBedroom:545, threeBedroom:1073 },
+        },
       },
       { name: "Regular", color: "#2196F3",
         dateRanges: [{ start: "2026-02-01", end: "2026-03-31" }, { start: "2026-11-01", end: "2026-11-30" }, { start: "2026-12-18", end: "2026-12-31" }],
         rates: {
           sunThu: { deluxeStudio:10, oneBedroom:20, twoBedroom:24, threeBedroom:47 },
           friSat: { deluxeStudio:15, oneBedroom:29, twoBedroom:36, threeBedroom:60 },
+        },
+        cashRates: {
+          sunThu: { deluxeStudio:221, oneBedroom:299, twoBedroom:453, threeBedroom:891 },
+          friSat: { deluxeStudio:332, oneBedroom:450, twoBedroom:680, threeBedroom:1339 },
         },
       },
       { name: "Peak", color: "#FF9800",
@@ -721,6 +737,10 @@ const RESORTS = [
           sunThu: { deluxeStudio:14, oneBedroom:27, twoBedroom:33, threeBedroom:59 },
           friSat: { deluxeStudio:23, oneBedroom:44, twoBedroom:56, threeBedroom:95 },
         },
+        cashRates: {
+          sunThu: { deluxeStudio:310, oneBedroom:420, twoBedroom:635, threeBedroom:1250 },
+          friSat: { deluxeStudio:509, oneBedroom:689, twoBedroom:1043, threeBedroom:2052 },
+        },
       },
       { name: "Premier", color: "#F44336",
         dateRanges: [{ start: "2026-06-11", end: "2026-08-27" }],
@@ -728,15 +748,26 @@ const RESORTS = [
           sunThu: { deluxeStudio:15, oneBedroom:31, twoBedroom:41, threeBedroom:71 },
           friSat: { deluxeStudio:27, oneBedroom:52, twoBedroom:66, threeBedroom:111 },
         },
+        cashRates: {
+          sunThu: { deluxeStudio:332, oneBedroom:450, twoBedroom:680, threeBedroom:1339 },
+          friSat: { deluxeStudio:598, oneBedroom:810, twoBedroom:1225, threeBedroom:2411 },
+        },
       },
     ],
   },
 
   // --- Disney's Vero Beach Resort ---
+  // cashRates below are ESTIMATES, not observed prices -- see
+  // docs/data_reproducibility.md "Estimated cash rates" for the full
+  // methodology and confidence caveats, same reasoning as Hilton Head
+  // above (no same-property regular hotel to anchor a villa premium off).
+  // estimatedCashRates:true flags this for getCashRateWithFallback(),
+  // which returns isEstimate:true.
   {
     id: "veroBeach",
     name: "Disney's Vero Beach Resort",
     year: 2026,
+    estimatedCashRates: true,
     roomTypes: [
       { id: "innStandard", name: "Deluxe Inn Room - Standard View", sleeps: 4 },
       { id: "deluxeStudio", name: "Deluxe Studio", sleeps: 4 },
@@ -752,12 +783,20 @@ const RESORTS = [
           sunThu: { innStandard:10, deluxeStudio:12, innOcean:14, oneBedroom:21, twoBedroom:30, beachCottage:60 },
           friSat: { innStandard:16, deluxeStudio:17, innOcean:17, oneBedroom:29, twoBedroom:39, beachCottage:72 },
         },
+        cashRates: {
+          sunThu: { innStandard:163, deluxeStudio:179, innOcean:193, oneBedroom:242, twoBedroom:367, beachCottage:722 },
+          friSat: { innStandard:260, deluxeStudio:268, innOcean:268, oneBedroom:363, twoBedroom:549, beachCottage:1081 },
+        },
       },
       { name: "Regular", color: "#2196F3",
         dateRanges: [{ start: "2026-05-01", end: "2026-05-31" }, { start: "2026-11-28", end: "2026-12-23" }],
         rates: {
           sunThu: { innStandard:10, deluxeStudio:13, innOcean:15, oneBedroom:24, twoBedroom:33, beachCottage:61 },
           friSat: { innStandard:17, deluxeStudio:18, innOcean:19, oneBedroom:31, twoBedroom:42, beachCottage:74 },
+        },
+        cashRates: {
+          sunThu: { innStandard:163, deluxeStudio:186, innOcean:200, oneBedroom:252, twoBedroom:381, beachCottage:750 },
+          friSat: { innStandard:276, deluxeStudio:284, innOcean:292, oneBedroom:385, twoBedroom:582, beachCottage:1145 },
         },
       },
       { name: "Choice", color: "#9C27B0",
@@ -766,6 +805,10 @@ const RESORTS = [
           sunThu: { innStandard:14, deluxeStudio:16, innOcean:18, oneBedroom:29, twoBedroom:36, beachCottage:73 },
           friSat: { innStandard:17, deluxeStudio:19, innOcean:21, oneBedroom:37, twoBedroom:47, beachCottage:88 },
         },
+        cashRates: {
+          sunThu: { innStandard:228, deluxeStudio:244, innOcean:259, oneBedroom:330, twoBedroom:500, beachCottage:984 },
+          friSat: { innStandard:276, deluxeStudio:292, innOcean:307, oneBedroom:395, twoBedroom:598, beachCottage:1177 },
+        },
       },
       { name: "Peak", color: "#FF9800",
         dateRanges: [{ start: "2026-02-01", end: "2026-02-21" }, { start: "2026-04-12", end: "2026-04-30" }],
@@ -773,12 +816,20 @@ const RESORTS = [
           sunThu: { innStandard:15, deluxeStudio:17, innOcean:19, oneBedroom:31, twoBedroom:44, beachCottage:81 },
           friSat: { innStandard:20, deluxeStudio:21, innOcean:23, oneBedroom:40, twoBedroom:52, beachCottage:99 },
         },
+        cashRates: {
+          sunThu: { innStandard:244, deluxeStudio:260, innOcean:275, oneBedroom:352, twoBedroom:533, beachCottage:1048 },
+          friSat: { innStandard:325, deluxeStudio:333, innOcean:349, oneBedroom:451, twoBedroom:682, beachCottage:1343 },
+        },
       },
       { name: "Premier", color: "#F44336",
         dateRanges: [{ start: "2026-02-22", end: "2026-04-11" }, { start: "2026-12-24", end: "2026-12-31" }],
         rates: {
           sunThu: { innStandard:21, deluxeStudio:23, innOcean:26, oneBedroom:43, twoBedroom:61, beachCottage:105 },
           friSat: { innStandard:27, deluxeStudio:29, innOcean:31, oneBedroom:53, twoBedroom:72, beachCottage:126 },
+        },
+        cashRates: {
+          sunThu: { innStandard:341, deluxeStudio:357, innOcean:379, oneBedroom:483, twoBedroom:731, beachCottage:1439 },
+          friSat: { innStandard:439, deluxeStudio:455, innOcean:470, oneBedroom:616, twoBedroom:932, beachCottage:1835 },
         },
       },
     ],
@@ -1572,13 +1623,46 @@ function getLiveCashRate(resort, dateStr, roomTypeId) {
   const resortData = CASH_PRICES_LIVE[resort.id];
   if (!resortData) return null;
   const dayType = getDayType(dateStr);
+  const readBucket = (period) => period.roomTypes[roomTypeId]?.[dayType];
+
   for (const period of resortData.periods) {
     if (period.yearUsed !== resort.year) continue;
     if (dateStr < period.rangeStart || dateStr > period.rangeEnd) continue;
-    const bucket = period.roomTypes[roomTypeId]?.[dayType];
+    const bucket = readBucket(period);
     if (bucket && bucket.average != null) {
       return {
         rate: bucket.average,
+        sourceYear: resort.year,
+        lastChecked: bucket.lastChecked,
+        lastCheckedAt: bucket.lastCheckedAt,
+        sampleCount: bucket.sampleCount,
+      };
+    }
+  }
+
+  // No live sample exists for the year actually being viewed (e.g. the
+  // nightly pipeline has only reached 2027 so far, and resort.year is
+  // still 2026) -- borrow another sampled year's price for the same
+  // calendar month/day instead of showing nothing. Matched by month/day,
+  // not the literal date, since a live "period" here is just an arbitrary
+  // chunk of dates the nightly job happened to check on a given run, not a
+  // clean travel-period calendar the way static cashRates are -- so this
+  // can reach either direction (an older or a newer sampled year).
+  const monthDay = (d) => d.slice(5);
+  const targetMD = monthDay(dateStr);
+  for (const period of resortData.periods) {
+    if (period.yearUsed === resort.year) continue;
+    const startMD = monthDay(period.rangeStart);
+    const endMD = monthDay(period.rangeEnd);
+    const inRange = startMD <= endMD
+      ? (targetMD >= startMD && targetMD <= endMD)
+      : (targetMD >= startMD || targetMD <= endMD); // range wraps across Dec 31 -> Jan 1
+    if (!inRange) continue;
+    const bucket = readBucket(period);
+    if (bucket && bucket.average != null) {
+      return {
+        rate: bucket.average,
+        sourceYear: period.yearUsed,
         lastChecked: bucket.lastChecked,
         lastCheckedAt: bucket.lastCheckedAt,
         sampleCount: bucket.sampleCount,
@@ -1588,17 +1672,25 @@ function getLiveCashRate(resort, dateStr, roomTypeId) {
   return null;
 }
 
-// Get cash rate with fallback to prior year's data if current year has none.
-// Checks live pricing first (see getLiveCashRate) -- when a fresh sample
-// exists it silently takes over from the static MouseSavers-derived rate,
-// same as choosing "replace" over "show both" for this feature. Returns
-// { rate, isPriorYear, isLive?, lastCheckedAt?, sampleCount? } or null.
+// Get cash rate with fallback to another year's data if the year actually
+// being viewed has none. Checks live pricing first (see getLiveCashRate) --
+// when a fresh sample exists it silently takes over from the static
+// MouseSavers-derived rate, same as choosing "replace" over "show both" for
+// this feature. isPriorYear/fallbackYear double as the general "this number
+// came from a different year" flag+value for both the static path (always
+// backward, resort.year - 1) and the live path (either direction, whichever
+// year the nightly pipeline has actually sampled) -- display code should
+// read fallbackYear rather than assume "prior" means "earlier." Returns
+// { rate, isPriorYear, fallbackYear?, isLive?, lastCheckedAt?, sampleCount? }
+// or null.
 function getCashRateWithFallback(resort, dateStr, roomTypeId) {
   const live = getLiveCashRate(resort, dateStr, roomTypeId);
   if (live) {
+    const isPriorYear = live.sourceYear !== resort.year;
     return {
       rate: live.rate,
-      isPriorYear: false,
+      isPriorYear,
+      fallbackYear: isPriorYear ? live.sourceYear : undefined,
       isLive: true,
       lastCheckedAt: live.lastCheckedAt,
       sampleCount: live.sampleCount,
