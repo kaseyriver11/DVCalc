@@ -890,7 +890,7 @@ function buildOutlookStripHTML(resortId, roomTypeId, stayDates) {
     if (!label) return `<div class="outlook-dot outlook-none"></div>`;
     const align = i === 0 ? "tooltip-align-left" : i === BOOKING_WINDOWS.length - 1 ? "tooltip-align-right" : "";
     return `
-      <div class="outlook-dot ${label.cls} tooltip-anchor ${align}" tabindex="0">
+      <div class="outlook-dot ${label.cls} tooltip-anchor ${align}">
         <div class="tooltip-card outlook-tooltip">${w.label}: ${label.text}</div>
       </div>`;
   }).join("");

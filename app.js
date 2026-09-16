@@ -284,7 +284,7 @@ function buildAvailabilityDotsHTML(avail, stayLength) {
     return `
       <div class="avail-dot-col">
         <span class="avail-dot-label">${w.shortLabel}</span>
-        <div class="avail-dot ${label.dotCls} tooltip-anchor ${align}" tabindex="0">
+        <div class="avail-dot ${label.dotCls} tooltip-anchor ${align}">
           <div class="avail-dot-tooltip tooltip-card">${w.label}: ${label.text}</div>
         </div>
       </div>`;
@@ -914,7 +914,7 @@ function buildDistributionHTML(values, currentValue, opts) {
     const binPct = Math.round((count / total) * 100);
     const align = i <= 1 ? "tooltip-align-left" : i >= DIST_BIN_COUNT - 2 ? "tooltip-align-right" : "";
     return `
-      <div class="dist-bar-anchor tooltip-anchor ${align}" tabindex="0">
+      <div class="dist-bar-anchor tooltip-anchor ${align}">
         <div class="dist-bar${i === currentBin ? " current" : ""}" style="height:${heightPct}%"></div>
         <div class="dist-tooltip tooltip-card">${binPct}% (${count}/${total}) between ${opts.format(binLo)}${unit} and ${opts.format(binHi)}${unit}</div>
       </div>
@@ -971,7 +971,7 @@ function buildValueScoreHTML(score) {
   const rounded = Math.min(5, Math.max(1, Math.round(score)));
   return `
     <div class="value-score-row">
-      <div class="value-score-badge tooltip-anchor ${VALUE_SCORE_CLASS[rounded]}" tabindex="0">
+      <div class="value-score-badge tooltip-anchor ${VALUE_SCORE_CLASS[rounded]}">
         <span class="value-score-num">${score.toFixed(1)}</span>
         <div class="value-tooltip tooltip-card">
           <div class="value-tooltip-title">${score.toFixed(1)} out of 5 — ${VALUE_SCORE_LABELS[rounded]}</div>
@@ -1845,13 +1845,13 @@ function renderCalendar() {
     const cashLabel = cashRate ? `<span class="day-cash${cashIsPriorYear ? ' prior-year' : ''}">$${Math.round(cashRate).toLocaleString()}${cashIsPriorYear ? '*' : ''}</span>` : "";
     const crowd = getCrowdForDate(dateStr);
     const crowdLabel = crowd ? `
-      <span class="day-crowd tooltip-anchor ${crowdClass(crowd.label)} ${tooltipAlign}" tabindex="0">
+      <span class="day-crowd tooltip-anchor ${crowdClass(crowd.label)} ${tooltipAlign}">
         ${crowd.crowd}
         ${buildCrowdTooltipHTML(dateStr, crowd)}
       </span>` : "";
     const dayEvents = getEventsForDate(dateStr);
     const eventLabel = dayEvents.length > 0 ? `
-      <span class="day-event tooltip-anchor ${tooltipAlign}" tabindex="0">
+      <span class="day-event tooltip-anchor ${tooltipAlign}">
         🎉
         ${buildEventTooltipHTML(dateStr, dayEvents)}
       </span>` : "";
