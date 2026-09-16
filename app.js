@@ -890,6 +890,18 @@ function percentileRank(values, value) {
 
 const DIST_BIN_COUNT = 12;
 
+// Green (low/good) -> red (high/bad) for metrics where lower is unambiguously
+// better (crowd, points) -- pct is the same percentile the callout text
+// already shows, so the bar's color and its "busier/more points than X%"
+// sentence always agree. Deliberately not used for cash price -- the Value
+// Score elsewhere in this same card treats a *high* cash-per-point as the
+// favorable direction, so coloring raw cash red-for-expensive would
+// contradict that right next to it.
+function distGoodBadColor(pct) {
+  const hue = 120 - (pct / 100) * 120; // 120 = green, 0 = red
+  return `hsl(${hue}, 65%, 42%)`;
+}
+
 function buildDistributionHTML(values, currentValue, opts) {
   if (values.length < 20 || currentValue == null) return "";
 
@@ -906,6 +918,7 @@ function buildDistributionHTML(values, currentValue, opts) {
   const pct = percentileRank(values, currentValue);
   const total = values.length;
   const unit = opts.unit || "";
+  const currentColor = opts.colorScale ? distGoodBadColor(pct) : null;
 
   const bars = bins.map((count, i) => {
     const heightPct = count === 0 ? 2 : Math.max((count / maxCount) * 100, 8);
@@ -913,9 +926,11 @@ function buildDistributionHTML(values, currentValue, opts) {
     const binHi = min + ((i + 1) / DIST_BIN_COUNT) * span;
     const binPct = Math.round((count / total) * 100);
     const align = i <= 1 ? "tooltip-align-left" : i >= DIST_BIN_COUNT - 2 ? "tooltip-align-right" : "";
+    const isCurrent = i === currentBin;
+    const barStyle = `height:${heightPct}%${isCurrent && currentColor ? `;background:${currentColor}` : ""}`;
     return `
       <div class="dist-bar-anchor tooltip-anchor ${align}">
-        <div class="dist-bar${i === currentBin ? " current" : ""}" style="height:${heightPct}%"></div>
+        <div class="dist-bar${isCurrent ? " current" : ""}" style="${barStyle}"></div>
         <div class="dist-tooltip tooltip-card">${binPct}% (${count}/${total}) between ${opts.format(binLo)}${unit} and ${opts.format(binHi)}${unit}</div>
       </div>
     `;
@@ -1200,6 +1215,7 @@ function buildStayInsightsHTML(resort, roomTypeId, stayDates) {
       title: "Crowd forecast",
       format: v => v.toFixed(1),
       calloutText: pct => pct == null ? "" : `Busier than <strong>${pct}%</strong> of all ${nights}-night stays ${rangeLabel}`,
+      colorScale: true,
     }));
   }
   if (pointsOk) {
@@ -1208,6 +1224,7 @@ function buildStayInsightsHTML(resort, roomTypeId, stayDates) {
       format: v => Math.round(v).toLocaleString(),
       unit: " points",
       calloutText: pct => pct == null ? "" : `More points than <strong>${pct}%</strong> of all ${nights}-night stays ${rangeLabel}`,
+      colorScale: true,
     }));
   }
   if (cashOk) {
