@@ -1034,7 +1034,7 @@ function render() {
     const rank = i + 1;
     const priorYearMark = row.isPriorYearCash ? '*' : '';
     const cashClass = row.isCustomCash ? 'cash-value custom' : row.isPriorYearCash ? 'cash-value prior-year' : 'cash-value';
-    const cashDisplay = `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${row.fallbackYear} rates` : 'Click to edit'}">$${row.totalCash.toLocaleString()}${priorYearMark}</span>`;
+    const cashDisplay = `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${row.fallbackYear} rates` : 'Click to edit'}">$${Math.round(row.totalCash).toLocaleString()}${priorYearMark}</span>`;
     html += `<tr>
       <td class="rank-num ${rank === 1 ? 'top' : ''}">${rank}</td>
       <td>
@@ -1110,7 +1110,7 @@ function render() {
       input.select();
 
       const commit = () => {
-        const val = parseFloat(input.value);
+        const val = Math.round(parseFloat(input.value));
         if (val > 0) {
           state.customCashRates[key] = val;
         } else {

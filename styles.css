@@ -198,8 +198,8 @@ select, input, textarea, button {
 }
 
 .custom-select-narrow {
-  min-width: 80px;
-  max-width: 120px;
+  min-width: 180px;
+  max-width: 220px;
 }
 
 .custom-select-trigger {

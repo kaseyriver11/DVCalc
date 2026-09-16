@@ -1842,7 +1842,7 @@ function renderCalendar() {
       `;
     }
 
-    const cashLabel = cashRate ? `<span class="day-cash${cashIsPriorYear ? ' prior-year' : ''}">$${cashRate.toLocaleString()}${cashIsPriorYear ? '*' : ''}</span>` : "";
+    const cashLabel = cashRate ? `<span class="day-cash${cashIsPriorYear ? ' prior-year' : ''}">$${Math.round(cashRate).toLocaleString()}${cashIsPriorYear ? '*' : ''}</span>` : "";
     const crowd = getCrowdForDate(dateStr);
     const crowdLabel = crowd ? `
       <span class="day-crowd tooltip-anchor ${crowdClass(crowd.label)} ${tooltipAlign}" tabindex="0">
@@ -1958,7 +1958,7 @@ function buildNightlyRows(breakdown, hasCashData, useCustomRate) {
       <div class="nightly-row">
         <span class="night-date">${n.dayName} ${formatShortDate(n.date)}</span>
         <span class="night-points">${n.points} pts</span>
-        ${hasCashData ? `<span class="night-cash">$${displayCash ? displayCash.toLocaleString() : "—"}</span>` : ""}
+        ${hasCashData ? `<span class="night-cash">$${displayCash ? Math.round(displayCash).toLocaleString() : "—"}</span>` : ""}
       </div>
     `;
   }).join("");
@@ -1994,7 +1994,7 @@ function buildSegmentBlock(seg, totals, index, isCurrentSegment, totalVisible) {
       </div>
       <div class="segment-detail">${totals.roomType ? totals.roomType.name : ""}</div>
       <div class="segment-detail">${formatShortDate(segCheckIn)} — ${formatShortDate(segCheckOut)} (${nightCount} night${nightCount !== 1 ? "s" : ""})</div>
-      <div class="segment-detail"><strong>${totals.totalPoints} pts</strong>${hasCashData ? ` · $${totals.totalCash.toLocaleString()} cash` : ""}</div>
+      <div class="segment-detail"><strong>${totals.totalPoints} pts</strong>${hasCashData ? ` · $${Math.round(totals.totalCash).toLocaleString()} cash` : ""}</div>
       <div class="segment-actions">
         ${hasCompleteDates ? `<a class="segment-compare" href="compare.html?checkin=${segCheckIn}&checkout=${segCheckOut}&category=${segCategory}">Compare Resorts</a>` : ""}
         <span class="segment-nightly-toggle" onclick="this.closest('.segment-block').querySelector('.summary-nightly').classList.toggle('open')">Nightly</span>
@@ -2381,7 +2381,7 @@ function renderSummary() {
           </div>
           ` : ""}
           ${hasCashData ? `
-          <div class="cost-tile-value rack">$${totalDisneyCash.toLocaleString()}</div>
+          <div class="cost-tile-value rack">$${Math.round(totalDisneyCash).toLocaleString()}</div>
           <div class="cost-tile-sub">${useCustomRate ? `${stayDates.length} nights × $${state.customCashRate}/night` : `$${(totalDisneyCash / totalPoints).toFixed(2)}/pt`}</div>
           ${anyIsPriorYear ? `<div class="prior-year-note">* Some cash rates based on ${priorYearFallbackYear || ''} pricing</div>` : ""}
           ` : `
@@ -2405,7 +2405,7 @@ function renderSummary() {
           <div class="cost-tile-rate-input">
             <span>$</span><input type="number" id="rental-rate" min="15" max="25" step="0.5" value="${state.rentalRate}"><span>/pt</span>
           </div>
-          <div class="cost-tile-value cash">$${rentalValue.toLocaleString()}</div>
+          <div class="cost-tile-value cash">$${Math.round(rentalValue).toLocaleString()}</div>
           <div class="cost-tile-sub">${totalPoints} pts</div>
           ${hasCashData ? `<div class="cost-tile-savings">save $${Math.round(totalDisneyCash - rentalValue).toLocaleString()} <span class="savings-badge">${savings}% off</span></div>` : ""}
         </div>
@@ -2461,7 +2461,7 @@ function renderSummary() {
   const customInput = document.getElementById("custom-cash-rate");
   if (customInput) {
     customInput.addEventListener("change", (e) => {
-      const val = parseFloat(e.target.value);
+      const val = Math.round(parseFloat(e.target.value));
       state.customCashRate = val > 0 ? val : null;
       renderSummary();
     });

@@ -1631,7 +1631,7 @@ function getLiveCashRate(resort, dateStr, roomTypeId) {
     const bucket = readBucket(period);
     if (bucket && bucket.average != null) {
       return {
-        rate: bucket.average,
+        rate: Math.round(bucket.average),
         sourceYear: resort.year,
         lastChecked: bucket.lastChecked,
         lastCheckedAt: bucket.lastCheckedAt,
@@ -1661,7 +1661,7 @@ function getLiveCashRate(resort, dateStr, roomTypeId) {
     const bucket = readBucket(period);
     if (bucket && bucket.average != null) {
       return {
-        rate: bucket.average,
+        rate: Math.round(bucket.average),
         sourceYear: period.yearUsed,
         lastChecked: bucket.lastChecked,
         lastCheckedAt: bucket.lastCheckedAt,
