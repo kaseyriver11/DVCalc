@@ -98,13 +98,25 @@ function loadGoogleIdentityScript() {
   return gsiScriptPromise;
 }
 
-// A fresh nonce per attempt -- passed to both GSI (bound into the signed ID
-// token) and signInWithIdToken() (which checks it matches), so a captured/
-// replayed token from elsewhere can't be reused to sign in as someone else.
+// A fresh nonce per attempt -- passed to both GSI and signInWithIdToken()
+// (which checks it matches), so a captured/replayed token from elsewhere
+// can't be reused to sign in as someone else. IMPORTANT: Google embeds
+// whatever we hand its initialize() call *directly* as the ID token's
+// nonce claim, but Supabase's signInWithIdToken() takes the RAW nonce and
+// hashes it itself before comparing against that claim -- so Google must
+// be given the SHA-256 hash (sha256Hex(raw) below) while Supabase must be
+// given the original raw value. Passing the same string to both (as an
+// earlier version of this file did) makes every sign-in fail that
+// comparison and silently fall back to the redirect flow.
 function randomNonce() {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return [...bytes].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 // Set fresh by enhanceSignInButton() each time it (re-)initializes GSI --
@@ -144,12 +156,12 @@ function enhanceSignInButton(btn) {
   if (!configured || !btn || btn.dataset.gsiEnhanced) return;
   btn.dataset.gsiEnhanced = "1";
   const isGate = btn.id === "gate-signin"; // the big full-page gate button gets Google's larger button; the compact nav pill gets the medium one
-  loadGoogleIdentityScript().then(() => {
+  loadGoogleIdentityScript().then(async () => {
     gsiNonce = randomNonce();
     window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleCredentialResponse,
-      nonce: gsiNonce,
+      nonce: await sha256Hex(gsiNonce),
       use_fedcm_for_prompt: true,
     });
 
