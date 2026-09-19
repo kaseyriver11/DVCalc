@@ -144,6 +144,29 @@ async function handleCredentialResponse(response) {
   }
 }
 
+// initialize() sets GLOBAL state in the GSI SDK (one callback/nonce for the
+// whole page, not per-button) -- cached in a single promise so it only ever
+// runs once no matter how many buttons get enhanced. Pages like home.html
+// can have several sign-in buttons live at once (one per locked widget);
+// without this, enhancing them all back-to-back raced each other's
+// randomNonce()/initialize() calls, and whichever one lost the race left
+// gsiNonce mismatched against what Google actually signed into the ID
+// token -- silently reintroducing the exact nonce bug fixed above.
+let gsiInitPromise = null;
+function ensureGsiInitialized() {
+  if (gsiInitPromise) return gsiInitPromise;
+  gsiInitPromise = loadGoogleIdentityScript().then(async () => {
+    gsiNonce = randomNonce();
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+      nonce: await sha256Hex(gsiNonce),
+      use_fedcm_for_prompt: true,
+    });
+  });
+  return gsiInitPromise;
+}
+
 // Replaces `btn` (visually) with Google's own real, visible renderButton()
 // -- see the big comment above for why this is the option left standing.
 // `btn` itself is only hidden, not removed, and stays fully wired to its
@@ -155,23 +178,18 @@ async function handleCredentialResponse(response) {
 function enhanceSignInButton(btn) {
   if (!configured || !btn || btn.dataset.gsiEnhanced) return;
   btn.dataset.gsiEnhanced = "1";
-  const isGate = btn.id === "gate-signin"; // the big full-page gate button gets Google's larger button; the compact nav pill gets the medium one
-  loadGoogleIdentityScript().then(async () => {
-    gsiNonce = randomNonce();
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse,
-      nonce: await sha256Hex(gsiNonce),
-      use_fedcm_for_prompt: true,
-    });
-
+  // The full-page gate button and home.html's per-widget prompts are both
+  // roomy, standalone buttons -- Google's larger size fits them. The
+  // compact nav pill is the one exception, sized down to "medium."
+  const isRoomy = btn.id === "gate-signin" || btn.classList.contains("home-signin-btn");
+  ensureGsiInitialized().then(() => {
     const container = document.createElement("span");
     container.style.display = "inline-block";
     btn.insertAdjacentElement("afterend", container);
     window.google.accounts.id.renderButton(container, {
       type: "standard",
       theme: "outline",
-      size: isGate ? "large" : "medium",
+      size: isRoomy ? "large" : "medium",
       shape: "pill",
       text: "signin_with",
       logo_alignment: "left",
@@ -187,13 +205,15 @@ function enhanceSignInButton(btn) {
 
 // Re-scans for every known "Sign in with Google" button on the page -- the
 // shared nav one (#account-signin, rebuilt from scratch by
-// renderAccountControl() on every auth-state change) plus each page's own
+// renderAccountControl() on every auth-state change), each page's own
 // full-page gate (#gate-signin, rendered asynchronously by that page's own
-// script once it knows the user is signed out). enhanceSignInButton()'s
+// script once it knows the user is signed out), and home.html's per-widget
+// prompts (.home-signin-btn, home.js -- several of these can exist on
+// screen at once, one per locked dashboard card). enhanceSignInButton()'s
 // dataset guard makes repeat calls cheap, so this gets called liberally
 // rather than trying to track the one right moment to call it.
 function enhanceAllSignInButtons() {
-  document.querySelectorAll("#account-signin, #gate-signin").forEach(enhanceSignInButton);
+  document.querySelectorAll("#account-signin, #gate-signin, .home-signin-btn").forEach(enhanceSignInButton);
 }
 
 // The plain click-triggered fallback -- still wired to every existing
