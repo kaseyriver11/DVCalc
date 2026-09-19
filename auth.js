@@ -167,21 +167,17 @@ function ensureGsiInitialized() {
   return gsiInitPromise;
 }
 
-// Replaces `btn` (visually) with Google's own real, visible renderButton()
+// Upgrades `btn` (visually) to Google's own real, visible renderButton()
 // -- see the big comment above for why this is the option left standing.
 // `btn` itself is only hidden, not removed, and stays fully wired to its
 // original click listener (signInWithGoogle()) so it can reappear as a
-// working fallback if renderButton() never successfully renders. Safe to
-// call more than once on the same element (the dataset flag makes repeat
-// calls a no-op), so callers can re-scan liberally instead of tracking
-// which buttons are already done.
-function enhanceSignInButton(btn) {
+// working fallback if renderButton() never successfully renders.
+function enhanceSignInButton(btn, size) {
   if (!configured || !btn || btn.dataset.gsiEnhanced) return;
   btn.dataset.gsiEnhanced = "1";
-  // The full-page gate button and home.html's per-widget prompts are both
-  // roomy, standalone buttons -- Google's larger size fits them. The
-  // compact nav pill is the one exception, sized down to "medium."
-  const isRoomy = btn.id === "gate-signin" || btn.classList.contains("home-signin-btn");
+  // Only the legacy auto-scan below (enhanceAllSignInButtons()) calls this
+  // without a size -- renderSignInButton() always passes one explicitly.
+  if (!size) size = (btn.id === "gate-signin" || btn.classList.contains("home-signin-btn")) ? "large" : "medium";
   ensureGsiInitialized().then(() => {
     const container = document.createElement("span");
     container.style.display = "inline-block";
@@ -189,7 +185,7 @@ function enhanceSignInButton(btn) {
     window.google.accounts.id.renderButton(container, {
       type: "standard",
       theme: "outline",
-      size: isRoomy ? "large" : "medium",
+      size,
       shape: "pill",
       text: "signin_with",
       logo_alignment: "left",
@@ -203,17 +199,32 @@ function enhanceSignInButton(btn) {
   });
 }
 
-// Re-scans for every known "Sign in with Google" button on the page -- the
-// shared nav one (#account-signin, rebuilt from scratch by
-// renderAccountControl() on every auth-state change), each page's own
-// full-page gate (#gate-signin, rendered asynchronously by that page's own
-// script once it knows the user is signed out), and home.html's per-widget
-// prompts (.home-signin-btn, home.js -- several of these can exist on
-// screen at once, one per locked dashboard card). enhanceSignInButton()'s
-// dataset guard makes repeat calls cheap, so this gets called liberally
-// rather than trying to track the one right moment to call it.
+// The one place any page/widget creates a "Sign in with Google" button --
+// builds it with `className` (so each context keeps its own existing
+// visual style: nav pill, big full-page gate, home.html card widget),
+// wires the click-to-redirect fallback, and immediately tries to upgrade
+// it to Google's real button via enhanceSignInButton(). Every sign-in
+// surface in the app should call this rather than hand-rolling its own
+// <button> + click listener + enhancement call -- that duplication (five
+// nearly-identical page-gate copies, plus a home.html copy that used a
+// different class than the others) is exactly how a real button went
+// unenhanced until a live screenshot caught it.
+function renderSignInButton(container, className, size = "medium") {
+  if (!container) return;
+  if (!configured) { container.innerHTML = ""; return; }
+  container.innerHTML = `<button type="button" class="${className}">Sign in with Google</button>`;
+  const btn = container.firstElementChild;
+  btn.addEventListener("click", signInWithGoogle);
+  enhanceSignInButton(btn, size);
+}
+
+// Compatibility shim for pages not yet updated to call renderSignInButton()
+// directly -- still auto-detects the old hardcoded button ids/classes
+// (#account-signin, #gate-signin, .home-signin-btn) and enhances them the
+// same way. Safe to remove once every page creating a sign-in button goes
+// through renderSignInButton() instead.
 function enhanceAllSignInButtons() {
-  document.querySelectorAll("#account-signin, #gate-signin, .home-signin-btn").forEach(enhanceSignInButton);
+  document.querySelectorAll("#account-signin, #gate-signin, .home-signin-btn").forEach(btn => enhanceSignInButton(btn));
 }
 
 // The plain click-triggered fallback -- still wired to every existing
@@ -743,20 +754,16 @@ function renderAccountControl(session) {
     el.innerHTML = `<button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
     document.getElementById("account-signout").addEventListener("click", signOut);
   } else {
-    el.innerHTML = `<button type="button" class="account-btn" id="account-signin">Sign in with Google</button>`;
-    document.getElementById("account-signin").addEventListener("click", signInWithGoogle);
+    renderSignInButton(el, "account-btn", "medium");
   }
 }
 
 onAuthChange(renderAccountControl);
 init();
-// Enhances every "Sign in with Google" button as soon as it exists.
-// #account-signin appears/disappears whenever renderAccountControl()
-// rebuilds the nav control above; each page's own #gate-signin is rendered
-// asynchronously by that page's own script once it knows the user is
-// signed out -- there's no single fixed moment after which "the DOM is
-// done" a one-time scan could wait for, so a MutationObserver catches
-// either button the instant it's inserted, on whichever page put it there.
+// Runs the compatibility shim for any page still creating a sign-in button
+// the old way (see enhanceAllSignInButtons() above) -- a MutationObserver
+// catches one appearing later too, since those pages render their gate
+// asynchronously once they know the user is signed out.
 if (configured) {
   enhanceAllSignInButtons();
   new MutationObserver(enhanceAllSignInButtons).observe(document.body, { childList: true, subtree: true });
@@ -764,6 +771,7 @@ if (configured) {
 
 window.DVCAuth = {
   signInWithGoogle,
+  renderSignInButton,
   signOut,
   deleteAccount,
   onAuthChange,
