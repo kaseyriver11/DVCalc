@@ -1,6 +1,6 @@
 # Phase 5 Deployment — Banking/Borrowing Reminder Emails
 
-This is the one piece of DVCalc's accounts feature that needs real deployment
+This is the one piece of DVC Companion's accounts feature that needs real deployment
 work outside the browser — an Edge Function running server-side on a daily
 schedule, sending real email. None of this can be done by editing files alone;
 each numbered step below is something you need to actually run.
@@ -28,9 +28,12 @@ contents of `db/migrations/004_add_reminder_unsubscribe_token.sql` → Run.
 
 1. Sign up at [resend.com](https://resend.com) (free tier: 3,000 emails/month,
    100/day — plenty for a hobby-scale tool).
-2. **Domain verification** — done, using `dvcalc.app` (added under Resend's
-   **Domains** page, DNS records added at Squarespace alongside the GitHub
-   Pages A/AAAA records already there).
+2. **Domain verification** — under Resend's **Domains** page, verify
+   `dvccompanion.com` (add its DNS records at Squarespace alongside the
+   GitHub Pages A/AAAA records already there). Originally done against
+   `dvcalc.app` before the app moved to `dvccompanion.com`; that
+   verification can be removed from Resend once the new domain is sending
+   cleanly.
 3. Create an API key under **API Keys**, "Sending access" permission →
    note it down, you'll set it as a secret in step 4.
 
@@ -57,14 +60,16 @@ before.
 
 ```
 supabase secrets set RESEND_API_KEY=<your resend api key>
-supabase secrets set REMINDER_FROM_EMAIL="DVCalc <reminders@dvcalc.app>"
-supabase secrets set APP_BASE_URL=https://dvcalc.app
+supabase secrets set REMINDER_FROM_EMAIL="DVC Companion <reminders@dvccompanion.com>"
+supabase secrets set APP_BASE_URL=https://dvccompanion.com
 ```
 
-`REMINDER_FROM_EMAIL` uses `dvcalc.app` since that's the domain verified in
-Resend — the address doesn't need to be a real inbox, just a valid address at
-the verified domain. `APP_BASE_URL` is the live site now that `dvcalc.app` is
-up (used for any links back to the app in the reminder email itself).
+`REMINDER_FROM_EMAIL` uses `dvccompanion.com` since that's the domain
+verified in Resend — the address doesn't need to be a real inbox, just a
+valid address at the verified domain. `APP_BASE_URL` is the live site (used
+for any links back to the app in the reminder email itself). Re-run both
+`secrets set` commands (no redeploy needed — Edge Functions read secrets at
+request time) whenever the domain changes.
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are already available to every
 Edge Function automatically — you don't need to set those yourself.

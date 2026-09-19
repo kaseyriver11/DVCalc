@@ -1,4 +1,4 @@
-# DVCalc Facebook Growth Plan
+# DVC Companion Facebook Growth Plan
 
 **Status:** v1.0 is effectively done (see "Before we start," updated
 2026-09-06) — the gate this plan was waiting on has cleared. Growth work
@@ -96,7 +96,7 @@ buying a fake number.
 
 **Week 1 — setup, no posting yet**
 - [ ] Create the Page now (free, no reason to wait) — bio links straight to
-      `dvcalc.app`, no content push yet
+      `dvccompanion.com` (moved from `dvcalc.app`), no content push yet
 - [ ] Identify and join 4-6 high-traffic DVC Facebook groups with your real
       profile (DVC Fan, DVC Members, DVC Resale Community, etc.)
 - [ ] Read each group's self-promotion rules before posting anything
@@ -119,7 +119,7 @@ buying a fake number.
 - [ ] If Phase 1 got real traction (people asking "what tool is this," a
       few genuine Page follows trickling in from your bio link), start
       Phase 3's content cadence softly: 1-2 Page posts this week using real
-      DVCalc data (a `changes.html` year-over-year point swing, a
+      DVC Companion data (a `changes.html` year-over-year point swing, a
       `contractvalue.html` ranking) — not a hard sales push
 - [ ] Decide whether to launch the dedicated Group yet, based on whether
       you now have both some personal credibility and a real bank of

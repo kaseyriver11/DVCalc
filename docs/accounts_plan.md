@@ -203,15 +203,22 @@ Deployed to production: `dvcalc.app` is live (GitHub Pages custom domain),
 and its URL is in Supabase's Redirect URLs allow-list alongside
 `localhost:8794`, so Google sign-in works on both.
 
+**Migrated to `dvccompanion.com`** (purchased via Squarespace) -- see
+`docs/phase5_deployment.md` for the updated Resend/secrets steps. Supabase's
+Redirect URLs allow-list and Google Cloud's OAuth authorized redirect
+URIs/origins need the new domain added (and `dvcalc.app` removed once the
+cutover is confirmed working), or Google sign-in will break on the new
+domain.
+
 ## Context
 
-DVCalc is a 100% static site (GitHub Pages, no backend, no build step, no accounts) built up over this project's history around a calendar/points/cash tool. Through conversation, the owner has landed on a bigger vision: let users optionally sign in with Google, store their real DVC contract(s) (resort, use year, points, direct vs. resale), and use that data to make the tool itself smarter — highlighting the 11-month home-resort window vs. 7-month window on the calendar, filtering out resorts a resale-restricted contract legally can't book, tracking trip history against a "true cost of ownership" value story, and (opt-in) emailing banking/borrowing deadline reminders.
+DVC Companion is a 100% static site (GitHub Pages, no backend, no build step, no accounts) built up over this project's history around a calendar/points/cash tool. Through conversation, the owner has landed on a bigger vision: let users optionally sign in with Google, store their real DVC contract(s) (resort, use year, points, direct vs. resale), and use that data to make the tool itself smarter — highlighting the 11-month home-resort window vs. 7-month window on the calendar, filtering out resorts a resale-restricted contract legally can't book, tracking trip history against a "true cost of ownership" value story, and (opt-in) emailing banking/borrowing deadline reminders.
 
 The explicit constraint from the owner: **the site stays "tool first."** Everything that works today for an anonymous visitor must keep working exactly as-is; login is a pure opt-in enhancement layer, never a gate.
 
 Two DVC domain rules get encoded as real product logic here, so getting them right matters more than usual (a wrong answer here isn't a cosmetic bug, it's telling someone they can or can't book somewhere):
 
-- **Resale restriction rule** (verified via multiple independent sources, cross-referenced, 2026-09-03): resale contracts purchased *at* Riviera Resort (`rivieraResort`), Villas at Disneyland Hotel (`disneylandHotel`), or The Cabins at Fort Wilderness (`fortWildernessCabins`) can only ever be used at that same home resort. Resale contracts purchased at any of the other 14 resorts can book any of those 14 at 7 months, but can never book the three resorts above. Direct-purchased contracts have no restriction. This is current DVC policy, not something DVCalc's data already encodes — worth periodic re-check, since Disney could change it.
+- **Resale restriction rule** (verified via multiple independent sources, cross-referenced, 2026-09-03): resale contracts purchased *at* Riviera Resort (`rivieraResort`), Villas at Disneyland Hotel (`disneylandHotel`), or The Cabins at Fort Wilderness (`fortWildernessCabins`) can only ever be used at that same home resort. Resale contracts purchased at any of the other 14 resorts can book any of those 14 at 7 months, but can never book the three resorts above. Direct-purchased contracts have no restriction. This is current DVC policy, not something DVC Companion's data already encodes — worth periodic re-check, since Disney could change it.
 - **Banking/borrowing deadline rule** (verified, consistent across sources): each of DVC's 8 use years (Feb, Mar, Apr, Jun, Aug, Sep, Oct, Dec) has exactly one deadline date, always 8 months after the use-year start, and it governs both banking and borrowing (they close together). Exact deadlines: Feb→Sep 30, Mar→Oct 31, Apr→Nov 30, Jun→Jan 31, Aug→Mar 31, Sep→Apr 30, Oct→May 31, Dec→Jul 31 (rolling into the next calendar year where the deadline month is earlier than the use-year month).
 
 Confirmed by direct exploration before building: the codebase had zero auth, zero backend calls, zero localStorage, and only one `sessionStorage` pattern (a one-shot, self-clearing 3-key handoff between `index.html` and `compare.html` — see `app.js:1888-1928`, `compare.html:1009-1122`). Room type ids are resort-scoped, not globally unique (e.g. `"deluxeStudio"` exists on 8+ different resorts with different pricing) — a room is only identified by the pair `(resortId, roomTypeId)`.

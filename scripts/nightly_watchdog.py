@@ -2,7 +2,7 @@
 """
 Nightly freshness watchdog + morning digest email.
 
-Checks whether any of DVCalc's manually-maintained data sources have
+Checks whether any of DVC Companion's manually-maintained data sources have
 changed since the last run, refreshes a rotating slice of live Disney cash
 pricing, and emails a one-shot summary via Resend. Never writes to data.js /
 resort_investment.js / dues_historical.js -- only its own state file
@@ -18,7 +18,7 @@ Env vars:
                         the script still runs and prints the report to
                         stdout (useful for local testing).
     DIGEST_TO_EMAIL  -- required to send; the report's only recipient.
-    DIGEST_FROM      -- optional, defaults to "DVCalc <digest@dvcalc.app>".
+    DIGEST_FROM      -- optional, defaults to "DVC Companion <digest@dvccompanion.com>".
 
 Usage:
     python3 scripts/nightly_watchdog.py
@@ -391,7 +391,7 @@ def build_email_html(results, severity):
     )
     return f"""
     <div style="font-family:sans-serif;font-size:14px;color:#222;">
-      <h2 style="margin-bottom:4px;">DVCalc Nightly Check</h2>
+      <h2 style="margin-bottom:4px;">DVC Companion Nightly Check</h2>
       <ul style="padding-left:18px;line-height:1.6;">{rows}</ul>
       <p style="color:#999;font-size:12px;margin-top:20px;">
         Freshness watchdogs only -- nothing here auto-updates data.js,
@@ -408,7 +408,7 @@ def send_email(subject, html):
     instead of crashing the whole run before the state file gets saved."""
     api_key = os.environ.get("RESEND_API_KEY")
     to_email = os.environ.get("DIGEST_TO_EMAIL")
-    from_email = os.environ.get("DIGEST_FROM", "DVCalc <digest@dvcalc.app>")
+    from_email = os.environ.get("DIGEST_FROM", "DVC Companion <digest@dvccompanion.com>")
     if not api_key or not to_email:
         print("[nightly_watchdog] RESEND_API_KEY/DIGEST_TO_EMAIL not set -- skipping send, printing report instead:\n")
         print(html)
@@ -455,9 +455,9 @@ def main():
 
     severity = severity_of(results)
     subject = {
-        "ok": "✅ DVCalc nightly check — all clear",
-        "review": f"⚠️ DVCalc nightly check — {sum(1 for r in results if r[0] == 'review')} item(s) need review",
-        "error": "\U0001f534 DVCalc nightly check — pipeline error",
+        "ok": "✅ DVC Companion nightly check — all clear",
+        "review": f"⚠️ DVC Companion nightly check — {sum(1 for r in results if r[0] == 'review')} item(s) need review",
+        "error": "\U0001f534 DVC Companion nightly check — pipeline error",
     }[severity]
 
     html = build_email_html(results, severity)

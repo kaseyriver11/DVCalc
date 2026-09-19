@@ -18,7 +18,7 @@ no server of its own.
 
 **GitHub Actions**, scheduled via cron — not a Supabase Edge Function. Two
 reasons: this job needs to write data files back into the repo (git commit +
-push), which Edge Functions can't do; and DVCalc is a public repo, so Actions
+push), which Edge Functions can't do; and DVC Companion is a public repo, so Actions
 minutes are free and unlimited. This matches the architecture
 `docs/live_pricing_plan.md` already proposed for the live-pricing piece
 specifically — this doc generalizes that into the shared nightly mechanism
@@ -70,17 +70,18 @@ It should never become something you start skimming past.
 
 One JSON object per run, three possible states: `ok`, `review`, `error`.
 Composed into an email via Resend (already verified and working for
-`dvcalc.app` from Phase 5) — reusing that infrastructure rather than adding a
-second email provider.
+`dvccompanion.com` from Phase 5) — reusing that infrastructure rather than
+adding a second email provider.
 
-- **Sender:** `digest@dvcalc.app` (a distinct address from `reminders@`, so
-  this internal ops email doesn't visually blend with user-facing reminder
-  emails — no extra domain verification needed, same verified domain).
+- **Sender:** `digest@dvccompanion.com` (a distinct address from
+  `reminders@`, so this internal ops email doesn't visually blend with
+  user-facing reminder emails — no extra domain verification needed, same
+  verified domain).
 - **Recipient:** you only. This is an operations report, not a user feature.
 - **Subject line reflects severity at a glance:**
-  - `✅ DVCalc nightly check — all clear` (quiet night, the common case)
-  - `⚠️ DVCalc nightly check — N item(s) need review`
-  - `🔴 DVCalc nightly check — pipeline error`
+  - `✅ DVC Companion nightly check — all clear` (quiet night, the common case)
+  - `⚠️ DVC Companion nightly check — N item(s) need review`
+  - `🔴 DVC Companion nightly check — pipeline error`
 - **Body**, ordered worst-to-best: hard errors first (a script crashed,
   needs debugging), then review items (something changed, go look), then a
   one-line routine-success summary at the bottom (once Tier 1 is built:
