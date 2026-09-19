@@ -69,18 +69,17 @@ async function init() {
 // google.accounts.id.prompt() (One Tap) was tried first here and dropped --
 // it's best-effort by design, and in practice (confirmed both in automated
 // testing and by the real user on a real device) it frequently shows no UI
-// at all and never fires a usable callback. Google's own docs call
-// renderButton() the reliable, click-triggered alternative -- but it only
-// draws Google's own real button, inside a cross-origin iframe, styled by
-// Google. A synthetic click() from our own button can't reach into that
-// iframe to trigger it (cross-origin, and browsers require a genuinely
-// trusted click for the credential picker anyway). So instead we render
-// that real Google button into an invisible layer stacked exactly on top
-// of each existing purple "Sign in with Google" button -- the user sees
-// and clicks our button, but the actual browser click event lands on
-// Google's real (invisible) button underneath, which is what makes it a
-// trusted click Google will act on. This is the same technique Firebase
-// Auth/Auth0/NextAuth use to offer a custom-styled Google button.
+// at all and never fires a usable callback. An invisible renderButton()
+// overlaid on top of our own purple button was tried next and also
+// dropped -- Google's button actively resists being hidden/overlaid (an
+// anti-clickjacking measure on Google's end), so the click silently fell
+// through to the old redirect flow instead of ever reaching Google's
+// button. What's left, and what Google's own docs actually document as the
+// supported path, is showing Google's real, visible renderButton() in
+// place of our own purple button -- see enhanceSignInButton() below. Our
+// button stays in the DOM (hidden) as a fallback if the Google button
+// can't be rendered at all (script blocked, offline, etc.), so sign-in
+// never just stops working.
 const GOOGLE_CLIENT_ID = "763559252369-1jjbee4gpuedblkv8399u2d8qf275kb7.apps.googleusercontent.com";
 
 let gsiScriptPromise = null;
@@ -133,13 +132,18 @@ async function handleCredentialResponse(response) {
   }
 }
 
-// Overlays a real (invisible) Google button on top of `btn` -- see the big
-// comment above. Safe to call more than once on the same element (the
-// dataset flag makes repeat calls a no-op), so callers can re-scan
-// liberally instead of tracking which buttons are already done.
+// Replaces `btn` (visually) with Google's own real, visible renderButton()
+// -- see the big comment above for why this is the option left standing.
+// `btn` itself is only hidden, not removed, and stays fully wired to its
+// original click listener (signInWithGoogle()) so it can reappear as a
+// working fallback if renderButton() never successfully renders. Safe to
+// call more than once on the same element (the dataset flag makes repeat
+// calls a no-op), so callers can re-scan liberally instead of tracking
+// which buttons are already done.
 function enhanceSignInButton(btn) {
   if (!configured || !btn || btn.dataset.gsiEnhanced) return;
   btn.dataset.gsiEnhanced = "1";
+  const isGate = btn.id === "gate-signin"; // the big full-page gate button gets Google's larger button; the compact nav pill gets the medium one
   loadGoogleIdentityScript().then(() => {
     gsiNonce = randomNonce();
     window.google.accounts.id.initialize({
@@ -149,28 +153,23 @@ function enhanceSignInButton(btn) {
       use_fedcm_for_prompt: true,
     });
 
-    // btn gets moved inside a positioning wrapper so the overlay can sit
-    // exactly on top of it without disturbing the page's existing layout
-    // (the wrapper takes btn's old place in the DOM, sized to its content).
-    const wrap = document.createElement("span");
-    wrap.style.cssText = "position: relative; display: inline-block;";
-    btn.parentNode.insertBefore(wrap, btn);
-    wrap.appendChild(btn);
-
-    const overlay = document.createElement("div");
-    // A fully zero-opacity cross-origin iframe can trip some browsers'
-    // invisible-iframe click heuristics -- 0.01 reads as invisible but
-    // stays a "real," non-zero-opacity element.
-    overlay.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.01; overflow: hidden; z-index: 2;";
-    wrap.appendChild(overlay);
-
-    const width = Math.min(400, Math.max(200, Math.round(btn.getBoundingClientRect().width) || 200));
-    window.google.accounts.id.renderButton(overlay, { type: "standard", theme: "outline", size: "large", width });
+    const container = document.createElement("span");
+    container.style.display = "inline-block";
+    btn.insertAdjacentElement("afterend", container);
+    window.google.accounts.id.renderButton(container, {
+      type: "standard",
+      theme: "outline",
+      size: isGate ? "large" : "medium",
+      shape: "pill",
+      text: "signin_with",
+      logo_alignment: "left",
+    });
+    btn.style.display = "none"; // only hidden after renderButton() succeeds, so a thrown error leaves our own button visible and working
   }).catch((err) => {
-    // btn's own click handler (signInWithGoogle(), below) still works
-    // untouched -- this overlay is purely an enhancement, never a
-    // replacement, so a failure here never breaks sign-in.
-    console.warn("[DVCAuth] Google button overlay unavailable, falling back to redirect-on-click:", err);
+    // btn's own click handler (signInWithGoogle(), below) is untouched and
+    // still visible -- this enhancement never actually replaced it, so a
+    // failure here never breaks sign-in.
+    console.warn("[DVCAuth] Google's real sign-in button unavailable, falling back to our own button + redirect flow:", err);
   });
 }
 
@@ -187,9 +186,10 @@ function enhanceAllSignInButtons() {
 
 // The plain click-triggered fallback -- still wired to every existing
 // button (nav and gate alike) exactly as before. Once
-// enhanceSignInButton() successfully overlays a button, a real click never
-// reaches this listener at all (the overlay sits on top and intercepts
-// it), so this only actually runs when the overlay couldn't be set up.
+// enhanceSignInButton() successfully renders Google's real button, our own
+// button is hidden and this listener is simply never reachable by a real
+// click anymore, so this only actually runs when Google's button couldn't
+// be rendered at all.
 async function signInWithGoogle() {
   if (!configured) {
     console.warn("[DVCAuth] Sign-in unavailable: Supabase not configured.");
