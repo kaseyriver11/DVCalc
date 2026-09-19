@@ -65,6 +65,22 @@ async function init() {
 // Supabase's own provider config and is never touched by this file. It's
 // already in that provider's "Client IDs" allow-list (shared with the
 // redirect flow), so no Supabase-side config change was needed for this.
+//
+// google.accounts.id.prompt() (One Tap) was tried first here and dropped --
+// it's best-effort by design, and in practice (confirmed both in automated
+// testing and by the real user on a real device) it frequently shows no UI
+// at all and never fires a usable callback. Google's own docs call
+// renderButton() the reliable, click-triggered alternative -- but it only
+// draws Google's own real button, inside a cross-origin iframe, styled by
+// Google. A synthetic click() from our own button can't reach into that
+// iframe to trigger it (cross-origin, and browsers require a genuinely
+// trusted click for the credential picker anyway). So instead we render
+// that real Google button into an invisible layer stacked exactly on top
+// of each existing purple "Sign in with Google" button -- the user sees
+// and clicks our button, but the actual browser click event lands on
+// Google's real (invisible) button underneath, which is what makes it a
+// trusted click Google will act on. This is the same technique Firebase
+// Auth/Auth0/NextAuth use to offer a custom-styled Google button.
 const GOOGLE_CLIENT_ID = "763559252369-1jjbee4gpuedblkv8399u2d8qf275kb7.apps.googleusercontent.com";
 
 let gsiScriptPromise = null;
@@ -92,81 +108,97 @@ function randomNonce() {
   return [...bytes].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-let gsiInitializedForNonce = null;
-let pendingCredential = null; // { resolve, reject } for the in-flight prompt
+// Set fresh by enhanceSignInButton() each time it (re-)initializes GSI --
+// handleCredentialResponse() always reads whichever nonce is current, since
+// only one init is ever "live" at a time no matter how many buttons on the
+// page got enhanced.
+let gsiNonce = null;
 
-function handleCredentialResponse(response) {
-  if (pendingCredential) {
-    const { resolve } = pendingCredential;
-    pendingCredential = null;
-    resolve(response.credential);
-  }
-}
-
-async function signInWithGoogleIdToken() {
-  await loadGoogleIdentityScript();
-  const nonce = randomNonce();
-  // Re-initialize per attempt since the nonce has to change every time --
-  // initialize() itself is cheap/idempotent, unlike actually showing a
-  // prompt.
-  window.google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse,
-    nonce,
-    use_fedcm_for_prompt: true,
-  });
-  gsiInitializedForNonce = nonce;
-
-  const credential = await new Promise((resolve, reject) => {
-    pendingCredential = { resolve, reject };
-    window.google.accounts.id.prompt((notification) => {
-      // Only "couldn't show a prompt at all" falls back to the redirect
-      // flow below -- a user who explicitly dismissed it made a choice,
-      // and silently retrying via a different flow behind their back would
-      // override that.
-      if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
-        if (pendingCredential) {
-          pendingCredential = null;
-          reject(new Error("gsi-not-displayed: " + (notification.getNotDisplayedReason?.() || notification.getSkippedReason?.() || "unknown")));
-        }
-      } else if (notification.isDismissedMoment?.()) {
-        if (pendingCredential) {
-          pendingCredential = null;
-          reject(new Error("gsi-dismissed"));
-        }
-      }
-    });
-  });
-
-  const { error } = await supabase.auth.signInWithIdToken({
-    provider: "google",
-    token: credential,
-    nonce: gsiInitializedForNonce,
-  });
-  if (error) throw error;
-}
-
-async function signInWithGoogle() {
-  if (!configured) {
-    console.warn("[DVCAuth] Sign-in unavailable: Supabase not configured.");
-    return;
-  }
+async function handleCredentialResponse(response) {
   try {
-    await signInWithGoogleIdToken();
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: response.credential,
+      nonce: gsiNonce,
+    });
+    if (error) throw error;
   } catch (err) {
-    if (err.message === "gsi-dismissed") return; // user explicitly closed the prompt -- respect that, don't fall back
-    // Falls back to the classic full-page redirect flow -- covers
-    // browsers/situations where Google's client-side prompt can't be shown
-    // (FedCM unsupported, third-party state blocked, a prior prompt was
-    // dismissed too recently, etc.) so sign-in never just stops working,
-    // just occasionally falls back to the older (still fully functional)
-    // flow.
-    console.warn("[DVCAuth] Google Identity Services sign-in unavailable, falling back to redirect flow:", err);
+    // Covers a stale/invalid token or any other exchange failure -- falls
+    // back to the classic redirect flow so sign-in still completes.
+    console.warn("[DVCAuth] ID token sign-in failed, falling back to redirect flow:", err);
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.href },
     });
   }
+}
+
+// Overlays a real (invisible) Google button on top of `btn` -- see the big
+// comment above. Safe to call more than once on the same element (the
+// dataset flag makes repeat calls a no-op), so callers can re-scan
+// liberally instead of tracking which buttons are already done.
+function enhanceSignInButton(btn) {
+  if (!configured || !btn || btn.dataset.gsiEnhanced) return;
+  btn.dataset.gsiEnhanced = "1";
+  loadGoogleIdentityScript().then(() => {
+    gsiNonce = randomNonce();
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+      nonce: gsiNonce,
+      use_fedcm_for_prompt: true,
+    });
+
+    // btn gets moved inside a positioning wrapper so the overlay can sit
+    // exactly on top of it without disturbing the page's existing layout
+    // (the wrapper takes btn's old place in the DOM, sized to its content).
+    const wrap = document.createElement("span");
+    wrap.style.cssText = "position: relative; display: inline-block;";
+    btn.parentNode.insertBefore(wrap, btn);
+    wrap.appendChild(btn);
+
+    const overlay = document.createElement("div");
+    // A fully zero-opacity cross-origin iframe can trip some browsers'
+    // invisible-iframe click heuristics -- 0.01 reads as invisible but
+    // stays a "real," non-zero-opacity element.
+    overlay.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.01; overflow: hidden; z-index: 2;";
+    wrap.appendChild(overlay);
+
+    const width = Math.min(400, Math.max(200, Math.round(btn.getBoundingClientRect().width) || 200));
+    window.google.accounts.id.renderButton(overlay, { type: "standard", theme: "outline", size: "large", width });
+  }).catch((err) => {
+    // btn's own click handler (signInWithGoogle(), below) still works
+    // untouched -- this overlay is purely an enhancement, never a
+    // replacement, so a failure here never breaks sign-in.
+    console.warn("[DVCAuth] Google button overlay unavailable, falling back to redirect-on-click:", err);
+  });
+}
+
+// Re-scans for every known "Sign in with Google" button on the page -- the
+// shared nav one (#account-signin, rebuilt from scratch by
+// renderAccountControl() on every auth-state change) plus each page's own
+// full-page gate (#gate-signin, rendered asynchronously by that page's own
+// script once it knows the user is signed out). enhanceSignInButton()'s
+// dataset guard makes repeat calls cheap, so this gets called liberally
+// rather than trying to track the one right moment to call it.
+function enhanceAllSignInButtons() {
+  document.querySelectorAll("#account-signin, #gate-signin").forEach(enhanceSignInButton);
+}
+
+// The plain click-triggered fallback -- still wired to every existing
+// button (nav and gate alike) exactly as before. Once
+// enhanceSignInButton() successfully overlays a button, a real click never
+// reaches this listener at all (the overlay sits on top and intercepts
+// it), so this only actually runs when the overlay couldn't be set up.
+async function signInWithGoogle() {
+  if (!configured) {
+    console.warn("[DVCAuth] Sign-in unavailable: Supabase not configured.");
+    return;
+  }
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.href },
+  });
 }
 
 async function signOut() {
@@ -262,7 +294,7 @@ async function getContractYearPoints() {
 }
 
 // row: { contract_id, use_year_label, points_remaining, points_banked,
-// points_borrowed } -- upsert (not insert/update) since the caller doesn't
+// points_borrowed, points_holding } -- upsert (not insert/update) since the caller doesn't
 // know whether this (contract_id, use_year_label) pair already has a row;
 // db/migrations/007_add_contract_year_points_ledger.sql's unique
 // constraint on that pair is what makes the upsert target unambiguous.
@@ -686,17 +718,17 @@ function renderAccountControl(session) {
 
 onAuthChange(renderAccountControl);
 init();
-// Kicked off now (fire-and-forget), not lazily on first click -- by the
-// time a real user actually clicks "Sign in with Google," the round trip
-// to fetch this script has almost always already finished, so
-// signInWithGoogleIdToken()'s prompt() call runs synchronously within the
-// click's own call stack instead of after an awaited network fetch. That
-// matters here: browsers (and FedCM in particular) can be stricter about
-// treating a credential prompt as tied to real user activation the further
-// it is from the actual click, so keeping the gap as close to zero as
-// possible is worth doing even though loadGoogleIdentityScript() would
-// otherwise work lazily too.
-if (configured) loadGoogleIdentityScript().catch(() => {});
+// Enhances every "Sign in with Google" button as soon as it exists.
+// #account-signin appears/disappears whenever renderAccountControl()
+// rebuilds the nav control above; each page's own #gate-signin is rendered
+// asynchronously by that page's own script once it knows the user is
+// signed out -- there's no single fixed moment after which "the DOM is
+// done" a one-time scan could wait for, so a MutationObserver catches
+// either button the instant it's inserted, on whichever page put it there.
+if (configured) {
+  enhanceAllSignInButtons();
+  new MutationObserver(enhanceAllSignInButtons).observe(document.body, { childList: true, subtree: true });
+}
 
 window.DVCAuth = {
   signInWithGoogle,
