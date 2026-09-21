@@ -3,7 +3,7 @@
 // https://www.disneyfoodblog.com/wdwcalendar
 // Transcribed from the PDF's "Disney Hotel Construction" section 2026-09-13.
 //
-// Each entry: resortIds (DVCalc resort id(s) affected), location (building/area
+// Each entry: resortIds (DVC Companion resort id(s) affected), location (building/area
 // within the resort, if the whole resort isn't affected), startDate/endDate
 // (ISO "YYYY-MM-DD", or null for "Ongoing"/open-ended — ongoing work with no
 // known start is treated as already active, and an open end date is treated
@@ -11,7 +11,7 @@
 // human-readable range, since several of these are quarter/season-level
 // estimates that don't reduce cleanly to exact days), and description.
 //
-// Only entries for DVC resorts are included (DVCalc doesn't track non-DVC
+// Only entries for DVC resorts are included (DVC Companion doesn't track non-DVC
 // hotels like All-Star Movies or Port Orleans). Some construction affects a
 // shared building that houses both a non-DVC resort and its DVC villas (e.g.
 // BoardWalk Inn / BoardWalk Villas) — those are kept since they affect DVC
@@ -219,7 +219,7 @@ const RESORT_CONSTRUCTION = [
   },
 ];
 
-// Returns construction/refurbishment entries for a DVCalc resort id that
+// Returns construction/refurbishment entries for a DVC Companion resort id that
 // overlap the given [rangeStart, rangeEnd) window -- callers pass either the
 // selected stay dates or the currently-viewed calendar month, so an entry
 // only shows up when it's actually relevant to what's on screen.

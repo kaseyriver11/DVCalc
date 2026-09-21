@@ -342,7 +342,7 @@ collected per resort, not derived from a formula.
 ## Why this still can't run "in" the static site
 
 Even without needing a browser, this still has to run **repeatedly, on a schedule,
-indefinitely** to build a price-over-time picture, and DVCalc is a static site on GitHub
+indefinitely** to build a price-over-time picture, and DVC Companion is a static site on GitHub
 Pages with no server. The scraper has to live somewhere else and hand its output to the
 static site as a data file.
 

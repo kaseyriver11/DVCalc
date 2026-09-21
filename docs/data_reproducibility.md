@@ -284,7 +284,7 @@ this repo:**
 - Aulani: two anchors, $637/night (low season) to $1,012/night (Christmas
   week), also 2026, similarly aggregator-sourced.
 - **Villa-premium ratio (~1.025x):** derived from one real comparable pair —
-  DVCalc's own live-sampled Beach Club Villas Deluxe Studio price vs.
+  DVC Companion's own live-sampled Beach Club Villas Deluxe Studio price vs.
   MouseSavers' real Beach Club Resort (the same property's regular hotel)
   rate, same dates. Applied to both anchors to get an estimated studio villa
   rate.
