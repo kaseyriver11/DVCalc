@@ -5,7 +5,10 @@ verified via a real manual run, then a real Cloudflare/User-Agent bug found
 and fixed (see below), then scheduled on a real nightly cron (9am UTC).
 Phase 2 (live cash pricing folded into the same nightly run, via a resort
 rotation) built and integration-tested the same night — see "Phase 2" below
-for what changed from the original plan.
+for what changed from the original plan. A sixth check, banking-reminder
+pipeline health, was added 2026-09-20 — see "Tier 2b" below; it needs
+`db/migrations/017_add_reminder_run_log.sql` run before it'll report
+anything but "no runs recorded."
 
 ## The ask
 
@@ -65,6 +68,39 @@ It should never become something you start skimming past.
 | **Contract Value purchase prices** (Fidelity Real Estate + DVCNews pricing page) | Hash-diff both sources. | This is the one you flagged yourself as needing regular attention. Deliberately *not* auto-parsed and written into `resort_investment.js` — a scraping error here puts a wrong number in front of someone deciding whether to spend $20-30k on a contract. Flag-only, always. |
 | **Undercover Tourist crowd calendar** | **Not a real-time check at all** — the site blocks plain HTTP requests outright (confirmed 403 earlier this project), so there's no signal a nightly script could observe even if it tried every night. Instead: a one-time seasonal nudge that fires starting mid-November each year ("next year's calendar has likely published, worth a browser session"), remembered in the state file so it only fires once per year, not every night for six weeks. | Being honest about what can't be automated matters as much as automating what can. Hammering a blocking site nightly for no signal would also be impolite scraping for zero benefit. |
 | **Disney Food Blog "DFB Disney World Calendar" PDF** (source for `data/disney_events.js` and `data/resort_construction.js`) | **Also not a real-time check** — confirmed 2026-09-14 that `https://www.disneyfoodblog.com/wdwcalendar` never exposes a real `.pdf` URL in its static HTML; the actual download link is only generated after an email-gate form submit, so there's nothing scrapable. Instead: a time-based staleness reminder off the "Transcribed \<date\>" comment already present in both data files — DFB republishes roughly every 3-4 weeks, so this flags once the oldest of the two transcription dates passes 21 days old. | Same reasoning as the Undercover Tourist check — no scrapable signal exists, so a calendar-based reminder beats silence. Reads both files' dates and uses the older one, so a partial update to just one file still gets caught. |
+
+## Tier 2b — banking reminder pipeline health (added 2026-09-20)
+
+One more watchdog, added after realizing the reminder-email pipeline
+(`docs/phase5_deployment.md`) had no failure signal at all: it's a
+`pg_cron` job calling an Edge Function via `pg_net`, fire-and-forget --
+nothing ever reads the function's own `{sent, skipped, errors}` JSON
+response. A night the cron silently stopped firing, or fired but failed
+for every user, would look identical to a quiet night with nothing due.
+
+Fixed with a heartbeat table rather than trying to observe `pg_cron`/`pg_net`
+state directly (no clean API for that from outside Postgres): every
+`send-banking-reminders` invocation now writes one row to
+`reminder_run_log` (`db/migrations/017_add_reminder_run_log.sql`),
+success or failure, wrapped so even an unhandled crash still logs before
+the response returns. `check_banking_reminders()` in
+`scripts/nightly_watchdog.py` reads the most recent row over PostgREST
+and flags:
+
+- **error** — no rows at all, or the latest row is more than 30 hours old
+  (the cron runs daily at 13:00 UTC; 30h tolerates normal jitter without
+  false-alarming) — the cron job has likely stopped firing.
+- **review** — a recent run exists but logged one or more errors (a
+  Resend failure, a missing email, a query failure).
+- **ok** — a recent run with zero errors.
+
+`reminder_run_log` is deliberately public-readable (RLS `select using
+(true)`, no insert/update/delete policy for anyone but the service-role
+key) so the watchdog script needs no new GitHub Actions secret — it reuses
+the same publishable anon key already embedded client-side in `auth.js`.
+That's safe specifically because the function logs errors by profile/contract
+id, never by email address, into that table — see the comment where errors
+are pushed in `supabase/functions/send-banking-reminders/index.ts`.
 
 ## The report
 

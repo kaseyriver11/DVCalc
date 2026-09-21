@@ -60,6 +60,19 @@ HASH_WATCHED_PAGES = {
 
 PDF_CONTENT_API = "https://disneyvacationclub.disney.go.com/api/v1/content?url=/vacation-planning/points-charts&format=raw"
 
+# Same URL + publishable anon key already embedded client-side in auth.js
+# (Supabase anon keys are meant to be public -- RLS is the real boundary).
+# Reusing it here means checking banking-reminder health needs no new
+# GitHub Actions secret. reminder_run_log is public-readable by design
+# (see db/migrations/017_add_reminder_run_log.sql) specifically so this
+# script can read it with nothing more privileged than that.
+REMINDER_SUPABASE_URL = "https://afqhmtqwjtjkjahepqxv.supabase.co"
+REMINDER_SUPABASE_ANON_KEY = "sb_publishable_moCeyHUFBzY6dKmQjHY9kw_4w2Pho3k"
+# The cron fires daily at 13:00 UTC (docs/phase5_deployment.md); 30h of
+# slack catches a genuinely missed day without false-alarming on normal
+# run-time jitter.
+REMINDER_RUN_STALE_HOURS = 30
+
 
 def http_get(url):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
@@ -373,6 +386,66 @@ def build_live_pricing_summary(results):
         f.write(js)
 
 
+def check_banking_reminders(state, results):
+    """Reads reminder_run_log (public-readable, see
+    db/migrations/017_add_reminder_run_log.sql) to confirm the
+    send-banking-reminders Edge Function's daily pg_cron job is both
+    firing and succeeding. That function's own {sent, skipped, errors}
+    response only ever reaches pg_net's fire-and-forget caller -- without
+    this check there's no way to notice a cron job that silently stopped
+    firing, or a run that's failing for everyone, until an owner misses a
+    real deadline."""
+    import datetime
+    url = (
+        f"{REMINDER_SUPABASE_URL}/rest/v1/reminder_run_log"
+        "?select=run_at,sent,skipped,error_count,errors"
+        "&order=run_at.desc&limit=1"
+    )
+    req = urllib.request.Request(url, headers={
+        "apikey": REMINDER_SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {REMINDER_SUPABASE_ANON_KEY}",
+        "User-Agent": UA,
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            rows = json.loads(resp.read())
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as e:
+        results.append(("error", f"banking reminders: couldn't reach reminder_run_log to check -- {e}"))
+        return
+
+    if not rows:
+        results.append((
+            "error",
+            "banking reminders: no runs recorded yet in reminder_run_log -- has the "
+            "daily cron been scheduled? see docs/phase5_deployment.md step 7",
+        ))
+        return
+
+    row = rows[0]
+    run_at = datetime.datetime.fromisoformat(row["run_at"].replace("Z", "+00:00"))
+    age_hours = (datetime.datetime.now(datetime.timezone.utc) - run_at).total_seconds() / 3600
+
+    if age_hours > REMINDER_RUN_STALE_HOURS:
+        results.append((
+            "error",
+            f"banking reminders: last run was {age_hours:.0f}h ago ({run_at.date()}) -- "
+            f"expected daily, the pg_cron job may have stopped firing",
+        ))
+    elif row["error_count"] > 0:
+        first_error = (row.get("errors") or ["(no detail)"])[0]
+        results.append((
+            "review",
+            f"banking reminders: last run ({run_at.date()}) had {row['error_count']} "
+            f"error(s) -- {first_error}",
+        ))
+    else:
+        results.append((
+            "ok",
+            f"banking reminders: last run {run_at.date()} -- sent {row['sent']}, "
+            f"skipped {row['skipped']}, no errors",
+        ))
+
+
 def severity_of(results):
     statuses = {r[0] for r in results}
     if "error" in statuses:
@@ -452,6 +525,7 @@ def main():
     check_dfb_calendar_freshness(state, results)
     check_undercover_tourist_season(state, results)
     check_live_pricing(state, results)
+    check_banking_reminders(state, results)
 
     severity = severity_of(results)
     subject = {

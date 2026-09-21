@@ -11,9 +11,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 function page(message: string): Response {
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DVCalc Reminders</title></head>
+<title>DVC Companion Reminders</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 60px auto; padding: 0 20px; text-align: center; color: #333;">
-  <h2 style="color: #4a148c;">DVCalc Reminders</h2>
+  <h2 style="color: #4a148c;">DVC Companion Reminders</h2>
   <p>${message}</p>
 </body></html>`;
   return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });

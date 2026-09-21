@@ -18,11 +18,22 @@ each numbered step below is something you need to actually run.
 - `account.html` now shows each active contract's next banking/borrowing
   deadline date, computed client-side — this already works, no deployment
   needed for that part
+- `db/migrations/017_add_reminder_run_log.sql` — a `reminder_run_log`
+  heartbeat table the function now writes to on every invocation (success
+  or failure), separate from `reminder_log`'s per-send double-guard.
+  `scripts/nightly_watchdog.py` reads it (public-readable, no new secret
+  needed) to report banking-reminder pipeline health in the nightly
+  digest — see `docs/nightly_pipeline_plan.md`.
 
-## 1. Run the migration
+## 1. Run the migrations
 
 Same as before — Supabase dashboard → SQL Editor → New query → paste the
 contents of `db/migrations/004_add_reminder_unsubscribe_token.sql` → Run.
+Then do the same for `db/migrations/017_add_reminder_run_log.sql` — without
+it, the function's insert into `reminder_run_log` at the end of every
+invocation fails (harmlessly — it's caught and folded into the response's
+`errors` array rather than crashing the send), and the nightly digest's
+banking-reminders check will report "no runs recorded."
 
 ## 2. Set up Resend (the email-sending service)
 

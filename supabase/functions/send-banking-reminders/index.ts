@@ -74,9 +74,9 @@ Deno.serve(async () => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const resendKey = Deno.env.get("RESEND_API_KEY");
-  const fromEmail = Deno.env.get("REMINDER_FROM_EMAIL") ?? "DVCalc <onboarding@resend.dev>";
+  const fromEmail = Deno.env.get("REMINDER_FROM_EMAIL") ?? "DVC Companion <onboarding@resend.dev>";
   const unsubscribeBaseUrl = Deno.env.get("UNSUBSCRIBE_FUNCTION_URL"); // e.g. https://<ref>.supabase.co/functions/v1/unsubscribe-reminders
-  const appBaseUrl = Deno.env.get("APP_BASE_URL") ?? "https://your-dvcalc-domain.example.com"; // set this once you know where DVCalc is actually hosted
+  const appBaseUrl = Deno.env.get("APP_BASE_URL") ?? "https://your-dvcalc-domain.example.com"; // set this once you know where DVC Companion is actually hosted
 
   if (!supabaseUrl || !serviceKey || !resendKey) {
     return new Response(
@@ -88,104 +88,126 @@ Deno.serve(async () => {
   const supabase = createClient(supabaseUrl, serviceKey);
   const today = todayInEastern();
 
-  const { data: profiles, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, display_name, reminder_opt_in, reminder_lead_days, reminder_unsubscribe_token")
-    .eq("reminder_opt_in", true);
-
-  if (profileError) {
-    return new Response(JSON.stringify({ error: profileError.message }), { status: 500 });
-  }
-
   let sent = 0;
   let skipped = 0;
+  // Error strings are logged into the public-readable reminder_run_log
+  // below, so they're written by id, never by email address -- keep it
+  // that way if you touch this loop (see db/migrations/017_add_reminder_run_log.sql).
   const errors: string[] = [];
 
-  for (const profile of profiles ?? []) {
-    const { data: contracts, error: contractError } = await supabase
-      .from("contracts")
-      .select("id, home_resort_id, use_year, nickname")
-      .eq("user_id", profile.id)
-      .eq("is_active", true);
+  try {
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, display_name, reminder_opt_in, reminder_lead_days, reminder_unsubscribe_token")
+      .eq("reminder_opt_in", true);
 
-    if (contractError) {
-      errors.push(`contracts query failed for ${profile.id}: ${contractError.message}`);
-      continue;
+    if (profileError) throw new Error(`profiles query failed: ${profileError.message}`);
+
+    for (const profile of profiles ?? []) {
+      const { data: contracts, error: contractError } = await supabase
+        .from("contracts")
+        .select("id, home_resort_id, use_year, nickname")
+        .eq("user_id", profile.id)
+        .eq("is_active", true);
+
+      if (contractError) {
+        errors.push(`contracts query failed for profile ${profile.id}: ${contractError.message}`);
+        continue;
+      }
+
+      for (const contract of contracts ?? []) {
+        const deadline = nextDeadline(contract.use_year, today);
+        if (deadline.daysUntil < 0 || deadline.daysUntil > profile.reminder_lead_days) {
+          skipped++;
+          continue;
+        }
+
+        const deadlineDateStr = formatDeadlineDate(deadline.ms);
+
+        const { data: existingLog } = await supabase
+          .from("reminder_log")
+          .select("id")
+          .eq("contract_id", contract.id)
+          .eq("deadline_date", deadlineDateStr)
+          .eq("reminder_type", "banking_borrowing_deadline")
+          .maybeSingle();
+
+        if (existingLog) {
+          skipped++;
+          continue;
+        }
+
+        const { data: userResp, error: userError } = await supabase.auth.admin.getUserById(profile.id);
+        const email = userResp?.user?.email;
+        if (userError || !email) {
+          errors.push(`no email for profile ${profile.id}: ${userError?.message ?? "unknown"}`);
+          continue;
+        }
+
+        const contractLabel = contract.nickname || contract.home_resort_id;
+        const dayWord = deadline.daysUntil === 1 ? "day" : "days";
+        const subject = `DVC banking/borrowing deadline in ${deadline.daysUntil} ${dayWord}`;
+        const unsubscribeLink = unsubscribeBaseUrl
+          ? `${unsubscribeBaseUrl}?token=${profile.reminder_unsubscribe_token}`
+          : null;
+
+        const html = `
+          <p>Hi${profile.display_name ? " " + profile.display_name : ""},</p>
+          <p>Your <strong>${contractLabel}</strong> contract (${contract.use_year} use year) has a banking/borrowing
+          deadline on <strong>${deadlineDateStr}</strong> &mdash; that's ${deadline.daysUntil} ${dayWord} away.</p>
+          <p>Points not banked or borrowed by then are forfeited for this use year. Log in to
+          <a href="${appBaseUrl}/account.html">DVC Companion</a> or check Disney's member site to confirm
+          your points are handled the way you want.</p>
+          <p style="font-size:12px;color:#888;">You're getting this because you opted in to deadline reminders for
+          this contract in DVC Companion.
+          ${unsubscribeLink ? `<a href="${unsubscribeLink}">Unsubscribe from these emails</a>` : "Manage this in My Contracts."}</p>
+        `;
+
+        const emailResp = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ from: fromEmail, to: email, subject, html }),
+        });
+
+        if (!emailResp.ok) {
+          errors.push(`Resend send failed for profile ${profile.id} (contract ${contract.id}): ${await emailResp.text()}`);
+          continue;
+        }
+
+        const { error: logError } = await supabase.from("reminder_log").insert({
+          user_id: profile.id,
+          contract_id: contract.id,
+          deadline_date: deadlineDateStr,
+          reminder_type: "banking_borrowing_deadline",
+        });
+        if (logError) errors.push(`reminder_log insert failed for contract ${contract.id}: ${logError.message}`);
+
+        sent++;
+      }
     }
-
-    for (const contract of contracts ?? []) {
-      const deadline = nextDeadline(contract.use_year, today);
-      if (deadline.daysUntil < 0 || deadline.daysUntil > profile.reminder_lead_days) {
-        skipped++;
-        continue;
-      }
-
-      const deadlineDateStr = formatDeadlineDate(deadline.ms);
-
-      const { data: existingLog } = await supabase
-        .from("reminder_log")
-        .select("id")
-        .eq("contract_id", contract.id)
-        .eq("deadline_date", deadlineDateStr)
-        .eq("reminder_type", "banking_borrowing_deadline")
-        .maybeSingle();
-
-      if (existingLog) {
-        skipped++;
-        continue;
-      }
-
-      const { data: userResp, error: userError } = await supabase.auth.admin.getUserById(profile.id);
-      const email = userResp?.user?.email;
-      if (userError || !email) {
-        errors.push(`no email for user ${profile.id}: ${userError?.message ?? "unknown"}`);
-        continue;
-      }
-
-      const contractLabel = contract.nickname || contract.home_resort_id;
-      const dayWord = deadline.daysUntil === 1 ? "day" : "days";
-      const subject = `DVC banking/borrowing deadline in ${deadline.daysUntil} ${dayWord}`;
-      const unsubscribeLink = unsubscribeBaseUrl
-        ? `${unsubscribeBaseUrl}?token=${profile.reminder_unsubscribe_token}`
-        : null;
-
-      const html = `
-        <p>Hi${profile.display_name ? " " + profile.display_name : ""},</p>
-        <p>Your <strong>${contractLabel}</strong> contract (${contract.use_year} use year) has a banking/borrowing
-        deadline on <strong>${deadlineDateStr}</strong> &mdash; that's ${deadline.daysUntil} ${dayWord} away.</p>
-        <p>Points not banked or borrowed by then are forfeited for this use year. Log in to
-        <a href="${appBaseUrl}/account.html">DVCalc</a> or check Disney's member site to confirm
-        your points are handled the way you want.</p>
-        <p style="font-size:12px;color:#888;">You're getting this because you opted in to deadline reminders for
-        this contract in DVCalc.
-        ${unsubscribeLink ? `<a href="${unsubscribeLink}">Unsubscribe from these emails</a>` : "Manage this in My Contracts."}</p>
-      `;
-
-      const emailResp = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${resendKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ from: fromEmail, to: email, subject, html }),
-      });
-
-      if (!emailResp.ok) {
-        errors.push(`Resend send failed for ${email}: ${await emailResp.text()}`);
-        continue;
-      }
-
-      const { error: logError } = await supabase.from("reminder_log").insert({
-        user_id: profile.id,
-        contract_id: contract.id,
-        deadline_date: deadlineDateStr,
-        reminder_type: "banking_borrowing_deadline",
-      });
-      if (logError) errors.push(`reminder_log insert failed for contract ${contract.id}: ${logError.message}`);
-
-      sent++;
-    }
+  } catch (err) {
+    // A crash partway through still needs to reach reminder_run_log below
+    // -- otherwise the one night this function actually breaks is exactly
+    // the night nightly_watchdog.py's "no recent run" check can't tell
+    // apart from a cron job that stopped firing entirely.
+    errors.push(`unhandled error: ${err instanceof Error ? err.message : String(err)}`);
   }
+
+  // Heartbeat row -- see db/migrations/017_add_reminder_run_log.sql. Best
+  // effort: a failure here shouldn't hide the real sent/skipped/errors
+  // result from a manual curl test, so it's appended to errors rather
+  // than thrown.
+  const loggedErrors = errors.map((e) => (e.length > 300 ? e.slice(0, 300) + "…" : e));
+  const { error: runLogError } = await supabase.from("reminder_run_log").insert({
+    sent,
+    skipped,
+    error_count: errors.length,
+    errors: loggedErrors,
+  });
+  if (runLogError) errors.push(`reminder_run_log insert failed: ${runLogError.message}`);
 
   return new Response(JSON.stringify({ sent, skipped, errors }), {
     headers: { "Content-Type": "application/json" },
