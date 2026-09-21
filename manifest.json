@@ -1,0 +1,17 @@
+{
+  "name": "DVC Companion",
+  "short_name": "DVC Companion",
+  "description": "Points calendar, trip planning, contract tracking, and House Money payback for Disney Vacation Club owners.",
+  "start_url": "home.html",
+  "scope": ".",
+  "id": ".",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#4a148c",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "images/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "images/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "images/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
