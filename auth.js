@@ -209,6 +209,11 @@ function enhanceSignInButton(btn, size) {
 // nearly-identical page-gate copies, plus a home.html copy that used a
 // different class than the others) is exactly how a real button went
 // unenhanced until a live screenshot caught it.
+//
+// Also appends the "or sign in with email" trigger (see
+// appendEmailCodeTrigger() below) right under the Google button, so every
+// one of those same surfaces gets the passwordless email-code option for
+// free -- no per-page wiring, same reasoning as the Google button itself.
 function renderSignInButton(container, className, size = "medium") {
   if (!container) return;
   if (!configured) { container.innerHTML = ""; return; }
@@ -216,6 +221,7 @@ function renderSignInButton(container, className, size = "medium") {
   const btn = container.firstElementChild;
   btn.addEventListener("click", signInWithGoogle);
   enhanceSignInButton(btn, size);
+  appendEmailCodeTrigger(container);
 }
 
 // Compatibility shim for pages not yet updated to call renderSignInButton()
@@ -242,6 +248,290 @@ async function signInWithGoogle() {
     provider: "google",
     options: { redirectTo: window.location.href },
   });
+}
+
+// ---- Passwordless email sign-in (one-time code) ----
+// The non-Google alternative: type an email, get a 6-digit code, type the
+// code back in, done -- no password to create/remember/reset. Both steps
+// go through Supabase's own built-in email-OTP support (no new
+// tables/columns -- new users provision a profiles row the exact same way
+// Google sign-in already does, via handle_new_user()'s generic `after
+// insert on auth.users` trigger, so this file needed zero schema changes).
+//
+// IMPORTANT (not something this file can do for you): Supabase's default
+// "Magic Link" email template only shows a clickable link, not the actual
+// numeric code -- verifyEmailCode() below still works once a user has a
+// code, but nothing will ever show them one until that template is edited
+// (Supabase Dashboard -> Authentication -> Emails -> Magic Link) to
+// include `{{ .Token }}` somewhere in the body, e.g. "Your DVC Companion
+// code is: {{ .Token }}". This is a one-time account-settings change on
+// the Supabase project, so it's left for the app's owner to make (or
+// explicitly ask this session's agent to make via the already-linked
+// Supabase CLI) rather than done silently here.
+
+// shouldCreateUser: true -- unifies signup and sign-in into one flow (an
+// unrecognized email just becomes a new account), matching how Google
+// sign-in already never distinguishes "signing up" from "signing in."
+async function signInWithEmailCode(email) {
+  if (!configured) return { error: "Not configured" };
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true },
+  });
+  return { error: error?.message };
+}
+
+// type: "email" covers both the numeric code and the magic-link token
+// Supabase issues from the same signInWithOtp() call above -- there's no
+// separate "code" vs "link" verification type in supabase-js v2.
+async function verifyEmailCode(email, token) {
+  if (!configured) return { error: "Not configured" };
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: token.trim(), type: "email" });
+  return { data, error: error?.message };
+}
+
+// Lazily builds the shared 2-step modal (email -> code) once per page load
+// and reuses it for every trigger -- there can be several sign-in surfaces
+// live at once (home.html's per-widget buttons), and they should all open
+// the exact same modal instance rather than each growing their own copy.
+let emailCodeModalEl = null;
+function ensureEmailCodeModal() {
+  if (emailCodeModalEl) return emailCodeModalEl;
+  injectEmailCodeStyles();
+
+  const overlay = document.createElement("div");
+  overlay.className = "dvc-emailcode-overlay";
+  overlay.innerHTML = `
+    <div class="dvc-emailcode-box" role="dialog" aria-modal="true" aria-label="Sign in with email">
+      <button type="button" class="dvc-emailcode-close" aria-label="Close">&times;</button>
+      <div class="dvc-emailcode-step" data-step="email">
+        <h3>Sign in with Email</h3>
+        <p>We'll send a 6-digit code to your email -- no password needed.</p>
+        <input type="email" class="dvc-emailcode-input" data-field="email" placeholder="you@example.com" autocomplete="email" inputmode="email">
+        <div class="dvc-emailcode-error" data-error="email"></div>
+        <button type="button" class="dvc-emailcode-submit" data-action="send">Send Code</button>
+      </div>
+      <div class="dvc-emailcode-step" data-step="code" style="display:none;">
+        <h3>Enter Your Code</h3>
+        <p>We sent a code to <strong data-sent-to></strong>.</p>
+        <input type="text" class="dvc-emailcode-input dvc-emailcode-code" data-field="token" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        <div class="dvc-emailcode-error" data-error="code"></div>
+        <button type="button" class="dvc-emailcode-submit" data-action="verify">Verify &amp; Sign In</button>
+        <button type="button" class="dvc-emailcode-linkbtn" data-action="resend">Resend code</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  emailCodeModalEl = overlay;
+
+  const emailInput = overlay.querySelector('[data-field="email"]');
+  const tokenInput = overlay.querySelector('[data-field="token"]');
+  const emailStep = overlay.querySelector('[data-step="email"]');
+  const codeStep = overlay.querySelector('[data-step="code"]');
+  const emailError = overlay.querySelector('[data-error="email"]');
+  const codeError = overlay.querySelector('[data-error="code"]');
+  const sentTo = overlay.querySelector("[data-sent-to]");
+
+  function close() {
+    overlay.classList.remove("open");
+    emailError.textContent = "";
+    codeError.textContent = "";
+  }
+
+  async function send() {
+    const email = emailInput.value.trim();
+    if (!email) { emailError.textContent = "Enter your email first."; return; }
+    const btn = overlay.querySelector('[data-action="send"]');
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+    const { error } = await signInWithEmailCode(email);
+    btn.disabled = false;
+    btn.textContent = "Send Code";
+    if (error) { emailError.textContent = error; return; }
+    sentTo.textContent = email;
+    emailStep.style.display = "none";
+    codeStep.style.display = "block";
+    tokenInput.value = "";
+    tokenInput.focus();
+  }
+
+  async function verify() {
+    const email = emailInput.value.trim();
+    const token = tokenInput.value.trim();
+    if (!token) { codeError.textContent = "Enter the code from your email."; return; }
+    const btn = overlay.querySelector('[data-action="verify"]');
+    btn.disabled = true;
+    btn.textContent = "Verifying...";
+    const { error } = await verifyEmailCode(email, token);
+    btn.disabled = false;
+    btn.textContent = "Verify & Sign In";
+    if (error) { codeError.textContent = error; return; }
+    close();
+    // Reset back to step 1 for next time -- onAuthChange listeners
+    // (registered below, same as Google sign-in) handle everything else.
+    emailStep.style.display = "block";
+    codeStep.style.display = "none";
+  }
+
+  async function resend() {
+    codeError.textContent = "";
+    const link = overlay.querySelector('[data-action="resend"]');
+    link.disabled = true;
+    const { error } = await signInWithEmailCode(emailInput.value.trim());
+    link.disabled = false;
+    if (error) codeError.textContent = error;
+    else codeError.textContent = "Code resent.";
+  }
+
+  overlay.querySelector(".dvc-emailcode-close").addEventListener("click", close);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("open")) close(); });
+  overlay.querySelector('[data-action="send"]').addEventListener("click", send);
+  overlay.querySelector('[data-action="verify"]').addEventListener("click", verify);
+  overlay.querySelector('[data-action="resend"]').addEventListener("click", resend);
+  emailInput.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+  tokenInput.addEventListener("keydown", (e) => { if (e.key === "Enter") verify(); });
+
+  return overlay;
+}
+
+function openEmailCodeModal() {
+  const overlay = ensureEmailCodeModal();
+  overlay.classList.add("open");
+  overlay.querySelector('[data-field="email"]').focus();
+}
+
+// Small unobtrusive text-link appended after every Google button (see
+// renderSignInButton() above) -- deliberately plain/minimal rather than
+// styled per-context, since it has to look reasonable in wildly different
+// layouts (compact nav pill, full-page gate, home.html card widget) with
+// no per-page customization.
+function appendEmailCodeTrigger(container) {
+  // Inject styles here too, not just from ensureEmailCodeModal() -- that
+  // only ran on first CLICK, so the trigger itself rendered as an
+  // unstyled default <button> (visible border/background) until someone
+  // actually clicked it once. injectEmailCodeStyles() is idempotent, so
+  // calling it from both places is harmless.
+  injectEmailCodeStyles();
+  const link = document.createElement("button");
+  link.type = "button";
+  link.className = "dvc-emailcode-trigger";
+  link.textContent = "or sign in with email";
+  link.addEventListener("click", openEmailCodeModal);
+  container.appendChild(link);
+}
+
+// Self-contained CSS injected once into <head> -- auth.js runs on pages
+// that don't all load the same stylesheet (tokens.css, styles.css, or a
+// page's own inline <style>), so this can't lean on any of those the way
+// a single page's own components can. Hardcoded brand purple (#4a148c)
+// matches tokens.css's --color-primary and the PWA manifest's theme_color.
+let emailCodeStylesInjected = false;
+function injectEmailCodeStyles() {
+  if (emailCodeStylesInjected) return;
+  emailCodeStylesInjected = true;
+  const style = document.createElement("style");
+  style.textContent = `
+.dvc-emailcode-trigger {
+  display: block;
+  background: none;
+  border: none;
+  padding: 6px 0 0;
+  margin: 0;
+  font-size: 0.78rem;
+  color: #666;
+  text-decoration: underline;
+  cursor: pointer;
+  font-family: inherit;
+}
+.dvc-emailcode-trigger:hover { color: #4a148c; }
+
+.dvc-emailcode-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.dvc-emailcode-overlay.open { display: flex; }
+
+.dvc-emailcode-box {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 28px 24px 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.dvc-emailcode-box h3 { margin: 0 0 8px; font-size: 1.1rem; color: #1a237e; }
+.dvc-emailcode-box p { margin: 0 0 16px; font-size: 0.85rem; color: #666; line-height: 1.4; }
+
+.dvc-emailcode-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+}
+.dvc-emailcode-close:hover { color: #333; }
+
+.dvc-emailcode-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-family: inherit;
+}
+.dvc-emailcode-code { letter-spacing: 4px; text-align: center; font-weight: 700; }
+
+.dvc-emailcode-error {
+  font-size: 0.8rem;
+  color: #b71c1c;
+  min-height: 1.1em;
+  margin-bottom: 8px;
+}
+
+.dvc-emailcode-submit {
+  width: 100%;
+  padding: 11px;
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dvc-emailcode-submit:hover { background: #38116b; }
+.dvc-emailcode-submit:disabled { opacity: 0.6; cursor: default; }
+
+.dvc-emailcode-linkbtn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: #4a148c;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: center;
+}
+.dvc-emailcode-linkbtn:disabled { opacity: 0.6; cursor: default; }
+  `;
+  document.head.appendChild(style);
 }
 
 async function signOut() {
@@ -807,6 +1097,9 @@ if (configured) {
 window.DVCAuth = {
   signInWithGoogle,
   renderSignInButton,
+  signInWithEmailCode,
+  verifyEmailCode,
+  openEmailCodeModal,
   signOut,
   deleteAccount,
   onAuthChange,
