@@ -203,10 +203,20 @@ select, input, textarea, button {
   margin: 0 auto;
 }
 
+/* max-width:100% is load-bearing here, not belt-and-braces: a
+   .picker-trigger whose label is one long nowrap string (a full resort
+   name in "Booking As") pushes this group's content-based minimum past the
+   container's width, and align-items:stretch does NOT clamp a flex item
+   back down to its container in that case -- every sibling group then
+   stretches to the same overflowed width and the whole control bar (and
+   with it the page) scrolls sideways. Capping at 100% is what actually
+   forces the label to ellipsize instead. */
 .control-group {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Toggle button only shown on mobile (see the max-width:800px override) --
@@ -310,9 +320,15 @@ select, input, textarea, button {
   font-weight: 700;
   margin-left: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
+/* flex:1 + min-width:0 is what lets the ellipsis above actually fire --
+   a flex item's default min-width:auto refuses to shrink below its own
+   min-content, which for nowrap text is the entire string. */
 .picker-trigger-value {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

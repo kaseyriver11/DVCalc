@@ -1561,8 +1561,6 @@ let selectedContractId = null;   // which one the user is browsing "as", or null
 // ---- Smart Draw (point allocation recommendation) UI state ----
 // Session-derived, not calendar selection state -- same reasoning as
 // userContracts/itinerary state above.
-let smartDrawApplyStatus = null;  // null | "applying" | "applied" | "error"
-let smartDrawUndoSnapshot = null; // { contractId, year, previous: {remaining,banked,borrowed} } | null
 let smartDrawManualOpen = false;
 // { pointsNeeded, banked, borrowed, remaining } -- only trusted while
 // pointsNeeded still matches the active stay's cost, so switching to a
@@ -1581,8 +1579,6 @@ let multiContractSplitMode = false;
 // matches the active stay, so switching stays discards a stale split
 // rather than silently carrying over amounts that no longer add up.
 let multiContractAllocations = null;
-let multiSplitApplyStatus = null;  // null | "applying" | "applied" | "error"
-let multiSplitUndoSnapshot = null; // { pointsNeeded, previousByContractId: {id: {remaining,banked,borrowed,holding}} } | null
 
 // ---- 11-to-7 Swap Simulator (Task 04) UI state ----
 // Only meaningful while booking the actual home resort at 11 months --
@@ -1635,8 +1631,7 @@ function getAvailablePoints(c) {
 // be re-banked if unused), then already-borrowed-in points (same
 // irreversibility), then native current-year points last (still bankable
 // up until this use year's own deadline). Pure function, no DOM/network --
-// callers write `after` via the same upsertContractYearPoints()
-// account.html's wallet-card steppers use.
+// `after` is a preview only; calendar planning never writes ledger balances.
 function computeSmartDraw(currentRow, pointsNeeded) {
   let need = pointsNeeded;
   const drawHolding = Math.min(currentRow.holding, need); need -= drawHolding;
@@ -1728,11 +1723,7 @@ async function refreshUserContracts() {
 
 function setSelectedContract(id) {
   selectedContractId = id || null;
-  // A stale Smart Draw recommendation/undo for the previous contract would
-  // be actively misleading once the selection changes -- drop it rather
-  // than let it linger pointed at the wrong contract-year row.
-  smartDrawApplyStatus = null;
-  smartDrawUndoSnapshot = null;
+  // Recompute the preview when changing contracts.
   smartDrawManualOpen = false;
   smartDrawManualDraws = null;
   renderBookingAsControl();
@@ -2505,12 +2496,24 @@ function syncBookingAsPickerTrigger() {
   const label = document.getElementById("booking-as-picker-trigger-label");
   if (!trigger || !label) return;
   const contract = getSelectedContract();
+  // The UY pill is a SIBLING of the label span, not nested inside it --
+  // .picker-trigger-value truncates with an ellipsis once the contract name
+  // outgrows the trigger, and a nested pill would be the first thing that
+  // ellipsis ate. As its own flex item (flex-shrink:0) it always survives.
+  let pill = trigger.querySelector(".booking-as-trigger-pill");
   if (contract) {
     const name = contract.nickname || resortNameForId(contract.home_resort_id);
-    label.innerHTML = `${escapeHTML(name)}<span class="booking-as-trigger-pill">${contract.use_year} UY</span>`;
+    label.textContent = name;
+    if (!pill) {
+      pill = document.createElement("span");
+      pill.className = "booking-as-trigger-pill";
+      label.insertAdjacentElement("afterend", pill);
+    }
+    pill.textContent = `${contract.use_year} UY`;
     applyResortArtBackground(trigger, getResortImage(contract.home_resort_id));
   } else {
     label.textContent = "Just browsing (no contract)";
+    if (pill) pill.remove();
     applyResortArtBackground(trigger, null);
   }
 }
@@ -2576,7 +2579,7 @@ function rerenderStaySummary() {
   if (isReviewMode()) renderTripRail(); else renderSummary();
 }
 
-// The draw actually shown/applied: the auto recommendation, unless manual
+// The draw shown in the preview: the auto recommendation, unless manual
 // mode is open AND its stashed amounts were computed for this exact
 // pointsNeeded (see smartDrawManualDraws's comment above).
 function smartDrawEffectiveDraws(currentRow, pointsNeeded) {
@@ -2598,9 +2601,8 @@ function smartDrawEffectiveDraws(currentRow, pointsNeeded) {
 
 // The recommendation card itself: a segmented bar (same visual language as
 // account.html's wallet-card ledger rows, tokens.css), one plain-language
-// line per nonzero bucket, guardrail call-outs, and the Apply/Undo/manual
-// controls. Advisory only -- see the guardrail copy below and the
-// footer disclaimer for why this never claims to touch a real booking.
+// line per nonzero bucket, guardrail call-outs, and the logging/manual
+// controls. The footer explains that this preview does not change balances.
 function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
   const { draws, after, shortfall } = smartDrawEffectiveDraws(currentRow, pointsNeeded);
 
@@ -2645,7 +2647,7 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
     // many days were actually left.
     const tier = window.DVCDates.urgencyTier(deadline.daysUntil);
     const deadlineCopy = window.DVCDates.formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil);
-    guardrails.push(`<div class="smart-draw-guardrail ${tier}">${after.remaining.toLocaleString()} pts left on this contract after this trip &mdash; bank them by ${deadlineCopy} or they can't roll into ${currentRow.year + 1}.</div>`);
+    guardrails.push(`<div class="smart-draw-guardrail ${tier}">Projected: ${after.remaining.toLocaleString()} current pts left on this contract after this trip &mdash; bank them by ${deadlineCopy} or they can't roll into ${currentRow.year + 1}.</div>`);
   }
   if (stayDates.length > 0) {
     const today = new Date(); today.setHours(12, 0, 0, 0);
@@ -2659,10 +2661,6 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
       guardrails.push(`<div class="smart-draw-guardrail warning">Check-in is ${daysUntilCheckIn <= 0 ? "today or already past" : `${daysUntilCheckIn} day${daysUntilCheckIn === 1 ? "" : "s"} away`} &mdash; if you later modify or cancel this reservation with Disney this close to check-in, those points move to a Holding Account (must be rebooked within 60 days, can't be banked).</div>`);
     }
   }
-
-  const applying = smartDrawApplyStatus === "applying";
-  const applied = smartDrawApplyStatus === "applied";
-
   let manualHTML = "";
   if (smartDrawManualOpen) {
     const manualTotal = draws.holding + draws.banked + draws.borrowed + draws.remaining;
@@ -2684,11 +2682,6 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
       </div>
     `;
   }
-
-  const undoBannerHTML = (smartDrawUndoSnapshot && smartDrawUndoSnapshot.contractId === contract.id)
-    ? `<div class="smart-draw-undo-banner">&check; Applied &middot; <button type="button" class="smart-draw-undo-btn" onclick="undoSmartDraw()">Undo</button></div>`
-    : "";
-
   return `
     <div class="smart-draw-card">
       <div class="smart-draw-title">Suggested draw for this trip</div>
@@ -2697,85 +2690,51 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
       ${guardrails.join("")}
       ${manualHTML}
       <div class="smart-draw-actions">
-        <button type="button" class="smart-draw-apply-btn" onclick="applySmartDraw('${contract.id}')" ${applying ? "disabled" : ""}>${applying ? "Applying…" : applied ? "Applied ✓" : "Apply to Trip"}</button>
+        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Log This Trip &rarr;</button>
         <button type="button" class="smart-draw-manual-toggle" onclick="toggleSmartDrawManual(${pointsNeeded})">${smartDrawManualOpen ? "Use recommended split" : "Adjust manually"}</button>
       </div>
-      ${undoBannerHTML}
-      <div class="smart-draw-footer">Advisory allocation based on DVC point longevity rules. Does not execute bookings in your official Disney account.</div>
+      <div class="smart-draw-footer">Planning preview only. Your recorded balances stay unchanged. Log This Trip opens a prefilled form for you to review and save.</div>
     </div>
   `;
 }
 
-async function applySmartDraw(contractId) {
-  const contract = userContracts.find(c => c.id === contractId);
-  const resort = getResort();
-  if (!contract || !resort) return;
-  const stayDates = getStayDates();
-  const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
-  if (totals.points == null) return;
-  const currentRow = getCurrentYearRow(contract);
-  const draw = smartDrawEffectiveDraws(currentRow, totals.points);
-
-  smartDrawApplyStatus = "applying";
-  rerenderStaySummary();
-
-  const previous = { remaining: currentRow.remaining, banked: currentRow.banked, borrowed: currentRow.borrowed, holding: currentRow.holding };
-  const result = await window.DVCAuth.upsertContractYearPoints({
-    contract_id: contract.id,
-    use_year_label: currentRow.year,
-    points_remaining: draw.after.remaining,
-    points_banked: draw.after.banked,
-    points_borrowed: draw.after.borrowed,
-    points_holding: draw.after.holding,
-  });
-
-  if (result.error) {
-    smartDrawApplyStatus = "error";
-    rerenderStaySummary();
+// Explicit handoff to trip logging. No itinerary or ledger is written here.
+function logTripFromCalendar() {
+  const session = window.DVCAuth?.getSession();
+  const totals = calcCurrentSegmentTotals();
+  if (!session || !totals || isSplitMode()) return;
+  const hasFallbackCash = totals.isPriorYearCash && totals.totalCash > 0;
+  const customCash = !totals.resortHasCashData && !hasFallbackCash && state.customCashRate > 0;
+  const draft = {
+    version: 1,
+    user_id: session.user.id,
+    resort_id: totals.resort.id,
+    room_type_id: state.roomTypeId,
+    check_in: state.checkIn,
+    check_out: state.checkOut,
+    points_used: totals.totalPoints,
+    custom_cash_value: customCash ? state.customCashRate * totals.dates.length : totals.hasCash ? totals.totalCash : null,
+    cash_is_custom: !!customCash,
+    contract_id: multiContractSplitMode ? null : getSelectedContract()?.id || null,
+    notes: "",
+  };
+  if (multiContractSplitMode) {
+    const contracts = eligibleSplitContracts(totals.resort);
+    const allocations = getMultiSplitAllocations(contracts, totals.totalPoints);
+    const lines = contracts.filter(c => allocations[c.id] > 0)
+      .map(c => (c.nickname || resortNameForId(c.home_resort_id)) + ": " + allocations[c.id] + " pts");
+    draft.contract_allocations = contracts.filter(c => allocations[c.id] > 0).map(c => ({ contract_id: c.id, points: allocations[c.id] }));
+    draft.notes = "Proposed contract split from calendar (confirm actual points used):\n" + lines.join("\n");
+  }
+  try {
+    sessionStorage.setItem("dvc_trip_draft", JSON.stringify(draft));
+    saveStateToSession();
+    sessionStorage.setItem("dvc_return_to_calendar", "1");
+  } catch (error) {
+    alert("Couldn't open the trip form. Please try again, or log the trip from Membership Value.");
     return;
   }
-
-  const existing = userContractYearPoints.find(r => r.contract_id === contract.id && r.use_year_label === currentRow.year);
-  if (existing) Object.assign(existing, result.data);
-  else userContractYearPoints.push(result.data);
-
-  smartDrawApplyStatus = "applied";
-  smartDrawUndoSnapshot = { contractId: contract.id, year: currentRow.year, previous };
-  smartDrawManualOpen = false;
-  smartDrawManualDraws = null;
-  rerenderStaySummary();
-
-  // 8s, not the 1500ms save-confirmation-toast convention used elsewhere
-  // (account.html's .qe-status, the itinerary save button) -- those are
-  // pure confirmations with nothing to react to, while this one is
-  // reversible and worth a real chance to notice before it's gone.
-  setTimeout(() => {
-    if (smartDrawUndoSnapshot && smartDrawUndoSnapshot.contractId === contract.id && smartDrawUndoSnapshot.year === currentRow.year) {
-      smartDrawUndoSnapshot = null;
-      smartDrawApplyStatus = null;
-      rerenderStaySummary();
-    }
-  }, 8000);
-}
-
-async function undoSmartDraw() {
-  if (!smartDrawUndoSnapshot) return;
-  const { contractId, year, previous } = smartDrawUndoSnapshot;
-  const result = await window.DVCAuth.upsertContractYearPoints({
-    contract_id: contractId,
-    use_year_label: year,
-    points_remaining: previous.remaining,
-    points_banked: previous.banked,
-    points_borrowed: previous.borrowed,
-    points_holding: previous.holding,
-  });
-  if (!result.error) {
-    const existing = userContractYearPoints.find(r => r.contract_id === contractId && r.use_year_label === year);
-    if (existing) Object.assign(existing, result.data);
-  }
-  smartDrawUndoSnapshot = null;
-  smartDrawApplyStatus = null;
-  rerenderStaySummary();
+  window.location.href = "trips.html";
 }
 
 function toggleSmartDrawManual(pointsNeeded) {
@@ -2839,8 +2798,6 @@ function getMultiSplitAllocations(contracts, pointsNeeded) {
 function toggleMultiContractSplit() {
   multiContractSplitMode = !multiContractSplitMode;
   multiContractAllocations = null; // start fresh each time split mode is (re-)opened
-  multiSplitApplyStatus = null;
-  multiSplitUndoSnapshot = null;
   rerenderStaySummary();
 }
 
@@ -2929,20 +2886,13 @@ function buildMultiContractSplitHTML(resort, stayDates) {
         <input type="range" class="multi-split-slider" min="0" max="${available}" step="1" value="${allocated}"
           oninput="setMultiSplitAllocation('${c.id}', this.value, ${available}, ${pointsNeeded})">
         <div class="multi-split-row-footer">
-          <span class="multi-split-after-label">After this trip:</span> <span class="multi-split-after-num">${(available - allocated).toLocaleString()}</span> pts left
+          <span class="multi-split-after-label">Projected after this trip:</span> <span class="multi-split-after-num">${(available - allocated).toLocaleString()}</span> pts left
         </div>
         ${warning ? `<div class="smart-draw-guardrail warning">${warning}</div>` : ""}
       </div>
     `;
   }).join("");
 
-  const applying = multiSplitApplyStatus === "applying";
-  const applied = multiSplitApplyStatus === "applied";
-  const canApply = totalAllocated === pointsNeeded;
-
-  const undoBannerHTML = multiSplitUndoSnapshot
-    ? `<div class="smart-draw-undo-banner">&check; Applied &middot; <button type="button" class="smart-draw-undo-btn" onclick="undoMultiSplit()">Undo</button></div>`
-    : "";
 
   return `
     <div class="multi-split-card smart-draw-card">
@@ -2950,92 +2900,12 @@ function buildMultiContractSplitHTML(resort, stayDates) {
       ${buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded)}
       <div class="multi-split-rows">${rowsHTML}</div>
       <div class="smart-draw-actions">
-        <button type="button" class="smart-draw-apply-btn" onclick="applyMultiSplit('${resort.id}')" ${applying || !canApply ? "disabled" : ""}>${applying ? "Applying…" : applied ? "Applied ✓" : "Apply Split"}</button>
+        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Log This Trip &rarr;</button>
         <button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">&larr; Use one contract</button>
       </div>
-      ${undoBannerHTML}
-      <div class="smart-draw-footer">Each contract draws in Holding &rarr; Banked &rarr; Borrowed &rarr; Current order, same priority Smart Draw uses. Advisory only -- does not execute bookings in your official Disney account.</div>
+      <div class="smart-draw-footer">Planning preview only. Your recorded balances stay unchanged. Log This Trip opens a prefilled form with this proposed split in the notes.</div>
     </div>
   `;
-}
-
-async function applyMultiSplit(resortId) {
-  const resort = RESORTS.find(r => r.id === resortId) || getResort();
-  const stayDates = getStayDates();
-  const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
-  if (totals.points == null) return;
-  const contracts = eligibleSplitContracts(resort);
-  const allocations = getMultiSplitAllocations(contracts, totals.points);
-
-  multiSplitApplyStatus = "applying";
-  rerenderStaySummary();
-
-  const previousByContractId = {};
-  const errors = [];
-  for (const c of contracts) {
-    const allocated = allocations[c.id] || 0;
-    if (allocated <= 0) continue;
-    const currentRow = getCurrentYearRow(c);
-    previousByContractId[c.id] = { remaining: currentRow.remaining, banked: currentRow.banked, borrowed: currentRow.borrowed, holding: currentRow.holding };
-    const draw = computeSmartDraw(currentRow, allocated);
-    const result = await window.DVCAuth.upsertContractYearPoints({
-      contract_id: c.id,
-      use_year_label: currentRow.year,
-      points_remaining: draw.after.remaining,
-      points_banked: draw.after.banked,
-      points_borrowed: draw.after.borrowed,
-      points_holding: draw.after.holding,
-    });
-    if (result.error) {
-      errors.push(c.id);
-      continue;
-    }
-    const existing = userContractYearPoints.find(r => r.contract_id === c.id && r.use_year_label === currentRow.year);
-    if (existing) Object.assign(existing, result.data);
-    else userContractYearPoints.push(result.data);
-  }
-
-  if (errors.length > 0) {
-    multiSplitApplyStatus = "error";
-    rerenderStaySummary();
-    return;
-  }
-
-  multiSplitApplyStatus = "applied";
-  multiSplitUndoSnapshot = { pointsNeeded: totals.points, previousByContractId };
-  rerenderStaySummary();
-
-  // Same 8s reversible-action visibility window as Smart Draw's own undo.
-  setTimeout(() => {
-    if (multiSplitUndoSnapshot && multiSplitUndoSnapshot.pointsNeeded === totals.points) {
-      multiSplitUndoSnapshot = null;
-      multiSplitApplyStatus = null;
-      rerenderStaySummary();
-    }
-  }, 8000);
-}
-
-async function undoMultiSplit() {
-  if (!multiSplitUndoSnapshot) return;
-  const { previousByContractId } = multiSplitUndoSnapshot;
-  for (const [contractId, previous] of Object.entries(previousByContractId)) {
-    const currentRow = getCurrentYearRow(userContracts.find(c => c.id === contractId));
-    const result = await window.DVCAuth.upsertContractYearPoints({
-      contract_id: contractId,
-      use_year_label: currentRow.year,
-      points_remaining: previous.remaining,
-      points_banked: previous.banked,
-      points_borrowed: previous.borrowed,
-      points_holding: previous.holding,
-    });
-    if (!result.error) {
-      const existing = userContractYearPoints.find(r => r.contract_id === contractId && r.use_year_label === currentRow.year);
-      if (existing) Object.assign(existing, result.data);
-    }
-  }
-  multiSplitUndoSnapshot = null;
-  multiSplitApplyStatus = null;
-  rerenderStaySummary();
 }
 
 // ---- 11-to-7 Swap Simulator (Task 04) -----------------------------------

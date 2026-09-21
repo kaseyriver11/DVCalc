@@ -935,28 +935,71 @@ body {
 }
 .field-hint.exact { color: var(--color-good); }
 
-/* The two auto-suggested fields (Points Used, Cash Value) get their own
-   soft highlighted card -- same "insight, not a static box" language as
-   this page's other computed numbers (.dopamine-tile) -- so the
-   auto-filled suggestion reads as something the app figured out for you,
-   not just another blank to fill in. */
+/* The whole numeric card is the input surface, rather than a browser
+   input nested inside a colored box. Keep the value large and editable. */
 .insight-field {
-  background: var(--color-primary-tint-bg);
-  border-radius: 10px;
-  padding: 10px 12px;
+  background: linear-gradient(145deg, #fff, #faf8fd);
+  border: 1px solid var(--color-border-light);
+  border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.insight-field label { color: var(--color-secondary); }
+.insight-field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.12);
+}
+.insight-field label {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
 .insight-field:not(:last-child) { margin-bottom: 10px; }
+.insight-value-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.insight-unit { color: var(--color-text-muted); font-size: 0.9rem; flex-shrink: 0; }
 .insight-input {
-  background: white;
-  font-size: 1.15rem !important;
+  appearance: textfield;
+  -moz-appearance: textfield;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  padding: 6px 0;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  font-family: inherit;
+  font-size: 1.75rem;
+  line-height: 1.2;
   font-weight: 700;
-  color: var(--color-primary);
-  border: 1px solid rgba(74,20,140,0.18) !important;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
 }
+.insight-input::-webkit-inner-spin-button,
+.insight-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.insight-input::placeholder { font-size: 1rem; font-weight: 400; color: var(--color-text-faint); }
+.insight-field .field-hint { color: var(--color-text-muted); line-height: 1.4; }
+.insight-field .field-hint.exact { color: var(--color-good); }
+
+.trip-funding { margin: 16px 0; padding: 0; min-width: 0; border: 0; }
+.trip-funding legend { font-size: 0.9rem; font-weight: 700; color: var(--color-text); }
+.funding-help { font-size: 0.78rem; line-height: 1.5; color: var(--color-text-muted); margin: 8px 0; }
+.funding-contract-row { border: 1px solid var(--color-border-light); border-radius: 12px; padding: 12px; margin: 8px 0; }
+.funding-contract-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.85rem; cursor: pointer; }
+.funding-contract-choice input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--color-primary); }
+.funding-amount { display: flex; align-items: center; gap: 8px; padding-left: 30px; color: var(--color-text-muted); }
+.funding-amount input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--color-border); border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 1rem; }
+.funding-amount input:disabled { opacity: 0.45; }
+.funding-amount input:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+#outside-funding summary { padding: 12px 0; min-height: 44px; cursor: pointer; color: var(--color-primary); font-size: 0.85rem; }
+.funding-summary { padding: 12px; border-radius: 10px; background: #f4f7f4; color: var(--color-text); font-size: 0.8rem; line-height: 1.5; }
+.funding-summary.funding-incomplete { background: #fff7e8; }
 
 .points-breakdown-toggle {
   display: block;
@@ -1123,6 +1166,7 @@ body {
   <script src="data/resort_investment.js"></script>
   <script src="data/disney_events.js"></script>
   <script src="data/resort_images.js"></script>
+  <script src="dvc-trip-funding.js"></script>
   <script src="dvc-badges.js"></script>
   <script src="dvc-track.js"></script>
   <script>
@@ -1441,10 +1485,13 @@ function renderUnconfigured() {
   pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
 }
 
-function tripCashValue(trip) {
-  if (trip.custom_cash_value != null) return { cash: trip.custom_cash_value, isCustom: true };
-  const est = estimateTripCashValue(trip.resort_id, trip.room_type_id, trip.check_in, trip.check_out);
-  return est ? { cash: est.cash, isCustom: false, estimateYear: est.year, isDeflated: est.isDeflated } : null;
+function tripCashValue(trip, ownedContracts) {
+  const est = trip.custom_cash_value != null
+    ? { cash: Number(trip.custom_cash_value), isCustom: true }
+    : estimateTripCashValue(trip.resort_id, trip.room_type_id, trip.check_in, trip.check_out);
+  if (!est) return null;
+  const credited = window.DVCTripFunding.credit(trip, est.cash, ownedContracts);
+  return credited ? { ...est, ...credited } : null;
 }
 
 
@@ -1629,7 +1676,7 @@ function buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, cur
 
   const tripValueByYear = {};
   for (const t of trips) {
-    const v = tripCashValue(t);
+    const v = tripCashValue(t, contracts);
     if (!v || !Number.isFinite(v.cash)) continue;
     const y = parseInt(t.check_out.slice(0, 4), 10);
     tripValueByYear[y] = (tripValueByYear[y] || 0) + v.cash;
@@ -1732,8 +1779,8 @@ function computeHouseMoneyStats(contracts, trips, settings) {
   let lifetimeValue = 0;
   let tripsWithValue = 0;
   for (const t of trips) {
-    const v = tripCashValue(t);
-    if (v && Number.isFinite(v.cash)) {
+    const v = tripCashValue(t, contracts);
+    if (v && Number.isFinite(v.cash) && v.ownedPoints > 0) {
       lifetimeValue += v.cash;
       tripsWithValue++;
     }
@@ -1827,7 +1874,7 @@ function computeLast12MonthSavings(trips) {
   for (const t of trips) {
     const checkOutMs = new Date(t.check_out + "T12:00:00").getTime();
     if (checkOutMs <= now && checkOutMs >= cutoff) {
-      const v = tripCashValue(t);
+      const v = tripCashValue(t, contracts);
       if (v && Number.isFinite(v.cash)) sum += v.cash;
     }
   }
@@ -2439,47 +2486,39 @@ async function renderSignedIn() {
           <div class="form-group-label">The Numbers</div>
           <div class="insight-field">
             <label for="f-points">Points Used</label>
-            <input type="number" id="f-points" min="0" step="1" class="insight-input">
+            <div class="insight-value-row">
+              <input type="number" id="f-points" min="0" step="1" inputmode="numeric" class="insight-input" aria-describedby="points-hint">
+              <span class="insight-unit" aria-hidden="true">pts</span>
+            </div>
             <div class="field-hint" id="points-hint"></div>
           </div>
 
-          <button type="button" class="points-breakdown-toggle" id="points-breakdown-toggle" aria-expanded="false">
-            + Break down point sources <span class="points-breakdown-toggle-sub">(DVC one-time, family transfer, etc.)</span>
-          </button>
-          <div class="points-breakdown-panel" id="points-breakdown-panel" hidden>
-            <div class="form-row-3">
-              <div class="form-field">
-                <label for="f-points-contracts">My Contracts</label>
-                <input type="number" id="f-points-contracts" min="0" step="1">
-              </div>
-              <div class="form-field">
-                <label for="f-points-onetime">Disney One-Time</label>
-                <input type="number" id="f-points-onetime" min="0" step="1">
-              </div>
-              <div class="form-field">
-                <label for="f-points-transferred">Transferred/Borrowed</label>
-                <input type="number" id="f-points-transferred" min="0" step="1">
-              </div>
-            </div>
-            <div class="points-breakdown-total" id="points-breakdown-total"></div>
-          </div>
+          <fieldset class="trip-funding" id="trip-funding">
+            <legend>Where did the points come from?</legend>
+            <p class="funding-help">Assign all points to your contracts or outside sources. Banked or borrowed points from your own contracts belong with those contracts.</p>
+            <div id="funding-review-note" class="funding-help"></div>
+            <div id="funding-contracts"></div>
+            <details id="outside-funding">
+              <summary>Outside points</summary>
+              <div class="form-field"><label for="funding-one-time">Disney one-time points</label><input id="funding-one-time" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+              <div class="form-field"><label for="funding-transferred">Transferred or rented points from others</label><input id="funding-transferred" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+              <div class="form-field"><label for="funding-other">Other outside points</label><input id="funding-other" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+            </details>
+            <div id="funding-summary" class="funding-summary" role="status" aria-live="polite"></div>
+          </fieldset>
 
           <div class="insight-field">
             <label for="f-cash-value">Cash Value</label>
-            <input type="number" id="f-cash-value" min="0" step="1" placeholder="Total $ for the stay" class="insight-input">
+            <div class="insight-value-row">
+              <span class="insight-unit" aria-hidden="true">$</span>
+              <input type="number" id="f-cash-value" min="0" step="1" inputmode="decimal" placeholder="Total for the stay" class="insight-input" aria-describedby="cash-hint">
+            </div>
             <div class="field-hint" id="cash-hint"></div>
           </div>
         </div>
 
         <div class="form-group">
           <div class="form-group-label">Extra Details</div>
-          <div class="form-field">
-            <label for="f-contract">Contract (optional)</label>
-            <select id="f-contract">
-              <option value="">Not linked to a specific contract</option>
-              ${activeContracts.map(c => `<option value="${c.id}">${contractLabel(c)}</option>`).join("")}
-            </select>
-          </div>
           <div class="form-field">
             <label for="f-notes">Notes (optional)</label>
             <textarea id="f-notes" rows="2"></textarea>
@@ -2499,6 +2538,7 @@ async function renderSignedIn() {
   wireTripForm(activeContracts);
   attachAssumptionsListeners();
   pendingWarning = null;
+  openCalendarTripDraft();
 }
 
 function renderTripList() {
@@ -2511,7 +2551,8 @@ function renderTripList() {
   justLoggedTripId = null;
   const sorted = [...trips].sort((a, b) => b.check_out.localeCompare(a.check_out));
   list.innerHTML = sorted.map(t => {
-    const v = tripCashValue(t);
+    const v = tripCashValue(t, contracts);
+    const attribution = window.DVCTripFunding.summary(t, contracts);
     const nights = nightsBetween(t.check_in, t.check_out);
     const resort = RESORTS.find(r => r.id === t.resort_id);
     const roomType = resort?.roomTypes.find(rt => rt.id === t.room_type_id);
@@ -2524,11 +2565,12 @@ function renderTripList() {
           <div class="trip-postcard-dates">${formatTripDateRange(t.check_in, t.check_out)} &middot; ${nights} night${nights === 1 ? "" : "s"}</div>
         </div>
         <div class="trip-postcard-value">
-          <div class="trip-postcard-pill${v ? "" : " no-data"}">${v ? "+" + fmt(v.cash) + " toward House Money" : "No rate data"}</div>
-          <div class="trip-postcard-points">${t.points_used.toLocaleString()} pts</div>
+          <div class="trip-postcard-pill${v ? "" : " no-data"}">${v ? "+" + fmt(v.cash) + " toward House Money" : (!attribution.valid ? "Review point sources" : "No rate data")}</div>
+          <div class="trip-postcard-points">${t.points_used.toLocaleString()} pts${attribution.valid ? ` &middot; ${attribution.owned} from your contracts` : " &middot; excluded from membership value"}</div>
+          ${v && v.outsidePoints ? `<div class="trip-postcard-points">Whole stay: ${fmt(v.totalCash)}; outside share excluded</div>` : ""}
         </div>
         <div class="trip-postcard-actions">
-          <button type="button" class="icon-btn" data-edit="${t.id}" title="Edit" aria-label="Edit">&#9998;</button>
+          <button type="button" class="icon-btn" data-edit="${t.id}" title="Edit" aria-label="${attribution.valid ? 'Edit trip' : 'Review point sources'}">&#9998;</button>
           <button type="button" class="icon-btn danger" data-delete="${t.id}" title="Delete" aria-label="Delete">&times;</button>
         </div>
       </div>
@@ -2637,25 +2679,86 @@ function updatePointsSuggestion() {
 function updateSuggestions() {
   updateCashSuggestion();
   updatePointsSuggestion();
+  updateFundingSummary(true);
 }
 
-// "+ Break down point sources" accordion -- purely optional attribution
-// metadata (see points_source_breakdown in db/migrations/012_...), never
-// required to save a trip. The live total is informational only (colored,
-// not blocking) since the three sub-fields are a convenience for someone
-// who wants this level of detail, not a second required entry of the same
-// number.
-function updatePointsBreakdownTotal() {
-  const contracts = parseInt(document.getElementById("f-points-contracts").value, 10) || 0;
-  const oneTime = parseInt(document.getElementById("f-points-onetime").value, 10) || 0;
-  const transferred = parseInt(document.getElementById("f-points-transferred").value, 10) || 0;
-  const target = parseInt(document.getElementById("f-points").value, 10) || 0;
-  const sum = contracts + oneTime + transferred;
-  const el = document.getElementById("points-breakdown-total");
-  el.textContent = `Total: ${sum} / ${target} pts`;
-  const matches = sum === target && target > 0;
-  el.classList.toggle("match", matches);
-  el.classList.toggle("mismatch", !matches);
+let lastAutoAllocation = null;
+function fundingEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+function readTripFunding() {
+  const allocations = Array.from(document.querySelectorAll('[data-funding-contract]:checked')).map(box => ({
+    contract_id: box.dataset.fundingContract,
+    points: Number(document.getElementById(box.dataset.pointsInput).value || NaN),
+  }));
+  const read = id => { const raw = document.getElementById(id).value; return raw === "" ? 0 : Number(raw); };
+  return { version: 2, allocations, one_time: read('funding-one-time'), transferred: read('funding-transferred'), other: read('funding-other') };
+}
+function renderTripFunding(values) {
+  const old = values?.points_source_breakdown;
+  const total = Number(document.getElementById('f-points').value);
+  const proposed = old?.version === 2 ? old.allocations : values?.contract_allocations;
+  let allocations = Array.isArray(proposed) ? proposed : [];
+  if (!allocations.length && values?.contract_id) {
+    allocations = [{ contract_id: values.contract_id, points: old?.contracts ?? total }];
+  } else if (!values && contracts.filter(c => c.is_active).length === 1) {
+    allocations = [{ contract_id: contracts.find(c => c.is_active).id, points: total }];
+  }
+  document.getElementById('funding-contracts').innerHTML = contracts.length ? contracts.map((c, index) => {
+    const row = allocations.find(a => a.contract_id === c.id);
+    const label = contractLabel(c) + (c.is_active ? '' : ' (inactive � past stays)');
+    const inputId = 'funding-points-' + index;
+    return `<div class="funding-contract-row"><label class="funding-contract-choice"><input type="checkbox" data-funding-contract="${fundingEscape(c.id)}" data-points-input="${inputId}" ${row ? 'checked' : ''}><span>${fundingEscape(label)}</span></label><div class="funding-amount"><input type="number" id="${inputId}" min="1" step="1" inputmode="numeric" aria-label="Points from ${fundingEscape(label)}" value="${row && Number.isFinite(row.points) ? row.points : ''}" ${row ? '' : 'disabled'}><span>pts</span></div></div>`;
+  }).join('') : '<p class="funding-help">No contracts yet. <a href="account.html">Add a contract</a> to credit its vacation value, or enter outside points below.</p>';
+  document.getElementById('funding-one-time').value = old?.one_time ?? 0;
+  document.getElementById('funding-transferred').value = old?.transferred ?? 0;
+  document.getElementById('funding-other').value = old?.other ?? 0;
+  document.getElementById('outside-funding').open = !contracts.length || ['one_time', 'transferred', 'other'].some(k => old?.[k] > 0);
+  const needsReview = values?.id && !window.DVCTripFunding.summary(values, contracts).valid;
+  const missing = allocations.some(a => !contracts.some(c => c.id === a.contract_id));
+  document.getElementById('funding-review-note').textContent = needsReview
+    ? 'Review these point sources and save. This trip is excluded from membership value until its funding is confirmed.'
+    : missing ? 'A proposed contract is no longer available. Assign those points to the correct source.' : '';
+  lastAutoAllocation = allocations.length === 1 && !old && !missing ? allocations[0].points : null;
+  document.querySelectorAll('[data-funding-contract]').forEach(box => {
+    box.addEventListener('change', () => {
+      const input = document.getElementById(box.dataset.pointsInput);
+      input.disabled = !box.checked;
+      if (!box.checked) input.value = '';
+      lastAutoAllocation = null;
+      if (box.checked && document.querySelectorAll('[data-funding-contract]:checked').length === 1) {
+        const f = readTripFunding();
+        input.value = Math.max(0, Number(document.getElementById('f-points').value) - f.one_time - f.transferred - f.other) || '';
+        if (!f.one_time && !f.transferred && !f.other) lastAutoAllocation = Number(input.value);
+      }
+      updateFundingSummary();
+    });
+  });
+  document.querySelectorAll('#trip-funding input[type="number"]').forEach(input => input.addEventListener('input', () => {
+    lastAutoAllocation = null;
+    updateFundingSummary();
+  }));
+  updateFundingSummary();
+}
+function updateFundingSummary(updateSingle = false) {
+  const el = document.getElementById('funding-summary');
+  if (!el) return;
+  const total = Number(document.getElementById('f-points').value);
+  const checked = document.querySelectorAll('[data-funding-contract]:checked');
+  if (updateSingle && lastAutoAllocation != null && checked.length === 1) {
+    const input = document.getElementById(checked[0].dataset.pointsInput);
+    if (Number(input.value) === lastAutoAllocation && Number.isInteger(total) && total > 0) {
+      input.value = total;
+      lastAutoAllocation = total;
+    }
+  }
+  const funding = readTripFunding();
+  const result = window.DVCTripFunding.validate(total, funding, contracts);
+  el.classList.toggle('funding-incomplete', !result.valid);
+  if (!result.valid) { el.textContent = result.error; return; }
+  const cash = Number(document.getElementById('f-cash-value').value);
+  const credit = Number.isFinite(cash) && cash >= 0 ? fmt(cash * result.share) : '�';
+  el.textContent = `${total} of ${total} pts assigned � ${result.owned} from your contracts. ${credit} of this stay's cash value counts toward ownership payback (${Math.round(result.share * 100)}%). Outside points do not count.`;
 }
 
 function uniqueResorts() {
@@ -2682,15 +2785,8 @@ function wireTripForm(activeContracts) {
   document.getElementById("f-checkin").addEventListener("change", updateSuggestions);
   document.getElementById("f-checkout").addEventListener("change", updateSuggestions);
 
-  document.getElementById("points-breakdown-toggle").addEventListener("click", () => {
-    const panel = document.getElementById("points-breakdown-panel");
-    const btn = document.getElementById("points-breakdown-toggle");
-    panel.hidden = !panel.hidden;
-    btn.setAttribute("aria-expanded", String(!panel.hidden));
-  });
-  ["f-points", "f-points-contracts", "f-points-onetime", "f-points-transferred"].forEach(id => {
-    document.getElementById(id).addEventListener("input", updatePointsBreakdownTotal);
-  });
+  document.getElementById("f-points").addEventListener("input", () => updateFundingSummary(true));
+  document.getElementById("f-cash-value").addEventListener("input", () => updateFundingSummary());
 
   document.querySelectorAll(".js-add-trip").forEach(btn =>
     btn.addEventListener("click", () => openTripForm(null))
@@ -2705,30 +2801,61 @@ function wireTripForm(activeContracts) {
   document.getElementById("save-trip").addEventListener("click", saveTripForm);
 }
 
-function openTripForm(trip) {
+// Consume only after authentication and form rendering. A draft never carries
+// an existing trip ID and is removed before opening, so re-renders cannot replay it.
+function openCalendarTripDraft() {
+  const session = window.DVCAuth?.getSession();
+  if (!session) return;
+  let draft;
+  try {
+    const raw = sessionStorage.getItem("dvc_trip_draft");
+    if (!raw) return;
+    sessionStorage.removeItem("dvc_trip_draft");
+    draft = JSON.parse(raw);
+  } catch (error) {
+    return;
+  }
+  if (!draft || draft.version !== 1 || draft.user_id !== session.user.id) return;
+  const resort = RESORTS.find(r => r.id === draft.resort_id && r.roomTypes.some(rt => rt.id === draft.room_type_id));
+  if (!resort || !/^\d{4}-\d{2}-\d{2}$/.test(draft.check_in) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(draft.check_out) || draft.check_out <= draft.check_in ||
+      !Number.isInteger(draft.points_used) || draft.points_used < 0) return;
+  const cash = Number.isFinite(draft.custom_cash_value) && draft.custom_cash_value >= 0
+    ? draft.custom_cash_value : null;
+  openTripForm(null, {
+    resort_id: draft.resort_id,
+    room_type_id: draft.room_type_id,
+    check_in: draft.check_in,
+    check_out: draft.check_out,
+    points_used: draft.points_used,
+    custom_cash_value: cash,
+    cash_is_custom: !!draft.cash_is_custom,
+    contract_id: contracts.some(c => c.is_active && c.id === draft.contract_id) ? draft.contract_id : null,
+    contract_allocations: Array.isArray(draft.contract_allocations) ? draft.contract_allocations : null,
+    notes: typeof draft.notes === "string" ? draft.notes : "",
+  });
+}
+
+function openTripForm(trip, draft = null) {
   editingTripId = trip ? trip.id : null;
+  const values = trip || draft;
   lastAutoFilledPoints = null;
   lastAutoFilledCash = null;
   document.getElementById("form-error").style.display = "none";
-  document.getElementById("f-resort").value = trip?.resort_id || document.getElementById("f-resort").value;
-  populateRoomTypesForResort(document.getElementById("f-resort").value, trip?.room_type_id);
-  document.getElementById("f-checkin").value = trip?.check_in || "";
-  document.getElementById("f-checkout").value = trip?.check_out || "";
-  document.getElementById("f-points").value = trip?.points_used || "";
-  document.getElementById("f-contract").value = trip?.contract_id || "";
-  document.getElementById("f-notes").value = trip?.notes || "";
-  document.getElementById("f-cash-value").value = trip?.custom_cash_value != null ? trip.custom_cash_value : "";
+  document.getElementById("f-resort").value = values?.resort_id || document.getElementById("f-resort").value;
+  populateRoomTypesForResort(document.getElementById("f-resort").value, values?.room_type_id);
+  document.getElementById("f-checkin").value = values?.check_in || "";
+  document.getElementById("f-checkout").value = values?.check_out || "";
+  document.getElementById("f-points").value = values?.points_used ?? "";
+  document.getElementById("f-notes").value = values?.notes || "";
+  document.getElementById("f-cash-value").value = values?.custom_cash_value ?? "";
   updateSuggestions();
+  if (draft) {
+    lastAutoFilledPoints = Number(document.getElementById("f-points").value);
+    if (!draft.cash_is_custom) lastAutoFilledCash = Number(document.getElementById("f-cash-value").value);
+  }
 
-  const breakdown = trip?.points_source_breakdown || null;
-  document.getElementById("f-points-contracts").value = breakdown?.contracts ?? "";
-  document.getElementById("f-points-onetime").value = breakdown?.one_time ?? "";
-  document.getElementById("f-points-transferred").value = breakdown?.transferred ?? "";
-  // Auto-expand only when editing a trip that actually has a breakdown --
-  // a brand-new trip always starts collapsed, keeping the fast path clear.
-  document.getElementById("points-breakdown-panel").hidden = !breakdown;
-  document.getElementById("points-breakdown-toggle").setAttribute("aria-expanded", String(!!breakdown));
-  updatePointsBreakdownTotal();
+  renderTripFunding(values);
 
   document.getElementById("trip-modal-title").textContent = trip ? "Edit Trip" : "Log a Trip";
   document.getElementById("save-trip").textContent = trip ? "Save Changes" : "Save Trip";
@@ -2746,7 +2873,7 @@ async function saveTripForm() {
 
   const checkIn = document.getElementById("f-checkin").value;
   const checkOut = document.getElementById("f-checkout").value;
-  const points = parseInt(document.getElementById("f-points").value, 10);
+  const points = Number(document.getElementById("f-points").value);
 
   if (!checkIn || !checkOut) {
     errorEl.textContent = "Check-in and check-out dates are required.";
@@ -2769,19 +2896,21 @@ async function saveTripForm() {
     return;
   }
   const cashValueRaw = document.getElementById("f-cash-value").value;
-  if (!cashValueRaw) {
-    errorEl.textContent = "Cash value is required -- without it a trip can't count toward whether your contract is paying for itself. Enter your best guess if we don't have an estimate for this resort.";
+  if (!cashValueRaw || !Number.isFinite(Number(cashValueRaw)) || Number(cashValueRaw) < 0) {
+    errorEl.textContent = "Enter a cash value of zero or more for the whole stay. Only the share funded by your contracts counts toward membership value.";
     errorEl.style.display = "block";
     return;
   }
 
-  // Only stored when the accordion actually has something in it -- an
-  // untouched "+ Break down point sources" section saves as null, not a
-  // fake {0,0,0} breakdown nobody actually entered.
-  const bContracts = document.getElementById("f-points-contracts").value;
-  const bOneTime = document.getElementById("f-points-onetime").value;
-  const bTransferred = document.getElementById("f-points-transferred").value;
-  const hasBreakdown = bContracts !== "" || bOneTime !== "" || bTransferred !== "";
+  const funding = readTripFunding();
+  const attribution = window.DVCTripFunding.validate(points, funding, contracts);
+  if (!attribution.valid) {
+    errorEl.textContent = attribution.error;
+    errorEl.style.display = "block";
+    updateFundingSummary();
+    document.getElementById("trip-funding").scrollIntoView({ block: "center", behavior: "smooth" });
+    return;
+  }
 
   const payload = {
     resort_id: document.getElementById("f-resort").value,
@@ -2789,14 +2918,10 @@ async function saveTripForm() {
     check_in: checkIn,
     check_out: checkOut,
     points_used: points,
-    contract_id: document.getElementById("f-contract").value || null,
+    contract_id: funding.allocations.length === 1 ? funding.allocations[0].contract_id : null,
     notes: document.getElementById("f-notes").value.trim() || null,
-    custom_cash_value: parseFloat(cashValueRaw),
-    points_source_breakdown: hasBreakdown ? {
-      contracts: parseInt(bContracts, 10) || 0,
-      one_time: parseInt(bOneTime, 10) || 0,
-      transferred: parseInt(bTransferred, 10) || 0,
-    } : null,
+    custom_cash_value: Number(cashValueRaw),
+    points_source_breakdown: funding,
   };
 
   const result = editingTripId

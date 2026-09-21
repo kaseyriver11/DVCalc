@@ -327,6 +327,59 @@ body {
   background: rgba(46, 125, 50, 0.07);
   border-radius: 6px;
 }
+
+/* Compact mobile table, NOT a stacked-card rebuild -- a card-per-itinerary
+   layout was tried and rejected: it "fit" a phone screen, but a comparison
+   feature whose whole point is seeing every option at once shouldn't force
+   scrolling through one option at a time to do that. Below 700px (this
+   page's existing breakpoint, see .picker-row above) the table instead
+   goes table-layout:fixed with every column sized off the row-label
+   column's own explicit width, and every cell's text set to wrap at word
+   boundaries -- shrinking font/padding enough that up to 3 itinerary
+   columns stay visible side by side with ZERO horizontal scroll. Verified
+   against a real 390px-wide viewport with 2 and 3 itineraries selected
+   before landing on these exact sizes; going smaller starts breaking
+   genuinely long words (e.g. "Boardwalk/Preferred") mid-token, which is
+   the one acceptable rough edge at 3-up density.
+   Positioned LAST in this stylesheet deliberately: at equal specificity
+   (e.g. this vs. the unconditional ".compare-table tbody th" rule setting
+   white-space:nowrap above), the cascade breaks ties by source order, not
+   by which rule sits inside a @media block -- an earlier first attempt at
+   this override went right after .compare-table's base rules and was
+   silently beaten by the nowrap declared further down, so the label
+   column never actually wrapped even though the media query itself was
+   matching. */
+@media (max-width: 700px) {
+  .compare-table-wrap {
+    overflow-x: visible;
+    /* Bleeds past .section's own 24px side padding so the table gets the
+       full viewport width to work with, not just what's left after the
+       card's padding. */
+    margin: 0 -24px;
+    padding: 0 6px;
+  }
+  .compare-table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 0.7rem;
+  }
+  .compare-table th, .compare-table td {
+    padding: 6px 4px;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+  .compare-table thead th:first-child, .compare-table tbody th {
+    width: 72px;
+    font-size: 0.56rem;
+    white-space: normal;
+    padding-right: 2px;
+  }
+  .compare-table .compare-col-title { font-size: 0.6rem; }
+  .compare-table thead .segment-resort { font-size: 0.72rem; }
+  .window-badge, .risk-badge, .feasibility-badge { font-size: 0.6rem; padding: 2px 5px; line-height: 1.25; }
+  .window-sub, .risk-sub, .feasibility-detail { font-size: 0.56rem; margin-top: 2px; }
+  .compare-metric { font-size: 0.8rem; }
+}
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -861,11 +914,9 @@ function buildCompareTableHTML(selected) {
   // The pill+label+checkmark are one nowrap inline-flex unit (.crowd-inline)
   // instead of relying on .compare-metric.best's usual ::after checkmark --
   // two cells with the IDENTICAL "7 Heavy ✓" content were rendering
-  // differently (one wrapped the label below the pill with the checkmark
-  // stranded on its own line, the other stayed on one line) purely because
-  // table auto-layout gave their columns different widths. Forcing this
-  // group to never wrap internally makes every column render it identically,
-  // and the table's existing overflow-x:auto absorbs any resulting width.
+  // differently purely because table auto-layout gave their columns
+  // different widths. Forcing this short group to never wrap internally
+  // makes every column render it identically.
   const crowdRow = metrics.map((m, i) => {
     if (m.avgCrowd == null) return `<td>&mdash;</td>`;
     return `
@@ -883,6 +934,12 @@ function buildCompareTableHTML(selected) {
     ? ""
     : `<div class="empty-note">Home Resort Priority and Point Feasibility need at least one active contract -- <a href="account.html">add one</a> to see them here.</div>`;
 
+  // Stays ONE table at every width -- see the compact mobile ruleset in
+  // <style> (table-layout:fixed + word-wrap, no horizontal scroll) for how
+  // this fits a phone screen. A stacked Mobile Card Feed was tried and
+  // rejected here: for an itinerary-vs-itinerary comparison, seeing every
+  // option at once is the actual point, so trading that away for taller
+  // single-column cards defeated the feature even though it "fit."
   return `
     ${noContractsNote}
     <div class="compare-table-wrap">

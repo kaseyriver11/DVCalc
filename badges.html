@@ -195,6 +195,7 @@ body {
   <script src="data/disney_events.js"></script>
   <script src="data/resort_shorthand.js"></script>
   <script src="data/resort_images.js"></script>
+  <script src="dvc-trip-funding.js"></script>
   <script src="dvc-badges.js"></script>
   <script src="dvc-track.js"></script>
   <script>
@@ -284,10 +285,13 @@ function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
   return { cash, rawCash: result.totalCash, year: tripYear, anchorYear, nights, isDeflated: tripYear !== anchorYear };
 }
 
-function tripCashValue(trip) {
-  if (trip.custom_cash_value != null) return { cash: trip.custom_cash_value, isCustom: true };
-  const est = estimateTripCashValue(trip.resort_id, trip.room_type_id, trip.check_in, trip.check_out);
-  return est ? { cash: est.cash, isCustom: false, estimateYear: est.year, isDeflated: est.isDeflated } : null;
+function tripCashValue(trip, ownedContracts) {
+  const est = trip.custom_cash_value != null
+    ? { cash: Number(trip.custom_cash_value), isCustom: true }
+    : estimateTripCashValue(trip.resort_id, trip.room_type_id, trip.check_in, trip.check_out);
+  if (!est) return null;
+  const credited = window.DVCTripFunding.credit(trip, est.cash, ownedContracts);
+  return credited ? { ...est, ...credited } : null;
 }
 
 const FALLBACK_PRICE_PER_POINT = 140;
@@ -346,8 +350,8 @@ function computeHouseMoneyStats(contracts, trips) {
   let lifetimeValue = 0;
   let tripsWithValue = 0;
   for (const t of trips) {
-    const v = tripCashValue(t);
-    if (v && Number.isFinite(v.cash)) {
+    const v = tripCashValue(t, contracts);
+    if (v && Number.isFinite(v.cash) && v.ownedPoints > 0) {
       lifetimeValue += v.cash;
       tripsWithValue++;
     }

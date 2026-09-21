@@ -62,7 +62,7 @@ function computePointEfficiency(contracts, trips, contractYearPoints) {
     return sum + c.points_per_year * years;
   }, 0);
   if (totalAllotted <= 0) return null;
-  const totalUsed = trips.reduce((sum, t) => sum + (t.points_used || 0), 0);
+  const totalUsed = trips.reduce((sum, t) => sum + (window.DVCTripFunding?.summary(t, contracts).owned || 0), 0);
   // points_holding counts here too, same reasoning as banked/remaining --
   // holding points came from this same use year's own allotment (a stay
   // that already drew from one of the other buckets, then got parked by a
