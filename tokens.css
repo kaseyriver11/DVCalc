@@ -1,0 +1,971 @@
+/* ---- Shared design tokens ----
+   Canonical color/radius palette for every page. Values are copied from
+   styles.css's existing usage (the "polished" reference), reconciling real
+   drift found across pages during the Contract Vault revamp: styles.css's
+   #38116b vs. account.html/trips.html/itineraries.html's #38106b for the
+   same "purple active" state, and three different "danger" reds
+   (#b71c1c/#c62828/#b3261e). Going forward, --color-primary-active and
+   --color-danger are the single source of truth for those.
+   Only index.html and account.html consume this file so far -- the other
+   5 standalone pages keep their own inline <style> blocks until the
+   app-wide visual refresh phase folds them in too. */
+:root {
+  --color-primary: #4a148c;
+  --color-primary-hover: #6a1b9a;
+  --color-primary-active: #38116b;
+  --color-primary-tint-bg: #ece1f7;
+  --color-secondary: #1a237e;
+
+  --color-good: #2e7d32;
+  --color-good-hover: #256428;
+  --color-good-bg: #e8f5e9;
+
+  --color-danger: #b71c1c;
+  --color-danger-bg: #ffebee;
+
+  --color-warning: #ef6c00;
+  --color-warning-bg: #fff3e0;
+
+  --color-info: #1565c0;
+  --color-info-bg: #e3f2fd;
+
+  --color-text: #333;
+  --color-text-muted: #666;
+  --color-text-faint: #999;
+  --color-border: #ccc;
+  --color-border-light: #e0e0e0;
+  --color-bg-card: #ffffff;
+  --color-bg-page: #f5f5f5;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-pill: 999px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ---- Custom Select (styled dropdown wrapper around a native <select>) ----
+   Shared by account.html (Home Resort) and index.html's own 11-to-7 Swap
+   Simulator resort/room pickers -- moved here from styles.css so both pages
+   use one copy instead of two forks. Paired JS: dvc-ui.js's
+   initCustomSelect(). index.html's top-bar Room Type/Booking As/Load Trip
+   controls moved off this component in the 2026-09-19 picker redesign (see
+   styles.css's .picker-trigger/.sheet-* /.room-type-* rules) but their
+   underlying native <select>s still use the bare .native-select rule below
+   to stay hidden, since dvc-ui.js's convention of "keep the native <select>
+   as the source of truth, dispatch a real change event" is unchanged. */
+.native-select {
+  display: none;
+}
+
+.custom-select {
+  position: relative;
+  min-width: 200px;
+  max-width: 360px;
+}
+
+.custom-select-narrow {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.custom-select-trigger:hover {
+  border-color: #b39ddb;
+}
+
+.custom-select.open .custom-select-trigger {
+  border-color: var(--color-primary);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+}
+
+.custom-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-arrow {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--color-text-faint);
+  border-bottom: 2px solid var(--color-text-faint);
+  transform: rotate(45deg);
+  margin-top: -4px;
+  transition: transform 0.12s ease;
+}
+
+.custom-select.open .custom-select-arrow {
+  transform: rotate(-135deg);
+  margin-top: 2px;
+}
+
+.custom-select-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-primary);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.custom-select.open .custom-select-dropdown {
+  display: block;
+}
+
+.custom-select-option {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-select-option:last-child {
+  border-bottom: none;
+}
+
+.custom-select-option:hover {
+  background: #f3e5f5;
+}
+
+.custom-select-option.selected {
+  background: #ede7f6;
+  font-weight: 600;
+}
+
+/* ---- Hover Tooltip (generic rich hover card) ----
+   Moved here from styles.css for the same reason as .custom-select above --
+   account.html's wallet-card deadline chip needs the same hover treatment
+   as every other hover surface in the app. */
+.tooltip-anchor {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tooltip-card {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 210px;
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 10px 12px;
+  text-align: left;
+  /* Explicit, not left to inherit -- an anchor that sets white-space:nowrap
+     on itself (e.g. .wallet-card-deadline-pill, so ITS OWN one-line label
+     never wraps) otherwise leaks that nowrap onto this tooltip's text too,
+     forcing a long sentence onto one ~800px+ line. Since the tooltip stays
+     in the layout tree even while hidden (visibility:hidden, not
+     display:none), that invisible oversized line still inflates the
+     page's scrollWidth and silently adds horizontal scroll -- found by
+     the very .wallet-card-deadline-pill tooltip this rule exists for. */
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 50;
+}
+
+.tooltip-card::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--color-bg-card);
+  filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.06));
+}
+
+.tooltip-anchor.tooltip-align-left .tooltip-card {
+  left: -10px;
+  transform: none;
+}
+
+.tooltip-anchor.tooltip-align-left .tooltip-card::before {
+  left: 18px;
+  transform: none;
+}
+
+.tooltip-anchor.tooltip-align-right .tooltip-card {
+  left: auto;
+  right: -10px;
+  transform: none;
+}
+
+.tooltip-anchor.tooltip-align-right .tooltip-card::before {
+  left: auto;
+  right: 18px;
+  transform: none;
+}
+
+.tooltip-anchor:hover .tooltip-card,
+.tooltip-anchor:focus .tooltip-card,
+.tooltip-anchor:focus-within .tooltip-card {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Touch-tap equivalent of the :hover rule above -- hover has no
+   touchscreen equivalent at all, so a page with touch users needs an
+   explicit class a tap handler can toggle. Deliberately not tabindex/
+   :focus-based (a documented past bug here: a tapped tooltip could get
+   stuck open on mobile with no way to dismiss) -- callers add a plain
+   click listener that adds/removes this class instead. Purely additive:
+   pages that don't wire up a tap handler are completely unaffected. */
+.tooltip-anchor.tap-open .tooltip-card {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* ---- Segmented points bar + steppers ----
+   Originally account.html-only (the Contract Vault wallet-card ledger
+   rows); moved here so the calendar's Smart Draw recommendation card
+   (app.js) can reuse the exact same Banked/Current/Borrowed visual
+   language instead of inventing a second one. */
+.ledger-bar {
+  display: flex;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: #f0f0f0;
+  border: 1px solid #e5e5e5;
+  margin-bottom: 10px;
+}
+/* Glides between widths on stepper/typed changes instead of snapping, so
+   adjusting a balance reads as a physical shift in the bar rather than an
+   instant redraw. */
+.ledger-bar-seg {
+  min-width: 0;
+  transition: flex-grow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ledger-seg-banked { background: var(--color-warning); }
+.ledger-seg-current { background: var(--color-primary); }
+.ledger-seg-borrowed {
+  background: repeating-linear-gradient(45deg, var(--color-secondary) 0 4px, rgba(255,255,255,0.45) 4px 8px);
+}
+/* Holding points (see dvc-ledger.js): a distinct solid color, not another
+   pattern -- borrowed already owns the striped treatment, and holding is
+   conceptually "parked," not "borrowed from elsewhere," so it shouldn't
+   read as a variant of that same bucket. */
+.ledger-seg-holding { background: var(--color-info); }
+
+.ledger-steppers {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ledger-stepper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.ledger-stepper-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #999;
+  font-weight: 700;
+}
+
+/* Direct-entry only -- no +/- buttons. A soft chip holding one large
+   centered number field; the whole chip (not the borderless input) carries
+   the focus highlight since the input itself has no border of its own. */
+.ledger-stepper-row {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 8px 4px 7px;
+  border-bottom: 3px solid transparent;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.ledger-stepper-row:focus-within {
+  background: #eee;
+  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
+}
+/* Colored accent matching each stat's segment in .ledger-bar above --
+   reads as a status badge tied to real data rather than a generic gray
+   form field, and ties the two representations of the same numbers
+   (bar + stepper) together visually. */
+/* Two callers use different field names for the same "current balance"
+   concept -- account.html's ledger calls it "current", the calendar's
+   Smart Draw card (app.js) calls it "remaining" (matching its own
+   draws.remaining variable) -- both map to the same accent color. */
+.ledger-stepper.banked .ledger-stepper-row { border-bottom-color: var(--color-warning); }
+.ledger-stepper.current .ledger-stepper-row,
+.ledger-stepper.remaining .ledger-stepper-row { border-bottom-color: var(--color-primary); }
+.ledger-stepper.borrowed .ledger-stepper-row { border-bottom-color: var(--color-secondary); }
+.ledger-stepper.holding .ledger-stepper-row { border-bottom-color: var(--color-info); }
+
+/* Inline validation message under the Borrowed stepper (dvc-ledger.js's
+   validateBorrowedPoints) -- advisory, not blocking (this app can't check
+   the real number against Disney's system), so it's a note, not a form
+   error. */
+.ledger-validation-note {
+  font-size: 0.72rem;
+  color: var(--color-warning);
+  margin-top: 6px;
+}
+
+.ledger-stepper input {
+  width: 100%;
+  border: none;
+  background: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: inherit;
+  text-align: center;
+  color: var(--color-text);
+}
+.ledger-stepper input:focus {
+  outline: none;
+}
+
+/* ---- Smart Draw recommendation card (app.js, calendar summary panel) ----
+   A single-tap "which points to draw from" recommendation, styled as a
+   card rather than a table: title/total up top, the shared segmented bar
+   above, one plain-language line per nonzero bucket, then colored
+   guardrail lines reusing the tinted/left-border alert convention from
+   .resort-alert.overlaps-stay (styles.css). */
+.smart-draw-card {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+.smart-draw-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 8px;
+}
+
+.smart-draw-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.smart-draw-line-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.smart-draw-guardrail {
+  font-size: 0.76rem;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-top: 8px;
+}
+.smart-draw-guardrail.calm {
+  background: var(--color-good-bg);
+  border-left: 3px solid var(--color-good);
+  color: var(--color-good);
+}
+.smart-draw-guardrail.warning {
+  background: var(--color-warning-bg);
+  border-left: 3px solid var(--color-warning);
+  color: #7a4a00;
+}
+.smart-draw-guardrail.danger {
+  background: var(--color-danger-bg);
+  border-left: 3px solid var(--color-danger);
+  color: var(--color-danger);
+}
+.smart-draw-guardrail a { color: inherit; font-weight: 600; }
+
+.smart-draw-footer {
+  font-size: 0.66rem;
+  color: #aaa;
+  margin-top: 8px;
+}
+
+.smart-draw-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.smart-draw-apply-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.smart-draw-apply-btn:hover { background: var(--color-primary-active); }
+
+.smart-draw-manual-toggle {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.smart-draw-manual-total {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  margin: 8px 0 4px;
+}
+
+.smart-draw-undo-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-good-bg);
+  color: var(--color-good);
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.smart-draw-undo-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* ---- Multi-Contract Split (Task 07, app.js's buildMultiContractSplitHTML())
+   Shares .smart-draw-card/-title/-actions/-apply-btn/-manual-toggle/
+   -guardrail/-footer/-undo-banner/-undo-btn with the Smart Draw card above
+   for a consistent look -- only what's genuinely new (the totals line,
+   per-contract rows, and the range slider itself) gets its own rules. No
+   existing range-slider styling anywhere in this app to match (the rental
+   rate "slider" CLAUDE.md mentions is actually a plain number input), so
+   this is a fresh custom <input type="range"> treatment, themed to match
+   the rest of the app's purple palette. ---- */
+.multi-split-offer { margin-top: 8px; }
+
+.multi-split-totals {
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 10px;
+}
+.multi-split-totals.ok { background: var(--color-good-bg); color: var(--color-good); }
+.multi-split-totals.warning { background: var(--color-warning-bg); color: #7a4a00; }
+.multi-split-totals.danger { background: var(--color-danger-bg); color: var(--color-danger); }
+
+.multi-split-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.multi-split-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+.multi-split-row-name { font-weight: 700; color: var(--color-secondary); }
+.multi-split-row-stat { color: var(--color-text-muted); white-space: nowrap; }
+.multi-split-allocated-num { color: var(--color-primary); font-weight: 700; }
+
+.multi-split-row-footer {
+  font-size: 0.74rem;
+  color: var(--color-text-faint);
+  margin-top: 4px;
+}
+.multi-split-after-num { font-weight: 600; color: var(--color-text-muted); }
+
+/* Custom range slider -- webkit/moz/standard thumb+track rules repeated
+   per-vendor since there's no shorthand that covers all three; the base
+   element rule handles sizing/reset common to every browser. */
+.multi-split-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border-light);
+  outline: none;
+  cursor: pointer;
+  margin: 6px 0;
+}
+.multi-split-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+.multi-split-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+.multi-split-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border-light);
+}
+
+/* ---- 11-to-7 Swap Simulator (Task 04, app.js's buildSwapSimulatorHTML())
+   Also shares .smart-draw-card/-title/-actions/-manual-toggle/-guardrail/
+   -footer for a consistent look. ---- */
+.swap-sim-offer { margin-top: 8px; }
+
+.swap-sim-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+/* flex-basis, not a fixed width -- lets each select shrink on a narrow
+   phone (guardrail #1) while still preferring a sensible side-by-side
+   width on desktop; min-width:200px on .custom-select itself is what
+   actually forces the wrap once two won't fit. */
+.swap-sim-select { flex: 1 1 200px; }
+
+.swap-sim-windows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+.swap-sim-window-row { display: flex; justify-content: space-between; gap: 8px; color: var(--color-text-muted); }
+.swap-sim-window-row strong { color: var(--color-secondary); }
+
+.swap-sim-delta {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+}
+.swap-sim-delta-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; opacity: 0.75; }
+.swap-sim-delta-num { font-size: 1.3rem; font-weight: 800; line-height: 1.3; }
+.swap-sim-delta-detail { font-size: 0.76rem; opacity: 0.85; }
+.swap-sim-delta.ok { background: var(--color-good-bg); color: var(--color-good); }
+/* Amber, not red -- a positive delta just means "needs more points," which
+   isn't itself bad (that's what the guardrail line right below actually
+   assesses, up to full danger if borrowing can't cover it at all). */
+.swap-sim-delta.warning { background: var(--color-warning-bg); color: #7a4a00; }
+.swap-sim-delta.neutral { background: var(--color-primary-tint-bg); color: var(--color-primary); }
+
+/* ---- Modal ----
+   Moved from styles.css so account.html (which doesn't link that file) can
+   reuse the same overlay/box pattern index.html's "Find Alternatives"
+   modal already uses, instead of forking a second one. */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-box {
+  background: white;
+  border-radius: var(--radius-md);
+  /* min() keeps the existing 480px desktop cap (a full-bleed modal on a
+     wide monitor would look wrong) while guaranteeing it never exceeds
+     92% of a narrow phone's viewport -- a bare "92vw" would have removed
+     the desktop cap entirely. */
+  max-width: min(480px, 92vw);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.modal-header h3 {
+  font-size: 1rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #999;
+  padding: 0 4px;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+/* ---- Card Studio wizard transitions ----
+   A native-app-style horizontal slide track for the Add/Edit Contract
+   modal's 3 steps (account.html) -- one flex row of full-width panes,
+   shifted via transform so only one is ever visible but all three stay
+   mounted (no re-render/flash between steps). .no-transition is applied
+   for exactly one frame when a caller needs to jump straight to a step
+   with no slide (e.g. opening the modal already on Step 3 to edit an
+   existing contract). */
+.studio-wizard-viewport {
+  overflow: hidden;
+}
+.studio-wizard-track {
+  display: flex;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.studio-wizard-track.no-transition {
+  transition: none;
+}
+.studio-step-pane {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Native-feeling press feedback on the studio's main tap targets. */
+.resort-chip:active, .use-year-chip:active, .save-btn:active {
+  transform: scale(0.97);
+}
+
+/* Plays once when a brand-new contract's card first appears in the deck --
+   a quick gold flash to mark "this one just got issued" without a modal or
+   toast interrupting the flow. */
+@keyframes deedIssuedShimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.3) drop-shadow(0 0 16px rgba(212, 175, 55, 0.6)); }
+  100% { filter: brightness(1); }
+}
+.wallet-card.newly-issued {
+  animation: deedIssuedShimmer 0.6s ease-out;
+}
+
+/* ---- Enamel pin badge tile (trips.html Trophy Case) ----
+   A reusable collectible-pin component: circular metallic bezel with a
+   lacquer gloss overlay, four tier-color enamels, and a locked/grayscale
+   state. Page-specific text/grid layout stays in trips.html's own
+   <style> -- this is just the tile/icon mechanics, in case another page
+   ever wants the same pin visual language. */
+.badge-tile {
+  background: white;
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #eaeaea;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  cursor: pointer;
+}
+.badge-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.badge-icon-wrap {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Convex gloss shine across the top half -- reads as a lacquered/resin
+   coating over the metal rather than a flat emoji-in-a-circle. */
+.badge-icon-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.35), transparent);
+  border-radius: 50% 50% 0 0;
+  pointer-events: none;
+}
+
+.tier-bronze .badge-icon-wrap { background: linear-gradient(135deg, #cd7f32, #8b4513); border: 2px solid #e6b89c; }
+.tier-silver .badge-icon-wrap { background: linear-gradient(135deg, #e0e0e0, #9e9e9e); border: 2px solid #ffffff; }
+.tier-gold .badge-icon-wrap { background: linear-gradient(135deg, #ffd700, #b8860b); border: 2px solid #fffae6; }
+.tier-prismatic .badge-icon-wrap {
+  background: linear-gradient(135deg, #00ffff, #ff00ff, #ffff00);
+  border: 2px solid #ffffff;
+  animation: prismaticGlow 3s infinite alternate;
+}
+@keyframes prismaticGlow {
+  0% { filter: hue-rotate(0deg) brightness(1); }
+  100% { filter: hue-rotate(60deg) brightness(1.15); }
+}
+
+/* ---- Resort Loyalty icon art (dvc-badges.js's buildTrophyTileHTML(),
+   data/resort_images.js) -- the circle shows the resort's own photo
+   (set inline, wins over the tier gradient above for this one longhand)
+   instead of the shared tier-color gradient. Tier reads from a bold
+   colored RING around the circle (below) -- tried the key glyph's own
+   color alone first, but a 26px icon tinted against a busy photo turned
+   out too small/low-contrast to read at a glance, so the ring is the
+   primary signal now and the key's tint is just a secondary echo of it.
+   animation: none overrides .tier-prismatic .badge-icon-wrap's hue-rotate
+   cycling above -- letting that animate the PHOTO would constantly shift
+   its colors, which reads as broken rather than special. */
+.badge-icon-wrap.has-art {
+  background-size: cover;
+  background-position: center;
+  animation: none;
+  border-width: 3px;
+  border-style: solid;
+}
+.tier-bronze .badge-icon-wrap.has-art { border-color: #cd7f32; }
+.tier-silver .badge-icon-wrap.has-art { border-color: #c0c0c0; }
+.tier-gold .badge-icon-wrap.has-art { border-color: #ffd700; }
+.tier-prismatic .badge-icon-wrap.has-art {
+  animation: prismaticBorder 3s infinite;
+}
+@keyframes prismaticBorder {
+  0%, 100% { border-color: #00e5ff; }
+  33% { border-color: #ff2fd6; }
+  66% { border-color: #ffe600; }
+}
+
+.badge-icon-key {
+  width: 26px;
+  height: 26px;
+  fill: #9e9e9e;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
+}
+.tier-bronze .badge-icon-key { fill: #cd7f32; }
+.tier-silver .badge-icon-key { fill: #eeeeee; }
+.tier-gold .badge-icon-key { fill: #ffd700; }
+.tier-prismatic .badge-icon-key { fill: #ff2fd6; }
+
+.badge-tile.locked { opacity: 0.5; filter: grayscale(0.8); }
+.badge-tile.locked .badge-icon-wrap {
+  background: #e0e0e0;
+  border: 2px dashed #bdbdbd;
+  box-shadow: none;
+}
+/* .badge-tile.locked .badge-icon-wrap above (3 classes) otherwise beats
+   .badge-icon-wrap.has-art's background-size/position (2 classes) --
+   its `background: #e0e0e0` shorthand resets them to auto/0%-0%, which
+   renders only a tiny unscaled top-left corner of the photo instead of a
+   proper cover-fit crop. This 4-class override re-asserts cover/center
+   and clears the flat gray fill so the (grayscale-filtered, dimmed by the
+   parent tile's own opacity/filter above) photo shows properly instead. */
+.badge-tile.locked .badge-icon-wrap.has-art {
+  background-color: transparent;
+  background-size: cover;
+  background-position: center;
+  border: 2px dashed rgba(255, 255, 255, 0.7);
+}
+/* A locked pin's lacquer shine would just be a bright streak on flat gray
+   -- turn it off so "locked" reads as unmistakably inert, not just dim. */
+.badge-tile.locked .badge-icon-wrap::after { display: none; }
+
+/* ---- Trophy case layouts ----
+   Two containers share the same .badge-tile pins: a compact auto-fill
+   grid (trips.html's dashboard preview, a handful of tiles) and a
+   horizontally-scrolling row (badges.html's per-category Trophy Room --
+   keeps a category from growing the page vertically no matter how many
+   badges it eventually holds). */
+.trophy-case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.trophy-case-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.trophy-case-row .badge-tile {
+  flex: 0 0 140px;
+}
+
+.badge-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #333;
+  margin-top: 4px;
+  line-height: 1.25;
+}
+
+.badge-tier {
+  font-size: 0.68rem;
+  color: #888;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.badge-progress-track {
+  width: 100%;
+  height: 4px;
+  background: #eee;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.badge-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.badge-progress-label {
+  font-size: 0.62rem;
+  color: #aaa;
+  margin-top: 3px;
+}
+
+/* ---- Badge inspection modal ---- */
+.badge-modal-icon-wrap { width: 90px; height: 90px; margin: 4px auto 14px; }
+.badge-modal-icon-wrap .badge-icon-wrap { width: 90px; height: 90px; font-size: 2.4rem; }
+.badge-modal-icon-wrap .badge-icon-key { width: 42px; height: 42px; }
+
+.badge-modal-status {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.badge-modal-detail {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 6px;
+}
+
+/* Only rendered when real aggregate data exists (badge_rarity_stats(),
+   db/migrations/009_add_badge_rarity_stats.sql) -- never a placeholder
+   or invented number. */
+.badge-modal-rarity {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-primary-tint-bg);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin: 8px auto 0;
+  display: block;
+  width: fit-content;
+}
+
+.badge-modal-ladder {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.badge-tier-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #999;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #faf8fd;
+}
+.badge-tier-row.reached {
+  color: var(--color-good);
+  font-weight: 700;
+  background: var(--color-good-bg);
+}
+.badge-tier-row.next {
+  color: var(--color-primary);
+  font-weight: 700;
+  background: var(--color-primary-tint-bg);
+}
+
+.badge-modal-next-step {
+  text-align: center;
+  font-size: 0.82rem;
+  color: #555;
+  background: #faf8fd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 12px;
+}
+.badge-modal-next-step strong { color: var(--color-primary); }
+.badge-modal-next-step.maxed { color: var(--color-good); background: var(--color-good-bg); font-weight: 600; }
