@@ -37,7 +37,7 @@ select, input, textarea, button {
 .site-nav-brand {
   font-weight: 700;
   font-size: 1rem;
-  color: #4a148c;
+  color: var(--color-primary);
   text-decoration: none;
   letter-spacing: 0.2px;
   flex-shrink: 0;
@@ -80,11 +80,11 @@ select, input, textarea, button {
   border-bottom: 2px solid transparent;
 }
 
-.site-nav-links a:hover { color: #4a148c; }
+.site-nav-links a:hover { color: var(--color-primary); }
 
 .site-nav-links a.active {
-  color: #4a148c;
-  border-bottom-color: #4a148c;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -110,7 +110,7 @@ select, input, textarea, button {
   width: 100%;
   height: 2px;
   border-radius: 1px;
-  background: #4a148c;
+  background: var(--color-primary);
 }
 
 .account-btn, .account-link-btn {
@@ -121,7 +121,7 @@ select, input, textarea, button {
   border-radius: 20px;
   border: 1px solid #ddd;
   background: #f7f5fa;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
@@ -130,12 +130,12 @@ select, input, textarea, button {
 
 .account-btn:hover, .account-link-btn:hover {
   background: #ece1f7;
-  border-color: #4a148c;
+  border-color: var(--color-primary);
 }
 
 /* ---- Header ---- */
 .header {
-  background: linear-gradient(135deg, #1a237e, #4a148c);
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
   color: white;
   padding: 16px 24px;
   text-align: center;
@@ -152,7 +152,44 @@ select, input, textarea, button {
   opacity: 0.8;
 }
 
+/* ---- Suggest a Stay return banner ----
+   Shown only when arriving here via a "View This Stay" tap from
+   suggest.html (app.js checks dvc_suggest_return in sessionStorage) --
+   that flow has no other way back to the search results it came from,
+   since navigating here overwrites the address bar entirely. */
+.suggest-return-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 24px;
+  background: #f7f5fa;
+  border-bottom: 1px solid #e0d5f0;
+  font-size: 0.82rem;
+}
+.suggest-return-banner a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.suggest-return-banner a:hover { text-decoration: underline; }
+.suggest-return-banner button {
+  border: none;
+  background: none;
+  color: #999;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.suggest-return-banner button:hover { color: #555; }
+
 /* ---- Controls ---- */
+/* justify-content: flex-start + the same max-width/margin as .main-layout
+   below it (not center) -- otherwise Resort/Room Type visibly recenter
+   and shift sideways the moment #booking-as-control/#itinerary-load-control
+   flip from display:none to flex once Supabase auth resolves and there's
+   contract/itinerary data to show. */
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -161,13 +198,30 @@ select, input, textarea, button {
   background: white;
   border-bottom: 1px solid #e0e0e0;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+/* Toggle button only shown on mobile (see the max-width:800px override) --
+   on desktop the 4 dropdowns are always visible, same as before this was
+   made collapsible. */
+.controls-toggle {
+  display: none;
+}
+
+.controls-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
 }
 
 /* Hidden by default -- app.js reveals these once there's account data to
@@ -186,110 +240,362 @@ select, input, textarea, button {
   letter-spacing: 0.5px;
 }
 
-/* ---- Custom Select (styled dropdown for Room Type / Booking Window / Points Year) ---- */
-.native-select {
-  display: none;
-}
+/* ---- Custom Select ---- moved to tokens.css (shared with account.html) */
 
-.custom-select {
-  position: relative;
-  min-width: 200px;
-  max-width: 360px;
-}
-
-.custom-select-narrow {
-  min-width: 180px;
-  max-width: 220px;
-}
-
-.custom-select-trigger {
+/* ---- Picker Trigger ----
+   Visible button for the Resort/Room Type/Booking As/Load Trip pickers
+   below -- same box look as tokens.css's .custom-select-trigger, but a
+   standalone button rather than nested in a .custom-select wrapper, since
+   these open a bottom sheet or inline accordion instead of an absolutely-
+   positioned dropdown. The underlying <select>/searchable-select elements
+   stay in the DOM (hidden) as the actual state -- see the HTML comment
+   above #resort-select-wrapper. */
+.picker-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   width: 100%;
+  min-width: 200px;
+  max-width: 360px;
   padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
   font-family: inherit;
-  background: white;
-  color: #333;
+  background: var(--color-bg-card);
+  background-size: cover;
+  background-position: center;
+  color: var(--color-text);
   cursor: pointer;
   text-align: left;
 }
 
-.custom-select-trigger:hover {
-  border-color: #b39ddb;
+.picker-trigger:hover { border-color: #b39ddb; }
+
+/* Resort trigger with art (data/resort_images.js) -- app.js sets
+   background-image inline to a translucent tint wash over the resort's
+   photo (same treatment/color as .controls-toggle.has-art above it in the
+   drawer, so the two read as a matching pair) instead of the plain white
+   .picker-trigger background. */
+.picker-trigger.has-art {
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
-.custom-select.open .custom-select-trigger {
-  border-color: #4a148c;
-  border-radius: 6px 6px 0 0;
-  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
+/* A photo (however tastefully tinted) is busier than a flat background, so
+   dark trigger text can lose contrast against light patches of it -- a
+   soft white halo (not a solid color change) keeps the text readable
+   without hiding the art underneath. Applies to every art-washed trigger:
+   Resort, Booking As, and the "If using your own points" owner-resort
+   trigger in the cost tile. */
+.picker-trigger.has-art .picker-trigger-value {
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75), 0 0 1px rgba(255, 255, 255, 0.75);
 }
 
-.custom-select-value {
+/* Booking As trigger with an active contract reuses the exact same
+   lavender-wash-over-photo look as the Resort trigger (.has-art, set via
+   applyResortArtBackground() in syncBookingAsPickerTrigger()) -- a
+   solid-color gradient card was tried first and didn't match once every
+   resort had real art (data/resort_images.js, 2026-09-20); the photo is
+   what makes the trigger recognizable at a glance now, the same way it
+   does for the Resort picker. */
+.booking-as-trigger-pill {
+  display: inline-block;
+  background: var(--color-primary-tint-bg);
+  color: var(--color-primary);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.picker-trigger-value {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.custom-select-arrow {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid #999;
-  border-bottom: 2px solid #999;
-  transform: rotate(45deg);
-  margin-top: -4px;
-  transition: transform 0.12s ease;
+/* ---- Resort Sheet Hero ----
+   Shows the currently-selected resort's art (when it has any -- most don't
+   yet, see data/resort_images.js) as a scene-setting banner above the
+   search/list. Same [hidden]-safe rule as .picker-trigger-thumb: no
+   `display` override here. */
+.resort-sheet-hero {
+  height: 120px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 10px;
 }
 
-.custom-select.open .custom-select-arrow {
-  transform: rotate(-135deg);
-  margin-top: 2px;
+/* ---- Bottom Sheet ----
+   Same overlay/backdrop mechanics as tokens.css's .modal-overlay/.modal-box
+   (open/close via the .open class, dim backdrop) -- .sheet-overlay/.sheet
+   just re-anchor the box to the bottom edge and slide it up instead of
+   fading a centered box in, since these hold a scrollable list of cards
+   (resort/contract/itinerary picks) that reads better as a native-feeling
+   sheet than a small centered dialog. */
+.sheet-overlay.open { align-items: flex-end; }
+
+.modal-box.sheet {
+  max-width: 100%;
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 16px 16px 0 0;
+  margin: 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  animation: sheet-slide-up 0.22s ease-out;
 }
 
-.custom-select-dropdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid #4a148c;
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-  max-height: 260px;
-  overflow-y: auto;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
-.custom-select.open .custom-select-dropdown {
-  display: block;
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  margin: 4px auto 12px;
 }
 
-.custom-select-option {
+.sheet-search {
+  width: 100%;
   padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+.sheet-list {
+  overflow-y: auto;
+  max-height: 60vh;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheet-empty {
+  padding: 20px 4px;
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 0.85rem;
+}
+
+/* Resort picker rows -- plain cards, not full wallet/itinerary styling
+   (17 resorts is too many for a heavy card each); white-space: normal
+   (rather than the old input's forced single line) is the actual fix for
+   long resort names clipping on narrow screens -- it wraps instead. */
+.resort-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  background-size: cover;
+  background-position: center;
+  text-align: left;
+  white-space: normal;
   font-size: 0.85rem;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
 }
 
-.custom-select-option:last-child {
-  border-bottom: none;
-}
+.resort-pick-row:hover,
+.resort-pick-row:active { background-color: var(--color-primary-tint-bg); }
 
-.custom-select-option:hover {
-  background: #f3e5f5;
-}
-
-.custom-select-option.selected {
-  background: #ede7f6;
+.resort-pick-row.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-tint-bg);
   font-weight: 600;
 }
+
+/* Selected row with art (data/resort_images.js) -- app.js's
+   renderResortSheetList() sets background-image inline (same lavender-wash
+   helper as the trigger/drawer bar, resortArtWashCSS()) over this row only,
+   since this marks WHICH resort is selected rather than which ones happen
+   to have art. */
+.resort-pick-row.selected.has-art {
+  border-color: var(--color-primary);
+}
+
+.resort-pick-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ---- Wallet mini-card (Booking As sheet) ----
+   Trimmed-down cousin of account.html's full .wallet-card (this page
+   doesn't load that page's script, so it isn't shared -- same duplication
+   call as home.js's own deadline-status copy, see CLAUDE.md). Only what a
+   picker needs to identify a contract at a glance: home resort, use year,
+   and points available right now (getAvailablePoints() in app.js) -- no
+   ledger steppers, deadline pill, or perk dots, those live on My Contracts. */
+.wallet-mini-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.wallet-mini-card {
+  position: relative;
+  height: 110px;
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: inset 0 0 0 1.5px rgba(212,175,55,0.35), 0 6px 16px rgba(0,0,0,0.2);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.wallet-mini-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 55%);
+  pointer-events: none;
+}
+
+.wallet-mini-card.selected {
+  box-shadow: inset 0 0 0 2.5px #fff, 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.wallet-mini-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+}
+
+.wallet-mini-name {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.wallet-mini-points-num { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.wallet-mini-points-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 1px; opacity: 0.8; }
+
+.wallet-mini-bottom {
+  display: flex;
+  gap: 6px;
+  position: relative;
+}
+
+.wallet-mini-pill {
+  background: rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+/* "Just browsing" option -- a plain neutral card, not a gradient wallet
+   face, since there's no contract to represent. */
+.wallet-mini-card.browsing {
+  background: #f5f5f5 !important;
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1.5px var(--color-border-light);
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  height: 56px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* A white ring (the gradient cards' .selected treatment) barely shows up
+   against this card's own light gray face -- use the brand color instead. */
+.wallet-mini-card.browsing.selected {
+  box-shadow: inset 0 0 0 2.5px var(--color-primary);
+}
+
+/* ---- Itinerary mini-card (Load Trip sheet) ----
+   Same name/meta shape as itineraries.html's .itin-card, trimmed to just
+   what helps pick the right trip in a sheet -- no Edit/Sync/Delete actions,
+   those stay on the itineraries.html list itself. */
+.itin-mini-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.itin-mini-card {
+  padding: 12px 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+}
+
+.itin-mini-name { font-weight: 700; font-size: 0.9rem; color: var(--color-text); }
+.itin-mini-meta { font-size: 0.78rem; color: var(--color-text-muted); margin-top: 4px; }
+
+/* ---- Room Type accordion ----
+   Inline (not a sheet) -- short flat list, no search needed, meant to stay
+   low-friction right where Resort/Booking As live. Toggled via .open (like
+   .controls-groups.open elsewhere in this file), not the [hidden]
+   attribute -- an author stylesheet's `display` declaration always beats
+   the UA stylesheet's `[hidden] { display: none }` regardless of
+   specificity, so a plain `.room-type-grid { display: grid }` here would
+   silently defeat `hidden` and render the grid open by default. */
+.room-type-grid {
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.room-type-grid.open {
+  display: grid;
+}
+
+.room-type-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  cursor: pointer;
+  text-align: center;
+}
+
+.room-type-chip:hover { border-color: #b39ddb; }
+
+.room-type-chip.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-tint-bg);
+}
+
+.room-type-icon { font-size: 1.3rem; line-height: 1; }
+.room-type-name { font-size: 0.76rem; font-weight: 600; color: var(--color-text); }
+.room-type-sleeps { font-size: 0.66rem; color: var(--color-text-muted); }
 
 /* ---- Searchable Select ---- */
 .searchable-select {
@@ -309,7 +615,7 @@ select, input, textarea, button {
 
 .searchable-select input:focus {
   outline: none;
-  border-color: #4a148c;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
   cursor: text;
 }
@@ -325,7 +631,7 @@ select, input, textarea, button {
   left: 0;
   right: 0;
   background: white;
-  border: 1px solid #4a148c;
+  border: 1px solid var(--color-primary);
   border-top: none;
   border-radius: 0 0 6px 6px;
   max-height: 260px;
@@ -368,7 +674,7 @@ select, input, textarea, button {
 }
 
 .month-nav button {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -379,7 +685,7 @@ select, input, textarea, button {
 }
 
 .month-nav button:hover {
-  background: #6a1b9a;
+  background: var(--color-primary-hover);
 }
 
 .month-nav .month-label {
@@ -402,6 +708,7 @@ select, input, textarea, button {
 .calendar-side {
   flex: 1;
   min-width: 0;
+  transition: flex 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .summary-side {
@@ -423,27 +730,15 @@ select, input, textarea, button {
   flex: 1;
 }
 
-/* Booking Outlook and Crowd Forecast, side by side and stretched to match
-   each other's height -- each column holds exactly one card (Resort Alerts
-   moved out to its own full-width row below, since its entry count varies
-   and would otherwise fight this stretch), so equal height is always safe
-   here. */
-.insights-columns {
-  display: flex;
-  gap: 16px;
-  align-items: stretch;
+/* Trip rail fades/slides in on every display:none -> "" toggle in
+   renderLayoutMode() -- CSS animations restart automatically whenever an
+   element re-enters the render tree, so no JS trigger is needed here. */
+@keyframes fadeInRail {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-.insights-col {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-}
-
-.insights-col > .summary-card {
-  flex: 1;
+#trip-rail-view {
+  animation: fadeInRail 0.2s ease-out;
 }
 
 /* ---- Trip Rail (collapsed calendar in review mode) ---- */
@@ -629,8 +924,8 @@ select, input, textarea, button {
   margin-top: 14px;
   padding: 8px;
   background: white;
-  border: 1px solid #4a148c;
-  color: #4a148c;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
   border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 600;
@@ -653,7 +948,7 @@ select, input, textarea, button {
 
 .selection-hint .checkin-date {
   font-weight: 600;
-  color: #1a237e;
+  color: var(--color-secondary);
   font-style: normal;
 }
 
@@ -686,8 +981,8 @@ select, input, textarea, button {
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
   position: relative;
-  padding: 6px 2px;
-  min-height: 54px;
+  padding: 8px 2px;
+  min-height: 60px;
 }
 
 .day-cell:hover:not(.empty) {
@@ -701,54 +996,49 @@ select, input, textarea, button {
   background: transparent;
 }
 
+/* Holds the hero point cost plus the cash rate right under it (the
+   SUN-THU/FRI-SAT sub-label stays dropped -- the column header already
+   conveys weekday vs. weekend), centered in the cell. */
 .day-body {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+/* Date number, crowd badge, and event icon each claim their own corner of
+   .day-cell (top-left / top-right / bottom-right) so none of the three can
+   ever collide, regardless of which combination is present on a given day. */
 .day-cell .day-number {
-  font-size: 0.7rem;
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 0.65rem;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .day-cell .day-points {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  margin-top: 1px;
-}
-
-.day-cell .day-type-label {
-  font-size: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  opacity: 0.6;
-  margin-top: 1px;
-}
-
-.day-cell .day-topline {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  bottom: 3px;
-  left: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-start;
-  gap: 2px;
 }
 
 .day-cell .day-cash {
-  font-size: 0.5rem;
+  font-size: 0.58rem;
   font-weight: 600;
   color: #999;
   letter-spacing: -0.3px;
+  margin-top: 1px;
+}
+
+.day-cash.prior-year {
+  color: #bbb;
+  font-style: italic;
 }
 
 .day-cell .day-crowd {
-  position: relative;
+  position: absolute;
+  top: 3px;
+  right: 3px;
   font-size: 0.5rem;
   font-weight: 700;
   line-height: 1;
@@ -756,9 +1046,15 @@ select, input, textarea, button {
   border-radius: 999px;
 }
 
+/* The 🎉 marker -- app.js only renders this for genuinely date-specific
+   events (a ticketed party, a race morning), not for every day of a
+   multi-week festival/seasonal window, so it stays a meaningful flag
+   rather than calendar-wide noise. */
 .day-cell .day-event {
-  position: relative;
-  font-size: 0.6rem;
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  font-size: 0.65rem;
   line-height: 1;
 }
 
@@ -771,83 +1067,13 @@ select, input, textarea, button {
   color: white;
 }
 
-.crowd-low { background: #2e7d32; }
+.crowd-low { background: var(--color-good); }
 .crowd-moderate { background: #f9a825; }
-.crowd-busy { background: #ef6c00; }
+.crowd-busy { background: var(--color-warning); }
 .crowd-heavy { background: #d84315; }
-.crowd-extreme { background: #b71c1c; }
+.crowd-extreme { background: var(--color-danger); }
 
-/* ---- Hover Tooltip (generic rich hover card, used by crowd/value/distribution hovers) ----
-   cursor + user-select live here (not per-element) so every hover trigger in the
-   app looks and behaves identically -- otherwise a bare span/div with text or an
-   emoji directly inside it (a crowd number, a 🎉, a value-score badge) falls back
-   to the browser's default text-select (I-beam) cursor on the glyph itself, even
-   with a pointer-cursor ancestor, since "auto" resolves per-content rather than by
-   inheritance. */
-.tooltip-anchor {
-  position: relative;
-  cursor: pointer;
-  user-select: none;
-}
-
-.tooltip-card {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 210px;
-  background: white;
-  color: #333;
-  border-radius: 10px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-  padding: 10px 12px;
-  text-align: left;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.12s ease;
-  z-index: 50;
-}
-
-.tooltip-card::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-bottom-color: white;
-  filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.06));
-}
-
-.tooltip-anchor.tooltip-align-left .tooltip-card {
-  left: -10px;
-  transform: none;
-}
-
-.tooltip-anchor.tooltip-align-left .tooltip-card::before {
-  left: 18px;
-  transform: none;
-}
-
-.tooltip-anchor.tooltip-align-right .tooltip-card {
-  left: auto;
-  right: -10px;
-  transform: none;
-}
-
-.tooltip-anchor.tooltip-align-right .tooltip-card::before {
-  left: auto;
-  right: 18px;
-  transform: none;
-}
-
-.tooltip-anchor:hover .tooltip-card,
-.tooltip-anchor:focus .tooltip-card,
-.tooltip-anchor:focus-within .tooltip-card {
-  opacity: 1;
-  visibility: visible;
-}
+/* ---- Hover Tooltip ---- moved to tokens.css (shared with account.html) */
 
 /* "(!)" flag for estimated (not observed) cash rates -- see estimateBadgeHTML()
    in app.js. Reset text-transform/letter-spacing/white-space back to normal on
@@ -858,7 +1084,7 @@ select, input, textarea, button {
   display: inline-block;
   margin-left: 4px;
   font-weight: 700;
-  color: #ef6c00;
+  color: var(--color-warning);
 }
 
 .estimate-tooltip {
@@ -901,7 +1127,7 @@ select, input, textarea, button {
 
 .crowd-tooltip-season {
   font-weight: 700;
-  color: #2e7d32;
+  color: var(--color-good);
   letter-spacing: 0.5px;
 }
 
@@ -932,8 +1158,8 @@ select, input, textarea, button {
   color: white;
 }
 
-.park-flag.recommended .park-flag-icon { background: #2e7d32; }
-.park-flag.busy .park-flag-icon { background: #ef6c00; }
+.park-flag.recommended .park-flag-icon { background: var(--color-good); }
+.park-flag.busy .park-flag-icon { background: var(--color-warning); }
 
 .park-flag-name {
   flex: 1;
@@ -959,49 +1185,6 @@ select, input, textarea, button {
   font-size: 0.55rem;
   color: #aaa;
   text-align: right;
-}
-
-/* ---- Crowd Forecast (compact single-line card) ---- */
-.crowd-forecast-line {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #333;
-}
-
-.crowd-forecast-avg,
-.crowd-forecast-range {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.crowd-forecast-range {
-  font-size: 0.8rem;
-  color: #666;
-}
-
-.crowd-forecast-sep {
-  color: #ccc;
-}
-
-.crowd-tooltip-days {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-.crowd-tooltip-day-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 0.68rem;
-  color: #555;
 }
 
 /* ---- Event Tooltip (calendar cell special-event hover) ---- */
@@ -1140,7 +1323,7 @@ select, input, textarea, button {
 .dist-current {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 .dist-chart {
@@ -1165,7 +1348,7 @@ select, input, textarea, button {
 }
 
 .dist-bar.current {
-  background: #4a148c;
+  background: var(--color-primary);
 }
 
 .dist-tooltip {
@@ -1192,7 +1375,7 @@ select, input, textarea, button {
 }
 
 .dist-callout strong {
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 /* ---- Better Alternatives ---- */
@@ -1245,7 +1428,7 @@ select, input, textarea, button {
 .alt-resort {
   font-size: 0.65rem;
   font-weight: 700;
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 .alt-card-empty {
@@ -1287,7 +1470,7 @@ select, input, textarea, button {
   width: 100%;
   margin-top: 10px;
   padding: 10px;
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -1305,59 +1488,10 @@ select, input, textarea, button {
 }
 
 .find-alt-btn:hover {
-  background: #38116b;
+  background: var(--color-primary-active);
 }
 
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 200;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.modal-overlay.open {
-  display: flex;
-}
-
-.modal-box {
-  background: white;
-  border-radius: 12px;
-  max-width: 480px;
-  width: 100%;
-  max-height: 85vh;
-  overflow-y: auto;
-  padding: 20px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.modal-header h3 {
-  font-size: 1rem;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.4rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #999;
-  padding: 0 4px;
-}
-
-.modal-close:hover {
-  color: #333;
-}
+/* ---- Modal (.modal-overlay/.modal-box) ---- moved to tokens.css (shared with account.html) */
 
 .alt-cross-toggle {
   display: flex;
@@ -1371,57 +1505,70 @@ select, input, textarea, button {
 
 /* Selected state */
 .day-cell.selected {
-  outline: 3px solid #1a237e;
+  outline: 3px solid var(--color-secondary);
   outline-offset: -1px;
   box-shadow: 0 1px 6px rgba(26, 35, 126, 0.25);
 }
 
-/* Check-in marker */
+/* Check-in marker -- the solid vs. dashed outline (plus the "Sun, Sep 20 —
+   Thu, Sep 24" line above the grid) already distinguishes check-in from
+   check-out without needing a text label in the corner. Defined standalone
+   (not just an outline-color override layered on .selected) because the
+   check-in day only picks up .selected once a check-out date completes the
+   range -- until then this is the only rule marking it, and a color-only
+   override with no outline width/style set anywhere else was invisible. */
 .day-cell.checkin {
-  outline-color: #2e7d32;
-}
-
-.day-cell.checkin::after {
-  content: "IN";
-  position: absolute;
-  top: 2px;
-  left: 3px;
-  font-size: 0.45rem;
-  font-weight: 700;
-  color: #2e7d32;
-  letter-spacing: 0.5px;
+  outline: 3px solid var(--color-good);
+  outline-offset: -1px;
+  box-shadow: 0 1px 6px rgba(26, 35, 126, 0.25);
 }
 
 /* Check-out marker */
 .day-cell.checkout {
-  outline: 3px dashed #b71c1c;
+  outline: 3px dashed var(--color-danger);
   outline-offset: -1px;
   background: rgba(183, 28, 28, 0.06) !important;
 }
 
-.day-cell.checkout::after {
-  content: "OUT";
-  position: absolute;
-  top: 2px;
-  left: 3px;
-  font-size: 0.45rem;
-  font-weight: 700;
-  color: #b71c1c;
-  letter-spacing: 0.5px;
-}
-
 /* ---- Legend ---- */
-.legend {
+/* Consolidates what used to be 3 separate .legend boxes (Travel Period,
+   Crowd Level, Special Events) into one bar with divider rules between
+   groups -- source links moved out into their own muted line below,
+   reclaiming the vertical space 3 full boxes used to take. */
+.legend-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 10px 14px;
   margin-top: 6px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.legend-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
 }
+
+.legend-divider {
+  color: #ddd;
+  font-weight: 300;
+}
+
+.legend-sources {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 0.6rem;
+  color: #ccc;
+}
+.legend-sources .source-link { margin-left: 0; }
 
 .legend-title {
   font-size: 0.7rem;
@@ -1456,6 +1603,7 @@ select, input, textarea, button {
 .legend-note {
   font-size: 0.68rem;
   color: #888;
+  white-space: nowrap;
 }
 
 .source-link {
@@ -1467,13 +1615,13 @@ select, input, textarea, button {
 }
 
 .source-link:hover {
-  color: #4a148c;
+  color: var(--color-primary);
   text-decoration: underline;
 }
 
 /* Owner value color in summary */
 .summary-row .row-value.owner {
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 /* ---- Action Buttons (between settings and summary) ---- */
@@ -1561,13 +1709,13 @@ select, input, textarea, button {
 .summary-row .row-value {
   font-size: 1rem;
   font-weight: 700;
-  color: #1a237e;
+  color: var(--color-secondary);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .summary-row .row-value.cash {
-  color: #2e7d32;
+  color: var(--color-good);
   display: inline-flex;
   align-items: center;
 }
@@ -1578,7 +1726,7 @@ select, input, textarea, button {
 }
 
 .summary-row .row-value.rack {
-  color: #b71c1c;
+  color: var(--color-danger);
 }
 
 .cost-per-point {
@@ -1592,8 +1740,8 @@ select, input, textarea, button {
   display: inline-block;
   font-size: 0.65rem;
   font-weight: 600;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--color-good-bg);
+  color: var(--color-good);
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: 6px;
@@ -1641,9 +1789,9 @@ select, input, textarea, button {
   font-weight: 700;
 }
 
-.cost-tile-value.rack { color: #b71c1c; }
-.cost-tile-value.owner { color: #4a148c; }
-.cost-tile-value.cash { color: #2e7d32; }
+.cost-tile-value.rack { color: var(--color-danger); }
+.cost-tile-value.owner { color: var(--color-primary); }
+.cost-tile-value.cash { color: var(--color-good); }
 
 .cost-tile-sub {
   font-size: 0.68rem;
@@ -1651,21 +1799,17 @@ select, input, textarea, button {
   margin-top: 2px;
 }
 
-.cost-tile-select {
-  width: 100%;
+/* Owner-resort trigger inside the "If using your own points" cost tile --
+   same .picker-trigger look as the Resort/Booking As pickers (it opens
+   #owner-resort-sheet, the same hero+search+swatch-row sheet as the main
+   Resort picker), just sized down to fit a narrow tile instead of the
+   wider top control bar. */
+.cost-tile-trigger {
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 6px;
   padding: 4px 6px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
   font-size: 0.68rem;
-  background: white;
-  cursor: pointer;
-}
-
-.cost-tile-select:focus {
-  outline: none;
-  border-color: #4a148c;
-  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
 .cost-tile-rate-input {
@@ -1688,7 +1832,7 @@ select, input, textarea, button {
 
 .cost-tile-rate-input input[type="number"]:focus {
   outline: none;
-  border-color: #4a148c;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
@@ -1696,22 +1840,22 @@ select, input, textarea, button {
   margin-top: 6px;
   font-size: 0.68rem;
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--color-good);
 }
 
 .cost-tile-savings .savings-badge {
   display: inline-block;
   font-size: 0.65rem;
   font-weight: 600;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--color-good-bg);
+  color: var(--color-good);
   padding: 2px 6px;
   border-radius: 4px;
 }
 
 .summary-row.total {
   padding-top: 10px;
-  border-top: 2px solid #1a237e;
+  border-top: 2px solid var(--color-secondary);
   margin-top: 4px;
 }
 
@@ -1755,7 +1899,7 @@ select, input, textarea, button {
 }
 
 .summary-nightly h4:hover {
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 .nightly-rows {
@@ -1782,13 +1926,13 @@ select, input, textarea, button {
 
 .nightly-row .night-points {
   font-weight: 600;
-  color: #1a237e;
+  color: var(--color-secondary);
   min-width: 48px;
   text-align: right;
 }
 
 .nightly-row .night-cash {
-  color: #b71c1c;
+  color: var(--color-danger);
   font-size: 0.65rem;
   min-width: 52px;
   text-align: right;
@@ -1811,13 +1955,13 @@ select, input, textarea, button {
 }
 
 .contract-eligibility.contract-ok {
-  color: #2e7d32;
-  background: #e8f5e9;
+  color: var(--color-good);
+  background: var(--color-good-bg);
 }
 
 .contract-eligibility.contract-blocked {
-  color: #b71c1c;
-  background: #ffebee;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
 }
 
 .contract-points {
@@ -1828,8 +1972,8 @@ select, input, textarea, button {
 }
 
 .contract-points.contract-points-over {
-  color: #b71c1c;
-  background: #fff3e0;
+  color: var(--color-danger);
+  background: var(--color-warning-bg);
   border-radius: 6px;
   font-weight: 600;
 }
@@ -1858,8 +2002,8 @@ select, input, textarea, button {
 }
 
 .resort-alert.overlaps-stay {
-  background: #fff3e0;
-  border-left: 3px solid #ef6c00;
+  background: var(--color-warning-bg);
+  border-left: 3px solid var(--color-warning);
 }
 
 .resort-alert-badge {
@@ -1868,7 +2012,7 @@ select, input, textarea, button {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #ef6c00;
+  color: var(--color-warning);
   margin-bottom: 3px;
 }
 
@@ -1901,8 +2045,73 @@ select, input, textarea, button {
 }
 
 .resort-alert-footer:hover {
-  color: #4a148c;
+  color: var(--color-primary);
   text-decoration: underline;
+}
+
+/* ---- Special Events & Festivals (buildSpecialEventsHTML()) ---- */
+.special-event-group-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #999;
+  margin: 10px 0 6px;
+}
+
+.special-event-group-label:first-of-type {
+  margin-top: 0;
+}
+
+.special-event-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+}
+
+.special-event {
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #f7f7f7;
+}
+
+.special-event.ticketed {
+  border-left: 3px solid var(--color-primary);
+}
+
+.special-event-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-primary);
+  margin-bottom: 3px;
+}
+
+.special-event-name {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.special-event-dates {
+  font-size: 0.66rem;
+  color: #888;
+  margin-top: 1px;
+}
+
+.special-event-desc {
+  font-size: 0.72rem;
+  color: #555;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.special-event-empty {
+  font-size: 0.72rem;
+  color: #999;
+  font-style: italic;
 }
 
 /* ---- Value Score ---- */
@@ -1977,18 +2186,13 @@ select, input, textarea, button {
   margin-top: 2px;
 }
 
-.day-cash.prior-year {
-  color: #bbb;
-  font-style: italic;
-}
-
 
 .summary-compare {
   display: block;
   width: 100%;
   margin-top: 10px;
   padding: 8px;
-  background: #4a148c;
+  background: var(--color-primary);
   border: none;
   border-radius: 6px;
   font-size: 0.8rem;
@@ -2001,7 +2205,7 @@ select, input, textarea, button {
 }
 
 .summary-compare:hover {
-  background: #6a1b9a;
+  background: var(--color-primary-hover);
 }
 
 .summary-clear {
@@ -2019,8 +2223,8 @@ select, input, textarea, button {
 }
 
 .summary-clear:hover {
-  border-color: #b71c1c;
-  color: #b71c1c;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
   background: rgba(183, 28, 28, 0.04);
 }
 
@@ -2046,6 +2250,16 @@ select, input, textarea, button {
     transparent 9px
   );
   pointer-events: none;
+}
+
+/* Past dates: greyscale + dimmed so a stale month view (or paging back to
+   an earlier month) can't be mistaken for still-bookable dates -- distinct
+   from .contract-not-yet-bookable's diagonal-stripe treatment above, since
+   that's "not yet", this is "no longer". Still clickable, same reasoning:
+   someone may want to check what a past date cost for historical reference. */
+.day-cell.past-date {
+  opacity: 0.4;
+  filter: grayscale(1);
 }
 
 /* ---- Split Stay: Calendar ---- */
@@ -2090,7 +2304,7 @@ select, input, textarea, button {
 
 .segment-edit {
   font-size: 0.65rem;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   margin-left: auto;
   font-weight: 600;
@@ -2109,7 +2323,7 @@ select, input, textarea, button {
 }
 
 .segment-remove:hover {
-  color: #b71c1c;
+  color: var(--color-danger);
 }
 
 .segment-detail {
@@ -2127,7 +2341,7 @@ select, input, textarea, button {
 .segment-compare {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #4a148c;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -2143,7 +2357,7 @@ select, input, textarea, button {
 }
 
 .segment-nightly-toggle:hover {
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 .segment-block .summary-nightly {
@@ -2158,11 +2372,11 @@ select, input, textarea, button {
   margin-top: 10px;
   padding: 8px;
   background: none;
-  border: 2px dashed #4a148c;
+  border: 2px dashed var(--color-primary);
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   text-align: center;
   transition: all 0.15s;
@@ -2170,7 +2384,7 @@ select, input, textarea, button {
 
 .summary-add-segment:hover {
   background: rgba(74, 20, 140, 0.06);
-  border-color: #6a1b9a;
+  border-color: var(--color-primary-hover);
 }
 
 .summary-save-itinerary {
@@ -2178,7 +2392,7 @@ select, input, textarea, button {
   width: 100%;
   margin-top: 10px;
   padding: 8px;
-  background: #2e7d32;
+  background: var(--color-good);
   border: none;
   border-radius: 6px;
   font-size: 0.8rem;
@@ -2190,7 +2404,7 @@ select, input, textarea, button {
 }
 
 .summary-save-itinerary:hover {
-  background: #256428;
+  background: var(--color-good-hover);
 }
 
 .itinerary-save-form {
@@ -2210,13 +2424,13 @@ select, input, textarea, button {
 
 .itinerary-save-form input:focus {
   outline: none;
-  border-color: #2e7d32;
+  border-color: var(--color-good);
   box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
 }
 
 .itinerary-save-confirm {
   padding: 7px 12px;
-  background: #2e7d32;
+  background: var(--color-good);
   border: none;
   border-radius: 6px;
   font-size: 0.8rem;
@@ -2226,7 +2440,7 @@ select, input, textarea, button {
   white-space: nowrap;
 }
 
-.itinerary-save-confirm:hover { background: #256428; }
+.itinerary-save-confirm:hover { background: var(--color-good-hover); }
 .itinerary-save-confirm:disabled { background: #9ccc9f; cursor: default; }
 
 .itinerary-save-cancel {
@@ -2239,12 +2453,12 @@ select, input, textarea, button {
   cursor: pointer;
 }
 
-.itinerary-save-cancel:hover { border-color: #b71c1c; color: #b71c1c; }
+.itinerary-save-cancel:hover { border-color: var(--color-danger); color: var(--color-danger); }
 
 .itinerary-save-error {
   margin-top: 6px;
   font-size: 0.75rem;
-  color: #b71c1c;
+  color: var(--color-danger);
 }
 
 /* ---- Responsive ---- */
@@ -2275,6 +2489,19 @@ select, input, textarea, button {
        already be showing. overflow-y: hidden opts back out of the
        interop pairing without affecting the intended horizontal scroll. */
     overflow-y: hidden;
+    /* .calendar-grid's own min-width is 0 (see below) -- this container
+       never needs to scroll far enough to reveal real hidden content, only
+       far enough to absorb that same rounding noise (measured as low as
+       2-4px total across all 7 columns, an imperceptible sliver per cell).
+       Scoped to a NARROW/harmless scroll like that, a visible scrollbar
+       reads as "the calendar doesn't fit" (reported directly against a
+       live mobile screenshot) even though nothing is actually being cut
+       off -- hiding it keeps the sub-pixel safety valve functional
+       without advertising it as if there were real content to scroll to. */
+    scrollbar-width: none;
+  }
+  .calendar-grid-scroll::-webkit-scrollbar {
+    display: none;
   }
 
   /* Collapsed by default: brand + toggle stay on one row, everything else
@@ -2343,6 +2570,15 @@ select, input, textarea, button {
 
   .main-layout {
     flex-direction: column;
+    /* Desktop's flex-start (top-aligned columns) leaves each stacked child
+       free to size to its own content-width instead of the viewport once
+       direction flips to column -- .summary-side.expanded's width:auto
+       (needed on desktop so it can grow into the freed-up space next to
+       the collapsed trip rail) was sizing to the two-column Insights grid's
+       content width (~400px) instead of the phone's actual width, pushing
+       the whole page into horizontal scroll. stretch forces every stacked
+       child to the container's actual width regardless of its own content. */
+    align-items: stretch;
   }
 
   .calendar-side {
@@ -2358,6 +2594,81 @@ select, input, textarea, button {
   .controls {
     flex-direction: column;
     align-items: stretch;
+    padding: 10px 16px;
+  }
+
+  /* Collapsed by default on mobile -- the 4 stacked dropdowns were eating
+     roughly half the screen before any calendar/trip content appeared
+     (reported directly against a live screenshot). Doubles as the "Active
+     Context Summary Bar": while collapsed, its label shows a live Resort ·
+     Room Type · Booking As readout (app.js's buildActiveContextSummary())
+     instead of a static placeholder, so landing on a collapsed drawer never
+     leaves the calendar's point numbers unexplained. Styled as a tappable
+     mini-card (tinted background, rounded corners) rather than the plain
+     text-link look it had before, so it reads as its own summary control,
+     not just a section label. #controls-toggle's click wiring lives in
+     app.js now (it needs live calendar state), not nav.js. */
+  .controls-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-primary-tint-bg);
+    border-radius: 10px;
+    background: var(--color-primary-tint-bg);
+    background-size: cover;
+    background-position: center;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  /* Collapsed summary bar for a resort with art (data/resort_images.js) --
+     app.js's updateActiveContextBar() sets background-image inline to a
+     translucent tint wash over the resort's art (same --color-primary-
+     tint-bg color, just see-through) so the photo reads behind the text
+     instead of replacing the flat pill look outright. The border alone
+     would otherwise sit as a hard flat-purple line across a photo. */
+  .controls-toggle.has-art {
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Truncates instead of wrapping -- a full "Resort Name · Room Type ·
+     Contract Name" line can easily run past a narrow phone's width, and
+     wrapping it would push the chevron off to its own line or grow the
+     bar's height unpredictably. flex:1/min-width:0 is what lets the
+     ellipsis actually take effect on a flex child. */
+  #controls-toggle-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .controls-toggle-arrow {
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
+
+  .controls-toggle[aria-expanded="true"] .controls-toggle-arrow {
+    transform: rotate(180deg);
+  }
+
+  .controls-groups {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .controls-groups.open {
+    display: flex;
   }
 
   .month-nav {
@@ -2365,46 +2676,82 @@ select, input, textarea, button {
     justify-content: center;
   }
 
-  .custom-select {
+  .picker-trigger {
     min-width: unset;
+    max-width: unset;
     width: 100%;
   }
 
-  .searchable-select {
-    min-width: unset;
-    width: 100%;
+  .room-type-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Cells never shrink below a legible size — the grid scrolls
-     horizontally on narrow phones instead of squeezing content. */
+  .modal-box.sheet {
+    max-height: 80vh;
+  }
+
+  /* Reworked 2026-09-18: a forced min-width (420px) made the whole week
+     require horizontal scrolling to see Fri/Sat on real phones -- reported
+     back as a regression ("user has to scroll left and right"), not the
+     intended behavior. Shrinking every cell to actually fit the viewport
+     instead, so all 7 days are visible with no scrolling needed.
+     overflow-x: auto above stays as a safety net for anything narrower
+     than this still manages to fit (old phones, split-screen, etc). */
   .calendar-grid {
-    min-width: 420px;
+    min-width: 0;
+    padding: 4px;
+    gap: 2px;
   }
 
   .day-cell {
-    min-height: 58px;
+    min-height: 50px;
+    padding: 4px 1px;
+  }
+
+  .day-header {
+    font-size: 0.58rem;
+    padding: 4px 0;
   }
 
   .day-cell .day-points {
-    font-size: 0.85rem;
+    font-size: 0.72rem;
   }
 
   .day-cell .day-number {
-    font-size: 0.65rem;
-  }
-
-  .day-cell .day-topline {
+    font-size: 0.5rem;
     top: 2px;
-    right: 2px;
+    left: 3px;
   }
 
   .day-cell .day-cash {
-    font-size: 0.48rem;
+    font-size: 0.46rem;
+    letter-spacing: -0.2px;
   }
 
   .day-cell .day-crowd {
-    font-size: 0.48rem;
-    padding: 1px 3px;
+    top: 2px;
+    right: 2px;
+    font-size: 0.4rem;
+    padding: 1px 2px;
+  }
+
+  .day-cell .day-event {
+    bottom: 2px;
+    right: 2px;
+    font-size: 0.5rem;
+  }
+
+  /* The "|" divider only makes visual sense inline -- once .legend-group
+     wraps each section onto its own row (flex-wrap on .legend-bar), a
+     lone "|" character becomes its own near-empty row, which is what
+     produced the large gaps reported between Travel Period/Crowd Level/
+     Special Events on mobile. */
+  .legend-divider {
+    display: none;
+  }
+
+  .legend-bar {
+    gap: 10px;
   }
 }
 
@@ -2447,13 +2794,27 @@ select, input, textarea, button {
   max-width: 34px;
   height: 22px;
   border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.avail-dot-excellent { background: #2e7d32; }
+/* Baked-in context: a 2-letter code (Ex/Gd/Fr/Lo/NL) directly in the color
+   block itself, so the color alone doesn't require a tap to understand --
+   see availabilityLabel()/buildAvailabilityDotsHTML() in app.js. */
+.avail-dot-code {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+  pointer-events: none;
+}
+
+.avail-dot-excellent { background: var(--color-good); }
 .avail-dot-good { background: #f9a825; }
-.avail-dot-fair { background: #ef6c00; }
+.avail-dot-fair { background: var(--color-warning); }
 .avail-dot-low { background: #d84315; }
-.avail-dot-very-low { background: #b71c1c; }
+.avail-dot-very-low { background: var(--color-danger); }
 
 .avail-dot-tooltip {
   width: 160px;

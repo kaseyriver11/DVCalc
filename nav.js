@@ -36,3 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+// index.html's mobile-only collapse for the Resort/Room Type/Booking As/Load
+// Trip dropdowns (#controls-toggle/#controls-groups) now lives in app.js,
+// not here -- the collapsed label shows a live Resort/Room/Booking-As
+// summary (the "Active Context Summary Bar"), which needs real calendar
+// state that this page-agnostic shared include has no business knowing
+// about. See app.js's buildActiveContextSummary()/updateActiveContextBar().
