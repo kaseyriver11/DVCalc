@@ -12,18 +12,22 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f5f5f5;
+  background: var(--color-bg-page);
   color: #333;
   min-height: 100vh;
 }
 
 .header {
-  background: linear-gradient(135deg, #1a237e, #4a148c);
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
   color: white;
   padding: 16px 24px;
   text-align: center;
@@ -34,17 +38,17 @@ body {
 
 /* ---- Site nav ---- */
 .site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
-.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
 .site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
 .site-nav-group { display: flex; align-items: center; gap: 12px; }
 .site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
 .site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
 .site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
-.site-nav-links a:hover { color: #4a148c; }
-.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 
 .site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
-.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: #4a148c; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
 
 .account-btn, .account-link-btn {
   font: inherit;
@@ -54,13 +58,13 @@ body {
   border-radius: 20px;
   border: 1px solid #ddd;
   background: #f7f5fa;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   white-space: nowrap;
 }
-.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: var(--color-primary); }
 
 @media (max-width: 800px) {
   .site-nav-toggle { display: flex; }
@@ -92,7 +96,7 @@ body {
 .gate p { margin-bottom: 18px; font-size: 0.95rem; }
 
 .big-signin-btn {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -101,7 +105,7 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.big-signin-btn:hover { background: #38106b; }
+.big-signin-btn:hover { background: var(--color-primary-active); }
 
 .section {
   background: white;
@@ -114,7 +118,7 @@ body {
 .section h2 {
   font-size: 1.05rem;
   font-weight: 600;
-  color: #1a237e;
+  color: var(--color-secondary);
   margin-bottom: 4px;
 }
 
@@ -140,59 +144,482 @@ body {
   padding: 8px 0 16px;
 }
 
-/* ---- Value Story hero ---- */
-.story-tiles {
+/* ---- House Money hero gauge ---- */
+.house-money-card {
+  text-align: center;
+  padding: 8px 8px 4px;
+}
+
+.gauge-wrap {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  margin: 0 auto;
+}
+
+.house-money-gauge { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+.gauge-track {
+  fill: none;
+  stroke: var(--color-bg-page);
+  stroke-width: 10;
+}
+
+.gauge-arc {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;
+}
+
+.house-money-card.achieved .gauge-arc {
+  stroke: #d4af37;
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.6));
+}
+
+.house-money-card.achieved .gauge-track {
+  stroke: rgba(212, 175, 55, 0.15);
+}
+
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 12px;
+}
+
+.gauge-pct { font-size: 2rem; font-weight: 800; color: var(--color-secondary); line-height: 1; }
+.gauge-pct-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #999;
+  margin-top: 2px;
+}
+.gauge-badge { font-size: 0.95rem; font-weight: 700; color: #a3790a; line-height: 1.3; }
+
+.house-money-subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 14px;
+}
+.house-money-subtitle strong { color: var(--color-secondary); }
+.house-money-card.achieved .house-money-subtitle strong { color: #a3790a; }
+
+/* ---- House Money payback breakdown popover ----
+   Explains every component behind the estimated date (or the outlay math
+   even before one exists) -- see buildPaybackBreakdownHTML(). Anchored to
+   the subtitle line itself (.payback-info-anchor is added onto
+   .house-money-subtitle) or, for the per-contract dues breakdown, the
+   whole .contract-cost-card. Opens on hover (desktop mouse) via the .open
+   class, which mouseenter/mouseleave listeners toggle with a short close
+   delay to survive the visual gap between the trigger and the popover
+   below it -- AND on tap (touch, which has no hover), via the same click
+   toggle already needed for mobile. Both paths just add/remove the same
+   .open class, so either one alone is enough to show it -- see the
+   document-level listeners at the bottom of this file's script. */
+.payback-info-anchor { position: relative; }
+
+.payback-info-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  border: none;
+  background: var(--color-primary-tint-bg);
+  color: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
+.payback-info-trigger:hover { background: var(--color-primary); color: white; }
+
+/* A plain "i", not a pre-circled Unicode glyph (older ⓘ character) -- that
+   glyph bakes its own circle into the character itself, which doubled up
+   with this button's own CSS circle and rendered as a muddy double-ring
+   blob. One circle (this button's), one letter, styled like a classic
+   info-mark. */
+.payback-info-trigger-glyph {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+/* display:none/block (not opacity/visibility) so the closed popover never
+   generates a layout box at all -- avoids the class of bug this app hit
+   before (tokens.css's tooltip-card note) where a hidden-but-present
+   element with inherited nowrap text quietly added horizontal scroll. */
+.payback-breakdown-card {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(320px, 88vw);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  padding: 14px 16px;
+  text-align: left;
+  z-index: 60;
+}
+.payback-info-anchor.open .payback-breakdown-card { display: block; }
+
+.payback-breakdown-card::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.92);
+}
+
+.payback-breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.payback-breakdown-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: #999;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.payback-breakdown-close:hover { color: #333; }
+
+.payback-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: #555;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+}
+.payback-breakdown-row.sub { color: #888; padding-left: 8px; }
+.payback-breakdown-row.total {
+  font-weight: 700;
+  color: var(--color-secondary);
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 2px;
+  padding-top: 6px;
+}
+
+.payback-breakdown-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: 10px 0;
+}
+
+.payback-breakdown-footnote {
+  font-size: 0.72rem;
+  color: #888;
+  margin-top: 10px;
+  line-height: 1.5;
+  text-align: left;
+}
+.payback-breakdown-footnote strong { color: var(--color-primary); }
+
+/* ---- Dopamine stat tiles ---- */
+.dopamine-tiles {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
+  margin-top: 18px;
 }
 
-.story-tile {
+.dopamine-tile {
   text-align: center;
   padding: 14px 8px;
   border-radius: 8px;
   background: #faf8fd;
 }
 
-.story-tile-label {
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+.dopamine-tile-value { font-size: 1.3rem; font-weight: 700; color: var(--color-primary); }
+.dopamine-tile-unit { font-size: 0.72rem; font-weight: 600; color: #999; }
+
+.dopamine-tile-label {
+  font-size: 0.7rem;
   color: #888;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+/* ---- Model Assumptions & Sensitivity panel ----
+   Same collapsed-by-default advanced-panel pattern as contractvalue.html's
+   "Adjust assumptions" toggle, but with real range sliders (this app's
+   first -- contractvalue.html's own advanced panel is plain number inputs)
+   since these are meant to be dragged for live sensitivity, not typed. */
+.assumptions-section { padding: 14px 24px; }
+.assumptions-toggle {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 6px;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 4px 0;
 }
+.assumptions-toggle:hover { color: var(--color-primary-active); }
 
-.story-tile-value {
-  font-size: 1.5rem;
+.assumptions-panel {
+  display: none;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+}
+.assumptions-panel.open { display: flex; }
+
+.assumption-row { display: flex; flex-direction: column; gap: 6px; }
+
+.assumption-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+.assumption-label-row label { color: #444; font-weight: 600; }
+.assumption-value {
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
+  color: var(--color-primary);
 }
 
-.story-tile.cost .story-tile-value { color: #b71c1c; }
-.story-tile.value .story-tile-value { color: #2e7d32; }
-.story-tile.net .story-tile-value { color: #4a148c; }
+.assumption-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.assumption-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #555;
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border-light);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.assumption-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.assumption-chip.active {
+  background: var(--color-primary-tint-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
 
-.story-tile-sub {
+.assumption-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border-light);
+  outline: none;
+}
+.assumption-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.assumption-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.assumptions-save-status {
   font-size: 0.72rem;
   color: #999;
-  margin-top: 4px;
+  min-height: 1em;
+  text-align: right;
 }
 
-/* ---- Contract cost cards ---- */
-.contract-cost-card {
-  border: 1px solid #e5e5e5;
+/* ---- Exit Equity ---- */
+.exit-equity-context {
+  font-size: 0.78rem;
+  color: #666;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+.exit-equity-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.exit-equity-tile {
+  text-align: center;
+  padding: 14px 10px;
   border-radius: 8px;
-  padding: 14px 16px;
+  background: #faf8fd;
+}
+.exit-equity-tile-value { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); }
+.exit-equity-tile-label { font-size: 0.72rem; color: #888; margin-top: 4px; line-height: 1.35; }
+.exit-equity-tile-note { display: block; color: #aaa; }
+
+.exit-equity-status {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--color-bg-page);
+  color: #555;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.exit-equity-status.achieved {
+  background: var(--color-good-bg);
+  color: var(--color-good-hover);
+  font-weight: 700;
+}
+.exit-equity-status-sub {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: #4a7a4d;
+}
+
+.alt-fund-note {
+  margin-top: 10px;
+  font-size: 0.76rem;
+  color: #7a4a00;
+  background: var(--color-warning-bg);
+  border-radius: 6px;
+  padding: 8px 10px;
+  line-height: 1.4;
+}
+.alt-fund-note strong { color: #ef6c00; }
+
+/* ---- Cost vs. Value Over Time chart ----
+   Same hand-rolled SVG + HTML-tooltip approach as changes.html's own
+   year-over-year chart (this app uses no chart library anywhere) --
+   .chart-card/.chart-tooltip/.tt-*/.year-hover class names match that
+   page's exactly, so both charts share one visual language. Two series:
+   Total Spent (--color-info blue) and Value Extracted (--color-good
+   green) -- validated as a colorblind-safe pair via the dataviz skill's
+   validate_palette.js (red+green, the more "obvious" cost/value pairing,
+   fails CVD separation outright; blue+green passes every check in both
+   light and dark). */
+.chart-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 12px; position: relative; }
+.house-money-chart { width: 100%; height: auto; display: block; margin: 0 auto; }
+.house-money-chart .year-hover { cursor: crosshair; }
+
+/* gap: 12px (not the original 16px) plus a shorter swatch -- real-world
+   testing at phone width showed 3 legend items (once Alt. Vacation Fund
+   joins Total Spent/Value Extracted) wrapping the 3rd item onto its own
+   lonely line; tightening both closes that gap without needing to shrink
+   the label text itself. */
+.chart-legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.chart-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.76rem; color: #555; font-weight: 600; }
+.chart-legend-swatch { width: 14px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+
+.chart-tooltip {
+  display: none;
+  position: absolute;
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+}
+.chart-tooltip.visible { display: block; }
+.tt-year { font-weight: 700; font-size: 0.8rem; margin-bottom: 4px; color: #ccc; }
+.tt-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tt-name { color: #ddd; }
+.tt-value { margin-left: auto; font-weight: 700; padding-left: 12px; }
+
+/* ---- Trophy case & badge modal ----
+   Moved to tokens.css: needed by both trips.html (compact dashboard
+   preview) and badges.html (the full Trophy Room), see badges.html for
+   the category/rarity-specific additions. */
+
+/* ---- Contract cost cards ----
+   Replaced the old year-by-year <table class="amort-table"> entirely
+   (2026-09-17) -- a dense accounting grid read as a leftover desktop
+   spreadsheet, not part of a native app, and needed horizontal scroll on
+   any real phone. Each contract is now a single scannable module: 3
+   headline stat tiles (same grid-of-equal-tiles language as the House
+   Money hero's .dopamine-tiles above) plus a two-segment proportion bar
+   summarizing the whole ownership history in one glance, instead of a row
+   per year.
+   "Look 2" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md): a
+   plain neutral border + the resort's own art (data/resort_images.js)
+   faded in via resortArtCardStyle(), same recipe as this page's own trip
+   postcards. Used to be a flat gray background with a resort-hash-colored
+   LEFT border (walletCardPrimaryColor()) -- a third, different-again "how
+   do we show resort identity" look, reported directly as not matching
+   either of the other two the app settled on. Each cost-card-tile below
+   keeps its own solid white background regardless, so the actual numbers
+   stay fully legible even with a busy photo behind the card overall. */
+.contract-cost-card {
+  background: white;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid #e5e5e5;
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
   margin-bottom: 12px;
 }
 
 .contract-cost-card:last-child { margin-bottom: 0; }
 
+.contract-cost-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
 .contract-cost-name {
   font-weight: 600;
-  color: #1a237e;
+  color: var(--color-secondary);
   font-size: 0.92rem;
-  margin-bottom: 8px;
+}
+
+.contract-cost-owned-since {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #999;
+  white-space: nowrap;
 }
 
 .contract-cost-missing {
@@ -201,48 +628,122 @@ body {
   font-style: italic;
 }
 
-.contract-cost-missing a { color: #4a148c; }
+.contract-cost-missing a { color: var(--color-primary); }
 
-.amort-table-wrap { overflow-x: auto; margin-top: 8px; }
-
-.amort-table {
-  width: 100%;
-  min-width: 420px;
-  border-collapse: collapse;
-  font-size: 0.78rem;
+/* Same grid-of-equal-tiles shape as .dopamine-tiles above (Mobile
+   Responsiveness Guardrail #9 -- grid, not flex, for equal-width stat
+   boxes), so a phone gets the identical 3-up layout as desktop with no
+   media query needed. */
+.cost-card-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
-.amort-table th {
-  text-align: right;
-  padding: 5px 8px;
-  color: #888;
-  font-weight: 600;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  white-space: nowrap;
-  border-bottom: 1px solid #eee;
+.cost-card-tile {
+  text-align: center;
+  padding: 12px 6px;
+  border-radius: 8px;
+  background: white;
 }
-.amort-table th:first-child { text-align: left; }
 
-.amort-table td {
-  text-align: right;
-  padding: 5px 8px;
-  border-bottom: 1px solid #f5f5f5;
+.cost-card-tile-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-secondary);
   font-variant-numeric: tabular-nums;
 }
-.amort-table td:first-child { text-align: left; font-weight: 600; }
+.cost-card-tile.net .cost-card-tile-value { color: var(--color-primary); }
 
-.amort-summary {
+.cost-card-tile-label {
+  font-size: 0.66rem;
+  color: #888;
+  margin-top: 4px;
+  line-height: 1.3;
   display: flex;
-  gap: 20px;
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: #555;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
 }
-.amort-summary strong { color: #1a237e; }
 
-/* ---- Trip list ---- */
+/* .ledger-bar/.ledger-bar-seg are tokens.css's shared segmented-proportion
+   bar (already reused by account.html's points ledger and app.js's Smart
+   Draw card) -- these two color modifiers are this card's only local
+   addition, not a whole new bar component. */
+.cost-card-bar { margin-bottom: 8px; }
+.cost-seg-dues { background: var(--color-warning); }
+.cost-seg-buyin { background: var(--color-primary); }
+
+.cost-card-bar-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  color: #666;
+}
+
+/* ---- Dues-by-year table, inside a reused .payback-breakdown-card ----
+   Height-capped, not width-capped: a 4-column table this narrow never
+   needs horizontal scroll, but a long ownership history (Aulani back to
+   2011, say) has enough ROWS to make the popover unreasonably tall without
+   a vertical cap. */
+.dues-breakdown-table-wrap {
+  max-height: 220px;
+  overflow-y: auto;
+}
+.dues-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+.dues-breakdown-table th {
+  position: sticky;
+  top: 0;
+  text-align: right;
+  padding: 4px 6px;
+  color: #888;
+  font-weight: 600;
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border-light);
+  background: inherit;
+}
+.dues-breakdown-table th:first-child { text-align: left; }
+.dues-breakdown-table td {
+  text-align: right;
+  padding: 4px 6px;
+  color: #555;
+  border-bottom: 1px solid var(--color-bg-page);
+}
+.dues-breakdown-table td:first-child { text-align: left; font-weight: 600; color: var(--color-secondary); }
+.dues-breakdown-table tfoot td {
+  font-weight: 700;
+  color: var(--color-secondary);
+  border-top: 1px solid var(--color-border-light);
+  border-bottom: none;
+  padding-top: 6px;
+}
+
+.cost-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.cost-card-avg {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+/* ---- Trip postcard feed ---- */
 .trip-list {
   display: flex;
   flex-direction: column;
@@ -250,7 +751,16 @@ body {
   margin-bottom: 16px;
 }
 
-.trip-card {
+/* "Look 2" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md): plain
+   neutral border, no color accent -- this used to have a resort-hash-
+   colored top border (walletCardPrimaryColor()), which was one of several
+   different "how do we show resort identity" treatments that had drifted
+   across pages (reported directly, alongside contractvalue.html's purple
+   border and index.html's colored washes, as inconsistent). Now that the
+   photo itself (data/resort_images.js) carries resort identity, the
+   colored bar was redundant decoration -- dropped in favor of the same
+   plain border every other Look 2 card uses. */
+.trip-postcard {
   border: 1px solid #e5e5e5;
   border-radius: 8px;
   padding: 12px 16px;
@@ -261,28 +771,67 @@ body {
   flex-wrap: wrap;
 }
 
-.trip-main { flex: 1; min-width: 220px; }
+.trip-postcard-main { flex: 1; min-width: 220px; }
 
-.trip-name { font-weight: 600; color: #1a237e; font-size: 0.92rem; }
+.trip-postcard-resort { font-weight: 700; color: #222; font-size: 0.92rem; }
+/* Darkened from #888/#666 -- both were already borderline-low-contrast on
+   plain white, and reported hard to read once a photo (data/resort_images.js)
+   sat behind them too (see resortArtCardStyle() above). */
+.trip-postcard-room { font-size: 0.78rem; color: #555; margin-top: 1px; }
 
-.trip-meta {
+.trip-postcard-dates {
   font-size: 0.78rem;
-  color: #666;
-  margin-top: 3px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  color: #444;
+  margin-top: 4px;
 }
 
-.trip-value {
+.trip-postcard-value {
   text-align: right;
-  min-width: 110px;
+  min-width: 150px;
 }
 
-.trip-value-amount { font-size: 1.05rem; font-weight: 700; color: #2e7d32; }
-.trip-value-note { font-size: 0.68rem; color: #999; }
+.trip-postcard-pill {
+  display: inline-block;
+  background: var(--color-good-bg);
+  color: var(--color-good);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.trip-postcard-pill.no-data { background: #f0f0f0; color: #999; }
 
-.trip-actions { display: flex; gap: 8px; }
+.trip-postcard-points {
+  font-size: 0.68rem;
+  color: #666;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.trip-postcard-actions { display: flex; gap: 4px; }
+
+.icon-btn {
+  border: none;
+  background: none;
+  color: #aaa;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.icon-btn:hover { background: #f0f0f0; color: var(--color-primary); }
+.icon-btn.danger:hover { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* Plays once on the postcard for a trip just logged/saved via the modal. */
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(74, 20, 140, 0.35); }
+  100% { box-shadow: 0 0 0 14px rgba(74, 20, 140, 0); }
+}
+.trip-postcard.just-logged {
+  animation: pulseRing 0.6s ease-out;
+}
 
 .small-btn {
   font-size: 0.78rem;
@@ -294,11 +843,11 @@ body {
   color: #555;
   cursor: pointer;
 }
-.small-btn:hover { border-color: #4a148c; color: #4a148c; }
-.small-btn.danger:hover { border-color: #c62828; color: #c62828; }
+.small-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.small-btn.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
 
 .add-btn {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -307,25 +856,51 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.add-btn:hover { background: #38106b; }
+.add-btn:hover { background: var(--color-primary-active); }
 
-.trip-form {
-  border-top: 1px solid #eee;
-  margin-top: 16px;
-  padding-top: 16px;
-  display: none;
+/* ---- Log a Trip modal (2026-09-17 redesign) ----
+   Replaced the old flat .form-grid (one long vertical stack of identical
+   bare fields, reading as a tax form) with labeled .form-group sections --
+   Where You Stayed / When / The Numbers / Extra Details -- so related
+   fields read as one decision instead of N interchangeable rows. The
+   modal box itself stays capped near 480px (tokens.css's .modal-box), so
+   these are still narrow-viewport-safe multi-column rows (Mobile
+   Responsiveness Guardrail #1's "collapse to 1, not 2, columns" applies
+   below), not a wide desktop form. */
+.trip-modal-box { max-width: min(500px, 92vw); }
+
+.form-group {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-light);
 }
-.trip-form.open { display: block; }
+.form-group:last-of-type { border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 16px;
+.form-group-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--color-primary);
+  margin-bottom: 10px;
 }
 
-.form-field { display: flex; flex-direction: column; gap: 4px; }
-.form-field.full { grid-column: 1 / -1; }
+.form-group .form-field:not(:last-child) { margin-bottom: 12px; }
+
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 480px) {
+  .form-row-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 340px) {
+  .form-row-2 { grid-template-columns: 1fr; }
+}
+
+/* min-width: 0 lets a grid item shrink below its content's intrinsic size
+   (a <select>'s widest option, a date input's native width) -- without it
+   these columns blow out past the modal's box instead of wrapping/
+   truncating inside it, forcing a horizontal scrollbar. */
+.form-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
 .form-field label {
   font-size: 0.7rem;
@@ -336,17 +911,21 @@ body {
 }
 
 .form-field input, .form-field select, .form-field textarea {
-  padding: 8px 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 11px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.88rem;
   font-family: inherit;
+  background: white;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
   outline: none;
-  border-color: #4a148c;
-  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74,20,140,0.12);
 }
 
 .field-hint {
@@ -354,7 +933,61 @@ body {
   color: #888;
   min-height: 1em;
 }
-.field-hint.exact { color: #2e7d32; }
+.field-hint.exact { color: var(--color-good); }
+
+/* The two auto-suggested fields (Points Used, Cash Value) get their own
+   soft highlighted card -- same "insight, not a static box" language as
+   this page's other computed numbers (.dopamine-tile) -- so the
+   auto-filled suggestion reads as something the app figured out for you,
+   not just another blank to fill in. */
+.insight-field {
+  background: var(--color-primary-tint-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.insight-field label { color: var(--color-secondary); }
+.insight-field:not(:last-child) { margin-bottom: 10px; }
+.insight-input {
+  background: white;
+  font-size: 1.15rem !important;
+  font-weight: 700;
+  color: var(--color-primary);
+  border: 1px solid rgba(74,20,140,0.18) !important;
+}
+
+.points-breakdown-toggle {
+  display: block;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0 10px;
+  text-align: left;
+}
+.points-breakdown-toggle:hover { text-decoration: underline; }
+.points-breakdown-toggle-sub { font-weight: 400; color: #888; }
+
+.points-breakdown-panel {
+  background: #faf8fd;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.points-breakdown-panel[hidden] { display: none; }
+
+.points-breakdown-total {
+  font-size: 0.74rem;
+  color: #888;
+  margin-top: 8px;
+  text-align: right;
+}
+.points-breakdown-total.match { color: var(--color-good); font-weight: 600; }
+.points-breakdown-total.mismatch { color: var(--color-warning); font-weight: 600; }
 
 .save-warning {
   font-size: 0.8rem;
@@ -369,7 +1002,7 @@ body {
 .form-actions { display: flex; gap: 10px; }
 
 .save-btn {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -378,7 +1011,7 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.save-btn:hover { background: #38106b; }
+.save-btn:hover { background: var(--color-primary-active); }
 
 .cancel-btn {
   background: white;
@@ -391,14 +1024,34 @@ body {
 }
 
 .form-error {
-  color: #c62828;
+  color: var(--color-danger);
   font-size: 0.82rem;
   margin-bottom: 10px;
 }
 
 @media (max-width: 560px) {
-  .form-grid { grid-template-columns: 1fr; }
-  .story-tiles { grid-template-columns: 1fr; }
+  /* Stay a compact 3-column row on mobile (inherits grid-template-columns:
+     1fr 1fr 1fr from .dopamine-tiles above -- not overridden to a single
+     column anymore) instead of stacking into 3 nearly-full-height blocks,
+     which real-world testing on a phone showed forcing a full screen's
+     worth of scrolling just to reach the chart below. Smaller value/label
+     text and tighter padding are what make 3-across still readable at
+     this width. */
+  .dopamine-tiles { gap: 8px; }
+  .dopamine-tile { padding: 10px 4px; }
+  .dopamine-tile-value { font-size: 1.05rem; }
+  .dopamine-tile-unit { font-size: 0.62rem; }
+  .dopamine-tile-label { font-size: 0.62rem; }
+
+  .exit-equity-tiles { grid-template-columns: 1fr; }
+
+  /* Extra margin on top of the "Alt. Fund" shortened label (above) --
+     real-world testing at ~386px still wrapped the 3rd legend item even
+     after that, since 3 items' natural width was right at the edge of
+     what .chart-card's own padding leaves available. */
+  .chart-legend { gap: 8px; }
+  .chart-legend-item { font-size: 0.7rem; gap: 4px; }
+  .chart-legend-swatch { width: 12px; }
 }
   </style>
   <script>
@@ -421,11 +1074,12 @@ body {
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
@@ -446,6 +1100,7 @@ body {
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html" class="active">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -465,6 +1120,11 @@ body {
   <script src="data/cash_prices_live_summary.js"></script>
   <script src="data/dues_historical.js"></script>
   <script src="data/cash_value_index.js"></script>
+  <script src="data/resort_investment.js"></script>
+  <script src="data/disney_events.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="dvc-badges.js"></script>
+  <script src="dvc-track.js"></script>
   <script>
 const pageContent = document.getElementById("page-content");
 let contracts = [];
@@ -481,6 +1141,21 @@ let lastAutoFilledCash = null;
 // A non-blocking warning from the most recent save (e.g. the database is
 // missing a column), shown once at the top of Trip History then cleared.
 let pendingWarning = null;
+// The just-saved (new, not edited) trip's id, so its postcard gets the
+// pulseRing celebration animation on this one render only.
+let justLoggedTripId = null;
+// "Model Assumptions & Sensitivity" panel state -- userSettings starts as
+// the same defaults window.DVCAuth.getUserSettings() would fall back to
+// (kept in sync with auth.js's own DEFAULT_USER_SETTINGS), then gets
+// overwritten with the signed-in owner's real saved settings once
+// renderSignedIn()'s initial fetch resolves. contractYearPoints is
+// likewise promoted to module scope here (was a renderSignedIn()-local
+// `let`) so refreshHouseMoneyOutputs() can recompute pointEfficiency
+// without re-fetching it on every slider tick.
+let userSettings = { point_value_baseline: 35, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
+let contractYearPoints = [];
+let assumptionsOpen = false;
+let settingsSaveTimer = null;
 
 function resortName(id) {
   const r = RESORTS.find(r => r.id === id);
@@ -635,13 +1310,117 @@ function buildAmortizationSchedule(contract) {
   let cumulative = 0;
   let totalDues = 0;
   for (let y = purchaseYear; y <= currentYear; y++) {
-    const dues = contract.points_per_year * getDuesForYear(contract.home_resort_id, y);
+    const ratePerPoint = getDuesForYear(contract.home_resort_id, y);
+    const dues = contract.points_per_year * ratePerPoint;
     totalDues += dues;
     const yearTotal = dues + amortizedPurchasePerYear;
     cumulative += yearTotal;
-    rows.push({ year: y, dues, amortized: amortizedPurchasePerYear, total: yearTotal, cumulative });
+    rows.push({ year: y, ratePerPoint, dues, amortized: amortizedPurchasePerYear, total: yearTotal, cumulative });
   }
   return { rows, totalYears, totalDues, amortizedPurchasePerYear, totalCostToDate: cumulative };
+}
+
+// One contract's cost-of-ownership card -- a scannable summary (3 headline
+// stats + a Dues-vs-Buy-In proportion bar) instead of the old year-by-year
+// table, which read as a financial spreadsheet rather than part of a native
+// app. The per-year rows are still in schedule.rows if a future "see the
+// full history" expansion wants them; the card itself only needs the
+// totals. Buy-in shown here is the FULL purchase price -- amortizing it
+// evenly "over years owned to date" (buildAmortizationSchedule's own
+// approach) means, by construction, 100% of it is already recognized as of
+// today, same as totalDues already being a to-date sum.
+function buildContractCostCardHTML(c) {
+  const schedule = buildAmortizationSchedule(c);
+  if (!schedule) {
+    return `
+      <div class="contract-cost-card" style="${resortArtCardStyle(c.home_resort_id)}">
+        <div class="contract-cost-name">${contractLabel(c)}</div>
+        <div class="contract-cost-missing">Add a purchase price and date on this contract to see its cost breakdown &mdash; <a href="account.html">edit contract</a></div>
+      </div>
+    `;
+  }
+  const buyIn = schedule.amortizedPurchasePerYear * schedule.totalYears;
+  const duesPct = schedule.totalCostToDate > 0 ? Math.round((schedule.totalDues / schedule.totalCostToDate) * 100) : 0;
+  const purchaseYear = parseInt(c.purchase_date.slice(0, 4), 10);
+  const avgPerYear = schedule.totalCostToDate / schedule.totalYears;
+
+  return `
+    <div class="contract-cost-card payback-info-anchor" style="${resortArtCardStyle(c.home_resort_id)}">
+      <div class="contract-cost-header">
+        <div class="contract-cost-name">${contractLabel(c)}</div>
+        <div class="contract-cost-owned-since">Owned since ${purchaseYear} &middot; ${schedule.totalYears} yr${schedule.totalYears === 1 ? "" : "s"}</div>
+      </div>
+
+      <div class="cost-card-tiles">
+        <div class="cost-card-tile">
+          <div class="cost-card-tile-value">${fmt(schedule.totalDues)}</div>
+          <div class="cost-card-tile-label">
+            Dues Paid to Date
+            <button type="button" class="payback-info-trigger" aria-label="Show dues by year" aria-expanded="false"><span class="payback-info-trigger-glyph">i</span></button>
+          </div>
+        </div>
+        <div class="cost-card-tile">
+          <div class="cost-card-tile-value">${fmt(buyIn)}</div>
+          <div class="cost-card-tile-label">Amortized Buy-In</div>
+        </div>
+        <div class="cost-card-tile net">
+          <div class="cost-card-tile-value">${fmt(schedule.totalCostToDate)}</div>
+          <div class="cost-card-tile-label">Total Spent</div>
+        </div>
+      </div>
+
+      <div class="ledger-bar cost-card-bar">
+        <div class="ledger-bar-seg cost-seg-dues" style="flex-grow:${schedule.totalDues}"></div>
+        <div class="ledger-bar-seg cost-seg-buyin" style="flex-grow:${buyIn}"></div>
+      </div>
+      <div class="cost-card-bar-legend">
+        <span><i class="cost-legend-dot cost-seg-dues"></i>Dues (${duesPct}%)</span>
+        <span><i class="cost-legend-dot cost-seg-buyin"></i>Buy-In (${100 - duesPct}%)</span>
+        <span class="cost-card-avg">~${fmt(avgPerYear)}/yr</span>
+      </div>
+
+      ${buildDuesBreakdownHTML(c, schedule)}
+    </div>
+  `;
+}
+
+// Per-year dues detail behind the "Dues Paid to Date" tile's (i) trigger --
+// a small table, not a circular chart: this is a chronological year-by-year
+// progression (each year has its own real published per-point rate, see
+// data/dues_historical.js), and a proportion-of-a-whole visual like a donut
+// doesn't represent "how a rate changed over time" -- a table is the honest
+// shape for this data. Reuses the same .payback-info-anchor/-trigger/
+// -breakdown-card/-close component the House Money hero popover uses (see
+// buildPaybackBreakdownHTML() and the document click handler at the bottom
+// of this file) -- same tap-to-toggle behavior, no separate wiring needed.
+// Capped table height (not width) for a long ownership history -- a narrow
+// 4-column table never needs horizontal scroll, but 15+ rows (e.g. Aulani
+// since 2011) would otherwise push the popover very tall.
+function buildDuesBreakdownHTML(c, schedule) {
+  const rowsHTML = schedule.rows.map(r => `
+    <tr>
+      <td>${r.year}</td>
+      <td>$${r.ratePerPoint.toFixed(2)}/pt</td>
+      <td>${c.points_per_year}</td>
+      <td>${fmt(r.dues)}</td>
+    </tr>
+  `).join("");
+  return `
+    <div class="payback-breakdown-card">
+      <div class="payback-breakdown-header">
+        <span>Dues by Year</span>
+        <button type="button" class="payback-breakdown-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="dues-breakdown-table-wrap">
+        <table class="dues-breakdown-table">
+          <thead><tr><th>Year</th><th>Rate</th><th>Pts</th><th>Total</th></tr></thead>
+          <tbody>${rowsHTML}</tbody>
+          <tfoot><tr><td colspan="3">Total</td><td>${fmt(schedule.totalDues)}</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="payback-breakdown-footnote">Real published per-point dues rate for each year owned &mdash; not today's rate applied retroactively.</div>
+    </div>
+  `;
 }
 
 function fmt(n) {
@@ -652,10 +1431,10 @@ function renderGate() {
   pageContent.innerHTML = `
     <div class="gate">
       <p>Sign in to see your trip history and what your DVC membership has actually delivered.</p>
-      <button type="button" class="big-signin-btn" id="gate-signin">Sign in with Google</button>
+      <div id="gate-signin-slot"></div>
     </div>
   `;
-  document.getElementById("gate-signin").addEventListener("click", () => window.DVCAuth.signInWithGoogle());
+  window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
 }
 
 function renderUnconfigured() {
@@ -668,83 +1447,939 @@ function tripCashValue(trip) {
   return est ? { cash: est.cash, isCustom: false, estimateYear: est.year, isDeflated: est.isDeflated } : null;
 }
 
+
+// "Look 2" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md) --
+// shared by trip postcards AND the Cost of Ownership cards below (both are
+// dark-on-light content cards, unlike the white-on-dark wallet card,
+// "Look 1"): fades the resort's art (data/resort_images.js) in behind a
+// plain white wash rather than a resort-hash color. 0.92, not 0.86 --
+// bumped after the postcard text was reported hard to read (the postcard's
+// own lighter grays, #888/#666, were already low-contrast on solid white,
+// so a busier photo underneath made it worse); this is the one shared
+// constant, not a trips.html-only tweak, so it's worth syncing to any
+// other page using the same recipe (compare.html, contractvalue.html,
+// home.js, and whichever session owns itineraries.html's copy) rather
+// than drifting again. Empty string (no-op) for a resort with no art yet.
+function resortArtCardStyle(resortId) {
+  const image = typeof getResortImage === "function" ? getResortImage(resortId) : null;
+  if (!image) return "";
+  return `background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), url('${image}'); background-size: cover; background-position: center;`;
+}
+
+// ---- House Money economics ----
+// Used only when a contract has no real purchase_price -- resort-specific
+// resale pricing (data/resort_investment.js, already loaded elsewhere in
+// the app) is far more accurate than one flat guess across all 17 resorts,
+// so that's tried first and a flat $140/pt is the last resort.
+const FALLBACK_PRICE_PER_POINT = 140;
+
+// Split out from the old single-total contractInitialCost() so the House
+// Money breakdown popover (buildGaugeHTML()) can show purchase price and
+// closing costs as their own line items, not just the combined figure --
+// contractInitialCost() below is now just this function's .total, kept as
+// its own name since most callers only ever wanted the one number.
+function contractInitialCostBreakdown(c) {
+  const closing = c.purchase_type === "resale" ? 1500 : 0;
+  const price = c.purchase_price != null
+    ? c.purchase_price
+    : (RESORT_INVESTMENT_DATA[c.home_resort_id]?.resalePricePerPoint || FALLBACK_PRICE_PER_POINT) * c.points_per_year;
+  return { price, closing, total: price + closing };
+}
+
+function contractInitialCost(c) {
+  return contractInitialCostBreakdown(c).total;
+}
+
+// First year dues actually started counting for this contract -- real
+// purchase_date if known, else a 3-year-owned fallback (matches the
+// points/dues estimate fallback the rest of the app already uses for
+// missing purchase info).
+function contractOwnershipStartYear(c) {
+  const currentYear = new Date().getFullYear();
+  return c.purchase_date ? parseInt(c.purchase_date.slice(0, 4), 10) : currentYear - 2;
+}
+
+function contractDuesPaidToDate(c) {
+  const currentYear = new Date().getFullYear();
+  const startYear = contractOwnershipStartYear(c);
+  let total = 0;
+  for (let y = startYear; y <= currentYear; y++) {
+    total += getDuesForYear(c.home_resort_id, y) * c.points_per_year;
+  }
+  return total;
+}
+
+// Baseline Potential Value: what a contract's points are roughly "worth"
+// per year at a cash-equivalent rate, net of that year's actual dues --
+// independent of whether the owner has logged any trips at all. $35/pt is
+// what a member would actually pay Disney in cash for the same room
+// (renting the points out only gets ~$20/pt, since a renter takes a cut) --
+// SAME default contractvalue.html's own Cash Ratio feature already uses
+// for "Vacation Value ($/pt/yr)", after a DVC-literate reviewer flagged
+// this file's old $19/pt as far too low and pointed out it was being
+// silently netted against dues into an even smaller number, which read as
+// "this app thinks a point is worth <$10" even though $19 was the real
+// gross assumption (2026-09-20). Used two ways in computeHouseMoneyStats():
+// alone, when no trips are logged yet, so a brand-new owner still gets a
+// real projected date instead of a blank "log a trip" prompt; blended with
+// actual trip pace otherwise, so one outlier travel year (a big trip,
+// possibly on borrowed points) can't alone swing the projection to look
+// unrealistically fast.
+// Was a flat $35/pt module constant (STANDARD_DELUXE_VALUE_PER_POINT) --
+// now the "Vacation Value Baseline" slider in the Model Assumptions panel
+// below, persisted per-user via userSettings.point_value_baseline. $35 is
+// still the DEFAULT (matches contractvalue.html's own Cash Ratio default),
+// every function below just takes it as a parameter now instead of closing
+// over the constant, so a slider change can recompute the whole model
+// without a page reload.
+//
+// Same for STANDARD_VALUE_GROWTH/STANDARD_DUES_GROWTH -> userSettings.
+// value_growth_rate/dues_growth_rate (5%/yr and 4%/yr defaults, unchanged).
+
+// getDuesForYear() (data/dues_historical.js) clamps to the latest YEAR
+// this app has real published dues for (2026 as of this fix) -- asking it
+// for 2030, 2040, etc. silently returns the SAME 2026 rate forever, which
+// is exactly why a multi-year House Money projection used to understate
+// how much dues eat into future value the further out it projected (a
+// DVC-literate reviewer's second finding alongside the $19/pt issue,
+// 2026-09-20). This compounds duesGrowthRate forward from the last real
+// known year instead, and is a pure passthrough (identical to
+// getDuesForYear()) for any year still inside the real data.
+function projectedDuesForYear(resortId, year, duesGrowthRate) {
+  const history = DUES_HISTORY[resortId];
+  const raw = getDuesForYear(resortId, year);
+  if (!history) return raw;
+  const lastKnownYear = Math.max(...Object.keys(history).map(Number));
+  if (year <= lastKnownYear) return raw;
+  return raw * Math.pow(1 + duesGrowthRate, year - lastKnownYear);
+}
+
+// GROSS value only (no dues subtracted) -- used by buildHouseMoneySeries()
+// below for its "value" line, since that chart already puts dues on its
+// OWN "cost" line explicitly. Using the NET version (below) there too
+// would subtract dues twice: once off the value line, again as an
+// explicit cost -- a real bug caught while building the chart (2026-09-20)
+// that quietly pushed the projected House Money date years later than it
+// should be. The two models are mathematically equivalent (gross value
+// vs. rising cost that includes future dues = net value vs. a fixed
+// today's-gap target) as long as each stays internally consistent -- mixing
+// them is what breaks it.
+function contractBaselineGrossValue(c, yearsFromNow, settings) {
+  return c.points_per_year * settings.point_value_baseline * Math.pow(1 + settings.value_growth_rate, yearsFromNow);
+}
+
+// NET of that year's dues -- used for the headline "Current Annual Pace"
+// figure and the gauge's own annualVelocity, where the model is "today's
+// fixed gap, closed by a pace that already has dues subtracted out."
+function contractBaselinePotentialValue(c, year, yearsFromNow, settings) {
+  const grossValue = contractBaselineGrossValue(c, yearsFromNow, settings);
+  const dues = c.points_per_year * projectedDuesForYear(c.home_resort_id, year, settings.dues_growth_rate);
+  return Math.max(0, grossValue - dues);
+}
+
+// The hero gauge's totals always resolve to a number (via the fallbacks
+// above) even for contracts with no purchase price/date entered, unlike
+// the detailed Cost of Ownership table below, which intentionally prompts
+// the user to fill those in instead of guessing.
+//
+// No resale-equity tricks: the initial purchase price is treated as a sunk
+// vacation investment (contractInitialCost() never nets out what the
+// contract could resell for), and this only ever measures whether trip
+// value delivered has paid that -- and dues -- back through pure travel
+// utility.
+//
+// Year-by-year cumulative series behind BOTH the estimated House Money
+// date AND the "Cost vs. Value Over Time" chart (buildHouseMoneyChartHTML()
+// below) -- built once here, consumed by both, so the chart and the
+// gauge/date can never silently disagree the way two independent
+// calculations eventually would. Historical years (<= currentYear) use
+// REAL numbers only: actual published dues rates (getDuesForYear) and
+// actual logged trip value grouped by check-out year -- a past year with
+// no logged trip contributes $0 to the value line rather than a
+// fabricated estimate. Future years use the same projected-growth
+// assumptions as contractBaselinePotentialValue()/projectedDuesForYear()
+// above, blended with actualPace exactly like the headline pace figure
+// when real trip history exists. Stops a few years past the crossover
+// (or after MAX_YEARS if it never crosses) rather than running the full
+// 60-year guardrail every time, so the chart's x-axis stays a sane width.
+// altFund/altFundDepletionYear model the "Opportunity Cost Simulation"
+// (Model Assumptions panel): if this member had instead invested each
+// contract's buy-in at settings.opportunity_cost_rate and paid cash every
+// year for that SAME point allotment (at settings.point_value_baseline,
+// growing at settings.value_growth_rate), altFund tracks that alternative
+// fund's year-by-year balance -- compound growth, then that year's net
+// vacation cost deducted (gross room value minus the dues this member
+// would NOT have paid without owning). Deliberately decoupled from
+// tripValueByYear/actualPace (the Value Extracted line's own inputs,
+// below) -- a real member's logged trip history is sparse or back-filled
+// unevenly, and using it here would make the withdrawal understate a real
+// vacation's cost in any year with no (or a partial) logged trip, which
+// artificially inflates how long the fund appears to last. This is a pure
+// "what would the full point allotment have cost in cash" capacity model,
+// not a reflection of what the member actually booked. Computed
+// unconditionally (cheap, and a rate of 0% is still a coherent "same
+// cash, just spent as needed" baseline) -- callers decide whether
+// opportunity_cost_rate > 0 makes it worth showing. Clamped at 0 rather
+// than going negative once depleted -- the fund is gone, not in debt --
+// and altFundDepletionYear records the first year that happened.
+function buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, currentYear, settings) {
+  if (contracts.length === 0) return null;
+  const activeContracts = contracts.filter(c => c.is_active);
+  const startYear = contracts.reduce((min, c) => Math.min(min, contractOwnershipStartYear(c)), currentYear);
+
+  const tripValueByYear = {};
+  for (const t of trips) {
+    const v = tripCashValue(t);
+    if (!v || !Number.isFinite(v.cash)) continue;
+    const y = parseInt(t.check_out.slice(0, 4), 10);
+    tripValueByYear[y] = (tripValueByYear[y] || 0) + v.cash;
+  }
+
+  const years = [], outlay = [], value = [], altFund = [];
+  let cumOutlay = 0, cumValue = 0, crossoverYear = null;
+  let fund = 0, altFundDepletionYear = null;
+  const MAX_YEARS = 60;
+
+  for (let y = startYear; y < startYear + MAX_YEARS; y++) {
+    let duesThisYear = 0;
+    let pointsThisYear = 0;
+    for (const c of contracts) {
+      if (contractOwnershipStartYear(c) === y) {
+        const initialCost = contractInitialCostBreakdown(c).total;
+        cumOutlay += initialCost;
+        fund += initialCost;
+      }
+    }
+    for (const c of contracts) {
+      const ownedThisYear = contractOwnershipStartYear(c) <= y && (c.is_active || y <= currentYear);
+      if (!ownedThisYear) continue;
+      const rate = y <= currentYear ? getDuesForYear(c.home_resort_id, y) : projectedDuesForYear(c.home_resort_id, y, settings.dues_growth_rate);
+      const dues = c.points_per_year * rate;
+      cumOutlay += dues;
+      duesThisYear += dues;
+      // Same ownedThisYear set as the dues loop right above -- the "point
+      // allotment" a year's alternative-fund withdrawal is sized to should
+      // be exactly the points that were (or, for a future year, still are
+      // actively) generating the dues just added, not a separately-scoped
+      // count.
+      pointsThisYear += c.points_per_year;
+    }
+
+    let valueThisYear;
+    if (y <= currentYear) {
+      valueThisYear = tripValueByYear[y] || 0;
+    } else {
+      // GROSS value here (contractBaselineGrossValue, not
+      // contractBaselinePotentialValue) -- dues are already on the cumOutlay
+      // side above; using the NET (dues-subtracted) version here too would
+      // double-subtract them. See contractBaselineGrossValue()'s own comment.
+      const yearsFromNow = y - currentYear;
+      const yearBaseline = activeContracts.reduce((sum, c) => sum + contractBaselineGrossValue(c, yearsFromNow, settings), 0);
+      valueThisYear = tripsWithValue === 0 ? yearBaseline : (actualPace + yearBaseline) / 2;
+    }
+    cumValue += valueThisYear;
+
+    // Alternative fund withdrawal: a pure point-capacity "what-if," NOT
+    // valueThisYear above (see the function comment for why real/blended
+    // trip value would understate this). Every year withdraws what the
+    // FULL point allotment would have cost in cash at this year's grown
+    // rate, net of the dues avoided by not owning -- compound first, then
+    // withdraw.
+    const yearsFromStart = y - startYear;
+    const grossRoomCost = pointsThisYear * settings.point_value_baseline * Math.pow(1 + settings.value_growth_rate, yearsFromStart);
+    const netVacationWithdrawal = Math.max(0, grossRoomCost - duesThisYear);
+    if (fund > 0) fund *= 1 + settings.opportunity_cost_rate;
+    fund -= netVacationWithdrawal;
+    if (fund <= 0) {
+      if (altFundDepletionYear == null && netVacationWithdrawal > 0) altFundDepletionYear = y;
+      fund = 0;
+    }
+
+    years.push(y);
+    outlay.push(cumOutlay);
+    value.push(cumValue);
+    altFund.push(fund);
+
+    if (crossoverYear == null && cumValue >= cumOutlay) crossoverYear = y;
+    if (crossoverYear != null && y >= crossoverYear + 3) break;
+    if (crossoverYear == null && y >= currentYear + 30) break;
+  }
+
+  return { years, outlay, value, altFund, crossoverYear, altFundDepletionYear, currentYear };
+}
+
+function computeHouseMoneyStats(contracts, trips, settings) {
+  const currentYear = new Date().getFullYear();
+  let totalPurchasePrice = 0;
+  let totalClosingCosts = 0;
+  let totalDuesPaid = 0;
+  let earliestStartYear = currentYear;
+  for (const c of contracts) {
+    const breakdown = contractInitialCostBreakdown(c);
+    totalPurchasePrice += breakdown.price;
+    totalClosingCosts += breakdown.closing;
+    totalDuesPaid += contractDuesPaidToDate(c);
+    earliestStartYear = Math.min(earliestStartYear, contractOwnershipStartYear(c));
+  }
+  const totalInitialCost = totalPurchasePrice + totalClosingCosts;
+  const totalOutlay = totalInitialCost + totalDuesPaid;
+
+  // Number.isFinite guard: tripCashValue()'s estimate path can only ever
+  // fail closed (returns null on missing data), but this keeps one bad
+  // trip from silently poisoning the whole lifetime sum into NaN, which
+  // would otherwise propagate into every stat below it without ever
+  // throwing an error to notice by.
+  let lifetimeValue = 0;
+  let tripsWithValue = 0;
+  for (const t of trips) {
+    const v = tripCashValue(t);
+    if (v && Number.isFinite(v.cash)) {
+      lifetimeValue += v.cash;
+      tripsWithValue++;
+    }
+  }
+
+  const yearsOwned = contracts.length ? Math.max(1, currentYear - earliestStartYear + 1) : 1;
+  const paybackPct = totalOutlay > 0 ? Math.min(100, Math.round((lifetimeValue / totalOutlay) * 100)) : 0;
+  const remaining = Math.max(0, totalOutlay - lifetimeValue);
+
+  // Actual pace from logged trips: the long-run average (lifetime value /
+  // years owned) badly understates pace for anyone who has logged only one
+  // or two trips against several years of ownership -- it silently assumes
+  // every one of those years delivered ~$0, when in reality it usually
+  // just means the owner hasn't gotten around to logging older trips yet.
+  // Flooring it at the average value PER LOGGED TRIP (i.e. "if you keep
+  // taking trips like the ones you've told us about, about once a year")
+  // fixes that without ever making a newer/sparser history look
+  // artificially fast either -- it's a floor, not a replacement, so a
+  // genuinely long, consistent trip history still uses its own real
+  // average.
+  const actualPace = tripsWithValue > 0
+    ? Math.max(lifetimeValue / yearsOwned, lifetimeValue / tripsWithValue)
+    : 0;
+
+  // Blended velocity: actual pace alone has two failure modes -- zero
+  // trips logged (no pace to compute at all) and a single heavy outlier
+  // year (e.g. a big stay on borrowed points) skewing the projection
+  // unrealistically fast. Baseline Potential Value (contractBaselinePotentialValue()
+  // above) fixes both: with no trip history it stands in entirely, and
+  // once real history exists it's blended 50/50 with actual pace so no
+  // single year can swing the timeline on its own. Only ACTIVE contracts
+  // contribute -- a deactivated contract isn't generating future travel
+  // value regardless of what it cost historically (unlike totalOutlay
+  // above, which counts every contract ever owned).
+  const baselinePotential = contracts
+    .filter(c => c.is_active)
+    .reduce((sum, c) => sum + contractBaselinePotentialValue(c, currentYear, 0, settings), 0);
+
+  let annualVelocity, velocitySource;
+  if (tripsWithValue === 0) {
+    annualVelocity = baselinePotential;
+    velocitySource = baselinePotential > 0 ? "baseline" : "none";
+  } else {
+    annualVelocity = (actualPace + baselinePotential) / 2;
+    velocitySource = baselinePotential > 0 ? "blended" : "trips";
+  }
+
+  // Guardrail: truly nothing to project a pace from (no active contracts'
+  // potential AND no trip history) leaves this null rather than let a
+  // near-zero denominator produce a multi-decade "estimate" that reads as
+  // broken instead of motivating. The UI shows an onboarding prompt in
+  // this case (see buildGaugeHTML()) -- otherwise, even a brand-new owner
+  // with zero logged trips now gets a real projected date from
+  // baselinePotential alone.
+  //
+  // Derived from buildHouseMoneySeries() (above) rather than its own flat
+  // remaining/annualVelocity division (the old approach, which implicitly
+  // assumed THIS year's net pace holds constant forever) -- see that
+  // function's own comment for why the year-by-year simulation matters.
+  const series = buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, currentYear, settings);
+  let estimatedHouseMoneyDate = null;
+  if (paybackPct < 100 && annualVelocity > 0 && series && series.crossoverYear != null) {
+    const idx = series.years.indexOf(series.crossoverYear);
+    const prevOutlay = idx > 0 ? series.outlay[idx - 1] : 0;
+    const prevValue = idx > 0 ? series.value[idx - 1] : 0;
+    const remainingAtStart = Math.max(0, prevOutlay - prevValue);
+    const yearGain = series.value[idx] - prevValue;
+    // Interpolate within the crossover year (assumes that year's gain
+    // lands evenly across its 12 months) rather than rounding up to a
+    // whole extra year.
+    const monthsIntoYear = yearGain > 0 ? Math.min(12, Math.ceil((remainingAtStart / yearGain) * 12)) : 12;
+    const totalMonths = (series.crossoverYear - currentYear - 1) * 12 + monthsIntoYear;
+    estimatedHouseMoneyDate = new Date();
+    estimatedHouseMoneyDate.setDate(1); // avoid month-length rollover surprises (e.g. Jan 31 + 1mo)
+    estimatedHouseMoneyDate.setMonth(estimatedHouseMoneyDate.getMonth() + totalMonths);
+  }
+
+  return {
+    totalPurchasePrice, totalClosingCosts, totalInitialCost, totalDuesPaid, totalOutlay, lifetimeValue,
+    paybackPct, remaining, yearsOwned, actualPace, baselinePotential, annualVelocity, velocitySource,
+    estimatedHouseMoneyDate, series, settings,
+    tripsLogged: trips.length,
+    netFreeVacations: lifetimeValue - totalOutlay,
+  };
+}
+
+function computeLast12MonthSavings(trips) {
+  const now = Date.now();
+  const cutoff = now - 365 * 86400000;
+  let sum = 0;
+  for (const t of trips) {
+    const checkOutMs = new Date(t.check_out + "T12:00:00").getTime();
+    if (checkOutMs <= now && checkOutMs >= cutoff) {
+      const v = tripCashValue(t);
+      if (v && Number.isFinite(v.cash)) sum += v.cash;
+    }
+  }
+  return sum;
+}
+
+// DVC Point Efficiency: this app's schema only tracks a contract's
+// CURRENT and upcoming use-year balances (contract_year_points), not a
+// closed-out history of what happened to points in years already past --
+// so "% expired/forfeited" genuinely can't be computed here. This measures
+// the closest honestly-available proxy instead: how much of a member's
+// total allotted points (across every year owned) have been logged as
+// actually used on a trip.
+// computePointEfficiency moved to dvc-badges.js (window.DVCBadges) --
+// it's now banking-aware (credits contract_year_points' banked/remaining
+// balances, not just logged trips), and badges.html needs the exact same
+// formula, so it's shared instead of duplicated a 3rd time.
+
+// isGrandVillaTrip/evaluateTieredBadge/evaluateSpecialBadge/CATEGORY_KEYWORDS/
+// getRoomTypesForCategory/medianCashPerPoint/computeDuesEfficientResorts/
+// ODYSSEY_GROUPS/describeOdysseyNextStep/evaluateOdysseyBadge/STICKY_BADGE_IDS/
+// applyBadgePersistence/evaluateUserBadges all moved to dvc-badges.js
+// (window.DVCBadges) so badges.html can share the exact same logic.
+
+// Labels + explanations for each velocity source (computeHouseMoneyStats())
+// -- the whole point of naming this "Current Annual Pace" (not "Projected
+// Annual Pace", renamed 2026-09-20 once the projection stopped being a
+// flat multiple of this number -- see the year-by-year simulation in
+// computeHouseMoneyStats()) is to make clear it's THIS year's pace, not a
+// promise every future year matches it. The parenthetical says WHICH
+// inputs produced it, so a power-user's one huge outlier trip or a new
+// owner's total lack of trip history both have a visible, honest
+// explanation instead of a mystery number.
+const VELOCITY_SOURCE_LABEL = {
+  trips: "from your trip history",
+  blended: "blended: trip history + contract potential",
+  baseline: "estimated from contract potential -- no trips logged yet",
+  none: "",
+};
+
+// The breakdown popover behind the (i) trigger next to the estimated date --
+// shows every component of the math in the order it's actually computed
+// (Purchase Price + Closing -> Initial Investment; + Dues -> Total Spent So Far;
+// separately, Lifetime Value / pace -> Current Annual Pace), so "why does
+// it say March 2036" has a literal, checkable answer instead of asking for
+// trust.
+function buildPaybackBreakdownHTML(stats, dateLabel) {
+  const sourceNote = VELOCITY_SOURCE_LABEL[stats.velocitySource];
+  return `
+    <div class="payback-breakdown-card" role="dialog" aria-label="How your House Money estimate is calculated">
+      <div class="payback-breakdown-header">
+        <span>How this is calculated</span>
+        <button type="button" class="payback-breakdown-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="payback-breakdown-row">
+        <span>Contract Purchase Price(s)</span><span>${fmt(stats.totalPurchasePrice)}</span>
+      </div>
+      <div class="payback-breakdown-row sub">
+        <span>+ Est. Closing Costs</span><span>${fmt(stats.totalClosingCosts)}</span>
+      </div>
+      <div class="payback-breakdown-row total">
+        <span>= Total Initial Investment</span><span>${fmt(stats.totalInitialCost)}</span>
+      </div>
+      <div class="payback-breakdown-row">
+        <span>+ Cumulative Dues Paid to Date</span><span>${fmt(stats.totalDuesPaid)}</span>
+      </div>
+      <div class="payback-breakdown-row total">
+        <span>= Total Spent So Far</span><span>${fmt(stats.totalOutlay)}</span>
+      </div>
+      <div class="payback-breakdown-divider"></div>
+      <div class="payback-breakdown-row">
+        <span>Lifetime Value Extracted</span><span>${fmt(stats.lifetimeValue)}</span>
+      </div>
+      <div class="payback-breakdown-row">
+        <span>Current Annual Pace</span><span>${stats.annualVelocity > 0 ? fmt(stats.annualVelocity) + "/yr" : "&mdash;"}</span>
+      </div>
+      ${sourceNote ? `<div class="payback-breakdown-row sub"><span>${sourceNote}</span><span></span></div>` : ""}
+      <div class="payback-breakdown-footnote">
+        ${dateLabel
+          ? `${fmt(stats.totalOutlay)} spent &minus; ${fmt(stats.lifetimeValue)} extracted = ${fmt(stats.remaining)} remaining &mdash; projected forward year by year at ${(stats.settings.value_growth_rate * 100).toFixed(1)}%/yr vacation-value growth vs. ${(stats.settings.dues_growth_rate * 100).toFixed(1)}%/yr dues growth (not a flat pace) &rarr; <strong>${dateLabel}</strong>`
+          : `Add an active contract or log a past trip to start projecting a House Money date.`}
+      </div>
+    </div>
+  `;
+}
+
+// Just the container shell -- renderHouseMoneyChart() below fills it in
+// AFTER pageContent.innerHTML is assigned (same two-step split as
+// changes.html's chartEl/renderChart(), needed because the hover-zone
+// listeners have to attach to real DOM nodes, not a string).
+function buildHouseMoneyChartHTML(stats) {
+  if (!stats.series || stats.series.years.length < 2) return "";
+  // Alt Fund line only shown once the Opportunity Cost Rate slider is
+  // actually above 0% -- at 0% the simulated fund is just "cash spent as
+  // needed, no growth," which isn't a comparison worth a 3rd line on every
+  // owner's chart by default.
+  const showAltFund = stats.settings.opportunity_cost_rate > 0;
+  return `
+    <div class="chart-card">
+      <div class="chart-legend">
+        <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#1565c0"></span>Total Spent</span>
+        <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#2e7d32"></span>Value Extracted</span>
+        ${showAltFund ? `<span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#ef6c00"></span>Alt. Fund</span>` : ""}
+      </div>
+      <div id="house-money-chart"></div>
+      <div class="chart-tooltip" id="house-money-chart-tooltip"></div>
+      ${showAltFund && stats.series.altFundDepletionYear != null
+        ? `<div class="alt-fund-note">If invested instead at ${(stats.settings.opportunity_cost_rate * 100).toFixed(1)}%/yr and spent on equivalent vacations, your alternative cash fund would run out around <strong>${stats.series.altFundDepletionYear}</strong>.</div>`
+        : ""}
+      ${showAltFund && stats.series.altFundDepletionYear == null
+        ? `<div class="alt-fund-note">At a ${(stats.settings.opportunity_cost_rate * 100).toFixed(1)}% annual return, your initial capital growth outpaces annual room savings, leaving an estimated <strong>${fmt(stats.series.altFund[stats.series.altFund.length - 1])}</strong> balance at the end of the projection.</div>`
+        : ""}
+    </div>
+  `;
+}
+
+// Renders the actual SVG into #house-money-chart and wires its hover
+// tooltip -- same hand-rolled approach as changes.html's renderChart()
+// (nice-number Y axis, one invisible hover rect per year-column, an HTML
+// tooltip positioned relative to the .chart-card). stats.series (from
+// computeHouseMoneyStats()) is the single source of truth for both lines,
+// so this chart and the gauge/date estimate above it can never disagree.
+function renderHouseMoneyChart(stats) {
+  const chartEl = document.getElementById("house-money-chart");
+  if (!chartEl) return; // no series -- buildHouseMoneyChartHTML() rendered nothing
+  const tooltipEl = document.getElementById("house-money-chart-tooltip");
+  const { years, outlay, value, altFund, crossoverYear } = stats.series;
+  const showAltFund = stats.settings.opportunity_cost_rate > 0;
+
+  const allValues = showAltFund ? [...outlay, ...value, ...altFund] : [...outlay, ...value];
+  const minVal = Math.min(0, ...allValues);
+  const maxVal = Math.max(...allValues);
+  const range = maxVal - minVal || 10;
+  const rawStep = range / 6;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const nice = [1, 2, 5, 10].map(n => n * mag);
+  const step = nice.find(n => n >= rawStep) || nice[nice.length - 1];
+  const yMin = 0; // never negative -- both lines are cumulative spend/value
+  const yMax = Math.ceil((maxVal + range * 0.1) / step) * step;
+
+  const W = 600, H = 280;
+  // T = 32, not 20 -- the crossover marker's "House Money" label sits at
+  // T - 6 (real-world testing on a phone showed it clipping into the SVG's
+  // own top edge/the top Y-axis gridline at the old, tighter value).
+  const L = 60, R = 580, T = 32, B = 230;
+  const cW = R - L, cH = B - T;
+
+  const xPos = (yr) => years.length === 1 ? L + cW / 2 : L + (years.indexOf(yr) / (years.length - 1)) * cW;
+  const yPos = (v) => B - ((v - yMin) / (yMax - yMin)) * cH;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="house-money-chart">`;
+
+  for (let v = yMin; v <= yMax; v += step) {
+    const yy = yPos(v);
+    svg += `<line x1="${L}" y1="${yy}" x2="${R}" y2="${yy}" stroke="#eee" stroke-width="1"/>`;
+    svg += `<text x="${L - 8}" y="${yy + 4}" text-anchor="end" font-size="10" fill="#999">${fmt(v)}</text>`;
+  }
+
+  svg += `<line x1="${L}" y1="${B}" x2="${R}" y2="${B}" stroke="#ccc" stroke-width="1"/>`;
+
+  // Only every OTHER year labeled once the axis gets crowded (matches
+  // changes.html's own tick-crowding fallback), since this chart's horizon
+  // can run 15-20+ years, unlike that page's fixed handful.
+  const labelEvery = years.length > 12 ? 2 : 1;
+  years.forEach((yr, i) => {
+    const x = xPos(yr);
+    svg += `<line x1="${x}" y1="${B}" x2="${x}" y2="${B + 4}" stroke="#ccc" stroke-width="1"/>`;
+    if (i % labelEvery === 0) {
+      svg += `<text x="${x}" y="${B + 16}" text-anchor="middle" font-size="10" font-weight="600" fill="#666">${yr}</text>`;
+    }
+  });
+
+  // Crossover marker -- the same "House Money" date the gauge/breakdown
+  // popover above already show, drawn where the lines actually meet
+  // instead of just stated as text.
+  if (crossoverYear != null && years.includes(crossoverYear)) {
+    const cx = xPos(crossoverYear);
+    svg += `<line x1="${cx}" y1="${T}" x2="${cx}" y2="${B}" stroke="var(--color-primary)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>`;
+    svg += `<text x="${cx}" y="${T - 6}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--color-primary)">House Money</text>`;
+  }
+
+  const drawLine = (series, color, dashed) => {
+    const pts = years.map((yr, i) => `${xPos(yr)},${yPos(series[i])}`);
+    svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${dashed ? ' stroke-dasharray="5,4"' : ""}/>`;
+    years.forEach((yr, i) => {
+      svg += `<circle cx="${xPos(yr)}" cy="${yPos(series[i])}" r="3.5" fill="${color}" stroke="white" stroke-width="1.5"/>`;
+    });
+  };
+  drawLine(outlay, "#1565c0");
+  drawLine(value, "#2e7d32");
+  // Dashed, not solid -- this line is a simulated "what if" comparison,
+  // not a real financial line the other two are (actual spend, actual +
+  // projected trip value) -- the dash reads as "hypothetical" at a glance.
+  if (showAltFund) drawLine(altFund, "#ef6c00", true);
+
+  // Invisible year-column hover zones, on top of everything else.
+  const colW = years.length === 1 ? cW : cW / (years.length - 1);
+  years.forEach((yr) => {
+    const x = xPos(yr);
+    const x1 = Math.max(L - 10, x - colW / 2);
+    const x2 = Math.min(R + 10, x + colW / 2);
+    svg += `<rect x="${x1}" y="${T}" width="${x2 - x1}" height="${cH}" fill="transparent" class="year-hover" data-year="${yr}"/>`;
+  });
+
+  svg += `</svg>`;
+  chartEl.innerHTML = svg;
+
+  const chartCard = chartEl.closest(".chart-card");
+
+  function showTooltip(yearStr, mouseX, mouseY) {
+    const yr = parseInt(yearStr);
+    const i = years.indexOf(yr);
+    const isCrossoverYear = yr === crossoverYear;
+    tooltipEl.innerHTML = `
+      <div class="tt-year">${yr}${isCrossoverYear ? " &middot; House Money!" : ""}</div>
+      <div class="tt-row"><span class="tt-dot" style="background:#1565c0"></span><span class="tt-name">Total Spent</span><span class="tt-value">${fmt(outlay[i])}</span></div>
+      <div class="tt-row"><span class="tt-dot" style="background:#2e7d32"></span><span class="tt-name">Value Extracted</span><span class="tt-value">${fmt(value[i])}</span></div>
+      ${showAltFund ? `<div class="tt-row"><span class="tt-dot" style="background:#ef6c00"></span><span class="tt-name">Alt. Vacation Fund</span><span class="tt-value">${fmt(altFund[i])}</span></div>` : ""}
+    `;
+    tooltipEl.classList.add("visible");
+    const cardRect = chartCard.getBoundingClientRect();
+    let left = mouseX - cardRect.left + 12;
+    let top = mouseY - cardRect.top - 10;
+    const ttW = tooltipEl.offsetWidth;
+    if (left + ttW > cardRect.width - 8) left = left - ttW - 24;
+    if (top < 4) top = 4;
+    tooltipEl.style.left = left + "px";
+    tooltipEl.style.top = top + "px";
+  }
+
+  chartEl.querySelectorAll(".year-hover").forEach(el => {
+    el.addEventListener("mouseenter", (e) => showTooltip(el.dataset.year, e.clientX, e.clientY));
+    el.addEventListener("mousemove", (e) => showTooltip(el.dataset.year, e.clientX, e.clientY));
+    el.addEventListener("mouseleave", () => tooltipEl.classList.remove("visible"));
+  });
+}
+
+function buildGaugeHTML(stats) {
+  const r = 52;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - stats.paybackPct / 100);
+  const achieved = stats.paybackPct >= 100;
+  // A real Date now (not a bare year defaulting to January regardless of
+  // the actual projected month) -- see computeHouseMoneyStats().
+  const dateLabel = stats.estimatedHouseMoneyDate
+    ? stats.estimatedHouseMoneyDate.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+    : null;
+  // Nothing to project a pace from at all -- no active contracts'
+  // potential AND no trip history. A brand-new owner with zero trips still
+  // gets a real date now (baselinePotential), so this is narrower than the
+  // old "no trips yet" check.
+  const nothingToProjectFrom = stats.velocitySource === "none" && !dateLabel;
+  // Shown whenever there's actual outlay math to explain -- including the
+  // "nothing to project from" and "achieved" states, since
+  // Purchase+Closing+Dues is still real and checkable even before/after a
+  // projected date exists.
+  const showBreakdown = stats.totalOutlay > 0;
+  const breakdownTrigger = showBreakdown
+    ? `<button type="button" class="payback-info-trigger" aria-label="How is this calculated?" aria-expanded="false"><span class="payback-info-trigger-glyph">i</span></button>`
+    : "";
+
+  return `
+    <div class="house-money-card${achieved ? " achieved" : ""}">
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 120 120" class="house-money-gauge">
+          <circle class="gauge-track" cx="60" cy="60" r="${r}"></circle>
+          <circle class="gauge-arc" cx="60" cy="60" r="${r}" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
+        </svg>
+        <div class="gauge-center">
+          ${achieved
+            ? `<div class="gauge-badge">🎉 Living on<br>House Money!</div>`
+            : `<div class="gauge-pct">${stats.paybackPct}%</div><div class="gauge-pct-label">PAID OFF</div>`}
+        </div>
+      </div>
+      <div class="house-money-subtitle payback-info-anchor">
+        ${achieved
+          ? `<strong>+${fmt(stats.netFreeVacations)}</strong> in free vacations so far`
+          : nothingToProjectFrom
+            ? `Add a contract or log your first past trip to calculate your House Money timeline!`
+            : (dateLabel
+                ? `Estimated House Money: <strong>${dateLabel}</strong> &middot; ${fmt(stats.remaining)} remaining`
+                : `${fmt(stats.remaining)} remaining to reach House Money`)}
+        ${breakdownTrigger}
+        ${showBreakdown ? buildPaybackBreakdownHTML(stats, dateLabel) : ""}
+      </div>
+    </div>
+  `;
+}
+
+function buildStatTilesHTML(stats, pointEfficiency) {
+  const duesMultiplier = stats.lifetimeValue / Math.max(1, stats.totalDuesPaid);
+  const last12mo = computeLast12MonthSavings(trips);
+  return `
+    <div class="dopamine-tiles">
+      <div class="dopamine-tile">
+        <div class="dopamine-tile-value">$${duesMultiplier.toFixed(2)} <span class="dopamine-tile-unit">/ $1</span></div>
+        <div class="dopamine-tile-label">Deluxe room value extracted for every $1.00 paid in dues</div>
+      </div>
+      <div class="dopamine-tile">
+        <div class="dopamine-tile-value">${fmt(last12mo)}</div>
+        <div class="dopamine-tile-label">Extracted in the past 12 months</div>
+      </div>
+      <div class="dopamine-tile">
+        <div class="dopamine-tile-value">${pointEfficiency != null ? pointEfficiency + "%" : "&mdash;"}</div>
+        <div class="dopamine-tile-label">${pointEfficiency != null ? "of allotted points logged as used on a trip" : "Add a contract to track this"}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ---- Exit Equity ("Net Resale Liquidation") ----
+// A second, more conservative "has this membership paid for itself" read
+// than the House Money gauge above: House Money only ever measures trip
+// value against cash spent (purchase + dues), and never credits the owner
+// for what the contracts themselves could still be resold for. This nets
+// that resale value in instead -- "if I sold today, have my past trips
+// already covered what ownership actually cost me?" Only ACTIVE contracts
+// count toward current asset value (a contract already sold isn't
+// resellable a second time), same scoping as baselinePotential above.
+// Same resalePricePerPoint/$140 fallback contractInitialCostBreakdown()
+// already uses, so a contract's buy-in estimate and its current resale
+// estimate come from the same pricing table.
+function computeExitEquity(contracts, stats) {
+  const activeContracts = contracts.filter(c => c.is_active);
+  const totalPoints = activeContracts.reduce((sum, c) => sum + c.points_per_year, 0);
+  const currentAssetValueNet = activeContracts.reduce((sum, c) => {
+    const rate = RESORT_INVESTMENT_DATA[c.home_resort_id]?.resalePricePerPoint || FALLBACK_PRICE_PER_POINT;
+    return sum + c.points_per_year * rate;
+  }, 0) * 0.90; // net of a typical ~10% resale broker commission
+  const netVacationOutlay = stats.totalOutlay - currentAssetValueNet;
+  const achieved = stats.lifetimeValue >= netVacationOutlay;
+  const remaining = Math.max(0, netVacationOutlay - stats.lifetimeValue);
+  return { currentAssetValueNet, netVacationOutlay, achieved, remaining, contractCount: activeContracts.length, totalPoints };
+}
+
+function buildExitEquityHTML(equity) {
+  return `
+    <div class="exit-equity-card${equity.achieved ? " achieved" : ""}">
+      <div class="exit-equity-context">
+        What your membership is worth today across your ${equity.contractCount} active contract${equity.contractCount === 1 ? "" : "s"} (${equity.totalPoints.toLocaleString()} total points), net of ~10% broker fees.
+      </div>
+      <div class="exit-equity-tiles">
+        <div class="exit-equity-tile">
+          <div class="exit-equity-tile-value">${fmt(equity.currentAssetValueNet)}</div>
+          <div class="exit-equity-tile-label">Current Net Resale Value <span class="exit-equity-tile-note">(after ~10% broker fee)</span></div>
+        </div>
+        <div class="exit-equity-tile">
+          <div class="exit-equity-tile-value">${fmt(Math.max(0, equity.netVacationOutlay))}</div>
+          <div class="exit-equity-tile-label">Net Vacation Outlay to Date <span class="exit-equity-tile-note">(spent, minus current resale value)</span></div>
+        </div>
+      </div>
+      ${equity.achieved
+        ? `<div class="exit-equity-status achieved">🎉 Exit House Money Achieved!<div class="exit-equity-status-sub">If you sold your contracts today, your past trips have already fully covered your net depreciation and dues.</div></div>`
+        : `<div class="exit-equity-status">${fmt(equity.remaining)} in vacation value remaining until Exit House Money</div>`}
+    </div>
+  `;
+}
+
+// ---- Model Assumptions & Sensitivity ----
+// Chip-driven presets for the two sliders the spec calls for tap targets
+// on (Vacation Value Baseline, Opportunity Cost Rate) -- the other two
+// (Dues/Hotel Inflation) are slider-only, same as contractvalue.html's own
+// Dues Growth/Vacation Value Growth advanced inputs.
+const POINT_VALUE_PRESETS = [
+  { label: "Deluxe Rack ($35)", value: 35 },
+  { label: "AP / Promo ($26)", value: 26 },
+  { label: "Point Rental ($21)", value: 21 },
+];
+const OPPORTUNITY_COST_PRESETS = [
+  { label: "0% (None)", value: 0 },
+  { label: "4% (Conservative/HYSA)", value: 0.04 },
+  { label: "7% (S&P 500)", value: 0.07 },
+];
+
+// Keyed by field name so both the initial render (assumptionSliderRow) and
+// live updates (handleAssumptionChange, which has no server-shaped object
+// to re-derive a label from) format the same field's readout identically.
+const ASSUMPTION_FORMATTERS = {
+  point_value_baseline: v => "$" + v.toFixed(0) + "/pt",
+  dues_growth_rate: v => (v * 100).toFixed(1) + "%/yr",
+  value_growth_rate: v => (v * 100).toFixed(1) + "%/yr",
+  opportunity_cost_rate: v => (v * 100).toFixed(1) + "%/yr",
+};
+
+function assumptionSliderRow(field, label, value, min, max, step, presets) {
+  const format = ASSUMPTION_FORMATTERS[field];
+  const chipsHTML = presets ? `
+    <div class="assumption-chips">
+      ${presets.map(p => `<button type="button" class="assumption-chip${Math.abs(p.value - value) < 1e-9 ? " active" : ""}" data-field="${field}" data-value="${p.value}">${p.label}</button>`).join("")}
+    </div>
+  ` : "";
+  return `
+    <div class="assumption-row">
+      <div class="assumption-label-row">
+        <label for="a-${field}">${label}</label>
+        <span class="assumption-value" id="a-${field}-out">${format(value)}</span>
+      </div>
+      ${chipsHTML}
+      <input type="range" id="a-${field}" class="assumption-slider" data-field="${field}" min="${min}" max="${max}" step="${step}" value="${value}">
+    </div>
+  `;
+}
+
+function buildAssumptionsPanelHTML(settings) {
+  return `
+    <div class="section assumptions-section">
+      <button type="button" class="assumptions-toggle" id="assumptions-toggle" aria-expanded="${assumptionsOpen}">
+        &#9881; ${assumptionsOpen ? "Hide" : "Adjust"} Model Assumptions &amp; Sensitivity ${assumptionsOpen ? "&#9652;" : "&#9662;"}
+      </button>
+      <div class="assumptions-panel${assumptionsOpen ? " open" : ""}" id="assumptions-panel">
+        ${assumptionSliderRow("point_value_baseline", "Vacation Value Baseline ($/point)", settings.point_value_baseline, 15, 50, 1, POINT_VALUE_PRESETS)}
+        ${assumptionSliderRow("dues_growth_rate", "Annual Dues Inflation", settings.dues_growth_rate, 0.02, 0.08, 0.001)}
+        ${assumptionSliderRow("value_growth_rate", "Deluxe Hotel Inflation", settings.value_growth_rate, 0.02, 0.08, 0.001)}
+        ${assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate (Alt. Vacation Fund)", settings.opportunity_cost_rate, 0, 0.10, 0.005, OPPORTUNITY_COST_PRESETS)}
+        <div class="assumptions-save-status" id="assumptions-save-status"></div>
+      </div>
+    </div>
+  `;
+}
+
+// Slider drags use direct DOM writes (readout text, then a targeted
+// re-render of just #house-money-body/#exit-equity-body), never a full
+// renderSignedIn() -- same reasoning as account.html's
+// updateLedgerRowTotal() and the Multi-Contract Split sliders: a full
+// innerHTML rebuild would recreate the range input mid-drag and lose its
+// focus/drag state. Only the toggle button (open/close, not a value
+// change) goes through a full renderSignedIn().
+function handleAssumptionChange(field, value) {
+  userSettings = { ...userSettings, [field]: value };
+  const out = document.getElementById(`a-${field}-out`);
+  if (out) out.textContent = ASSUMPTION_FORMATTERS[field](value);
+  document.querySelectorAll(`.assumption-chip[data-field="${field}"]`).forEach(chip => {
+    chip.classList.toggle("active", Math.abs(parseFloat(chip.dataset.value) - value) < 1e-9);
+  });
+  refreshHouseMoneyOutputs();
+  scheduleSettingsSave();
+}
+
+function refreshHouseMoneyOutputs() {
+  const stats = computeHouseMoneyStats(contracts, trips, userSettings);
+  const pointEfficiency = window.DVCBadges.computePointEfficiency(contracts, trips, contractYearPoints);
+  const body = document.getElementById("house-money-body");
+  if (body) {
+    body.innerHTML = `${buildGaugeHTML(stats)}${buildStatTilesHTML(stats, pointEfficiency)}${buildHouseMoneyChartHTML(stats)}`;
+    renderHouseMoneyChart(stats);
+  }
+  const exitBody = document.getElementById("exit-equity-body");
+  if (exitBody && contracts.some(c => c.is_active)) {
+    exitBody.innerHTML = buildExitEquityHTML(computeExitEquity(contracts, stats));
+  }
+}
+
+// 500ms debounce, per the spec -- update the in-memory model and
+// re-render on every single slider tick (above), but only actually write
+// to the database once the user pauses, so dragging a slider doesn't fire
+// dozens of writes.
+function scheduleSettingsSave() {
+  clearTimeout(settingsSaveTimer);
+  const statusEl = document.getElementById("assumptions-save-status");
+  if (statusEl) statusEl.textContent = "";
+  settingsSaveTimer = setTimeout(async () => {
+    if (!window.DVCAuth.isConfigured()) return;
+    const savingSettings = userSettings;
+    const status = document.getElementById("assumptions-save-status");
+    if (status) status.textContent = "Saving…";
+    const { error } = await window.DVCAuth.saveUserSettings(savingSettings);
+    const status2 = document.getElementById("assumptions-save-status");
+    if (!status2) return;
+    status2.textContent = error ? "Couldn't save" : "Saved";
+    if (!error) setTimeout(() => { if (status2.textContent === "Saved") status2.textContent = ""; }, 1500);
+  }, 500);
+}
+
+function attachAssumptionsListeners() {
+  // Direct DOM toggle, not a full renderSignedIn() -- opening/closing this
+  // panel doesn't change anything the rest of the page shows, so there's
+  // no reason to re-fetch contracts/trips/settings over the network just
+  // to flip one boolean.
+  document.getElementById("assumptions-toggle")?.addEventListener("click", (e) => {
+    assumptionsOpen = !assumptionsOpen;
+    document.getElementById("assumptions-panel")?.classList.toggle("open", assumptionsOpen);
+    e.currentTarget.setAttribute("aria-expanded", String(assumptionsOpen));
+    e.currentTarget.innerHTML = `&#9881; ${assumptionsOpen ? "Hide" : "Adjust"} Model Assumptions &amp; Sensitivity ${assumptionsOpen ? "&#9652;" : "&#9662;"}`;
+  });
+  const panel = document.getElementById("assumptions-panel");
+  if (!panel) return;
+  panel.querySelectorAll(".assumption-slider").forEach(input => {
+    input.addEventListener("input", () => handleAssumptionChange(input.dataset.field, parseFloat(input.value)));
+  });
+  panel.querySelectorAll(".assumption-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const field = btn.dataset.field;
+      const value = parseFloat(btn.dataset.value);
+      const slider = document.getElementById("a-" + field);
+      if (slider) slider.value = value;
+      handleAssumptionChange(field, value);
+    });
+  });
+}
+
+function formatTripDateRange(checkIn, checkOut) {
+  const ci = new Date(checkIn + "T12:00:00");
+  const co = new Date(checkOut + "T12:00:00");
+  const ciMonth = ci.toLocaleDateString(undefined, { month: "short" });
+  const coMonth = co.toLocaleDateString(undefined, { month: "short" });
+  if (ciMonth === coMonth && ci.getFullYear() === co.getFullYear()) {
+    return `${ciMonth} ${ci.getDate()}–${co.getDate()}, ${co.getFullYear()}`;
+  }
+  return `${ciMonth} ${ci.getDate()} – ${coMonth} ${co.getDate()}, ${co.getFullYear()}`;
+}
+
 async function renderSignedIn() {
-  [contracts, trips] = await Promise.all([
+  [contracts, trips, contractYearPoints, userSettings] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
+    window.DVCAuth.getContractYearPoints(),
+    window.DVCAuth.getUserSettings(),
   ]);
 
   const activeContracts = contracts.filter(c => c.is_active);
 
   // ---- Cost of ownership ----
-  let totalCostToDate = 0;
-  const contractCostCards = activeContracts.map(c => {
-    const schedule = buildAmortizationSchedule(c);
-    if (!schedule) {
-      return `
-        <div class="contract-cost-card">
-          <div class="contract-cost-name">${contractLabel(c)}</div>
-          <div class="contract-cost-missing">Add a purchase price and date on this contract to see its cost breakdown &mdash; <a href="account.html">edit contract</a></div>
-        </div>
-      `;
-    }
-    totalCostToDate += schedule.totalCostToDate;
-    const rowsHTML = schedule.rows.map(r => `
-      <tr>
-        <td>${r.year}</td>
-        <td>${fmt(r.dues)}</td>
-        <td>${fmt(r.amortized)}</td>
-        <td>${fmt(r.total)}</td>
-        <td>${fmt(r.cumulative)}</td>
-      </tr>
-    `).join("");
-    return `
-      <div class="contract-cost-card">
-        <div class="contract-cost-name">${contractLabel(c)}</div>
-        <div class="amort-table-wrap">
-          <table class="amort-table">
-            <thead><tr><th>Year</th><th>Dues</th><th>Amortized Buy-In</th><th>Year Total</th><th>Cumulative</th></tr></thead>
-            <tbody>${rowsHTML}</tbody>
-          </table>
-        </div>
-        <div class="amort-summary">
-          <span>Total dues paid: <strong>${fmt(schedule.totalDues)}</strong> across ${schedule.totalYears} year${schedule.totalYears === 1 ? "" : "s"} (actual rate per year)</span>
-          <span>Buy-in spread over <strong>${schedule.totalYears}</strong> year${schedule.totalYears === 1 ? "" : "s"} owned so far</span>
-        </div>
-      </div>
-    `;
-  }).join("");
+  const contractCostCards = activeContracts.map(c => buildContractCostCardHTML(c)).join("");
 
-  // ---- Trip value ----
-  let totalTripValue = 0;
-  for (const t of trips) {
-    const v = tripCashValue(t);
-    if (v) totalTripValue += v.cash;
-  }
-
-  const net = totalTripValue - totalCostToDate;
+  // ---- House Money hero ----
+  // The Trophy Case preview used to live here too -- removed (2026-09-17)
+  // in favor of keeping badge browsing exclusively on badges.html/
+  // Achievements, so there's one canonical place for it instead of two
+  // partial copies. pointEfficiency is still computed here since the
+  // dopamine stat tiles below use it directly.
+  const stats = computeHouseMoneyStats(contracts, trips, userSettings);
+  const pointEfficiency = window.DVCBadges.computePointEfficiency(contracts, trips, contractYearPoints);
+  const exitEquity = computeExitEquity(contracts, stats);
 
   pageContent.innerHTML = `
     <div class="section">
-      <h2>The Full Story</h2>
-      <div class="section-sub">Cost of ownership to date vs. the cash value of trips you've logged</div>
-      <div class="story-tiles">
-        <div class="story-tile cost">
-          <div class="story-tile-label">Cost So Far</div>
-          <div class="story-tile-value">${fmt(totalCostToDate)}</div>
-          <div class="story-tile-sub">Dues + amortized buy-in</div>
-        </div>
-        <div class="story-tile value">
-          <div class="story-tile-label">Trip Value</div>
-          <div class="story-tile-value">${fmt(totalTripValue)}</div>
-          <div class="story-tile-sub">${trips.length} trip${trips.length === 1 ? "" : "s"} logged</div>
-          <button type="button" class="add-btn js-add-trip" style="margin-top: 8px;">+ Log a Trip</button>
-        </div>
-        <div class="story-tile net">
-          <div class="story-tile-label">Net</div>
-          <div class="story-tile-value">${net >= 0 ? "+" : "-"}${fmt(Math.abs(net))}</div>
-          <div class="story-tile-sub">${net >= 0 ? "Ahead of cost" : "Behind cost so far"}</div>
-        </div>
+      <h2>Your House Money Payback</h2>
+      <div class="section-sub">What your membership has cost so far vs. the Deluxe hotel value it's delivered</div>
+      <div id="house-money-body">
+        ${buildGaugeHTML(stats)}
+        ${buildStatTilesHTML(stats, pointEfficiency)}
+        ${buildHouseMoneyChartHTML(stats)}
+      </div>
+    </div>
+
+    ${buildAssumptionsPanelHTML(userSettings)}
+
+    <div class="section">
+      <h2>Exit Equity</h2>
+      <div class="section-sub">Net Resale Liquidation -- a second, more conservative "has this paid for itself" read that credits what the contracts themselves could still sell for</div>
+      <div id="exit-equity-body">
+        ${activeContracts.length === 0 ? `<div class="empty-note">No active contracts yet -- <a href="account.html">add one</a>.</div>` : buildExitEquityHTML(exitEquity)}
       </div>
     </div>
 
@@ -757,16 +2392,25 @@ async function renderSignedIn() {
     <div class="section">
       <div class="section-header-row">
         <div>
-          <h2>Trip History</h2>
-          <div class="section-sub">Log a trip you've taken. Points used and cash value are pre-filled with our best guess -- edit either if you know the real numbers.</div>
+          <h2>Past Stays</h2>
+          <div class="section-sub">Track the real vacation value your points have earned you.</div>
         </div>
         <button type="button" class="add-btn js-add-trip">+ Log a Trip</button>
       </div>
       ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
       <div class="trip-list" id="trip-list"></div>
-      <div class="trip-form" id="trip-form">
+    </div>
+
+    <div class="modal-overlay" id="trip-modal">
+      <div class="modal-box trip-modal-box">
+        <div class="modal-header">
+          <h3 id="trip-modal-title">Log a Trip</h3>
+          <button type="button" class="modal-close" id="trip-modal-close" aria-label="Close">&times;</button>
+        </div>
         <div class="form-error" id="form-error" style="display:none;"></div>
-        <div class="form-grid">
+
+        <div class="form-group">
+          <div class="form-group-label">Where You Stayed</div>
           <div class="form-field">
             <label for="f-resort">Resort</label>
             <select id="f-resort"></select>
@@ -775,19 +2419,60 @@ async function renderSignedIn() {
             <label for="f-room">Room Type</label>
             <select id="f-room"></select>
           </div>
-          <div class="form-field">
-            <label for="f-checkin">Check-in</label>
-            <input type="date" id="f-checkin">
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-label">When</div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="f-checkin">Check-in</label>
+              <input type="date" id="f-checkin">
+            </div>
+            <div class="form-field">
+              <label for="f-checkout">Check-out</label>
+              <input type="date" id="f-checkout">
+            </div>
           </div>
-          <div class="form-field">
-            <label for="f-checkout">Check-out</label>
-            <input type="date" id="f-checkout">
-          </div>
-          <div class="form-field">
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-label">The Numbers</div>
+          <div class="insight-field">
             <label for="f-points">Points Used</label>
-            <input type="number" id="f-points" min="0" step="1">
+            <input type="number" id="f-points" min="0" step="1" class="insight-input">
             <div class="field-hint" id="points-hint"></div>
           </div>
+
+          <button type="button" class="points-breakdown-toggle" id="points-breakdown-toggle" aria-expanded="false">
+            + Break down point sources <span class="points-breakdown-toggle-sub">(DVC one-time, family transfer, etc.)</span>
+          </button>
+          <div class="points-breakdown-panel" id="points-breakdown-panel" hidden>
+            <div class="form-row-3">
+              <div class="form-field">
+                <label for="f-points-contracts">My Contracts</label>
+                <input type="number" id="f-points-contracts" min="0" step="1">
+              </div>
+              <div class="form-field">
+                <label for="f-points-onetime">Disney One-Time</label>
+                <input type="number" id="f-points-onetime" min="0" step="1">
+              </div>
+              <div class="form-field">
+                <label for="f-points-transferred">Transferred/Borrowed</label>
+                <input type="number" id="f-points-transferred" min="0" step="1">
+              </div>
+            </div>
+            <div class="points-breakdown-total" id="points-breakdown-total"></div>
+          </div>
+
+          <div class="insight-field">
+            <label for="f-cash-value">Cash Value</label>
+            <input type="number" id="f-cash-value" min="0" step="1" placeholder="Total $ for the stay" class="insight-input">
+            <div class="field-hint" id="cash-hint"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-label">Extra Details</div>
           <div class="form-field">
             <label for="f-contract">Contract (optional)</label>
             <select id="f-contract">
@@ -796,15 +2481,11 @@ async function renderSignedIn() {
             </select>
           </div>
           <div class="form-field">
-            <label for="f-cash-value">Cash Value</label>
-            <input type="number" id="f-cash-value" min="0" step="1" placeholder="Total $ for the stay">
-            <div class="field-hint" id="cash-hint"></div>
-          </div>
-          <div class="form-field full">
             <label for="f-notes">Notes (optional)</label>
             <textarea id="f-notes" rows="2"></textarea>
           </div>
         </div>
+
         <div class="form-actions">
           <button type="button" class="save-btn" id="save-trip">Save Trip</button>
           <button type="button" class="cancel-btn" id="cancel-trip">Cancel</button>
@@ -813,8 +2494,10 @@ async function renderSignedIn() {
     </div>
   `;
 
+  renderHouseMoneyChart(stats);
   renderTripList();
   wireTripForm(activeContracts);
+  attachAssumptionsListeners();
   pendingWarning = null;
 }
 
@@ -824,28 +2507,29 @@ function renderTripList() {
     list.innerHTML = `<div class="empty-note">No trips logged yet.</div>`;
     return;
   }
-  list.innerHTML = trips.map(t => {
+  const justLogged = justLoggedTripId;
+  justLoggedTripId = null;
+  const sorted = [...trips].sort((a, b) => b.check_out.localeCompare(a.check_out));
+  list.innerHTML = sorted.map(t => {
     const v = tripCashValue(t);
     const nights = nightsBetween(t.check_in, t.check_out);
+    const resort = RESORTS.find(r => r.id === t.resort_id);
+    const roomType = resort?.roomTypes.find(rt => rt.id === t.room_type_id);
+    const pulse = t.id === justLogged ? " just-logged" : "";
     return `
-      <div class="trip-card">
-        <div class="trip-main">
-          <div class="trip-name">${resortName(t.resort_id)}</div>
-          <div class="trip-meta">
-            <span>${t.check_in} &rarr; ${t.check_out}</span>
-            <span>&middot;</span>
-            <span>${nights} night${nights === 1 ? "" : "s"}</span>
-            <span>&middot;</span>
-            <span>${t.points_used.toLocaleString()} pts</span>
-          </div>
+      <div class="trip-postcard${pulse}" style="${resortArtCardStyle(t.resort_id)}">
+        <div class="trip-postcard-main">
+          <div class="trip-postcard-resort">${resortName(t.resort_id)}</div>
+          ${roomType ? `<div class="trip-postcard-room">${roomType.name}</div>` : ""}
+          <div class="trip-postcard-dates">${formatTripDateRange(t.check_in, t.check_out)} &middot; ${nights} night${nights === 1 ? "" : "s"}</div>
         </div>
-        <div class="trip-value">
-          <div class="trip-value-amount">${v ? fmt(v.cash) : "&mdash;"}</div>
-          <div class="trip-value-note">${v ? (v.isCustom ? "your estimate" : (v.isDeflated ? `est. ${v.estimateYear} pricing` : `est. at ${v.estimateYear} rates`)) : "no rate data"}</div>
+        <div class="trip-postcard-value">
+          <div class="trip-postcard-pill${v ? "" : " no-data"}">${v ? "+" + fmt(v.cash) + " toward House Money" : "No rate data"}</div>
+          <div class="trip-postcard-points">${t.points_used.toLocaleString()} pts</div>
         </div>
-        <div class="trip-actions">
-          <button type="button" class="small-btn" data-edit="${t.id}">Edit</button>
-          <button type="button" class="small-btn danger" data-delete="${t.id}">Delete</button>
+        <div class="trip-postcard-actions">
+          <button type="button" class="icon-btn" data-edit="${t.id}" title="Edit" aria-label="Edit">&#9998;</button>
+          <button type="button" class="icon-btn danger" data-delete="${t.id}" title="Delete" aria-label="Delete">&times;</button>
         </div>
       </div>
     `;
@@ -955,6 +2639,25 @@ function updateSuggestions() {
   updatePointsSuggestion();
 }
 
+// "+ Break down point sources" accordion -- purely optional attribution
+// metadata (see points_source_breakdown in db/migrations/012_...), never
+// required to save a trip. The live total is informational only (colored,
+// not blocking) since the three sub-fields are a convenience for someone
+// who wants this level of detail, not a second required entry of the same
+// number.
+function updatePointsBreakdownTotal() {
+  const contracts = parseInt(document.getElementById("f-points-contracts").value, 10) || 0;
+  const oneTime = parseInt(document.getElementById("f-points-onetime").value, 10) || 0;
+  const transferred = parseInt(document.getElementById("f-points-transferred").value, 10) || 0;
+  const target = parseInt(document.getElementById("f-points").value, 10) || 0;
+  const sum = contracts + oneTime + transferred;
+  const el = document.getElementById("points-breakdown-total");
+  el.textContent = `Total: ${sum} / ${target} pts`;
+  const matches = sum === target && target > 0;
+  el.classList.toggle("match", matches);
+  el.classList.toggle("mismatch", !matches);
+}
+
 function uniqueResorts() {
   const seen = new Set();
   const list = [];
@@ -979,10 +2682,26 @@ function wireTripForm(activeContracts) {
   document.getElementById("f-checkin").addEventListener("change", updateSuggestions);
   document.getElementById("f-checkout").addEventListener("change", updateSuggestions);
 
+  document.getElementById("points-breakdown-toggle").addEventListener("click", () => {
+    const panel = document.getElementById("points-breakdown-panel");
+    const btn = document.getElementById("points-breakdown-toggle");
+    panel.hidden = !panel.hidden;
+    btn.setAttribute("aria-expanded", String(!panel.hidden));
+  });
+  ["f-points", "f-points-contracts", "f-points-onetime", "f-points-transferred"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updatePointsBreakdownTotal);
+  });
+
   document.querySelectorAll(".js-add-trip").forEach(btn =>
     btn.addEventListener("click", () => openTripForm(null))
   );
   document.getElementById("cancel-trip").addEventListener("click", closeTripForm);
+  document.getElementById("trip-modal-close").addEventListener("click", closeTripForm);
+  // Click the dimmed backdrop (not the box itself) to close, same
+  // convention as account.html's Card Studio and index.html's modals.
+  document.getElementById("trip-modal").addEventListener("click", (e) => {
+    if (e.target.id === "trip-modal") closeTripForm();
+  });
   document.getElementById("save-trip").addEventListener("click", saveTripForm);
 }
 
@@ -1000,14 +2719,25 @@ function openTripForm(trip) {
   document.getElementById("f-notes").value = trip?.notes || "";
   document.getElementById("f-cash-value").value = trip?.custom_cash_value != null ? trip.custom_cash_value : "";
   updateSuggestions();
-  document.getElementById("trip-form").classList.add("open");
+
+  const breakdown = trip?.points_source_breakdown || null;
+  document.getElementById("f-points-contracts").value = breakdown?.contracts ?? "";
+  document.getElementById("f-points-onetime").value = breakdown?.one_time ?? "";
+  document.getElementById("f-points-transferred").value = breakdown?.transferred ?? "";
+  // Auto-expand only when editing a trip that actually has a breakdown --
+  // a brand-new trip always starts collapsed, keeping the fast path clear.
+  document.getElementById("points-breakdown-panel").hidden = !breakdown;
+  document.getElementById("points-breakdown-toggle").setAttribute("aria-expanded", String(!!breakdown));
+  updatePointsBreakdownTotal();
+
+  document.getElementById("trip-modal-title").textContent = trip ? "Edit Trip" : "Log a Trip";
   document.getElementById("save-trip").textContent = trip ? "Save Changes" : "Save Trip";
-  document.getElementById("trip-form").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  document.getElementById("trip-modal").classList.add("open");
 }
 
 function closeTripForm() {
   editingTripId = null;
-  document.getElementById("trip-form").classList.remove("open");
+  document.getElementById("trip-modal").classList.remove("open");
 }
 
 async function saveTripForm() {
@@ -1045,6 +2775,14 @@ async function saveTripForm() {
     return;
   }
 
+  // Only stored when the accordion actually has something in it -- an
+  // untouched "+ Break down point sources" section saves as null, not a
+  // fake {0,0,0} breakdown nobody actually entered.
+  const bContracts = document.getElementById("f-points-contracts").value;
+  const bOneTime = document.getElementById("f-points-onetime").value;
+  const bTransferred = document.getElementById("f-points-transferred").value;
+  const hasBreakdown = bContracts !== "" || bOneTime !== "" || bTransferred !== "";
+
   const payload = {
     resort_id: document.getElementById("f-resort").value,
     room_type_id: document.getElementById("f-room").value,
@@ -1054,6 +2792,11 @@ async function saveTripForm() {
     contract_id: document.getElementById("f-contract").value || null,
     notes: document.getElementById("f-notes").value.trim() || null,
     custom_cash_value: parseFloat(cashValueRaw),
+    points_source_breakdown: hasBreakdown ? {
+      contracts: parseInt(bContracts, 10) || 0,
+      one_time: parseInt(bOneTime, 10) || 0,
+      transferred: parseInt(bTransferred, 10) || 0,
+    } : null,
   };
 
   const result = editingTripId
@@ -1065,6 +2808,10 @@ async function saveTripForm() {
     errorEl.style.display = "block";
     return;
   }
+
+  // Only a brand-new trip gets the pulseRing celebration on its postcard --
+  // editing an existing one isn't a new "10-second log" moment.
+  if (!editingTripId && result.data) justLoggedTripId = result.data.id;
 
   pendingWarning = result.warning || null;
   closeTripForm();
@@ -1091,6 +2838,78 @@ function waitForAuth(attempts) {
   }
 }
 waitForAuth(40);
+
+// Registered once at script load, not inside renderSignedIn() -- document
+// persists for the page's whole lifetime, so a listener added here on
+// every render would stack duplicates (same reasoning as account.html's
+// own Escape handler).
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") document.querySelectorAll(".payback-info-anchor.open").forEach((el) => el.classList.remove("open"));
+});
+
+// House Money payback breakdown popover: tap/hover-friendly, not
+// hover-only -- hover has no touchscreen equivalent, and this app has
+// already learned (account.html) that tabindex/:focus-based tap support
+// can leave a tapped tooltip stuck open on mobile with no way to dismiss.
+// A tap/click on the trigger always OPENS it (never toggles it closed) --
+// both real mobile browsers and this app's own automated testing show a
+// tap/click also synthesizes a mouseenter just beforehand, which the hover
+// handlers below already open it from; toggling here would then
+// immediately close what hover just opened. Closing stays available via
+// the (x) button, tapping/clicking anywhere else, or Escape -- clicking
+// inside the popover itself (reading a row) never closes it early.
+document.addEventListener("click", (e) => {
+  const trigger = e.target.closest(".payback-info-trigger");
+  const closeBtn = e.target.closest(".payback-breakdown-close");
+  const anchor = e.target.closest(".payback-info-anchor");
+  document.querySelectorAll(".payback-info-anchor.open").forEach((el) => {
+    if (el !== anchor || closeBtn) {
+      el.classList.remove("open");
+      el.querySelector(".payback-info-trigger")?.setAttribute("aria-expanded", "false");
+    }
+  });
+  if (trigger && !closeBtn) {
+    clearTimeout(paybackHoverCloseTimer);
+    const el = trigger.closest(".payback-info-anchor");
+    el.classList.add("open");
+    trigger.setAttribute("aria-expanded", "true");
+  }
+});
+
+// Hover support (desktop mouse) for the same popovers, layered on top of
+// the click-toggle above rather than replacing it -- click still has to
+// work for touch, which never fires these events at all. Delegated on
+// mouseenter/mouseleave requires the capture phase since neither event
+// bubbles; a short close delay (not an instant hide on mouseleave) is what
+// lets the pointer cross the visual gap between the trigger and the
+// popover rendered below it without the popover disappearing mid-transit,
+// same technique any hover dropdown menu needs.
+let paybackHoverCloseTimer = null;
+document.addEventListener("mouseenter", (e) => {
+  const target = e.target.closest?.(".payback-info-trigger, .payback-breakdown-card");
+  const anchor = target?.closest(".payback-info-anchor");
+  if (!anchor) return;
+  clearTimeout(paybackHoverCloseTimer);
+  document.querySelectorAll(".payback-info-anchor.open").forEach((el) => {
+    if (el !== anchor) {
+      el.classList.remove("open");
+      el.querySelector(".payback-info-trigger")?.setAttribute("aria-expanded", "false");
+    }
+  });
+  anchor.classList.add("open");
+  anchor.querySelector(".payback-info-trigger")?.setAttribute("aria-expanded", "true");
+}, true);
+
+document.addEventListener("mouseleave", (e) => {
+  const target = e.target.closest?.(".payback-info-trigger, .payback-breakdown-card");
+  const anchor = target?.closest(".payback-info-anchor");
+  if (!anchor) return;
+  clearTimeout(paybackHoverCloseTimer);
+  paybackHoverCloseTimer = setTimeout(() => {
+    anchor.classList.remove("open");
+    anchor.querySelector(".payback-info-trigger")?.setAttribute("aria-expanded", "false");
+  }, 200);
+}, true);
   </script>
 </body>
 </html>

@@ -435,7 +435,9 @@ async function getProfile() {
 }
 
 // patch: { reminder_opt_in, reminder_lead_days, display_name,
-//          in_app_notifications_enabled, push_enabled, push_subscription }
+//          in_app_notifications_enabled, push_enabled, push_subscription,
+//          point_value_baseline, dues_growth_rate, value_growth_rate,
+//          opportunity_cost_rate }
 async function updateProfile(patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   const { data, error } = await supabase
@@ -445,6 +447,39 @@ async function updateProfile(patch) {
     .select()
     .single();
   return { data, error: error?.message };
+}
+
+// House Money's "Model Assumptions & Sensitivity" panel (trips.html) --
+// four profile columns (db/migrations/018_add_house_money_model_settings.sql)
+// a signed-in owner can override away from the app's flat defaults. Kept as
+// its own thin get/save pair rather than making every trips.html call site
+// go through getProfile()/updateProfile() directly and repeat these same
+// four field names and defaults itself -- DEFAULT_USER_SETTINGS here is the
+// one place that has to agree with the migration's column defaults.
+const DEFAULT_USER_SETTINGS = {
+  point_value_baseline: 35,
+  dues_growth_rate: 0.04,
+  value_growth_rate: 0.05,
+  opportunity_cost_rate: 0.00,
+};
+
+// Always resolves to a full, defaulted settings object -- even signed-out/
+// unconfigured (getProfile()'s own null fallback) or a profile row created
+// before this migration ran (columns null) -- so trips.html never has to
+// separately null-check each of the four fields itself.
+async function getUserSettings() {
+  const profile = await getProfile();
+  return {
+    point_value_baseline: profile?.point_value_baseline ?? DEFAULT_USER_SETTINGS.point_value_baseline,
+    dues_growth_rate: profile?.dues_growth_rate ?? DEFAULT_USER_SETTINGS.dues_growth_rate,
+    value_growth_rate: profile?.value_growth_rate ?? DEFAULT_USER_SETTINGS.value_growth_rate,
+    opportunity_cost_rate: profile?.opportunity_cost_rate ?? DEFAULT_USER_SETTINGS.opportunity_cost_rate,
+  };
+}
+
+// patch: any subset of DEFAULT_USER_SETTINGS' keys.
+async function saveUserSettings(patch) {
+  return updateProfile(patch);
 }
 
 // The signed-in user's membership row, or null if they've never started a
@@ -789,6 +824,9 @@ window.DVCAuth = {
   incrementBadgeEvent,
   getProfile,
   updateProfile,
+  getUserSettings,
+  saveUserSettings,
+  DEFAULT_USER_SETTINGS,
   getSubscription,
   subscribeToMembership,
   manageMembership,
