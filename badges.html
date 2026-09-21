@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trophy Room | DVC Companion</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="images/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#4a148c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg-page);
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+/* ---- Site nav ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
+
+.site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
+
+@media (max-width: 700px) {
+  .site-nav-toggle { display: flex; }
+  .site-nav-links { display: none; flex: 0 0 100%; width: 100%; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 4px; padding-top: 10px; border-top: 1px solid #eee; }
+  .site-nav-group { flex-direction: column; align-items: flex-start; gap: 6px; }
+  #account-control { display: none; width: 100%; margin-top: 10px; }
+  .site-nav.open .site-nav-links { display: flex; }
+  .site-nav.open #account-control { display: block; }
+  .header { padding: 10px 20px; }
+  .header h1 { font-size: 1.05rem; }
+  .header .subtitle { font-size: 0.7rem; }
+}
+
+.page {
+  max-width: 980px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.gate {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 48px 32px;
+  text-align: center;
+  color: #666;
+}
+.gate p { margin-bottom: 18px; font-size: 0.95rem; }
+
+.big-signin-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.big-signin-btn:hover { background: var(--color-primary-active); }
+
+.small-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #555;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.small-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* ---- Trophy Room-specific chrome ---- */
+.collection-summary {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.collection-summary h2 { font-size: 1.15rem; font-weight: 600; color: var(--color-secondary); margin-bottom: 6px; }
+.collection-summary .collection-sub { font-size: 0.85rem; color: #888; margin-bottom: 14px; }
+.collection-progress-track { height: 8px; border-radius: 4px; background: var(--color-bg-page); overflow: hidden; max-width: 420px; margin: 0 auto; }
+.collection-progress-fill { height: 100%; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); border-radius: 4px; transition: width 0.3s ease; }
+
+.category-section {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.category-section h2 { font-size: 1.02rem; font-weight: 600; color: var(--color-secondary); margin-bottom: 4px; }
+.category-section .category-sub { font-size: 0.8rem; color: #888; margin-bottom: 16px; }
+.category-empty { color: #999; font-style: italic; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav">
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
+    <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Trip Planning</span>
+        <a href="itineraries.html">Saved Itineraries</a>
+        <a href="itinerarycompare.html">Compare Itineraries</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Buying Guide</span>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Account</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+        <a href="badges.html" class="active">Achievements</a>
+      </span>
+    </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
+    <h1>Trophy Room</h1>
+    <div class="subtitle">Every DVC Companion badge, grouped and ranked by how close you are to unlocking it</div>
+  </div>
+
+  <div class="page" id="page-content">
+    <div class="gate"><p>Loading&hellip;</p></div>
+  </div>
+
+  <div class="modal-overlay" id="badge-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="badge-modal-title"></h3>
+        <button type="button" class="modal-close" id="badge-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div id="badge-modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="auth.js"></script>
+  <script src="nav.js"></script>
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script src="data/cash_prices_live_summary.js"></script>
+  <script src="data/dues_historical.js"></script>
+  <script src="data/cash_value_index.js"></script>
+  <script src="data/resort_investment.js"></script>
+  <script src="data/disney_events.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="dvc-badges.js"></script>
+  <script src="dvc-track.js"></script>
+  <script>
+const pageContent = document.getElementById("page-content");
+// Last-rendered full badge list, so a tile click can look up its detail
+// for the shared modal without recomputing everything -- same pattern
+// trips.html uses for its own preview.
+let currentBadges = [];
+
+function fmt(n) {
+  return "$" + Math.round(n).toLocaleString();
+}
+
+// Everything below down to computePointEfficiency() is copied verbatim
+// from trips.html (not reshared via a module -- same precedent as
+// CATEGORY_KEYWORDS being independently duplicated across app.js/
+// compare.html/suggest.html) so evaluateUserBadges() gets the exact same
+// House Money / point-efficiency numbers here as it does on trips.html,
+// not an approximation that could silently drift from it.
+function formatDate(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+const MAX_TRIP_NIGHTS = 90;
+
+function nightsBetween(checkIn, checkOut) {
+  const ci = new Date(checkIn + "T12:00:00");
+  const co = new Date(checkOut + "T12:00:00");
+  const nights = Math.round((co - ci) / 86400000);
+  return Number.isFinite(nights) ? nights : 0;
+}
+
+function calcStay(resort, roomTypeId, stayDates) {
+  let totalPoints = 0, totalCash = 0, hasCash = false;
+  for (const dateStr of stayDates) {
+    const pts = getPointsForDate(resort, dateStr, roomTypeId);
+    const cashResult = getCashRateWithFallback(resort, dateStr, roomTypeId);
+    if (pts) totalPoints += pts;
+    if (cashResult && cashResult.rate) { totalCash += cashResult.rate; hasCash = true; }
+  }
+  return { totalPoints, totalCash: hasCash ? totalCash : null };
+}
+
+function remapDateToYear(dateStr, targetYear) {
+  const [, m, d] = dateStr.split("-");
+  return `${targetYear}-${m}-${d}`;
+}
+
+function stayDateRange(startDateStr, nights) {
+  const start = new Date(startDateStr + "T12:00:00");
+  const dates = [];
+  for (let i = 0; i < nights; i++) {
+    const dt = new Date(start);
+    dt.setDate(dt.getDate() + i);
+    dates.push(formatDate(dt.getFullYear(), dt.getMonth(), dt.getDate()));
+  }
+  return dates;
+}
+
+function latestCashYear(resortId) {
+  const years = [...new Set(RESORTS.filter(r => r.id === resortId).map(r => r.year))].sort((a, b) => b - a);
+  for (const y of years) {
+    const resort = RESORTS.find(r => r.id === resortId && r.year === y);
+    if (resort?.travelPeriods?.some(p => p.cashRates)) return y;
+  }
+  return years[0] || null;
+}
+
+function estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut) {
+  const anchorYear = latestCashYear(resortId);
+  if (!anchorYear) return null;
+  const resort = RESORTS.find(r => r.id === resortId && r.year === anchorYear);
+  const roomType = resort?.roomTypes.find(rt => rt.id === roomTypeId);
+  if (!resort || !roomType) return null;
+
+  const nights = nightsBetween(checkIn, checkOut);
+  if (nights <= 0 || nights > MAX_TRIP_NIGHTS) return null;
+
+  const stayDates = stayDateRange(remapDateToYear(checkIn, anchorYear), nights);
+  const result = calcStay(resort, roomTypeId, stayDates);
+  if (result.totalCash == null) return null;
+
+  const tripYear = parseInt(checkIn.slice(0, 4), 10);
+  const deflator = getCashValueMultiplier(tripYear) / getCashValueMultiplier(anchorYear);
+  const cash = result.totalCash * deflator;
+
+  return { cash, rawCash: result.totalCash, year: tripYear, anchorYear, nights, isDeflated: tripYear !== anchorYear };
+}
+
+function tripCashValue(trip) {
+  if (trip.custom_cash_value != null) return { cash: trip.custom_cash_value, isCustom: true };
+  const est = estimateTripCashValue(trip.resort_id, trip.room_type_id, trip.check_in, trip.check_out);
+  return est ? { cash: est.cash, isCustom: false, estimateYear: est.year, isDeflated: est.isDeflated } : null;
+}
+
+const FALLBACK_PRICE_PER_POINT = 140;
+
+function contractInitialCost(c) {
+  const closing = c.purchase_type === "resale" ? 1500 : 0;
+  if (c.purchase_price != null) return c.purchase_price + closing;
+  const perPoint = RESORT_INVESTMENT_DATA[c.home_resort_id]?.resalePricePerPoint || FALLBACK_PRICE_PER_POINT;
+  return perPoint * c.points_per_year + closing;
+}
+
+function contractOwnershipStartYear(c) {
+  const currentYear = new Date().getFullYear();
+  return c.purchase_date ? parseInt(c.purchase_date.slice(0, 4), 10) : currentYear - 2;
+}
+
+function contractDuesPaidToDate(c) {
+  const currentYear = new Date().getFullYear();
+  const startYear = contractOwnershipStartYear(c);
+  let total = 0;
+  for (let y = startYear; y <= currentYear; y++) {
+    total += getDuesForYear(c.home_resort_id, y) * c.points_per_year;
+  }
+  return total;
+}
+
+// Kept in sync with trips.html's copy -- see its own comment for the full
+// reasoning (Baseline Potential Value: a Deluxe rental/cash-equivalent
+// proxy net of dues, used to float Annual Velocity when trip history is
+// sparse or absent).
+const STANDARD_DELUXE_VALUE_PER_POINT = 19;
+
+function contractBaselinePotentialValue(c, year) {
+  const grossValue = c.points_per_year * STANDARD_DELUXE_VALUE_PER_POINT;
+  const dues = c.points_per_year * getDuesForYear(c.home_resort_id, year);
+  return Math.max(0, grossValue - dues);
+}
+
+// Kept in sync with trips.html's copy of this function (same duplication
+// convention as CATEGORY_KEYWORDS etc. elsewhere in this app) -- only
+// paybackPct is actually consumed here (the House Money badge's progress
+// value), but the rest is computed identically anyway so the two pages
+// never quietly disagree if a future badge reads more of it.
+function computeHouseMoneyStats(contracts, trips) {
+  const currentYear = new Date().getFullYear();
+  let totalInitialCost = 0;
+  let totalDuesPaid = 0;
+  let earliestStartYear = currentYear;
+  for (const c of contracts) {
+    totalInitialCost += contractInitialCost(c);
+    totalDuesPaid += contractDuesPaidToDate(c);
+    earliestStartYear = Math.min(earliestStartYear, contractOwnershipStartYear(c));
+  }
+  const totalOutlay = totalInitialCost + totalDuesPaid;
+
+  let lifetimeValue = 0;
+  let tripsWithValue = 0;
+  for (const t of trips) {
+    const v = tripCashValue(t);
+    if (v && Number.isFinite(v.cash)) {
+      lifetimeValue += v.cash;
+      tripsWithValue++;
+    }
+  }
+
+  const yearsOwned = contracts.length ? Math.max(1, currentYear - earliestStartYear + 1) : 1;
+  const paybackPct = totalOutlay > 0 ? Math.min(100, Math.round((lifetimeValue / totalOutlay) * 100)) : 0;
+  const remaining = Math.max(0, totalOutlay - lifetimeValue);
+  // Floored at the average value per logged trip, not just diluted across
+  // every year owned -- see trips.html's computeHouseMoneyStats() for why.
+  const actualPace = tripsWithValue > 0
+    ? Math.max(lifetimeValue / yearsOwned, lifetimeValue / tripsWithValue)
+    : 0;
+  // Baseline Potential Value + blended velocity -- see trips.html's
+  // computeHouseMoneyStats()/contractBaselinePotentialValue() for the full
+  // reasoning. Kept identical here purely for cross-page consistency.
+  const baselinePotential = contracts
+    .filter(c => c.is_active)
+    .reduce((sum, c) => sum + contractBaselinePotentialValue(c, currentYear), 0);
+  let annualVelocity, velocitySource;
+  if (tripsWithValue === 0) {
+    annualVelocity = baselinePotential;
+    velocitySource = baselinePotential > 0 ? "baseline" : "none";
+  } else {
+    annualVelocity = (actualPace + baselinePotential) / 2;
+    velocitySource = baselinePotential > 0 ? "blended" : "trips";
+  }
+
+  let estimatedHouseMoneyDate = null;
+  if (paybackPct < 100 && annualVelocity > 0) {
+    const monthsOut = Math.ceil((remaining / annualVelocity) * 12);
+    estimatedHouseMoneyDate = new Date();
+    estimatedHouseMoneyDate.setDate(1);
+    estimatedHouseMoneyDate.setMonth(estimatedHouseMoneyDate.getMonth() + monthsOut);
+  }
+
+  return {
+    totalInitialCost, totalDuesPaid, totalOutlay, lifetimeValue,
+    paybackPct, remaining, yearsOwned, actualPace, baselinePotential, annualVelocity, velocitySource,
+    estimatedHouseMoneyDate,
+    tripsLogged: trips.length,
+    netFreeVacations: lifetimeValue - totalOutlay,
+  };
+}
+
+// computePointEfficiency moved to dvc-badges.js (window.DVCBadges) --
+// it's now banking-aware (credits contract_year_points' banked/remaining
+// balances, not just logged trips), same formula trips.html now shares.
+
+async function renderSignedIn() {
+  const [contracts, trips, itineraries, userBadges, rarityStats, contractYearPoints] = await Promise.all([
+    window.DVCAuth.getContracts(),
+    window.DVCAuth.getTrips(),
+    window.DVCAuth.getItineraries(),
+    window.DVCAuth.getUserBadges(),
+    window.DVCAuth.getBadgeRarityStats(),
+    window.DVCAuth.getContractYearPoints(),
+  ]);
+
+  const stats = computeHouseMoneyStats(contracts, trips);
+  const pointEfficiency = window.DVCBadges.computePointEfficiency(contracts, trips, contractYearPoints);
+  const allBadges = window.DVCBadges.applyRarityStats(
+    window.DVCBadges.applyBadgePersistence(
+      [
+        ...window.DVCBadges.evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficiency, contractYearPoints),
+        ...window.DVCBadges.evaluateEventBadges(userBadges),
+      ],
+      userBadges,
+    ),
+    rarityStats,
+  );
+  // Hidden badges (Leap Day Lounger's the one currently) are secret until
+  // earned -- omitted from the grid, the category counts, AND the mastery
+  // score denominator so their existence isn't given away by a "30" that
+  // never quite adds up to what's visibly on screen (2026-09-19).
+  currentBadges = allBadges.filter(b => !b.hidden || b.unlocked);
+
+  const unlockedCount = currentBadges.filter(b => b.unlocked).length;
+  const totalCount = currentBadges.length;
+  const mastery = window.DVCBadges.computeMasteryScore(currentBadges);
+
+  const grouped = window.DVCBadges.groupBadgesByCategory(currentBadges);
+  const categorySections = Object.keys(window.DVCBadges.BADGE_CATEGORY_LABELS).map(catKey => {
+    const label = window.DVCBadges.BADGE_CATEGORY_LABELS[catKey];
+    const catBadges = window.DVCBadges.sortBadgesForDisplay(grouped[catKey] || []);
+    const catUnlocked = catBadges.filter(b => b.unlocked).length;
+    const body = catBadges.length > 0
+      ? `<div class="trophy-case-row">${window.DVCBadges.buildTrophyCaseHTML(catBadges)}</div>`
+      : `<div class="category-empty">No badges in this category yet.</div>`;
+    return `
+      <div class="category-section">
+        <h2>${label} (${catUnlocked} / ${catBadges.length} Unlocked)</h2>
+        <div class="category-sub">Scroll to see every pin in this category, sorted by tier and how close you are to unlocking it.</div>
+        ${body}
+      </div>
+    `;
+  }).join("");
+
+  pageContent.innerHTML = `
+    <div class="collection-summary">
+      <h2>Mastery Score: ${mastery.earned} / ${mastery.max} Tiers</h2>
+      <div class="collection-sub">${unlockedCount} of ${totalCount} Pins Unlocked &middot; ${mastery.pct}% Mastery Complete</div>
+      <div class="collection-progress-track"><div class="collection-progress-fill" style="width:${mastery.pct}%"></div></div>
+    </div>
+    ${categorySections}
+  `;
+
+  pageContent.querySelectorAll(".trophy-case-row").forEach(row => {
+    row.addEventListener("click", (e) => {
+      const tile = e.target.closest("[data-badge-id]");
+      if (tile) window.DVCBadges.openBadgeModal(tile.dataset.badgeId, currentBadges);
+    });
+  });
+}
+
+function renderGate() {
+  pageContent.innerHTML = `
+    <div class="gate">
+      <p>Sign in to see your Trophy Room.</p>
+      <div id="gate-signin-slot"></div>
+    </div>
+  `;
+  window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
+}
+
+function renderUnconfigured() {
+  pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
+}
+
+function render(session) {
+  if (!window.DVCAuth.isConfigured()) {
+    renderUnconfigured();
+  } else if (session) {
+    renderSignedIn();
+  } else {
+    renderGate();
+  }
+}
+
+function waitForAuth(attempts) {
+  if (window.DVCAuth) {
+    window.DVCAuth.onAuthChange(render);
+  } else if (attempts > 0) {
+    setTimeout(() => waitForAuth(attempts - 1), 50);
+  } else {
+    renderUnconfigured();
+  }
+}
+waitForAuth(40);
+
+document.getElementById("badge-modal-close").addEventListener("click", window.DVCBadges.closeBadgeModal);
+document.getElementById("badge-modal").addEventListener("click", (e) => {
+  if (e.target.id === "badge-modal") window.DVCBadges.closeBadgeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.getElementById("badge-modal")?.classList.contains("open")) window.DVCBadges.closeBadgeModal();
+});
+  </script>
+</body>
+</html>

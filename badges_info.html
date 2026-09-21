@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Badge Reference | DVC Companion</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="images/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#4a148c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg-page);
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.85; }
+.header a { color: white; opacity: 0.85; font-size: 0.78rem; }
+
+.page {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.controls {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+}
+.controls input[type="text"] {
+  flex: 1 1 200px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+.controls select {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+}
+.controls .count { font-size: 0.78rem; color: #888; white-space: nowrap; }
+
+.category-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin: 22px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--color-secondary);
+}
+.category-heading:first-of-type { margin-top: 0; }
+
+.binfo-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 16px;
+}
+
+.binfo-icon-col { flex: 0 0 auto; text-align: center; width: 64px; }
+.binfo-icon-col .badge-icon-wrap { width: 56px; height: 56px; font-size: 1.5rem; }
+.binfo-kind-tag {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #999;
+}
+.binfo-sticky-tag {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.binfo-body { flex: 1 1 auto; min-width: 0; }
+
+.binfo-title-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.binfo-name { font-size: 1.05rem; font-weight: 700; color: #333; }
+.binfo-id { font-size: 0.7rem; color: #bbb; font-family: "SFMono-Regular", Consolas, monospace; }
+
+.binfo-detail { font-size: 0.85rem; color: #555; line-height: 1.45; margin-bottom: 10px; }
+
+.binfo-ladder { border-top: 1px solid #eee; padding-top: 8px; }
+.binfo-tier-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8rem;
+  padding: 4px 0;
+  color: #555;
+}
+.binfo-tier-row .tier-label-col { font-weight: 600; color: #444; flex: 0 0 auto; }
+.binfo-tier-row .tier-req-col { text-align: right; color: #777; }
+
+.binfo-special-note {
+  font-size: 0.78rem;
+  color: #999;
+  font-style: italic;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.no-results { text-align: center; color: #999; font-size: 0.9rem; padding: 40px 0; }
+
+@media (max-width: 560px) {
+  .binfo-card { flex-direction: column; gap: 8px; }
+  .binfo-icon-col { display: flex; align-items: center; gap: 10px; width: auto; text-align: left; }
+  .binfo-icon-col .badge-icon-wrap { margin: 0; }
+  .binfo-kind-tag, .binfo-sticky-tag { margin-top: 0; display: inline-block; }
+}
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Badge Reference</h1>
+    <div class="subtitle">Every badge, every variant &mdash; name, description, and how to progress</div>
+    <a href="badges.html">&larr; Back to Trophy Room</a>
+  </div>
+
+  <div class="page">
+    <div class="controls">
+      <input type="text" id="search-input" placeholder="Search badge name or description&hellip;">
+      <select id="category-select">
+        <option value="all">All categories</option>
+      </select>
+      <select id="kind-select">
+        <option value="all">All types</option>
+        <option value="tiered">Tiered only</option>
+        <option value="special">Single-tier only</option>
+      </select>
+      <span class="count" id="result-count"></span>
+    </div>
+    <div id="badge-list"></div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script src="data/disney_events.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="dvc-badges.js"></script>
+  <script>
+try {
+// This page is a design/review tool, not a live user view -- it evaluates
+// every badge against empty contract/trip/itinerary data so every badge
+// comes back "locked" but with its FULL tier ladder and detail text intact
+// (evaluateTieredBadge/evaluateSpecialBadge always return the complete
+// tiers array regardless of whether any tier was actually reached). That's
+// exactly what's needed here: a static reference of every badge's name,
+// every variant's label/requirement, and its description, independent of
+// any one member's progress. Reuses the same shared window.DVCBadges logic
+// badges.html/trips.html use rather than re-typing badge definitions here,
+// so this reference can't silently drift from the real thing.
+const emptyStats = { paybackPct: 0 };
+// Hidden badges (Leap Day Lounger's the one currently) are secret --
+// this reference page evaluates against empty data, so every badge here
+// is permanently "locked," meaning a hidden one would ALWAYS be omitted
+// anyway. Filtered explicitly rather than relying on that coincidence, so
+// the intent reads clearly and survives someone changing this page's
+// data source later (2026-09-19).
+const allBadges = [
+  ...window.DVCBadges.evaluateUserBadges([], [], [], emptyStats, null, []),
+  ...window.DVCBadges.evaluateEventBadges([]),
+].filter(b => !b.hidden);
+
+// Same ladder-row logic as openBadgeModal() in dvc-badges.js -- a tier's
+// requirement is its own requirementLabel (Odyssey) if given, else the
+// badge's formatValue applied to that tier's raw threshold.
+function tierRequirementText(b, tier) {
+  return tier.requirementLabel != null ? tier.requirementLabel : b.formatValue(tier.threshold);
+}
+
+function badgeCardHTML(b) {
+  const sticky = window.DVCBadges.STICKY_BADGE_IDS.has(b.id);
+  const ladderOrNote = b.kind === "tiered"
+    ? `<div class="binfo-ladder">${b.tiers.map((t, i) => `
+        <div class="binfo-tier-row">
+          <span class="tier-label-col">Tier ${i + 1}: ${t.label}</span>
+          <span class="tier-req-col">${tierRequirementText(b, t)}</span>
+        </div>
+      `).join("")}</div>`
+    : `<div class="binfo-special-note">Single tier &mdash; unlocks as soon as the condition above is met.</div>`;
+
+  return `
+    <div class="binfo-card" data-name="${b.name.toLowerCase()}" data-detail="${b.detail.toLowerCase().replace(/"/g, "&quot;")}" data-category="${b.category}" data-kind="${b.kind}">
+      <div class="binfo-icon-col tier-gold">
+        <div class="badge-icon-wrap">${b.icon}</div>
+        <span class="binfo-kind-tag">${b.kind === "tiered" ? `${b.tiers.length}-tier` : "single-tier"}</span>
+        ${sticky ? `<span class="binfo-sticky-tag">Persisted</span>` : ""}
+      </div>
+      <div class="binfo-body">
+        <div class="binfo-title-row">
+          <span class="binfo-name">${b.icon} ${b.name}</span>
+          <span class="binfo-id">${b.id}</span>
+        </div>
+        <div class="binfo-detail">${b.detail}</div>
+        ${ladderOrNote}
+      </div>
+    </div>
+  `;
+}
+
+function render() {
+  const query = document.getElementById("search-input").value.trim().toLowerCase();
+  const category = document.getElementById("category-select").value;
+  const kind = document.getElementById("kind-select").value;
+
+  const filtered = allBadges.filter(b => {
+    if (category !== "all" && b.category !== category) return false;
+    if (kind !== "all" && b.kind !== kind) return false;
+    if (query && !b.name.toLowerCase().includes(query) && !b.detail.toLowerCase().includes(query)) return false;
+    return true;
+  });
+
+  const grouped = window.DVCBadges.groupBadgesByCategory(filtered);
+  const list = document.getElementById("badge-list");
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="no-results">No badges match that search.</div>`;
+  } else {
+    list.innerHTML = Object.keys(window.DVCBadges.BADGE_CATEGORY_LABELS).map(catKey => {
+      const catBadges = grouped[catKey] || [];
+      if (catBadges.length === 0) return "";
+      const label = window.DVCBadges.BADGE_CATEGORY_LABELS[catKey];
+      return `<div class="category-heading">${label} (${catBadges.length})</div>${catBadges.map(badgeCardHTML).join("")}`;
+    }).join("");
+  }
+
+  document.getElementById("result-count").textContent = `${filtered.length} of ${allBadges.length} badges`;
+}
+
+const categorySelect = document.getElementById("category-select");
+Object.keys(window.DVCBadges.BADGE_CATEGORY_LABELS).forEach(catKey => {
+  const opt = document.createElement("option");
+  opt.value = catKey;
+  opt.textContent = window.DVCBadges.BADGE_CATEGORY_LABELS[catKey];
+  categorySelect.appendChild(opt);
+});
+
+document.getElementById("search-input").addEventListener("input", render);
+categorySelect.addEventListener("change", render);
+document.getElementById("kind-select").addEventListener("change", render);
+
+render();
+} catch (err) {
+  // Surfaces a load-order/caching problem (e.g. a stale cached copy of
+  // dvc-badges.js missing an export this page depends on) as visible text
+  // instead of a silent blank badge-list -- the controls bar is static
+  // markup above this script, so it renders fine even when this throws,
+  // which otherwise looks like "nothing but the search bar."
+  document.getElementById("badge-list").innerHTML =
+    `<div class="no-results" style="color:#c0392b;">Failed to load badge data: ${err.message}<br><br>Try a hard refresh (Ctrl+Shift+R) -- this page depends on data/data.js, data/data_historical.js, data/disney_events.js, and dvc-badges.js all loading fresh.</div>`;
+  console.error(err);
+}
+  </script>
+</body>
+</html>
