@@ -172,13 +172,18 @@ function ensureGsiInitialized() {
 // `btn` itself is only hidden, not removed, and stays fully wired to its
 // original click listener (signInWithGoogle()) so it can reappear as a
 // working fallback if renderButton() never successfully renders.
+// Returns a promise resolving to the <span> wrapping Google's rendered
+// button (so renderSignInButton() can measure its real size to match the
+// email-code button against, below) or null if enhancement never
+// succeeded -- callers that don't care (the legacy enhanceAllSignInButtons()
+// shim) can just ignore the return value like before.
 function enhanceSignInButton(btn, size) {
-  if (!configured || !btn || btn.dataset.gsiEnhanced) return;
+  if (!configured || !btn || btn.dataset.gsiEnhanced) return Promise.resolve(null);
   btn.dataset.gsiEnhanced = "1";
   // Only the legacy auto-scan below (enhanceAllSignInButtons()) calls this
   // without a size -- renderSignInButton() always passes one explicitly.
   if (!size) size = (btn.id === "gate-signin" || btn.classList.contains("home-signin-btn")) ? "large" : "medium";
-  ensureGsiInitialized().then(() => {
+  return ensureGsiInitialized().then(() => {
     const container = document.createElement("span");
     container.style.display = "inline-block";
     btn.insertAdjacentElement("afterend", container);
@@ -191,11 +196,13 @@ function enhanceSignInButton(btn, size) {
       logo_alignment: "left",
     });
     btn.style.display = "none"; // only hidden after renderButton() succeeds, so a thrown error leaves our own button visible and working
+    return container;
   }).catch((err) => {
     // btn's own click handler (signInWithGoogle(), below) is untouched and
     // still visible -- this enhancement never actually replaced it, so a
     // failure here never breaks sign-in.
     console.warn("[DVCAuth] Google's real sign-in button unavailable, falling back to our own button + redirect flow:", err);
+    return null;
   });
 }
 
@@ -214,14 +221,44 @@ function enhanceSignInButton(btn, size) {
 // appendEmailCodeTrigger() below) right under the Google button, so every
 // one of those same surfaces gets the passwordless email-code option for
 // free -- no per-page wiring, same reasoning as the Google button itself.
+//
+// Everything renders inside a purpose-built .dvc-signin-cluster (flex
+// column, align-items: center) rather than depending on whatever
+// alignment the passed-in `container` happens to have -- an earlier
+// version relied on ambient CSS (some pages centered it via text-align on
+// an ancestor, home.html's dashboard banner instead used a `justify-
+// content: space-between` flex row), so the email option ended up
+// centered on some pages and left-justified on others, a real reported
+// bug. Owning the layout here guarantees identical behavior everywhere
+// renderSignInButton() is called, regardless of the surrounding page.
 function renderSignInButton(container, className, size = "medium") {
   if (!container) return;
   if (!configured) { container.innerHTML = ""; return; }
-  container.innerHTML = `<button type="button" class="${className}">Sign in with Google</button>`;
-  const btn = container.firstElementChild;
+  injectEmailCodeStyles();
+  container.innerHTML = `<div class="dvc-signin-cluster"><button type="button" class="${className}">Sign in with Google</button></div>`;
+  const cluster = container.firstElementChild;
+  const btn = cluster.firstElementChild;
   btn.addEventListener("click", signInWithGoogle);
-  enhanceSignInButton(btn, size);
-  appendEmailCodeTrigger(container);
+  const trigger = appendEmailCodeTrigger(cluster);
+  enhanceSignInButton(btn, size).then((googleSpan) => matchEmailTriggerSize(trigger, googleSpan));
+}
+
+// Google's real button renders inside a cross-origin iframe, so its
+// actual size can only be read back by measuring the wrapping <span> we
+// created for it (enhanceSignInButton()) -- it can't be set via CSS,
+// since we don't control the iframe's internal layout. Matching our own
+// button's min-width/min-height to that MEASURED size, rather than
+// guessing fixed px values that can silently drift out of sync with
+// whatever size Google actually renders in a given context/locale, is
+// what keeps both pills reading as equally-weighted options instead of
+// one looking like a smaller afterthought next to the other (also a real
+// reported bug). No-ops if Google's button never rendered (googleSpan is
+// null) -- the trigger just keeps its own CSS-default size in that case.
+function matchEmailTriggerSize(trigger, googleSpan) {
+  if (!trigger || !googleSpan) return;
+  const rect = googleSpan.getBoundingClientRect();
+  if (rect.width > 0) trigger.style.minWidth = Math.round(rect.width) + "px";
+  if (rect.height > 0) trigger.style.minHeight = Math.round(rect.height) + "px";
 }
 
 // Compatibility shim for pages not yet updated to call renderSignInButton()
@@ -402,18 +439,15 @@ function openEmailCodeModal() {
 }
 
 // A real "or" divider + a second pill-shaped button, appended after every
-// Google button (see renderSignInButton() above) -- a first version used a
-// plain underlined text link here, which read as a disclaimer/fallback
-// bolted onto the real (Google) button rather than an equally legitimate
-// second option, and it also left-aligned itself inside containers that
-// don't center block content, landing visually disconnected from Google's
-// centered pill above it (a real user-reported "looks rough" bug, not
-// just taste). This mirrors Google's own button shape/size instead, and
-// both the divider and the button center themselves via their own
-// width:fit-content + margin:auto rather than depending on whatever
-// layout/alignment each page's own container happens to use -- has to
-// look reasonable in wildly different contexts (compact nav pill,
-// full-page gate, home.html card widget) with no per-page customization.
+// Google button inside the .dvc-signin-cluster renderSignInButton() builds
+// -- a first version used a plain underlined text link here, which read
+// as a disclaimer bolted onto the real (Google) button rather than an
+// equally legitimate second option. Positioning/centering is entirely the
+// cluster's job now (flex column, align-items: center in
+// renderSignInButton()'s comment) -- this only sizes/styles its own two
+// elements, and returns the button so renderSignInButton() can
+// size-match it against Google's actual measured button size once that
+// renders (matchEmailTriggerSize()).
 function appendEmailCodeTrigger(container) {
   // Inject styles here too, not just from ensureEmailCodeModal() -- that
   // only ran on first CLICK, so the trigger itself rendered as an
@@ -433,6 +467,7 @@ function appendEmailCodeTrigger(container) {
   link.innerHTML = `<span class="dvc-emailcode-trigger-icon">&#9993;</span>Sign in with Email`;
   link.addEventListener("click", openEmailCodeModal);
   container.appendChild(link);
+  return link;
 }
 
 // Self-contained CSS injected once into <head> -- auth.js runs on pages
@@ -446,14 +481,24 @@ function injectEmailCodeStyles() {
   emailCodeStylesInjected = true;
   const style = document.createElement("style");
   style.textContent = `
+/* .dvc-signin-cluster (flex column, align-items: center) is what actually
+   centers every child here -- these three rules only size/style their own
+   content, not position themselves, so they render identically no matter
+   what CSS the page wrapping renderSignInButton()'s container applies. */
+.dvc-signin-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
 .dvc-emailcode-divider {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: fit-content;
-  min-width: 130px;
+  width: 130px;
   max-width: 100%;
-  margin: 10px auto 8px;
+  margin: 8px 0;
   color: #aaa;
   font-size: 0.68rem;
   font-weight: 700;
@@ -474,15 +519,12 @@ function injectEmailCodeStyles() {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
   box-sizing: border-box;
-  padding: 7px 18px;
+  padding: 9px 22px;
   background: white;
   border: 1px solid #d5d5d5;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.87rem;
   font-weight: 600;
   color: #444;
   cursor: pointer;
