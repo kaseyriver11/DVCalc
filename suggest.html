@@ -101,117 +101,310 @@ body {
   margin-bottom: 16px;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
+.find-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  background: #4a148c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(74,20,140,0.3);
+  transition: background 0.15s, transform 0.1s;
 }
-
-.form-field { display: flex; flex-direction: column; gap: 4px; }
-
-.form-field label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: #888;
-  letter-spacing: 0.4px;
-}
-
-.form-field input, .form-field select {
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.88rem;
-  background: white;
-}
-
-.form-field input:focus, .form-field select:focus {
-  outline: none;
-  border-color: #4a148c;
-  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
-}
+.find-btn:hover { background: #38106b; }
+.find-btn:active { transform: scale(0.98); }
 
 .scope-note {
   font-size: 0.76rem;
   color: #999;
-  margin-top: -8px;
-  margin-bottom: 16px;
+  margin-top: 8px;
+  margin-bottom: 4px;
 }
 .scope-note a { color: #4a148c; }
 
-.find-btn {
-  background: #4a148c;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 24px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.find-btn:hover { background: #38106b; }
+/* ---- Step-by-Step Card Wizard ------------------------------------------
+   Replaces the old all-at-once static form. Only the active step's body
+   is ever in the DOM; completed steps collapse to a one-line summary
+   (tap to reopen and edit -- wizardStep jumps back to it) and steps not
+   reached yet render as dimmed placeholders. Once the wizard finishes
+   (wizardStep = 5, a "done" sentinel), every step's `s < wizardStep`
+   check is true, so all four collapse automatically with no special
+   case needed. Points and Year/Travel-Window are two separate steps
+   (not combined into one) so the travel-window picker -- now a
+   multi-select -- has its own dedicated card instead of being crammed
+   below the points field. ---- */
+.wizard-progress { height: 4px; background: #eee; border-radius: 2px; margin-bottom: 18px; overflow: hidden; }
+.wizard-progress-fill { height: 100%; background: #4a148c; transition: width 0.2s; }
 
-.results-summary {
+.wizard { display: flex; flex-direction: column; gap: 10px; }
+
+.wizard-step { border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
+.wizard-step.upcoming { opacity: 0.5; }
+.wizard-step.collapsed { cursor: pointer; }
+.wizard-step.collapsed:hover { border-color: #4a148c; }
+
+.wizard-step-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+
+.wizard-step-number {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.82rem;
+  background: #f0f0f0; color: #aaa;
+}
+.wizard-step.active .wizard-step-number { background: #4a148c; color: white; }
+.wizard-step-number.done { background: #ece1f7; color: #4a148c; }
+
+.wizard-step-title { font-weight: 700; font-size: 0.92rem; color: #1a237e; }
+.wizard-step.upcoming .wizard-step-title { color: #aaa; }
+
+.wizard-step-summary { margin-left: auto; font-size: 0.8rem; color: #888; text-align: right; }
+.wizard-step-chevron { color: #bbb; font-size: 0.8rem; }
+
+.wizard-step-body { padding: 0 16px 18px; }
+
+.wizard-field-label {
+  font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
+  color: #888; letter-spacing: 0.4px; margin-bottom: 6px;
+}
+
+.wizard-step-body input, .wizard-step-body select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem; /* >=16px so iOS Safari never auto-zooms on focus */
+  background: white;
+}
+.wizard-step-body input:focus, .wizard-step-body select:focus {
+  outline: none;
+  border-color: #4a148c;
+  box-shadow: 0 0 0 3px rgba(74,20,140,0.15);
+}
+
+#w-points { font-size: 1.6rem; font-weight: 700; text-align: center; }
+
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.chip {
+  font: inherit;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #555;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.chip:hover { border-color: #4a148c; color: #4a148c; }
+.chip.active { background: #4a148c; border-color: #4a148c; color: white; }
+
+/* Horizontally scrollable single-tap month picker -- 13 pills (Any + 12
+   months) never need to wrap or shrink illegibly at any viewport, they
+   just scroll, with scroll-snap so a swipe settles on a whole pill. */
+.month-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  padding-bottom: 6px;
+}
+.month-scroll .chip { scroll-snap-align: start; }
+
+/* auto-fit + minmax means this needs no breakpoint of its own: it's 2
+   columns on a narrow phone (130px min won't fit 3 into ~340px of
+   content width) and widens to fit all 5 in one row on desktop. */
+.category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.category-card {
+  min-height: 60px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+}
+.category-card .category-emoji { font-size: 1.3rem; }
+.category-card:hover { border-color: #4a148c; }
+.category-card.active { border-color: #4a148c; background: #f7f5fa; color: #4a148c; }
+
+.stay-length-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 16px; }
+
+.scope-toggle { display: flex; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; }
+.scope-toggle button {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  background: white;
+  font: inherit;
+  font-weight: 600;
   font-size: 0.85rem;
   color: #555;
+  cursor: pointer;
+}
+.scope-toggle button + button { border-left: 1px solid #ddd; }
+.scope-toggle button.active { background: #4a148c; color: white; }
+.scope-toggle button:disabled { color: #ccc; cursor: not-allowed; }
+
+.wizard-nav { display: flex; gap: 10px; margin-top: 18px; }
+.wizard-nav .find-btn { width: auto; flex: 1; }
+.btn-back {
+  font: inherit;
+  min-height: 48px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #555;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-back:hover { border-color: #999; }
+
+/* ---- Results header: count badge + sort toolbar ------------------------
+   One pill-badge count and one row of toggle pills, identical at every
+   viewport -- there's no table with its own header-click affordance to
+   keep in sync (see the suggest.html note in CLAUDE.md). ---- */
+.results-count-badge {
+  display: inline-block;
+  background: #ece1f7;
+  color: #4a148c;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 999px;
   margin-bottom: 14px;
 }
-.results-summary strong { color: #1a237e; }
 
-.empty-note {
-  color: #999;
-  font-style: italic;
-  font-size: 0.88rem;
-  padding: 16px 0;
-}
-
-.results-table-wrap { overflow-x: auto; }
-
-.results-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-
-.results-table th, .results-table td {
-  padding: 9px 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-  white-space: nowrap;
-}
-
-.results-table thead th {
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  color: #888;
-  font-weight: 700;
-  cursor: pointer;
-  user-select: none;
-}
-.results-table thead th:hover { color: #4a148c; }
-.results-table thead th.sorted { color: #4a148c; }
-
-.results-table td.num { font-variant-numeric: tabular-nums; text-align: right; }
-.results-table .resort-name { font-weight: 600; color: #1a237e; white-space: normal; }
-.results-table .room-name { font-size: 0.78rem; color: #888; }
-
-.view-btn {
-  font-size: 0.76rem;
+.sort-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.sort-toolbar-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; color: #999; margin-right: 2px; }
+.sort-pill {
+  font: inherit;
+  min-height: 40px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #555;
+  font-size: 0.82rem;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
+  cursor: pointer;
+}
+.sort-pill:hover { border-color: #4a148c; color: #4a148c; }
+.sort-pill.active { background: #4a148c; border-color: #4a148c; color: white; }
+
+/* ---- Delightful empty state --------------------------------------- */
+.empty-state { text-align: center; padding: 32px 16px; }
+.empty-state-icon {
+  width: 64px; height: 64px; line-height: 64px;
+  border-radius: 50%; background: #f7f5fa; font-size: 1.8rem; margin: 0 auto 16px;
+}
+.empty-state-title { font-weight: 700; font-size: 1rem; color: #1a237e; margin-bottom: 6px; }
+.empty-state-desc { font-size: 0.85rem; color: #888; max-width: 360px; margin: 0 auto 20px; line-height: 1.5; }
+.empty-state-actions { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+.empty-state-actions button {
+  font: inherit;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #4a148c;
+  background: white;
+  color: #4a148c;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.empty-state-actions button:hover { background: #f7f5fa; }
+
+/* ---- Result cards (all viewports, see CLAUDE.md's suggest.html note) --- */
+.results-cards { display: flex; flex-direction: column; gap: 12px; }
+
+.result-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.result-card-header { margin-bottom: 10px; }
+.resort-name { font-weight: 700; color: #1a237e; font-size: 1rem; line-height: 1.3; }
+.room-name { font-size: 0.8rem; color: #888; margin-top: 2px; }
+
+.result-card-dates {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: #faf8fd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.result-card-dates-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.4px; color: #888; font-weight: 600; }
+.result-card-dates-value { font-size: 0.88rem; font-weight: 600; color: #1a237e; font-variant-numeric: tabular-nums; }
+
+.result-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.result-card-metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.result-card-metric-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.3px; color: #999; font-weight: 600; }
+.result-card-metric-value { font-size: 0.95rem; font-weight: 700; color: #333; font-variant-numeric: tabular-nums; }
+/* Nights is this page's headline answer ("how long can I stay"), so it
+   gets the same large-callout treatment contractvalue.html gives its own
+   single most important metric. */
+.result-card-metric.hero .result-card-metric-value { font-size: 1.4rem; color: #4a148c; }
+
+.result-card-view {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 8px;
   border: 1px solid #4a148c;
   background: white;
   color: #4a148c;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
 }
-.view-btn:hover { background: #4a148c; color: white; }
+.result-card-view:hover { background: #4a148c; color: white; }
+.result-card-view:active { transform: scale(0.98); }
 
-@media (max-width: 700px) {
-  .form-grid { grid-template-columns: repeat(2, 1fr); }
+.show-more-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px dashed #ccc;
+  background: white;
+  color: #4a148c;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
 }
+.show-more-btn:hover { border-color: #4a148c; background: #f7f5fa; }
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -227,17 +420,19 @@ body {
       document.body.appendChild(s);
     });
   </script>
+  <link rel="stylesheet" href="tokens.css">
   <script type="module" src="auth.js"></script>
   <script src="nav.js"></script>
 </head>
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html" class="active">Suggest a Stay</a>
@@ -258,6 +453,7 @@ body {
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -270,52 +466,9 @@ body {
 
   <div class="page">
     <div class="section">
-      <h2>Your Budget</h2>
-      <div class="section-sub">Fill in what you know. Everything else stays flexible.</div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label for="f-points">Points Available</label>
-          <input type="number" id="f-points" min="1" step="1" placeholder="e.g. 150">
-        </div>
-        <div class="form-field">
-          <label for="f-year">Points Year</label>
-          <select id="f-year"></select>
-        </div>
-        <div class="form-field">
-          <label for="f-month">Travel Month</label>
-          <select id="f-month">
-            <option value="any">Any month</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label for="f-category">Room Type</label>
-          <select id="f-category">
-            <option value="any">Any</option>
-            <option value="studio">Studio</option>
-            <option value="one">1-Bedroom</option>
-            <option value="two">2-Bedroom</option>
-            <option value="three">3-Bedroom / Grand Villa</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label for="f-nights">Minimum Nights</label>
-          <input type="number" id="f-nights" min="1" step="1" value="1">
-        </div>
-        <div class="form-field">
-          <label for="f-max-nights">Maximum Nights</label>
-          <input type="number" id="f-max-nights" min="1" step="1" placeholder="No max">
-        </div>
-        <div class="form-field">
-          <label for="f-scope">Resorts to Search</label>
-          <select id="f-scope">
-            <option value="all">All resorts</option>
-            <option value="access" id="scope-access-option" style="display:none;">Resorts I can book</option>
-            <option value="home" id="scope-home-option" style="display:none;">My home resort(s) only</option>
-          </select>
-        </div>
-      </div>
-      <div class="scope-note" id="scope-note" style="display:none;"></div>
-      <button type="button" class="find-btn" id="find-btn">Find Stays</button>
+      <h2>Plan Your Stay</h2>
+      <div class="section-sub">Answer a few quick questions -- we'll find stays that fit.</div>
+      <div class="wizard" id="wizard"></div>
     </div>
 
     <div class="section" id="results-section" style="display:none;">
@@ -324,6 +477,8 @@ body {
     </div>
   </div>
 
+  <script src="dvc-track.js"></script>
+  <script src="dvc-ui.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
@@ -335,20 +490,20 @@ const AVAILABLE_YEARS = ALL_DATA_YEARS.filter(y => y >= currentRealYear).length
   : [ALL_DATA_YEARS[ALL_DATA_YEARS.length - 1]];
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const POINT_PRESETS = [100, 150, 200, 250];
+const TODAY = new Date();
+const TODAY_STR = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, "0")}-${String(TODAY.getDate()).padStart(2, "0")}`;
 
-let userContracts = [];
-let sortKey = "nights";
-let sortDir = "desc";
-let lastResults = [];
-
-function formatDate(year, month, day) {
-  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
-
-function addDays(dateStr, n) {
-  const d = new Date(dateStr + "T12:00:00");
-  d.setDate(d.getDate() + n);
-  return formatDate(d.getFullYear(), d.getMonth(), d.getDate());
+// When the selected Points Year is the current real year, a month that's
+// already passed can't be searched -- there's no such thing as booking a
+// stay in April once it's September. A future year has no such
+// restriction since none of its months have happened yet.
+function availableMonthsForYear(year) {
+  const indices = year === currentRealYear
+    ? MONTH_ABBR.map((_, i) => i).filter(i => i >= TODAY.getMonth())
+    : MONTH_ABBR.map((_, i) => i);
+  return indices.map(i => [i, MONTH_ABBR[i]]);
 }
 
 // Inclusive keyword match, not a "default to studio" fallback -- a room
@@ -360,12 +515,25 @@ function addDays(dateStr, n) {
 // bucket rather than being miscounted as a studio.
 const CATEGORY_KEYWORDS = { studio: "studio", one: "one-bedroom", two: "two-bedroom", three: "three-bedroom" };
 
+// [key, label, emoji] -- key must match a CATEGORY_KEYWORDS entry (or
+// "any"). Grand Villas aren't a separate filterable category: the room
+// data names them e.g. "Three-Bedroom Grand Villa", so they already fall
+// under "three" via the same keyword match.
+const CATEGORY_OPTIONS = [
+  ["any", "Any", "\u{1F30E}"],
+  ["studio", "Studio", "\u{1F6CF}\u{FE0F}"],
+  ["one", "1-Bedroom", "\u{1F6CB}\u{FE0F}"],
+  ["two", "2-Bedroom", "\u{1F3E0}"],
+  ["three", "3BR / Grand Villa", "\u{1F3F0}"],
+];
+
+const STEP_TITLES = ["Points Available", "Year & Travel Window", "Room Type & Party Vibe", "Stay Length & Scope"];
+const WIZARD_STEP_COUNT = STEP_TITLES.length;
+
 function roomMatchesCategory(rt, category) {
   if (category === "any") return true;
   return rt.name.toLowerCase().includes(CATEGORY_KEYWORDS[category]);
 }
-
-const CATEGORY_LABELS = { studio: "Studio", one: "1-Bedroom", two: "2-Bedroom", three: "3-Bedroom" };
 
 function uniqueResorts(year) {
   const seen = new Set();
@@ -378,11 +546,24 @@ function uniqueResorts(year) {
   return list.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+function formatDate(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() + n);
+  return formatDate(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
 // Greedily extends a stay night by night from startDateStr while the
 // running point total stays within budget. This IS the correct max-nights
 // answer for a single continuous stay (not just a heuristic) -- points
 // per night are always positive, so there's no benefit to skipping a
-// night the way there might be in a more general knapsack problem.
+// night the way there might be in a more general knapsack problem. Now
+// that the wizard defaults maxNights to a real vacation-length cap (7),
+// this naturally lands in a sensible window instead of always maxing out
+// at the old 14-night ceiling.
 function maxNightsWithinBudget(resort, roomTypeId, startDateStr, budget, capNights) {
   let total = 0, nights = 0, dateStr = startDateStr;
   for (let i = 0; i < capNights; i++) {
@@ -395,7 +576,23 @@ function maxNightsWithinBudget(resort, roomTypeId, startDateStr, budget, capNigh
   return { nights, total };
 }
 
-function findFeasibleStays({ points, year, month, category, minNights, maxNights, resortIds }) {
+// months: [] (or omitted) means "any month" -- searches the whole year,
+// same as before. A non-empty array restricts the search to just those
+// months' days, concatenated (order doesn't matter -- maxNightsWithinBudget
+// is run per start date independently either way).
+function datesForMonths(year, months) {
+  if (!months || months.length === 0) {
+    return Array.from({ length: 365 }, (_, i) => addDays(`${year}-01-01`, i));
+  }
+  const dates = [];
+  for (const m of months) {
+    const daysInMonth = new Date(year, m + 1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) dates.push(formatDate(year, m, d));
+  }
+  return dates;
+}
+
+function findFeasibleStays({ points, year, months, category, minNights, maxNights, resortIds }) {
   const resorts = uniqueResorts(year).filter(r => resortIds == null || resortIds.has(r.id));
   const results = [];
   const CAP_NIGHTS = maxNights || 14;
@@ -405,10 +602,11 @@ function findFeasibleStays({ points, year, month, category, minNights, maxNights
     for (const rt of roomTypes) {
       let bestStart = null, bestNights = 0, bestTotal = 0;
 
-      const daysInMonth = month === "any" ? null : new Date(year, month + 1, 0).getDate();
-      const startDates = month === "any"
-        ? Array.from({ length: 365 }, (_, i) => addDays(`${year}-01-01`, i))
-        : Array.from({ length: daysInMonth }, (_, i) => formatDate(year, month, i + 1));
+      let startDates = datesForMonths(year, months);
+      // Never suggest a stay that's already in the past -- an unrestricted
+      // or current-month search for the current year would otherwise
+      // happily search January again in September.
+      if (year === currentRealYear) startDates = startDates.filter(d => d >= TODAY_STR);
 
       for (const startDate of startDates) {
         const { nights, total } = maxNightsWithinBudget(resort, rt.id, startDate, points, CAP_NIGHTS);
@@ -431,6 +629,7 @@ function findFeasibleStays({ points, year, month, category, minNights, maxNights
           nights: bestNights,
           pointsUsed: bestTotal,
           pointsLeft: points - bestTotal,
+          pointsPerNight: bestTotal / bestNights,
         });
       }
     }
@@ -440,14 +639,83 @@ function findFeasibleStays({ points, year, month, category, minNights, maxNights
 
 function fmtNum(n) { return n.toLocaleString(); }
 
+// ---- Wizard state --------------------------------------------------------
+let wizardStep = 1; // 1-4 = that step active, 5 = "done" (all collapsed)
+const wizardData = {
+  points: null,
+  year: null,
+  months: [], // empty = "any month" -- see datesForMonths()
+  category: "any",
+  minNights: 5,
+  maxNights: 7,
+  scope: "all",
+};
+
+let userContracts = [];
+let isSignedIn = false;
+let hasActiveContracts = false;
+
+// ---- Results state --------------------------------------------------------
+const DEFAULT_RESULT_LIMIT = 20;
+let showAllResults = false;
+let sortKey = "pointsPerNight"; // "Best Value" -- prioritizes efficient point usage by default
+let sortDir = "asc";
+let lastResults = [];
+let lastParams = null;
+
 function sortResults(results) {
   const dir = sortDir === "asc" ? 1 : -1;
   return [...results].sort((a, b) => {
-    if (sortKey === "resortName" || sortKey === "roomName") {
-      return a[sortKey].localeCompare(b[sortKey]) * dir;
-    }
+    if (sortKey === "resortName") return a[sortKey].localeCompare(b[sortKey]) * dir;
     return (a[sortKey] - b[sortKey]) * dir;
   });
+}
+
+const SORT_OPTIONS = [
+  ["pointsPerNight", "Best Value"],
+  ["nights", "Nights"],
+  ["pointsUsed", "Points Used"],
+  ["resortName", "Resort Name"],
+];
+// Efficiency metrics (value, total points) default to ascending -- lower
+// is better. Nights defaults descending (more vacation = "better" when
+// browsing by length). Name is alphabetical.
+function defaultDirFor(key) {
+  if (key === "resortName") return "asc";
+  if (key === "nights") return "desc";
+  return "asc";
+}
+
+function buildSortToolbarHTML() {
+  const pill = ([key, label]) => {
+    const active = sortKey === key;
+    const arrow = active ? (sortDir === "asc" ? " &uarr;" : " &darr;") : "";
+    return `<button type="button" class="sort-pill${active ? " active" : ""}" data-sort="${key}">${label}${arrow}</button>`;
+  };
+  return `
+    <div class="sort-toolbar">
+      <span class="sort-toolbar-label">Sort by</span>
+      ${SORT_OPTIONS.map(pill).join("")}
+    </div>
+  `;
+}
+
+function buildEmptyStateHTML() {
+  const suggestions = [];
+  if (lastParams) {
+    suggestions.push(`<button type="button" id="empty-action-points">Try ${fmtNum(lastParams.points + 20)} points instead</button>`);
+    if (lastParams.minNights > 1) suggestions.push(`<button type="button" id="empty-action-nights">Lower minimum nights to 1</button>`);
+    if (lastParams.scope !== "all") suggestions.push(`<button type="button" id="empty-action-scope">Search all resorts</button>`);
+    if (lastParams.category !== "any") suggestions.push(`<button type="button" id="empty-action-category">Search any room type</button>`);
+  }
+  return `
+    <div class="empty-state">
+      <div class="empty-state-icon">&#127965;&#65039;</div>
+      <div class="empty-state-title">Nothing fits that budget yet</div>
+      <div class="empty-state-desc">No resort/room combination worked with these filters. Try loosening one of them:</div>
+      <div class="empty-state-actions">${suggestions.join("")}</div>
+    </div>
+  `;
 }
 
 function renderResults() {
@@ -456,58 +724,76 @@ function renderResults() {
   section.style.display = "block";
 
   if (lastResults.length === 0) {
-    body.innerHTML = `<div class="empty-note">Nothing fits that budget with these filters -- try more points, a shorter minimum stay, or a wider room/resort search.</div>`;
+    body.innerHTML = buildEmptyStateHTML();
+    const bump = document.getElementById("empty-action-points");
+    if (bump) bump.addEventListener("click", () => { wizardData.points += 20; runSearch(); });
+    const nightsBtn = document.getElementById("empty-action-nights");
+    if (nightsBtn) nightsBtn.addEventListener("click", () => { wizardData.minNights = 1; runSearch(); });
+    const scopeBtn = document.getElementById("empty-action-scope");
+    if (scopeBtn) scopeBtn.addEventListener("click", () => { wizardData.scope = "all"; runSearch(); });
+    const categoryBtn = document.getElementById("empty-action-category");
+    if (categoryBtn) categoryBtn.addEventListener("click", () => { wizardData.category = "any"; runSearch(); });
     return;
   }
 
   const sorted = sortResults(lastResults);
-  const rows = sorted.map(r => `
-    <tr>
-      <td>
+  // Quality over quantity: only the top DEFAULT_RESULT_LIMIT render right
+  // away (ranked by whatever sort is active, "Best Value" by default) --
+  // the rest are one tap away via "Show all", not hidden for good.
+  const visible = showAllResults ? sorted : sorted.slice(0, DEFAULT_RESULT_LIMIT);
+
+  const cardHTML = (r, i) => `
+    <div class="result-card">
+      <div class="result-card-header">
         <div class="resort-name">${r.resortName}</div>
         <div class="room-name">${r.roomName}</div>
-      </td>
-      <td>${r.checkIn} &rarr; ${r.checkOut}</td>
-      <td class="num">${r.nights}</td>
-      <td class="num">${fmtNum(r.pointsUsed)}</td>
-      <td class="num">${fmtNum(r.pointsLeft)}</td>
-      <td><button type="button" class="view-btn" data-view="${sorted.indexOf(r)}">View</button></td>
-    </tr>
-  `).join("");
-
-  const colHeader = (key, label) => `<th data-sort="${key}" class="${sortKey === key ? "sorted" : ""}">${label}${sortKey === key ? (sortDir === "asc" ? " &uarr;" : " &darr;") : ""}</th>`;
-
-  body.innerHTML = `
-    <div class="results-summary"><strong>${lastResults.length}</strong> resort/room combination${lastResults.length === 1 ? "" : "s"} fit your budget.</div>
-    <div class="results-table-wrap">
-      <table class="results-table">
-        <thead>
-          <tr>
-            ${colHeader("resortName", "Resort")}
-            <th>Best Dates</th>
-            ${colHeader("nights", "Nights")}
-            ${colHeader("pointsUsed", "Points Used")}
-            ${colHeader("pointsLeft", "Points Left")}
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+      </div>
+      <div class="result-card-dates">
+        <span class="result-card-dates-label">Best Dates</span>
+        <span class="result-card-dates-value">${r.checkIn} &rarr; ${r.checkOut}</span>
+      </div>
+      <div class="result-card-grid">
+        <div class="result-card-metric hero">
+          <span class="result-card-metric-label">Nights</span>
+          <span class="result-card-metric-value">${r.nights}</span>
+        </div>
+        <div class="result-card-metric">
+          <span class="result-card-metric-label">Points Used</span>
+          <span class="result-card-metric-value">${fmtNum(r.pointsUsed)}</span>
+        </div>
+        <div class="result-card-metric">
+          <span class="result-card-metric-label">Points Left</span>
+          <span class="result-card-metric-value">${fmtNum(r.pointsLeft)}</span>
+        </div>
+      </div>
+      <button type="button" class="result-card-view" data-view="${i}">View This Stay</button>
     </div>
   `;
 
-  body.querySelectorAll("th[data-sort]").forEach(th => {
-    th.addEventListener("click", () => {
-      const key = th.dataset.sort;
+  body.innerHTML = `
+    <div class="results-count-badge">${lastResults.length} stay${lastResults.length === 1 ? "" : "s"} match${lastResults.length === 1 ? "es" : ""} your budget</div>
+    ${buildSortToolbarHTML()}
+    <div class="results-cards">
+      ${visible.map((r, i) => cardHTML(r, i)).join("")}
+    </div>
+    ${sorted.length > visible.length ? `<button type="button" class="show-more-btn" id="show-more-results">Show all ${sorted.length} stays</button>` : ""}
+  `;
+
+  body.querySelectorAll(".sort-pill").forEach(pillBtn => {
+    pillBtn.addEventListener("click", () => {
+      const key = pillBtn.dataset.sort;
       if (sortKey === key) {
         sortDir = sortDir === "asc" ? "desc" : "asc";
       } else {
         sortKey = key;
-        sortDir = key === "resortName" || key === "roomName" ? "asc" : "desc";
+        sortDir = defaultDirFor(key);
       }
       renderResults();
     });
   });
+
+  const showMoreBtn = document.getElementById("show-more-results");
+  if (showMoreBtn) showMoreBtn.addEventListener("click", () => { showAllResults = true; renderResults(); });
 
   body.querySelectorAll("[data-view]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -522,51 +808,324 @@ function renderResults() {
       };
       sessionStorage.setItem("dvc_calendar_state", JSON.stringify(restoredState));
       sessionStorage.setItem("dvc_return_to_calendar", "1");
+      // Separate from the pair above (which app.js consumes and clears on
+      // load) -- this is what lets index.html's "Back to Suggest a Stay"
+      // banner return here with the exact same search restored, rather
+      // than just linking back to a blank wizard.
+      sessionStorage.setItem("dvc_suggest_state", JSON.stringify({ wizardData, sortKey, sortDir, showAllResults }));
+      sessionStorage.setItem("dvc_suggest_return", "1");
       window.location.href = "index.html";
     });
   });
 }
 
 function runSearch() {
-  const points = parseInt(document.getElementById("f-points").value, 10);
-  if (!points || points <= 0) {
-    alert("Enter how many points you have available.");
-    return;
-  }
-  const year = parseInt(document.getElementById("f-year").value, 10);
-  const monthVal = document.getElementById("f-month").value;
-  const month = monthVal === "any" ? "any" : parseInt(monthVal, 10);
-  const category = document.getElementById("f-category").value;
-  const minNights = Math.max(1, parseInt(document.getElementById("f-nights").value, 10) || 1);
-  const maxNightsRaw = parseInt(document.getElementById("f-max-nights").value, 10);
-  const maxNights = maxNightsRaw > 0 ? maxNightsRaw : null;
-  if (maxNights != null && maxNights < minNights) {
-    alert("Maximum nights can't be less than minimum nights.");
-    return;
-  }
-  const scope = document.getElementById("f-scope").value;
+  const { points, year, months, category, minNights, maxNights, scope } = wizardData;
 
   let resortIds = null;
-  if (scope !== "all" && window.DVCAuth) {
+  if (scope === "access" && window.DVCAuth) {
     const allIds = [...new Set(RESORTS.map(r => r.id))];
     const access = window.DVCAuth.getUserResortAccess(userContracts.filter(c => c.is_active), allIds);
-    resortIds = scope === "home" ? access.homeResortIds : new Set([...access.homeResortIds, ...access.sevenMoResortIds]);
+    resortIds = new Set([...access.homeResortIds, ...access.sevenMoResortIds]);
   }
 
-  lastResults = findFeasibleStays({ points, year, month, category, minNights, maxNights, resortIds });
+  lastParams = { points, minNights, scope, category };
+  lastResults = findFeasibleStays({ points, year, months, category, minNights, maxNights, resortIds });
+  showAllResults = false;
+  wizardStep = WIZARD_STEP_COUNT + 1;
+  renderWizard();
   renderResults();
+  document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
 }
 
-function populateYearAndMonth() {
-  const yearSelect = document.getElementById("f-year");
-  yearSelect.innerHTML = AVAILABLE_YEARS.map(y => `<option value="${y}">${y}</option>`).join("");
+// ---- Wizard rendering -----------------------------------------------------
+// "Jan, Mar, Jul" for a few picks, a count once it'd otherwise crowd out
+// the rest of the collapsed-step summary line.
+function monthsSummaryLabel() {
+  if (wizardData.months.length === 0) return "Any month";
+  if (wizardData.months.length <= 3) return wizardData.months.map(m => MONTH_ABBR[m]).join(", ");
+  return `${wizardData.months.length} months`;
+}
 
-  const monthSelect = document.getElementById("f-month");
-  MONTH_NAMES.forEach((name, i) => {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = name;
-    monthSelect.appendChild(opt);
+function stepSummary(s) {
+  if (s === 1) {
+    if (!wizardData.points) return "";
+    return `${fmtNum(wizardData.points)} pts`;
+  }
+  if (s === 2) {
+    if (!wizardData.year) return "";
+    return `${wizardData.year} &middot; ${monthsSummaryLabel()}`;
+  }
+  if (s === 3) return CATEGORY_OPTIONS.find(c => c[0] === wizardData.category)[1];
+  if (s === 4) {
+    const nightsLabel = wizardData.maxNights ? `${wizardData.minNights}-${wizardData.maxNights} nights` : `${wizardData.minNights}+ nights`;
+    const scopeLabel = wizardData.scope === "access" ? "Resorts I can book" : "All resorts";
+    return `${nightsLabel} &middot; ${scopeLabel}`;
+  }
+  return "";
+}
+
+function collapsedStepHTML(s) {
+  return `
+    <div class="wizard-step collapsed" data-goto="${s}">
+      <div class="wizard-step-header">
+        <div class="wizard-step-number done">&#10003;</div>
+        <div class="wizard-step-title">${STEP_TITLES[s - 1]}</div>
+        <div class="wizard-step-summary">${stepSummary(s)}</div>
+        <div class="wizard-step-chevron">&#9662;</div>
+      </div>
+    </div>
+  `;
+}
+
+function upcomingStepHTML(s) {
+  return `
+    <div class="wizard-step upcoming">
+      <div class="wizard-step-header">
+        <div class="wizard-step-number">${s}</div>
+        <div class="wizard-step-title">${STEP_TITLES[s - 1]}</div>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody1() {
+  return `
+    <div class="wizard-step-body">
+      <label class="wizard-field-label" for="w-points">Points Available</label>
+      <input type="number" id="w-points" min="1" step="1" placeholder="e.g. 150" value="${wizardData.points ?? ""}">
+      <div class="chip-row" id="points-chip-row">
+        ${POINT_PRESETS.map(p => `<button type="button" class="chip${wizardData.points === p ? " active" : ""}" data-points="${p}">${p}</button>`).join("")}
+      </div>
+      <div class="wizard-nav">
+        <button type="button" class="find-btn" id="wizard-next-1">Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody2() {
+  const months = availableMonthsForYear(wizardData.year);
+  return `
+    <div class="wizard-step-body">
+      <label class="wizard-field-label" for="w-year">Points Year</label>
+      <div class="custom-select">
+        <select id="w-year" class="native-select">
+          ${AVAILABLE_YEARS.map(y => `<option value="${y}" ${wizardData.year === y ? "selected" : ""}>${y}</option>`).join("")}
+        </select>
+        <button type="button" class="custom-select-trigger">
+          <span class="custom-select-value"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
+        <div class="custom-select-dropdown"></div>
+      </div>
+      <label class="wizard-field-label" style="margin-top:16px;display:block;">Travel Window <span style="text-transform:none;font-weight:400;letter-spacing:normal;color:#bbb;">(pick as many months as you'd like)</span></label>
+      <div class="month-scroll" id="month-scroll">
+        <button type="button" class="chip${wizardData.months.length === 0 ? " active" : ""}" data-month="any">Any month</button>
+        ${months.map(([i, abbr]) => `<button type="button" class="chip${wizardData.months.includes(i) ? " active" : ""}" data-month="${i}">${abbr}</button>`).join("")}
+      </div>
+      <div class="wizard-nav">
+        <button type="button" class="btn-back" id="wizard-back-2">Back</button>
+        <button type="button" class="find-btn" id="wizard-next-2">Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody3() {
+  return `
+    <div class="wizard-step-body">
+      <div class="category-grid">
+        ${CATEGORY_OPTIONS.map(([key, label, emoji]) => `
+          <button type="button" class="category-card${wizardData.category === key ? " active" : ""}" data-category="${key}">
+            <span class="category-emoji">${emoji}</span>${label}
+          </button>
+        `).join("")}
+      </div>
+      <div class="wizard-nav">
+        <button type="button" class="btn-back" id="wizard-back-3">Back</button>
+        <button type="button" class="find-btn" id="wizard-next-3">Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody4() {
+  let noteHTML = "";
+  if (!isSignedIn) {
+    noteHTML = `<div class="scope-note">Sign in to search only resorts you can actually book with your <a href="account.html">contracts</a>.</div>`;
+  } else if (!hasActiveContracts) {
+    noteHTML = `<div class="scope-note">Add a <a href="account.html">contract</a> to filter by what you can actually book.</div>`;
+  }
+  return `
+    <div class="wizard-step-body">
+      <div class="stay-length-grid">
+        <div>
+          <label class="wizard-field-label" for="w-min-nights">Minimum Nights</label>
+          <input type="number" id="w-min-nights" min="1" step="1" value="${wizardData.minNights}">
+        </div>
+        <div>
+          <label class="wizard-field-label" for="w-max-nights">Maximum Nights</label>
+          <input type="number" id="w-max-nights" min="1" step="1" value="${wizardData.maxNights ?? ""}" placeholder="No max">
+        </div>
+      </div>
+      <label class="wizard-field-label" style="display:block;">Resorts to Search</label>
+      <div class="scope-toggle">
+        <button type="button" class="${wizardData.scope === "all" ? "active" : ""}" data-scope="all">All resorts</button>
+        <button type="button" class="${wizardData.scope === "access" ? "active" : ""}" data-scope="access" ${hasActiveContracts ? "" : "disabled"}>Resorts I can book</button>
+      </div>
+      ${noteHTML}
+      <div class="wizard-nav">
+        <button type="button" class="btn-back" id="wizard-back-4">Back</button>
+        <button type="button" class="find-btn" id="wizard-next-4">Find Stays</button>
+      </div>
+    </div>
+  `;
+}
+
+function activeStepHTML(s) {
+  const bodies = { 1: stepBody1, 2: stepBody2, 3: stepBody3, 4: stepBody4 };
+  return `
+    <div class="wizard-step active">
+      <div class="wizard-step-header">
+        <div class="wizard-step-number">${s}</div>
+        <div class="wizard-step-title">${STEP_TITLES[s - 1]}</div>
+      </div>
+      ${bodies[s]()}
+    </div>
+  `;
+}
+
+function renderWizard() {
+  const el = document.getElementById("wizard");
+  const progressStep = Math.min(wizardStep, WIZARD_STEP_COUNT);
+  let html = `<div class="wizard-progress"><div class="wizard-progress-fill" style="width:${(progressStep / WIZARD_STEP_COUNT) * 100}%"></div></div>`;
+  for (let s = 1; s <= WIZARD_STEP_COUNT; s++) {
+    if (s < wizardStep) html += collapsedStepHTML(s);
+    else if (s === wizardStep) html += activeStepHTML(s);
+    else html += upcomingStepHTML(s);
+  }
+  el.innerHTML = html;
+  attachWizardListeners();
+}
+
+function attachWizardListeners() {
+  document.querySelectorAll(".wizard-step.collapsed[data-goto]").forEach(stepEl => {
+    stepEl.addEventListener("click", () => {
+      wizardStep = Number(stepEl.dataset.goto);
+      renderWizard();
+    });
+  });
+
+  // Step 1: Points Available
+  const pointsInput = document.getElementById("w-points");
+  if (pointsInput) {
+    // "input" (not a full re-render) so the chip highlight can track what's
+    // typed without yanking focus out of the field on every keystroke.
+    pointsInput.addEventListener("input", () => {
+      wizardData.points = parseInt(pointsInput.value, 10) || null;
+      document.querySelectorAll("#points-chip-row .chip").forEach(chip => {
+        chip.classList.toggle("active", Number(chip.dataset.points) === wizardData.points);
+      });
+    });
+  }
+  document.querySelectorAll("#points-chip-row .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      wizardData.points = Number(chip.dataset.points);
+      renderWizard();
+    });
+  });
+  const next1 = document.getElementById("wizard-next-1");
+  if (next1) next1.addEventListener("click", () => {
+    const pointsVal = parseInt(document.getElementById("w-points").value, 10);
+    if (!pointsVal || pointsVal <= 0) { alert("Enter how many points you have available."); return; }
+    wizardData.points = pointsVal;
+    wizardStep = 2;
+    renderWizard();
+  });
+
+  // Step 2: Year & Travel Window
+  const yearSelect = document.getElementById("w-year");
+  // This step's markup is rebuilt from scratch (innerHTML) every render, so
+  // this is a fresh <select> node each time -- re-running initCustomSelect
+  // on it is correct here, unlike index.html's persistent selects, which
+  // instead call ._customSelectRender() to repopulate without re-init.
+  if (yearSelect) {
+    window.DVCUI.initCustomSelect(yearSelect);
+    // The month picker below depends on the selected year (a past month
+    // is only meaningful for the CURRENT real year), so switching years
+    // needs a full re-render to refresh which month chips even exist --
+    // dvc-ui.js dispatches a real "change" event on the underlying
+    // <select> when a custom-select option is clicked, same as a native
+    // select, so this fires either way.
+    yearSelect.addEventListener("change", () => {
+      const newYear = parseInt(yearSelect.value, 10);
+      wizardData.year = newYear;
+      const validMonths = new Set(availableMonthsForYear(newYear).map(([i]) => i));
+      wizardData.months = wizardData.months.filter(m => validMonths.has(m));
+      renderWizard();
+    });
+  }
+  // Multi-select: each specific month toggles independently; "Any month"
+  // is exclusive with all of them (picking it clears every specific pick,
+  // and it's shown active only once the list is empty) rather than being
+  // just one more toggle among the twelve.
+  document.querySelectorAll("#month-scroll .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      if (chip.dataset.month === "any") {
+        wizardData.months = [];
+      } else {
+        const m = Number(chip.dataset.month);
+        const idx = wizardData.months.indexOf(m);
+        if (idx === -1) wizardData.months.push(m); else wizardData.months.splice(idx, 1);
+        wizardData.months.sort((a, b) => a - b);
+      }
+      renderWizard();
+    });
+  });
+  const back2 = document.getElementById("wizard-back-2");
+  if (back2) back2.addEventListener("click", () => { wizardStep = 1; renderWizard(); });
+  const next2 = document.getElementById("wizard-next-2");
+  if (next2) next2.addEventListener("click", () => {
+    wizardData.year = parseInt(document.getElementById("w-year").value, 10);
+    wizardStep = 3;
+    renderWizard();
+  });
+
+  // Step 3: Room Type & Party Vibe
+  document.querySelectorAll(".category-card").forEach(card => {
+    card.addEventListener("click", () => {
+      wizardData.category = card.dataset.category;
+      renderWizard();
+    });
+  });
+  const back3 = document.getElementById("wizard-back-3");
+  if (back3) back3.addEventListener("click", () => { wizardStep = 2; renderWizard(); });
+  const next3 = document.getElementById("wizard-next-3");
+  if (next3) next3.addEventListener("click", () => { wizardStep = 4; renderWizard(); });
+
+  // Step 4: Stay Length & Scope
+  document.querySelectorAll(".scope-toggle button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.disabled) return;
+      wizardData.scope = btn.dataset.scope;
+      renderWizard();
+    });
+  });
+  const back4 = document.getElementById("wizard-back-4");
+  if (back4) back4.addEventListener("click", () => { wizardStep = 3; renderWizard(); });
+  const next4 = document.getElementById("wizard-next-4");
+  if (next4) next4.addEventListener("click", () => {
+    const minNights = Math.max(1, parseInt(document.getElementById("w-min-nights").value, 10) || 5);
+    const maxNightsRaw = parseInt(document.getElementById("w-max-nights").value, 10);
+    const maxNights = maxNightsRaw > 0 ? maxNightsRaw : null;
+    if (maxNights != null && maxNights < minNights) {
+      alert("Maximum nights can't be less than minimum nights.");
+      return;
+    }
+    wizardData.minNights = minNights;
+    wizardData.maxNights = maxNights;
+    runSearch();
   });
 }
 
@@ -576,26 +1135,40 @@ async function initAccountScope(attempts) {
     return;
   }
   window.DVCAuth.onAuthChange(async (session) => {
+    isSignedIn = !!session;
     userContracts = session ? await window.DVCAuth.getContracts() : [];
-    const hasActive = userContracts.some(c => c.is_active);
-    document.getElementById("scope-access-option").style.display = hasActive ? "" : "none";
-    document.getElementById("scope-home-option").style.display = hasActive ? "" : "none";
-    const note = document.getElementById("scope-note");
-    if (!session) {
-      note.style.display = "";
-      note.innerHTML = `Sign in to search only resorts you can actually book with your <a href="account.html">contracts</a>.`;
-    } else if (!hasActive) {
-      note.style.display = "";
-      note.innerHTML = `Add a <a href="account.html">contract</a> to filter by what you can actually book.`;
-    } else {
-      note.style.display = "none";
-    }
+    hasActiveContracts = userContracts.some(c => c.is_active);
+    // Only step 4 (or the post-search "done" state, which still renders
+    // step 4 collapsed) shows anything scope-related, so there's nothing
+    // to refresh otherwise.
+    if (wizardStep === 4 || wizardStep === WIZARD_STEP_COUNT + 1) renderWizard();
   });
 }
 
-populateYearAndMonth();
-document.getElementById("find-btn").addEventListener("click", runSearch);
-document.getElementById("f-points").addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
+wizardData.year = AVAILABLE_YEARS[0];
+
+// Restore a search handed off from a "View This Stay" round-trip (see the
+// data-view click handler in renderResults()) so index.html's "Back to
+// Suggest a Stay" banner returns here with the exact same results, not a
+// blank wizard. Consumed once -- a fresh "View This Stay" click re-sets
+// both keys for the next round trip, so there's no need to keep these
+// around past this restore.
+const savedSuggestState = sessionStorage.getItem("dvc_suggest_state");
+sessionStorage.removeItem("dvc_suggest_state");
+sessionStorage.removeItem("dvc_suggest_return");
+let restored = false;
+if (savedSuggestState) {
+  try {
+    const parsed = JSON.parse(savedSuggestState);
+    Object.assign(wizardData, parsed.wizardData);
+    sortKey = parsed.sortKey || sortKey;
+    sortDir = parsed.sortDir || sortDir;
+    showAllResults = !!parsed.showAllResults;
+    runSearch();
+    restored = true;
+  } catch (e) { /* fall through to a fresh wizard below */ }
+}
+if (!restored) renderWizard();
 initAccountScope(40);
   </script>
 </body>

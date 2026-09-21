@@ -138,6 +138,15 @@ body {
   gap: 12px;
 }
 
+@media (max-width: 700px) {
+  /* Never had a mobile override at all -- 3 dropdowns side by side on a
+     phone crushes each to a sliver. Matches the single-column-under-700px
+     convention now used app-wide (contractvalue.html/suggest.html). */
+  .picker-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .picker-slot label {
   display: block;
   font-size: 0.7rem;
@@ -206,6 +215,28 @@ body {
 .compare-table .segment-line:last-child { margin-bottom: 0; }
 .compare-table .segment-resort { font-weight: 600; color: #333; }
 .compare-table .segment-dates { color: #888; }
+.compare-table .segment-room { color: #888; }
+
+.compare-col-title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #999;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* Resets the uppercase/purple styling .compare-table thead th sets for
+   plain text so the nested resort-name div renders as a normal compact
+   heading instead of inheriting that treatment meant for the row label
+   cells (Nights, Total Points, etc). */
+.compare-table thead .segment-resort {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a237e;
+}
 
 .compare-metric {
   font-weight: 700;
@@ -218,6 +249,25 @@ body {
 }
 .compare-metric.best::after {
   content: " \2713";
+  font-size: 0.8em;
+}
+
+/* The pill+label+checkmark render as one atomic nowrap unit -- see the
+   crowdRow comment in buildCompareTableHTML for why this is necessary
+   (auto-layout column widths differing enough to make the identical value
+   wrap differently between columns otherwise). */
+.crowd-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.compare-table td.crowd-cell.best::after {
+  content: none;
+}
+.crowd-check {
+  color: #2e7d32;
+  font-weight: 700;
   font-size: 0.8em;
 }
 
@@ -234,6 +284,49 @@ body {
 .crowd-busy { background: #ef6c00; }
 .crowd-heavy { background: #d84315; }
 .crowd-extreme { background: #b71c1c; }
+
+/* ---- Contract-aware decision rows (Home Priority, Availability Risk,
+   Point Feasibility) ---- */
+/* Deliberately NOT nowrap like .crowd-inline above -- that group is always
+   a short "N Label" pair that comfortably fits one line in any column
+   width. These badges carry full phrases ("Home Resort (11-Month
+   Window)", "7-Month Switch Window") that don't -- forcing them onto one
+   line let the badge's own intrinsic width become the WHOLE table's
+   widest column, pushing the single-itinerary view wider than a phone
+   viewport and clipping every cell in that column (including the
+   pre-existing header/segment text sharing it), not just the badge. See
+   guardrail #1/#8 in CLAUDE.md: wrap, don't force a scroll, when the
+   content is prose rather than a short atomic label. */
+.window-badge, .risk-badge, .feasibility-badge {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: normal;
+}
+.feasibility-badge { font-size: 0.85rem; padding: 4px 10px; }
+
+.window-home, .risk-low, .feasibility-funded { background: #e8f5e9; color: #2e7d32; }
+.window-switch, .feasibility-borrow { background: #fff3e0; color: #e65100; }
+.risk-moderate { background: #fff8e1; color: #f57f17; }
+.window-blocked, .risk-high, .feasibility-deficit { background: #fbe9e7; color: #c62828; }
+
+.window-sub, .risk-sub, .feasibility-detail {
+  font-size: 0.74rem;
+  color: #888;
+  margin-top: 3px;
+}
+
+/* Same "compare-metric.best gets highlighted" intent as the numeric rows,
+   but these cells hold badges instead of a bare number -- a soft
+   background wash reads as "the winner" without needing a checkmark glyph
+   to fight the badge's own emoji for attention. */
+.compare-table td.row-best {
+  background: rgba(46, 125, 50, 0.07);
+  border-radius: 6px;
+}
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -255,11 +348,12 @@ body {
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
@@ -280,6 +374,7 @@ body {
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -299,10 +394,43 @@ body {
   <script src="data/cash_prices_live_summary.js"></script>
   <script src="data/undercovertourist_2026.js"></script>
   <script src="data/undercovertourist_2027.js"></script>
+  <script src="data/availability_data.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="dvc-dates.js"></script>
+  <script src="dvc-ledger.js"></script>
+  <script src="dvc-track.js"></script>
   <script>
 const pageContent = document.getElementById("page-content");
 let itineraries = [];
 const selectedIds = [null, null, null];
+
+// ---- Contract-aware state (Home Priority / Availability Risk / Point
+// Feasibility rows) -- populated in renderSignedIn() alongside itineraries.
+let activeContracts = [];
+let contractYearPoints = [];
+let resortAccess = { homeResortIds: new Set(), sevenMoResortIds: new Set() };
+
+// One-shot handoff from itineraries.html's "Compare Selected" sticky bar --
+// consumed (read once, then removed) so a later manual visit to this page
+// doesn't keep re-applying a stale prior selection.
+function consumeIncomingCompareSelection() {
+  const raw = sessionStorage.getItem("dvc_compare_selected_ids");
+  if (!raw) return;
+  sessionStorage.removeItem("dvc_compare_selected_ids");
+  let ids;
+  try {
+    ids = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  if (!Array.isArray(ids)) return;
+  ids.slice(0, 3).forEach((id, i) => {
+    if (itineraries.some(it => it.id === id)) selectedIds[i] = id;
+  });
+}
+// Guards the Split-Stay Scientist event so re-arranging pickers while
+// already at 2+ selected doesn't re-fire the tracked event every change.
+let splitStayScientistTracked = false;
 
 const CROWD_TABLES = {
   2026: typeof UNDERCOVER_TOURIST_CROWD_2026 !== "undefined" ? UNDERCOVER_TOURIST_CROWD_2026 : null,
@@ -318,9 +446,42 @@ function crowdClass(label) {
   return `crowd-${label.toLowerCase()}`;
 }
 
+// Same 5 tiers as the calendar's own crowd legend (app.js's CROWD_LEGEND):
+// 1-2 Low, 3-4 Moderate, 5-6 Busy, 7-8 Heavy, 9-10 Extreme. Used instead of
+// borrowing the label off whichever individual day happens to be closest to
+// the rounded average -- that could land on a day one tier over from the
+// average's own tier (e.g. an average of 6 picking up a nearby day's "7
+// Heavy" label instead of "6 Busy"), showing the same score with two
+// different names/colors depending on which itinerary it was in.
+function crowdLabelForScore(score) {
+  if (score <= 2) return "Low";
+  if (score <= 4) return "Moderate";
+  if (score <= 6) return "Busy";
+  if (score <= 8) return "Heavy";
+  return "Extreme";
+}
+
 function resortName(id, year) {
   const r = RESORTS.find(r => r.id === id && r.year === year) || RESORTS.find(r => r.id === id);
   return r ? r.name : id;
+}
+
+// "Sep 2 -- Sep 8, 2026" -- the year is dropped from the check-in side
+// unless the stay actually crosses a year boundary (a rare split-stay/
+// New Year's edge case), so the common case reads as one clean range
+// instead of repeating the year twice.
+function formatDateRange(checkIn, checkOut) {
+  const [ciY, ciM, ciD] = checkIn.split("-").map(Number);
+  const [coY, coM, coD] = checkOut.split("-").map(Number);
+  const ciDate = new Date(ciY, ciM - 1, ciD);
+  const coDate = new Date(coY, coM - 1, coD);
+  const coStr = coDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  if (ciY === coY) {
+    const ciStr = ciDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return `${ciStr} – ${coStr}`;
+  }
+  const ciStr = ciDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return `${ciStr} – ${coStr}`;
 }
 
 function roomTypeName(resortId, year, roomTypeId) {
@@ -346,12 +507,6 @@ function stayDateRange(startDateStr, nights) {
   return dates;
 }
 
-function formatDisplayDate(dateStr) {
-  if (!dateStr) return "";
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
-
 function fmt(n) {
   return "$" + Math.round(n).toLocaleString();
 }
@@ -359,8 +514,7 @@ function fmt(n) {
 // Same direct-lookup approach as itineraries.html -- these are future
 // plans against the year they were saved for, so no remapping needed.
 // Also pools every date across every segment for a single blended
-// average crowd/busy score, same averaging itineraries.html's sibling
-// page (the calendar's own Crowd Forecast card) already uses.
+// average crowd/busy score.
 function calcItineraryMetrics(itinerary) {
   let totalPoints = 0, totalCash = 0, totalNights = 0, hasCash = false;
   const allDates = [];
@@ -383,8 +537,7 @@ function calcItineraryMetrics(itinerary) {
   let avgCrowd = null, avgCrowdLabel = null;
   if (crowdEntries.length > 0) {
     avgCrowd = Math.round(crowdEntries.reduce((sum, e) => sum + e.crowd, 0) / crowdEntries.length);
-    avgCrowdLabel = crowdEntries.find(e => e.crowd === avgCrowd)?.label
-      || crowdEntries.slice().sort((a, b) => Math.abs(a.crowd - avgCrowd) - Math.abs(b.crowd - avgCrowd))[0].label;
+    avgCrowdLabel = crowdLabelForScore(avgCrowd);
   }
 
   return {
@@ -398,14 +551,186 @@ function calcItineraryMetrics(itinerary) {
   };
 }
 
+// ---- Contract-aware decision helpers ----
+// This page is self-contained like compare.html/contractvalue.html (doesn't
+// load app.js), so it keeps its own small copy of the two lookup pieces it
+// needs from AVAILABILITY_DATA rather than pulling in the whole file --
+// same NON_WDW_RESORT_IDS/getKeyDatesPeriod as app.js.
+const NON_WDW_RESORT_IDS = new Set(["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"]);
+
+function getKeyDatesPeriod(dateStr, resortId) {
+  const date = new Date(dateStr + "T12:00:00");
+  const month = date.getMonth();
+  const day = date.getDate();
+  const isNonWDW = NON_WDW_RESORT_IDS.has(resortId);
+  if ((month === 11 && day >= 25) || (month === 0 && day <= 5)) return "newYears";
+  if (isNonWDW) {
+    if (month === 0 || month === 1) return "presidents";
+    if (month === 2 || month === 3) return "easter";
+    if (month >= 4 && month <= 7) return "summer";
+    if (month >= 8 && month <= 10) return "thanksgiving";
+    if (month === 11) return "christmas";
+  } else {
+    if (month === 0) return "marathon";
+    if (month === 1) return "presidents";
+    if (month === 2 || month === 3) return "easter";
+    if (month >= 4 && month <= 7) return "summer";
+    if (month === 8 || month === 9) return "foodAndWine";
+    if (month === 10) return "thanksgiving";
+    if (month === 11) return "christmas";
+  }
+  return "summer";
+}
+
+// Worst (minimum) 7-Month availability score across every night of a
+// segment -- same "worst night wins" approach as app.js's
+// getStayAvailability(), but scoped to just the 7Mo window since that's the
+// only one the Availability Risk row cares about.
+function get7MoScoreForSegment(resortId, roomTypeId, dates) {
+  if (typeof AVAILABILITY_DATA === "undefined") return null;
+  const roomData = AVAILABILITY_DATA[resortId]?.[roomTypeId];
+  if (!roomData) return null;
+  let min = null;
+  for (const dateStr of dates) {
+    const period = getKeyDatesPeriod(dateStr, resortId);
+    const score = roomData[period]?.["7Mo"];
+    if (score == null) continue;
+    min = min == null ? score : Math.min(min, score);
+  }
+  return min;
+}
+
+// Collapses the app's existing 5-tier availability scale (app.js's
+// availabilityLabel(): Excellent/Good/Fair/Low/Not Likely, ratio = score /
+// stayLength) down to the 3-tier read this row wants, using the SAME real
+// historical data the calendar's own Booking Outlook card draws from (DVC
+// Field Guide) rather than a hardcoded list of "known tough" resort/room
+// combos -- the data already reflects those cases (Beach Club Studios
+// during Food & Wine included) without needing to special-case them.
+function riskTierForScore(score, stayLength) {
+  if (score == null) return null;
+  const ratio = score / stayLength;
+  if (ratio >= 0.6) return { level: "low", rank: 2, badge: "🟢 Low Risk", sub: "Readily available at 7mo" };
+  if (ratio >= 0.3) return { level: "moderate", rank: 1, badge: "🟡 Moderate Competition", sub: null };
+  return { level: "high", rank: 0, badge: "🔴 High Risk", sub: "Tough 7mo booking" };
+}
+
+function monthsBeforeCheckIn(dateStr, months) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setMonth(dt.getMonth() - months);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+function formatShortDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function daysUntil(dateStr) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return Math.round((new Date(y, m - 1, d) - today) / 86400000);
+}
+
+// Which booking window (home 11mo vs. switch 7mo vs. not bookable at all
+// under any of this user's contracts) an itinerary segment's resort falls
+// into. resortAccess is computed once in renderSignedIn() via
+// DVCAuth.getUserResortAccess(), which already unions permissively across
+// every active contract -- owning even one unrestricted way in makes the
+// resort bookable regardless of what any single other contract would say
+// (see auth.js), so a single lookup here covers every segment/itinerary.
+function homePriorityForSegment(resortId, checkIn) {
+  if (resortAccess.homeResortIds.has(resortId)) {
+    return { type: "home", rank: 2, opensOn: monthsBeforeCheckIn(checkIn, 11) };
+  }
+  if (resortAccess.sevenMoResortIds.has(resortId)) {
+    return { type: "switch", rank: 1, opensOn: monthsBeforeCheckIn(checkIn, 7) };
+  }
+  return { type: "blocked", rank: 0 };
+}
+
+function windowBadgeHTML(info) {
+  if (!info) return `<div class="segment-line">&mdash;</div>`;
+  if (info.type === "home") {
+    return `
+      <div class="segment-line">
+        <span class="window-badge window-home">🏡 Home Resort (11-Month Window)</span>
+        <div class="window-sub">Opens ${formatShortDate(info.opensOn)}</div>
+      </div>`;
+  }
+  if (info.type === "switch") {
+    const d = daysUntil(info.opensOn);
+    const countdown = d <= 0 ? "Window Open" : `Opens in ${d} day${d === 1 ? "" : "s"}`;
+    return `
+      <div class="segment-line">
+        <span class="window-badge window-switch">🔄 7-Month Switch Window</span>
+        <div class="window-sub">${formatShortDate(info.opensOn)} &mdash; ${countdown}</div>
+      </div>`;
+  }
+  return `<div class="segment-line"><span class="window-badge window-blocked">🚫 Not Bookable</span></div>`;
+}
+
+// Same date math as app.js's getCurrentYearRow(), generalized to an
+// arbitrary reference date via DVCDates.currentUYYear()'s own
+// {year,month,day} parameter instead of always "today" -- this finds the
+// use-year cycle that actually covers a future check-in date, so a
+// contract's "+ Plan a year" row (My Contracts) is used when the owner has
+// filled one in for that year, per "match the itinerary's travel year to
+// the Use Year." Falls back to the contract's full annual allotment, same
+// as getCurrentYearRow's own fallback, when no row exists yet for that cycle.
+function getYearRowForDate(contract, dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const uyLabel = window.DVCDates.currentUYYear(contract.use_year, { year: y, month: m, day: d });
+  const row = contractYearPoints.find(r => r.contract_id === contract.id && r.use_year_label === uyLabel);
+  return row
+    ? { remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0, holding: row.points_holding || 0 }
+    : { remaining: contract.points_per_year, banked: 0, borrowed: 0, holding: 0 };
+}
+
+// Pools every active contract's balance for the cycle covering the trip --
+// an owner with multiple contracts often funds one trip from more than one
+// of them, so this checks total feasibility rather than any single contract
+// alone. Uses itinerary.segments[0]'s check-in as the reference date for a
+// split-stay itinerary (same simplification calcItineraryMetrics makes
+// elsewhere on this page: one blended read per itinerary, not per segment).
+// Borrow headroom is modeled the same "elastic capacity" way app.js's
+// 11-to-7 Swap Simulator does (see CLAUDE.md) -- ceiling (DVCLedger's real
+// 100%-of-next-year rule) minus whatever's ALREADY borrowed for that cycle,
+// not a flat re-use of the ceiling, so an already-borrowed contract isn't
+// double-counted.
+function calcFeasibility(itinerary, totalPoints) {
+  if (activeContracts.length === 0) return null;
+  const refDate = itinerary.segments[0]?.checkIn;
+  if (!refDate) return null;
+
+  let available = 0, headroom = 0;
+  for (const c of activeContracts) {
+    const row = getYearRowForDate(c, refDate);
+    available += row.remaining + row.banked + row.borrowed + row.holding;
+    const ceiling = window.DVCLedger.validateBorrowedPoints(row.borrowed, c.points_per_year).maxAllowed;
+    headroom += Math.max(0, ceiling - row.borrowed);
+  }
+
+  if (totalPoints <= available) {
+    return { level: "funded", rank: 2, badge: "✅ Fully Funded", detail: `${Math.round(available - totalPoints).toLocaleString()} pts left over` };
+  }
+  if (totalPoints <= available + headroom) {
+    return { level: "borrow", rank: 1, badge: "⚠️ Requires Borrowing", detail: `${Math.round(totalPoints - available).toLocaleString()} pts needed from next year` };
+  }
+  const deficit = totalPoints - available - headroom;
+  return { level: "deficit", rank: 0, badge: "❌ Point Deficit", detail: `${Math.round(deficit).toLocaleString()} pts beyond max borrow` };
+}
+
 function renderGate() {
   pageContent.innerHTML = `
     <div class="gate">
       <p>Sign in to compare the itineraries you've saved from the calendar.</p>
-      <button type="button" class="big-signin-btn" id="gate-signin">Sign in with Google</button>
+      <div id="gate-signin-slot"></div>
     </div>
   `;
-  document.getElementById("gate-signin").addEventListener("click", () => window.DVCAuth.signInWithGoogle());
+  window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
 }
 
 function renderUnconfigured() {
@@ -441,36 +766,134 @@ function buildCompareTableHTML(selected) {
   const crowdBest = bestIndices(metrics.map(m => m.avgCrowd));
   const cashPerPointBest = bestIndices(metrics.map(m => m.cashPerPoint), "high");
 
-  const headerCells = selected.map(itin => `<th>${itin.name}</th>`).join("");
+  // Header holds only identity (itinerary name, shorthand resort) -- no
+  // room type, no dates, so it stays compact even with a split-stay
+  // itinerary that stacks multiple segments in one column. Room type and
+  // dates get their own rows below instead, same reasoning for each: a
+  // segment's room type/date range should line up in a shared row across
+  // every column, not be buried as header subtext that's awkward to
+  // compare at a glance and wraps unpredictably at narrow widths.
+  const headerCells = selected.map(itin => `
+    <th>
+      <div class="compare-col-title">${itin.name}</div>
+      ${itin.segments.map(seg => `
+        <div class="segment-line">
+          <div class="segment-resort">${shorthandResortName(seg.resortId, resortName(seg.resortId, itin.year))}</div>
+        </div>
+      `).join("")}
+    </th>
+  `).join("");
 
-  const segmentRows = selected.map(itin => `
+  const roomTypeRow = selected.map(itin => `
     <td>
       ${itin.segments.map(seg => `
         <div class="segment-line">
-          <div class="segment-resort">${resortName(seg.resortId, itin.year)}</div>
-          <div class="segment-dates">${roomTypeName(seg.resortId, itin.year, seg.roomTypeId)} &middot; ${formatDisplayDate(seg.checkIn)} &rarr; ${formatDisplayDate(seg.checkOut)}</div>
+          <div class="segment-room">${roomTypeName(seg.resortId, itin.year, seg.roomTypeId)}</div>
         </div>
       `).join("")}
     </td>
   `).join("");
+
+  const datesRow = selected.map(itin => `
+    <td>
+      ${itin.segments.map(seg => `
+        <div class="segment-line">
+          <div class="segment-dates">${formatDateRange(seg.checkIn, seg.checkOut)}</div>
+        </div>
+      `).join("")}
+    </td>
+  `).join("");
+
+  const hasContracts = activeContracts.length > 0;
+
+  // Home Priority & Booking Window -- per segment, same stacking pattern as
+  // roomTypeRow/datesRow above. Itinerary-level "best" uses the WORST
+  // segment's rank (a split stay is only as good as its weakest leg).
+  let homePriorityCells = "";
+  if (hasContracts) {
+    const perItin = selected.map(itin => itin.segments.map(seg => homePriorityForSegment(seg.resortId, seg.checkIn)));
+    const worstRank = perItin.map(perSeg => Math.min(...perSeg.map(p => p.rank)));
+    const bestSet = bestIndices(worstRank, "high");
+    homePriorityCells = perItin.map((perSeg, i) => `
+      <td${bestSet.has(i) ? ' class="row-best"' : ""}>${perSeg.map(windowBadgeHTML).join("")}</td>
+    `).join("");
+  }
+
+  // Availability Risk Index (7-Month Odds) -- doesn't need a contract at
+  // all (7-month odds matter to owners and renters alike), so this one
+  // always renders regardless of hasContracts.
+  const riskPerItin = selected.map(itin => itin.segments.map(seg => {
+    const nights = nightsBetween(seg.checkIn, seg.checkOut);
+    const score = get7MoScoreForSegment(seg.resortId, seg.roomTypeId, stayDateRange(seg.checkIn, nights));
+    return riskTierForScore(score, nights);
+  }));
+  const riskWorstRanks = riskPerItin.map(perSeg => {
+    const ranks = perSeg.filter(Boolean).map(t => t.rank);
+    return ranks.length ? Math.min(...ranks) : null;
+  });
+  const riskBestSet = bestIndices(riskWorstRanks, "high");
+  const riskRow = riskPerItin.map((perSeg, i) => `
+    <td${riskBestSet.has(i) ? ' class="row-best"' : ""}>
+      ${perSeg.map(t => t
+        ? `<div class="segment-line"><span class="risk-badge risk-${t.level}">${t.badge}</span>${t.sub ? `<div class="risk-sub">${t.sub}</div>` : ""}</div>`
+        : `<div class="segment-line">&mdash; No data</div>`
+      ).join("")}
+    </td>
+  `).join("");
+
+  // Point Balance & Feasibility Check -- one read per itinerary (not per
+  // segment), against the itinerary's already-computed totalPoints.
+  let feasibilityRow = "";
+  if (hasContracts) {
+    const feasibilityList = selected.map((itin, i) => calcFeasibility(itin, metrics[i].totalPoints));
+    const bestSet = bestIndices(feasibilityList.map(f => f ? f.rank : null), "high");
+    feasibilityRow = feasibilityList.map((f, i) => f
+      ? `<td${bestSet.has(i) ? ' class="row-best"' : ""}><span class="feasibility-badge feasibility-${f.level}">${f.badge}</span><div class="feasibility-detail">${f.detail}</div></td>`
+      : `<td>&mdash;</td>`
+    ).join("");
+  }
 
   const nightsRow = metrics.map(m => `<td class="compare-metric">${m.totalNights}</td>`).join("");
   const pointsRow = metrics.map((m, i) => `<td class="compare-metric${pointsBest.has(i) ? " best" : ""}">${m.totalPoints.toLocaleString()}</td>`).join("");
   const cashRow = metrics.map((m, i) => `<td class="compare-metric${cashBest.has(i) ? " best" : ""}">${m.totalCash != null ? fmt(m.totalCash) : "&mdash;"}</td>`).join("");
   const cashPerPointRow = metrics.map((m, i) => `<td class="compare-metric${cashPerPointBest.has(i) ? " best" : ""}">${m.cashPerPoint != null ? "$" + m.cashPerPoint.toFixed(2) : "&mdash;"}</td>`).join("");
   const pointsPerNightRow = metrics.map(m => `<td class="compare-metric">${m.pointsPerNight != null ? m.pointsPerNight.toFixed(1) : "&mdash;"}</td>`).join("");
-  const crowdRow = metrics.map((m, i) => `
-    <td class="${crowdBest.has(i) ? "compare-metric best" : ""}">
-      ${m.avgCrowd != null ? `<span class="crowd-pill ${crowdClass(m.avgCrowdLabel)}">${m.avgCrowd}</span> ${m.avgCrowdLabel}` : "&mdash;"}
-    </td>
-  `).join("");
+  // The pill+label+checkmark are one nowrap inline-flex unit (.crowd-inline)
+  // instead of relying on .compare-metric.best's usual ::after checkmark --
+  // two cells with the IDENTICAL "7 Heavy ✓" content were rendering
+  // differently (one wrapped the label below the pill with the checkmark
+  // stranded on its own line, the other stayed on one line) purely because
+  // table auto-layout gave their columns different widths. Forcing this
+  // group to never wrap internally makes every column render it identically,
+  // and the table's existing overflow-x:auto absorbs any resulting width.
+  const crowdRow = metrics.map((m, i) => {
+    if (m.avgCrowd == null) return `<td>&mdash;</td>`;
+    return `
+      <td class="crowd-cell${crowdBest.has(i) ? " compare-metric best" : ""}">
+        <span class="crowd-inline">
+          <span class="crowd-pill ${crowdClass(m.avgCrowdLabel)}">${m.avgCrowd}</span>
+          <span>${m.avgCrowdLabel}</span>
+          ${crowdBest.has(i) ? `<span class="crowd-check">&#10003;</span>` : ""}
+        </span>
+      </td>
+    `;
+  }).join("");
+
+  const noContractsNote = hasContracts
+    ? ""
+    : `<div class="empty-note">Home Resort Priority and Point Feasibility need at least one active contract -- <a href="account.html">add one</a> to see them here.</div>`;
 
   return `
+    ${noContractsNote}
     <div class="compare-table-wrap">
       <table class="compare-table">
         <thead><tr><th></th>${headerCells}</tr></thead>
         <tbody>
-          <tr><th>Itinerary</th>${segmentRows}</tr>
+          <tr><th>Room Type</th>${roomTypeRow}</tr>
+          <tr><th>Dates</th>${datesRow}</tr>
+          ${hasContracts ? `<tr><th>Home Priority &amp; Window</th>${homePriorityCells}</tr>` : ""}
+          <tr><th>Availability Risk (7mo)</th>${riskRow}</tr>
+          ${hasContracts ? `<tr><th>Point Feasibility</th>${feasibilityRow}</tr>` : ""}
           <tr><th>Nights</th>${nightsRow}</tr>
           <tr><th>Total Points</th>${pointsRow}</tr>
           <tr><th>Cash Value</th>${cashRow}</tr>
@@ -514,6 +937,11 @@ function wirePickerListeners() {
       document.getElementById("picker-row").outerHTML = renderPickers();
       wirePickerListeners();
       renderComparison();
+      const selectedCount = selectedIds.filter(Boolean).length;
+      if (selectedCount >= 2 && !splitStayScientistTracked) {
+        splitStayScientistTracked = true;
+        if (window.DVCTrack) window.DVCTrack.track("split-stay-scientist");
+      }
     });
   });
 }
@@ -526,7 +954,17 @@ function renderComparison() {
 }
 
 async function renderSignedIn() {
-  itineraries = await window.DVCAuth.getItineraries();
+  const [itins, contracts, cyp] = await Promise.all([
+    window.DVCAuth.getItineraries(),
+    window.DVCAuth.getContracts(),
+    window.DVCAuth.getContractYearPoints(),
+  ]);
+  itineraries = itins;
+  activeContracts = contracts.filter(c => c.is_active);
+  contractYearPoints = cyp;
+  const allResortIds = [...new Set(RESORTS.map(r => r.id))];
+  resortAccess = window.DVCAuth.getUserResortAccess(activeContracts, allResortIds);
+  consumeIncomingCompareSelection();
 
   if (itineraries.length < 2) {
     pageContent.innerHTML = `
@@ -541,7 +979,7 @@ async function renderSignedIn() {
   pageContent.innerHTML = `
     <div class="section">
       <h2>Compare Itineraries</h2>
-      <div class="section-sub">Pick up to 3 saved itineraries. A green checkmark marks the better number in each row -- fewer points and lighter crowds win, but higher cash value and $/point win too (more rack-rate value for the points you're spending).</div>
+      <div class="section-sub">Pick up to 3 saved itineraries. A green checkmark marks the better number in each row -- fewer points and lighter crowds win, but higher cash value and $/point win too (more rack-rate value for the points you're spending). Home Priority, Availability Risk, and Point Feasibility highlight the strongest option with a soft green badge instead.</div>
       ${renderPickers()}
     </div>
     <div class="section" id="compare-output"></div>

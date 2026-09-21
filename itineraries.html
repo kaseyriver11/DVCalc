@@ -12,18 +12,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
   <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f5f5f5;
+  background: var(--color-bg-page);
   color: #333;
   min-height: 100vh;
 }
 
 .header {
-  background: linear-gradient(135deg, #1a237e, #4a148c);
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
   color: white;
   padding: 16px 24px;
   text-align: center;
@@ -34,17 +35,17 @@ body {
 
 /* ---- Site nav ---- */
 .site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
-.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
 .site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
 .site-nav-group { display: flex; align-items: center; gap: 12px; }
 .site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
 .site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
 .site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
-.site-nav-links a:hover { color: #4a148c; }
-.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 
 .site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
-.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: #4a148c; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
 
 .account-btn, .account-link-btn {
   font: inherit;
@@ -54,13 +55,13 @@ body {
   border-radius: 20px;
   border: 1px solid #ddd;
   background: #f7f5fa;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   white-space: nowrap;
 }
-.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: var(--color-primary); }
 
 @media (max-width: 800px) {
   .site-nav-toggle { display: flex; }
@@ -92,7 +93,7 @@ body {
 .gate p { margin-bottom: 18px; font-size: 0.95rem; }
 
 .big-signin-btn {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -101,7 +102,7 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.big-signin-btn:hover { background: #38106b; }
+.big-signin-btn:hover { background: var(--color-primary-active); }
 
 .section {
   background: white;
@@ -114,7 +115,7 @@ body {
 .section h2 {
   font-size: 1.05rem;
   font-weight: 600;
-  color: #1a237e;
+  color: var(--color-secondary);
   margin-bottom: 4px;
 }
 
@@ -130,7 +131,7 @@ body {
   font-size: 0.88rem;
   padding: 8px 0 16px;
 }
-.empty-note a { color: #4a148c; }
+.empty-note a { color: var(--color-primary); }
 
 .itin-list {
   display: flex;
@@ -138,40 +139,178 @@ body {
   gap: 12px;
 }
 
+/* Washed with the resort's own art (itinCardArtBackground(), set inline
+   per-card) -- same white-wash-over-photo treatment and padding/radius as
+   home.html's "Saved Stays" widget rows (.home-itin-row), so the same
+   saved itinerary reads as the same card whether it's previewed on the
+   dashboard or managed in full here. No compare checkbox anymore (the
+   compare-select flow was removed from this page entirely --
+   itinerarycompare.html has its own pickers and works standalone). Plain
+   padding on every side -- NOT the old fixed right-side reserve for
+   absolutely-positioned icons, which squeezed the segment/footer rows into
+   an artificially narrow column even though only the header row actually
+   shares space with them. The icons now live inside .itin-card-header's
+   own flex row instead, so only that row needs to make room for them. */
+/* cursor:pointer applies to every card (past included) -- clicking
+   anywhere on it loads the itinerary into the calendar (see
+   wireCardEvents()'s .itin-card click listener), which is available
+   regardless of past/upcoming status. */
 .itin-card {
   border: 1px solid #e5e5e5;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 12px 14px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  cursor: pointer;
 }
 
+/* Past-dated itinerary (itineraryIsPast()) -- grayscale, not opacity, so it
+   reads as "this plan already happened" rather than merely "faded/less
+   important" (same distinction account.html's .wallet-card.inactive makes
+   for a deactivated contract). Cards here aren't stacked/overlapping, so
+   there's no bleed-through risk opacity would otherwise cause. */
+.itin-card.past { filter: grayscale(0.85) brightness(0.97); }
+
+/* Title + action icons share ONE row, full width -- title takes whatever
+   space the icons don't (min-width:0 lets it truncate/wrap instead of
+   pushing the icons off), icons never wrap under it. */
+.itin-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.itin-past-badge {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #888;
+  background: #eee;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Edit (load into calendar) + Delete -- low-contrast circular ghost
+   buttons that sit directly on the card art rather than a solid button
+   block, with a small hover "lift" (translateY + deeper shadow) instead of
+   just a color swap, so they read as floating controls over the artwork
+   rather than a form element. */
+.itin-card-icons {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.itin-icon-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  color: #555;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.itin-icon-btn:hover {
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
+  color: var(--color-primary);
+}
+.itin-icon-btn.danger:hover { color: var(--color-danger); }
+
+.itin-card-body {
+  position: relative;
+  min-width: 0;
+}
+
+/* Same weight/size/color as home.html's .home-itin-name -- this is the
+   itinerary's own saved title (user-editable at save time; defaults to a
+   suggested "Resort, Date, Room" name but can be renamed to anything, e.g.
+   "Anniversary Trip"), so it stays the header rather than being replaced
+   by a bare resort name -- that would silently drop a custom name. What
+   changed is everything BELOW it: the resort/room/date details used to
+   restate themselves a second time near-verbatim under this title; now
+   each segment row states them exactly once (see .itin-segment-row). */
 .itin-name {
-  font-weight: 600;
-  color: #1a237e;
-  font-size: 0.95rem;
-  margin-bottom: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--color-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 2px;
 }
 
 .itin-segments {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-bottom: 8px;
+  gap: 2px;
+  margin-bottom: 2px;
 }
 
+/* Same size/color as home.html's .home-itin-meta. One line per segment:
+   resort, room type, nights, and dates -- each fact stated exactly once
+   (nights/points/cash used to ALSO repeat in a separate totals line right
+   below this one). Points and cash now live only in the footer's stat
+   pills (.itin-card-stats) instead. */
 .itin-segment-row {
-  font-size: 0.8rem;
-  color: #555;
-}
-.itin-segment-row strong { color: #333; }
-
-.itin-meta {
   font-size: 0.78rem;
   color: #888;
-  margin-bottom: 10px;
 }
-.itin-meta strong { color: #4a148c; }
+.itin-segment-row strong { color: #666; font-weight: 600; }
 
-.itin-actions { display: flex; gap: 8px; }
+/* Stats (left) + calendar-sync pill (right), one footer row -- replaces
+   the old full-width white "Add Booking Windows to Calendar" block, which
+   sat as a heavy opaque bar across the card and covered most of the art
+   underneath it. The pill is deliberately small and translucent so the
+   art stays visible through/around it instead. */
+.itin-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.itin-card-stats {
+  font-size: 0.78rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.sync-pill {
+  flex-shrink: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--color-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.sync-pill:hover {
+  background: white;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+}
 
 .small-btn {
   font-size: 0.78rem;
@@ -183,14 +322,350 @@ body {
   color: #555;
   cursor: pointer;
 }
-.small-btn:hover { border-color: #4a148c; color: #4a148c; }
-.small-btn.danger:hover { border-color: #c62828; color: #c62828; }
+.small-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.small-btn.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
 .small-btn.primary {
-  background: #4a148c;
-  border-color: #4a148c;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
 }
-.small-btn.primary:hover { background: #38106b; }
+.small-btn.primary:hover { background: var(--color-primary-active); }
+.small-btn:disabled, .small-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: white;
+  color: #999;
+  border-color: #ccc;
+}
+.small-btn.primary:disabled:hover { background: white; }
+
+/* ---- Booking Milestones calendar sync ---- */
+.sync-calendar-wrap { position: relative; }
+
+/* Anchored to the trigger's RIGHT edge -- the sync toggle (.sync-pill) now
+   sits at the right end of the footer row, so right:0 keeps the menu
+   flush with it instead of opening off to one side. Width is capped to
+   the viewport (not a fixed 280px) so it can't overflow off-screen on a
+   narrow phone. */
+.sync-calendar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  width: min(280px, calc(100vw - 48px));
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  padding: 10px;
+}
+
+.sync-menu-ics {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* "Still to come" vs "Already passed" -- a raw list of all 4 milestones
+   with no such split (the original version) meant a trip 8 months out
+   showed the same as one departing tomorrow: no way to tell at a glance
+   which windows still mattered. Passed ones stay visible (so the list is
+   always the same familiar 4 items, not ones that vanish) but read as
+   inert history, not something to act on. */
+.sync-section-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #999;
+  font-weight: 700;
+  margin: 6px 0 4px;
+}
+.sync-section-label:first-child { margin-top: 0; }
+
+.sync-milestone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sync-milestone-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.sync-milestone-row:last-child { border-bottom: none; }
+
+.sync-milestone-row.past { opacity: 0.55; }
+
+.sync-milestone-info { min-width: 0; }
+
+.sync-milestone-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+.sync-milestone-date {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 1px;
+}
+
+.sync-milestone-gcal {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+}
+.sync-milestone-gcal:hover { background: var(--color-primary); color: white; }
+
+.sync-milestone-passed {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #999;
+}
+
+.sync-menu-empty {
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ---- Resort/Room Type/Sort filter toolbar ----
+   Real dropdown selectors -- same .control-group-label + .picker-trigger-
+   family shape as index.html's RESORT/ROOM TYPE controls, and now the same
+   KIND of control too: a free-text "search by resort or room type" box
+   was tried first, but a user was explicit they wanted actual Resort and
+   Room Type pickers here, not a type-to-filter field, to match the
+   calendar exactly. */
+.itin-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 160px;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .itin-toolbar { grid-template-columns: 1fr; }
+}
+
+.itin-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.itin-field-group label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Picker Trigger (ported from styles.css) ----
+   Same button used for index.html's Resort/Room Type controls -- the
+   visible box for a picker that opens a bottom sheet or inline accordion,
+   as opposed to tokens.css's .custom-select-trigger which opens an
+   absolutely-positioned dropdown (still used for Sort here, unchanged --
+   that one genuinely IS a short flat list, matching what a plain dropdown
+   is for). */
+.picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--color-bg-card);
+  background-size: cover;
+  background-position: center;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+.picker-trigger:hover { border-color: #b39ddb; }
+
+/* Resort trigger with a selected filter -- same lavender-wash-over-photo
+   look (resortArtWashCSS()/applyResortArtBackground() below) as
+   index.html's own Resort trigger, set once a resort is filtered on. */
+.picker-trigger.has-art { border-color: rgba(255, 255, 255, 0.6); }
+.picker-trigger.has-art .picker-trigger-value {
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75), 0 0 1px rgba(255, 255, 255, 0.75);
+}
+
+.picker-trigger-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Bottom Sheet (ported from styles.css) ----
+   Same overlay/backdrop mechanics as tokens.css's .modal-overlay/.modal-box
+   (open/close via the .open class already defined there), just re-anchored
+   to the bottom edge and slid up instead of fading a centered box in --
+   same as index.html's #resort-sheet. */
+.sheet-overlay.open { align-items: flex-end; }
+
+.modal-box.sheet {
+  max-width: 100%;
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 16px 16px 0 0;
+  margin: 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  animation: sheet-slide-up 0.22s ease-out;
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  margin: 4px auto 12px;
+}
+
+/* Shows the currently-filtered resort's art (data/resort_images.js), hidden
+   when no resort is selected -- same scene-setting banner as index.html's
+   #resort-sheet-hero. */
+.resort-sheet-hero {
+  height: 120px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 10px;
+}
+
+.sheet-search {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+.sheet-list {
+  overflow-y: auto;
+  max-height: 60vh;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheet-empty {
+  padding: 20px 4px;
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 0.85rem;
+}
+
+.resort-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  text-align: left;
+  white-space: normal;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.resort-pick-row:hover,
+.resort-pick-row:active { background-color: var(--color-primary-tint-bg); }
+.resort-pick-row.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-tint-bg);
+  font-weight: 600;
+}
+
+/* Every DVC resort is listed (same full 17 as the calendar's own sheet),
+   not just ones this account has a saved itinerary for -- resorts/room
+   types with nothing saved are still shown, just greyed out and disabled,
+   so the list always looks/feels exactly like the calendar's and never
+   silently hides an option. */
+.resort-pick-row.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.resort-pick-row.unavailable .resort-pick-swatch { background: #bbb !important; }
+
+.resort-pick-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ---- Room Type chip grid (ported from styles.css) ----
+   Same inline accordion as index.html's Room Type picker -- .open is a
+   class (not inline style) so it's easy to toggle from JS without
+   clobbering any other inline style, same reasoning as the source. */
+.room-type-grid {
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.room-type-grid.open { display: grid; }
+
+.room-type-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  cursor: pointer;
+}
+.room-type-chip:hover { border-color: #b39ddb; }
+.room-type-chip.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-tint-bg);
+}
+.room-type-chip.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.room-type-icon { font-size: 1.3rem; line-height: 1; }
+.room-type-name { font-size: 0.76rem; font-weight: 600; color: var(--color-text); text-align: center; }
+.room-type-sleeps { font-size: 0.66rem; color: var(--color-text-muted); }
+
+.itin-no-results {
+  color: #999;
+  font-style: italic;
+  font-size: 0.88rem;
+  padding: 8px 0 16px;
+}
+
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -212,11 +687,12 @@ body {
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
@@ -237,6 +713,7 @@ body {
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -254,12 +731,43 @@ body {
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="dvc-track.js"></script>
+  <script src="dvc-ui.js"></script>
   <script>
 const pageContent = document.getElementById("page-content");
+let itineraries = [];
+let filterResortId = "";
+let filterRoomType = "";
+let sortKey = "date";
+
+function escapeHTML(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 function resortName(id, year) {
   const r = RESORTS.find(r => r.id === id && r.year === year) || RESORTS.find(r => r.id === id);
   return r ? r.name : id;
+}
+
+// Same white-wash-over-photo treatment and blend ratio as home.js's
+// renderItinerariesWidget() -- home.html's "Saved Stays" preview and this
+// page's own cards are two views onto the same saved itineraries, and a
+// user flagged how different they looked side by side; matching the wash
+// here is most of what makes that true now. This page is self-contained
+// (see CLAUDE.md on home.js duplicating rather than sharing helpers), so
+// it gets its own copy of the helper rather than a shared module. A
+// split-stay itinerary is colored by its FIRST segment's resort, same
+// convention app.js's own shorthandResortName(segs[0].resortId, ...) call
+// already uses for a split-stay's display name. Falls back to a plain tint
+// (no url()) for the never-expected case of a resort with no art.
+function itinCardArtBackground(resortId) {
+  const image = typeof getResortImage === "function" ? getResortImage(resortId) : null;
+  const wash = "linear-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.86))";
+  return image ? `${wash}, url('${image}')` : wash;
 }
 
 function roomTypeName(resortId, year, roomTypeId) {
@@ -310,69 +818,614 @@ function fmt(n) {
   return "$" + Math.round(n).toLocaleString();
 }
 
+// Same short-name-strip as app.js's roomTypeShortName().
+function roomTypeShortName(name) {
+  return name.split(" - ")[0];
+}
+
+// Room Type is a TWO-STEP filter, same dependency the calendar itself has
+// (Room Type is always scoped to one resort there) -- with 17 resorts x
+// several view-category variants each, a single flat list of every room
+// type across every resort ran to 50+ mostly-irrelevant entries. So:
+//  - No resort picked ("All Resorts"): Room Type shows the ~6 broad
+//    categories (Studio, Deluxe Studio, One-Bedroom Villa, ...) collapsed
+//    across every resort (broadRoomTypeCategories()).
+//  - A resort picked: Room Type narrows to just THAT resort's own room
+//    types (roomTypesForResort()), labeled with the same full-name-when-
+//    ambiguous logic as app.js's renderRoomTypeAccordion() (see the
+//    Animal Kingdom Villas fix, 2026-09-20).
+// pickItinResort() resets filterRoomType to "" whenever the resort
+// changes, so filterRoomType's MEANING (broad category vs. this specific
+// resort's own label) is always unambiguous from filterResortId alone --
+// there's no state where a resort-scoped room type value could be read
+// back in All-Resorts mode or vice versa.
+function broadRoomTypeCategories() {
+  const seen = new Map();
+  for (const r of RESORTS) {
+    for (const rt of r.roomTypes) {
+      const short = roomTypeShortName(rt.name);
+      if (!seen.has(short)) seen.set(short, rt.sleeps);
+    }
+  }
+  return [...seen.entries()]
+    .map(([name, sleeps]) => ({ name, sleeps }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function roomTypesForResort(resortId) {
+  const resort = RESORTS.find(r => r.id === resortId);
+  if (!resort) return [];
+  const shortNameCounts = {};
+  resort.roomTypes.forEach(rt => {
+    const short = roomTypeShortName(rt.name);
+    shortNameCounts[short] = (shortNameCounts[short] || 0) + 1;
+  });
+  return resort.roomTypes.map(rt => {
+    const short = roomTypeShortName(rt.name);
+    return { name: shortNameCounts[short] > 1 ? rt.name : short, sleeps: rt.sleeps };
+  });
+}
+
+// A saved segment "counts" toward a given Room Type option under the same
+// rule the option list itself was built with: resort-scoped mode compares
+// the segment's full name (or its short name, for whichever resort that
+// segment's own room types weren't ambiguous) against the option; All
+// Resorts mode compares short names only.
+function segmentMatchesRoomTypeLabel(fullName, optionName) {
+  return fullName === optionName || roomTypeShortName(fullName) === optionName;
+}
+
+// Both filters must match on the SAME segment for a split-stay itinerary
+// to count -- "Resort X" + "Deluxe Studio" means the stay AT Resort X was
+// a Deluxe Studio, not just that the itinerary touches both somewhere
+// across different segments.
+function matchesFilters(itin) {
+  if (!filterResortId && !filterRoomType) return true;
+  return itin.segments.some(seg => {
+    if (filterResortId && seg.resortId !== filterResortId) return false;
+    if (filterRoomType) {
+      const fullName = roomTypeName(seg.resortId, itin.year, seg.roomTypeId);
+      if (!segmentMatchesRoomTypeLabel(fullName, filterRoomType)) return false;
+    }
+    return true;
+  });
+}
+
+// Full universe of resorts for the Resort sheet -- ALL 17 DVC resorts
+// (same list/order the calendar's own #resort-sheet shows), not just ones
+// with a saved itinerary. A user was explicit the picker should look
+// exactly like the calendar's, full stop -- resorts with nothing saved
+// still appear, just greyed out (see savedResortIds() below), rather than
+// being hidden from the list entirely.
+function allResortsForFilter() {
+  const seen = new Map();
+  for (const r of RESORTS) {
+    if (!seen.has(r.id)) seen.set(r.id, r.name);
+  }
+  return [...seen.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// Which resort ids actually appear in a saved itinerary -- used to grey
+// out Resort sheet rows as .unavailable.
+function savedResortIds() {
+  const seen = new Set();
+  for (const itin of itineraries) {
+    for (const seg of itin.segments) seen.add(seg.resortId);
+  }
+  return seen;
+}
+
+// Returns [{ itin, totals }] rather than plain itineraries -- renderCards()
+// needs calcItineraryTotals() output for its Points sort key anyway, so this
+// computes it once per render instead of once for sorting and again for display.
+function getFilteredSortedItineraries() {
+  const filtered = itineraries.filter(itin => matchesFilters(itin));
+  const decorated = filtered.map(itin => ({ itin, totals: calcItineraryTotals(itin) }));
+  decorated.sort((a, b) => {
+    if (sortKey === "points-asc") return a.totals.totalPoints - b.totals.totalPoints;
+    if (sortKey === "points-desc") return b.totals.totalPoints - a.totals.totalPoints;
+    if (sortKey === "name") {
+      const an = a.itin.segments.length ? resortName(a.itin.segments[0].resortId, a.itin.year) : "";
+      const bn = b.itin.segments.length ? resortName(b.itin.segments[0].resortId, b.itin.year) : "";
+      return an.localeCompare(bn);
+    }
+    // "date": upcoming stays first, by first segment's check-in
+    const ad = a.itin.segments.length ? a.itin.segments[0].checkIn : "9999-99-99";
+    const bd = b.itin.segments.length ? b.itin.segments[0].checkIn : "9999-99-99";
+    return ad.localeCompare(bd);
+  });
+  return decorated;
+}
+
 function formatDisplayDate(dateStr) {
   if (!dateStr) return "";
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
+// ---- Resort/Room Type filter pickers ----
+// The SAME components index.html's own Resort (a bottom sheet with a hero
+// photo, search, and swatch rows) and Room Type (an inline chip grid)
+// controls use, down to the closed trigger's own lavender-wash-over-photo
+// look and shorthand name -- a plain <select> restyled to look similar
+// was tried first, but a user was explicit they wanted the actual same
+// pickers the calendar has. This page is self-contained (see CLAUDE.md on
+// home.js duplicating rather than sharing helpers), so these are its own
+// copies rather than an import of app.js's versions.
+
+const ITIN_ACCENT_COLORS = ["#4a148c", "#1b5e3a", "#0d47a1", "#7a1734", "#8d5524", "#37474f"];
+function itinAccentColor(resortId) {
+  let hash = 0;
+  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
+  return ITIN_ACCENT_COLORS[hash % ITIN_ACCENT_COLORS.length];
+}
+
+// Same lavender wash + has-art toggle as app.js's resortArtWashCSS()/
+// applyResortArtBackground(), applied to the trigger button once a resort
+// is filtered on.
+function itinResortArtWashCSS(imagePath) {
+  return `linear-gradient(rgba(236, 225, 247, 0.82), rgba(236, 225, 247, 0.82)), url('${imagePath}')`;
+}
+function applyItinResortArtBackground(el, imagePath) {
+  if (!el) return;
+  if (imagePath) {
+    el.style.backgroundImage = itinResortArtWashCSS(imagePath);
+    el.classList.add("has-art");
+  } else {
+    el.style.backgroundImage = "";
+    el.classList.remove("has-art");
+  }
+}
+
+function syncItinResortTrigger() {
+  const trigger = document.getElementById("itin-resort-trigger");
+  const label = document.getElementById("itin-resort-trigger-label");
+  if (!trigger || !label) return;
+  const match = filterResortId ? allResortsForFilter().find(r => r.id === filterResortId) : null;
+  label.textContent = match
+    ? (typeof shorthandResortName === "function" ? shorthandResortName(match.id, match.name) : match.name)
+    : "All Resorts";
+  applyItinResortArtBackground(trigger, match ? getResortImage(match.id) : null);
+}
+
+// Hero shows the filtered resort's art, same as index.html's own
+// #resort-sheet-hero showing the currently-SELECTED resort's art -- hidden
+// (not just blank) when the filter is "All Resorts", same [hidden]-safe
+// rule the source uses (no `display` override anywhere).
+function setItinResortSheetHero(resortId) {
+  const hero = document.getElementById("itin-resort-sheet-hero");
+  if (!hero) return;
+  const image = resortId && typeof getResortImage === "function" ? getResortImage(resortId) : null;
+  if (image) {
+    hero.style.backgroundImage = `url('${image}')`;
+    hero.hidden = false;
+  } else {
+    hero.style.backgroundImage = "";
+    hero.hidden = true;
+  }
+}
+
+function openItinResortSheet() {
+  const search = document.getElementById("itin-resort-sheet-search");
+  search.value = "";
+  renderItinResortSheetList("");
+  setItinResortSheetHero(filterResortId);
+  document.getElementById("itin-resort-sheet").classList.add("open");
+}
+
+function closeItinResortSheet() {
+  document.getElementById("itin-resort-sheet").classList.remove("open");
+}
+
+function renderItinResortSheetList(filter) {
+  const listEl = document.getElementById("itin-resort-sheet-list");
+  if (!listEl) return;
+  const query = filter.toLowerCase();
+  const saved = savedResortIds();
+  const matches = allResortsForFilter().filter(r => r.name.toLowerCase().includes(query));
+  // Resorts with a saved itinerary first, then the rest -- each group
+  // still alphabetical within itself (filter() preserves the incoming
+  // order, and allResortsForFilter() is already sorted by name, so a
+  // simple partition keeps both groups sorted with no separate re-sort).
+  const options = [
+    ...matches.filter(r => saved.has(r.id)),
+    ...matches.filter(r => !saved.has(r.id)),
+  ];
+  const allRowHTML = !query
+    ? `<button type="button" class="resort-pick-row${!filterResortId ? " selected" : ""}" onclick="pickItinResort('')"><span>All Resorts</span></button>`
+    : "";
+  const rowsHTML = options.length === 0
+    ? (query ? `<div class="sheet-empty">No resorts match "${escapeHTML(filter)}".</div>` : "")
+    : options.map(r => {
+      const unavailable = !saved.has(r.id);
+      return `
+      <button type="button" class="resort-pick-row${filterResortId === r.id ? " selected" : ""}${unavailable ? " unavailable" : ""}" ${unavailable ? "disabled" : `onclick="pickItinResort('${r.id}')"`} title="${unavailable ? "No saved itinerary at this resort" : ""}">
+        <span class="resort-pick-swatch" style="background:${itinAccentColor(r.id)}"></span>
+        <span>${escapeHTML(r.name)}</span>
+      </button>
+    `;
+    }).join("");
+  listEl.innerHTML = allRowHTML + rowsHTML;
+}
+
+function pickItinResort(id) {
+  filterResortId = id;
+  // Room Type's option list depends on which resort (if any) is picked
+  // (see broadRoomTypeCategories()/roomTypesForResort() above) -- a
+  // previously-picked room type almost never makes sense in the new
+  // scope (a resort-specific label like "Deluxe Studio - Savanna View"
+  // isn't even an option once you're back in All-Resorts mode, or once
+  // you've switched to a DIFFERENT resort entirely), so it resets here
+  // rather than silently carrying over into a context it wasn't chosen in.
+  filterRoomType = "";
+  syncItinResortTrigger();
+  syncItinRoomTypeTrigger();
+  closeItinResortSheet();
+  renderCards();
+}
+
+function roomTypeChipIcon(name) {
+  const n = name.toLowerCase();
+  if (n.includes("grand villa")) return "\u{1F3E1}";
+  if (n.includes("two-bedroom")) return "\u{1F3E0}";
+  if (n.includes("one-bedroom")) return "\u{1F6CB}\u{FE0F}";
+  if (n.includes("cabin")) return "\u{1F3D5}\u{FE0F}";
+  return "\u{1F6CF}\u{FE0F}";
+}
+
+function syncItinRoomTypeTrigger() {
+  const label = document.getElementById("itin-roomtype-trigger-label");
+  if (!label) return;
+  label.textContent = filterRoomType || "All Room Types";
+}
+
+function toggleItinRoomTypeGrid() {
+  const grid = document.getElementById("itin-roomtype-grid");
+  if (!grid) return;
+  const opening = !grid.classList.contains("open");
+  if (opening) renderItinRoomTypeGrid();
+  grid.classList.toggle("open", opening);
+}
+
+function renderItinRoomTypeGrid() {
+  const grid = document.getElementById("itin-roomtype-grid");
+  if (!grid) return;
+  const options = filterResortId ? roomTypesForResort(filterResortId) : broadRoomTypeCategories();
+
+  // Which saved segments are even relevant to "unavailable" greying here:
+  // when a resort is picked, only THAT resort's own saved segments count
+  // (a Beach Club stay can't make an AKV room type option available);
+  // when browsing All Resorts, every saved segment counts.
+  const relevantFullNames = [];
+  for (const itin of itineraries) {
+    for (const seg of itin.segments) {
+      if (filterResortId && seg.resortId !== filterResortId) continue;
+      relevantFullNames.push(roomTypeName(seg.resortId, itin.year, seg.roomTypeId));
+    }
+  }
+
+  grid.innerHTML = `
+    <button type="button" class="room-type-chip${!filterRoomType ? " selected" : ""}" data-room-type="">
+      <span class="room-type-icon">&#127968;</span>
+      <span class="room-type-name">All Room Types</span>
+    </button>
+    ${options.map(rt => {
+      const unavailable = !relevantFullNames.some(fullName => segmentMatchesRoomTypeLabel(fullName, rt.name));
+      return `
+      <button type="button" class="room-type-chip${filterRoomType === rt.name ? " selected" : ""}${unavailable ? " unavailable" : ""}" ${unavailable ? "disabled" : `data-room-type="${escapeHTML(rt.name)}"`} title="${unavailable ? "No saved itinerary in this room type" : ""}">
+        <span class="room-type-icon">${roomTypeChipIcon(rt.name)}</span>
+        <span class="room-type-name">${escapeHTML(rt.name)}</span>
+        <span class="room-type-sleeps">Sleeps ${rt.sleeps}</span>
+      </button>
+    `;
+    }).join("")}
+  `;
+}
+
+function pickItinRoomType(name) {
+  filterRoomType = name;
+  syncItinRoomTypeTrigger();
+  const grid = document.getElementById("itin-roomtype-grid");
+  if (grid) grid.classList.remove("open");
+  renderCards();
+}
+
+// Every booking-window/ADR/online-check-in milestone (buildSegmentMilestoneEvents())
+// is offset BEFORE a segment's check-in, so once a stay's dates have
+// already passed, every one of those reminder dates has already passed
+// too -- "Add Booking Windows to Calendar" has nothing left to offer.
+// Plain YYYY-MM-DD string comparison (checkOut has no time component to
+// get a timezone wrong).
+function itineraryIsPast(itin) {
+  if (itin.segments.length === 0) return false;
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  return itin.segments[itin.segments.length - 1].checkOut < todayStr;
+}
+
+// ---- Booking Milestones calendar export ----
+// All calendar math below works in UTC calendar-date arithmetic (no local
+// timezone drift), then converts the resulting date + an Eastern wall-clock
+// time into the correct UTC instant for the .ics file, accounting for
+// whichever of EST/EDT actually applies on that specific date.
+
+function monthsBeforeDate(dateStr, months) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCMonth(dt.getUTCMonth() - months);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+function daysBeforeDate(dateStr, days) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - days);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+// Resolves EST (-5) vs EDT (-4) for the given calendar date via the
+// browser's own IANA timezone database, rather than hand-coding DST
+// transition rules (which change over time and are easy to get wrong).
+function easternOffsetHours(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const probe = new Date(Date.UTC(y, m - 1, d, 12)); // noon UTC: never crosses a DST boundary for this calendar date
+  const tzName = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "short" })
+    .formatToParts(probe).find(p => p.type === "timeZoneName")?.value;
+  return tzName === "EDT" ? 4 : 5;
+}
+
+function easternWallClockToUTC(dateStr, hour, minute) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const offset = easternOffsetHours(dateStr);
+  return new Date(Date.UTC(y, m - 1, d, hour + offset, minute, 0));
+}
+
+function formatICSTimestamp(date) {
+  return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
+// One segment (one resort/check-in date) produces up to 4 milestone events.
+// Not every window necessarily applies to every segment (e.g. 11-month is
+// really only meaningful at a contract's own home resort), but this app
+// doesn't reliably know that per segment -- all four are generated and
+// labeled by what they're for, same approach the spec itself takes.
+function buildSegmentMilestoneEvents(seg, resortLabel, uidPrefix) {
+  // Each window's own opening DATE, computed once up front so the summary
+  // text below can show it -- the "OR ADD INDIVIDUALLY TO GOOGLE CALENDAR"
+  // list is these summaries verbatim, and a link that only said "(Opens
+  // 8:00 AM ET)" with no date told a reader nothing they could act on
+  // without actually opening the linked calendar event first.
+  const win11 = monthsBeforeDate(seg.checkIn, 11);
+  const win7 = monthsBeforeDate(seg.checkIn, 7);
+  const dining = daysBeforeDate(seg.checkIn, 60);
+  const checkin = daysBeforeDate(seg.checkIn, 30);
+  const defs = [
+    {
+      key: "11mo", label: "11-Month Window", dateStr: win11, hour: 8, minute: 0,
+      summary: `DVC 11-Mo Window: Book ${resortLabel} on DVC Portal (Opens ${formatDisplayDate(win11)}, 8:00 AM ET)`,
+      description: `Your 11-month home resort booking window for the ${formatDisplayDate(seg.checkIn)} stay at ${resortLabel} opens today at 8:00 AM Eastern.`,
+    },
+    {
+      key: "7mo", label: "7-Month Swap Window", dateStr: win7, hour: 8, minute: 0,
+      summary: `DVC 7-Mo Swap Window: Attempt Swap to ${resortLabel} (Opens ${formatDisplayDate(win7)}, 8:00 AM ET)`,
+      description: `The 7-month any-resort booking window for the ${formatDisplayDate(seg.checkIn)} stay at ${resortLabel} opens today at 8:00 AM Eastern.`,
+    },
+    {
+      key: "dining", label: "Dining Reservations", dateStr: dining, hour: 6, minute: 0,
+      summary: `Disney Dining Booking Opens ${formatDisplayDate(dining)} (6:00 AM ET, 60-Day Window)`,
+      description: `Advance Dining Reservations for the ${formatDisplayDate(seg.checkIn)} stay at ${resortLabel} open today at 6:00 AM Eastern.`,
+    },
+    {
+      key: "checkin", label: "Online Check-In", dateStr: checkin, hour: 9, minute: 0,
+      summary: `Disney Online Check-In Opens ${formatDisplayDate(checkin)} for ${resortLabel}`,
+      description: `Online check-in for the ${formatDisplayDate(seg.checkIn)} stay at ${resortLabel} opens today at 9:00 AM Eastern.`,
+    },
+  ];
+  return defs.map(d => ({
+    uid: `${uidPrefix}-${d.key}@dvccompanion.com`,
+    start: easternWallClockToUTC(d.dateStr, d.hour, d.minute),
+    dateStr: d.dateStr,
+    label: d.label,
+    resortLabel,
+    summary: d.summary,
+    description: d.description,
+  }));
+}
+
+function buildItineraryMilestoneEvents(itin) {
+  const events = [];
+  itin.segments.forEach((seg, i) => {
+    const label = resortName(seg.resortId, itin.year);
+    events.push(...buildSegmentMilestoneEvents(seg, label, `dvcalc-${itin.id}-seg${i}`));
+  });
+  return events;
+}
+
+function icsEscapeText(text) {
+  return String(text).replace(/([,;])/g, "\\$1").replace(/\n/g, "\\n");
+}
+
+function buildICSContent(events) {
+  const stamp = formatICSTimestamp(new Date());
+  const veventBlocks = events.map(e => [
+    "BEGIN:VEVENT",
+    `UID:${e.uid}`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${formatICSTimestamp(e.start)}`,
+    `SUMMARY:${icsEscapeText(e.summary)}`,
+    `DESCRIPTION:${icsEscapeText(e.description)}`,
+    "BEGIN:VALARM",
+    "ACTION:DISPLAY",
+    "DESCRIPTION:Reminder",
+    "TRIGGER:-PT15M",
+    "END:VALARM",
+    "END:VEVENT",
+  ].join("\r\n")).join("\r\n");
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//DVC Companion//Booking Milestones//EN",
+    "CALSCALE:GREGORIAN",
+    veventBlocks,
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
+// Only ever exports events that haven't opened yet -- a .ics full of
+// already-past reminders (the original behavior) downloads a file with
+// nothing left to remind anyone of. The button that calls this is itself
+// only rendered when upcomingEvents.length > 0 (see buildSyncMenuHTML()),
+// but this filters independently too rather than trusting the caller.
+function exportBookingMilestonesICS(itin) {
+  const events = buildItineraryMilestoneEvents(itin).filter(e => e.start > new Date());
+  if (events.length === 0) return;
+  const content = buildICSContent(events);
+  const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `dvc-booking-milestones-${itin.id}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function googleCalendarUrl(event) {
+  const end = new Date(event.start.getTime() + 30 * 60000);
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: event.summary,
+    dates: `${formatICSTimestamp(event.start)}/${formatICSTimestamp(end)}`,
+    details: event.description,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+// Splits the itinerary's 4(+) milestones into "still to come" (actionable
+// -- each gets its own +Google Calendar link) and "already passed" (kept
+// visible so the list is always the same familiar set of milestones, but
+// dimmed and inert -- no calendar action makes sense for a window that's
+// already closed). The multi-segment resort label only shows when there's
+// more than one segment to disambiguate between -- a single-resort stay
+// doesn't need every row repeating the same name.
+function buildSyncMenuHTML(itin) {
+  const events = buildItineraryMilestoneEvents(itin);
+  const now = new Date();
+  const upcoming = events.filter(e => e.start > now).sort((a, b) => a.start - b.start);
+  const past = events.filter(e => e.start <= now).sort((a, b) => a.start - b.start);
+  const showResort = itin.segments.length > 1;
+
+  const rowHTML = (e, isPast) => `
+    <div class="sync-milestone-row${isPast ? " past" : ""}">
+      <div class="sync-milestone-info">
+        <div class="sync-milestone-label">${e.label}${showResort ? ` &middot; ${escapeHTML(e.resortLabel)}` : ""}</div>
+        <div class="sync-milestone-date">${formatDisplayDate(e.dateStr)}</div>
+      </div>
+      ${isPast
+        ? `<span class="sync-milestone-passed">Passed</span>`
+        : `<a class="sync-milestone-gcal" href="${googleCalendarUrl(e)}" target="_blank" rel="noopener">+ GCal</a>`}
+    </div>
+  `;
+
+  return `
+    ${upcoming.length > 0 ? `
+      <div class="sync-section-label">Still to come</div>
+      <div class="sync-milestone-list">${upcoming.map(e => rowHTML(e, false)).join("")}</div>
+    ` : `
+      <div class="sync-menu-empty">All booking windows for this stay have already passed.</div>
+    `}
+    ${past.length > 0 ? `
+      <div class="sync-section-label">Already passed</div>
+      <div class="sync-milestone-list">${past.map(e => rowHTML(e, true)).join("")}</div>
+    ` : ""}
+    ${upcoming.length > 0 ? `<button type="button" class="small-btn primary sync-menu-ics" data-sync-ics="${itin.id}">Add to Calendar (.ics)</button>` : ""}
+  `;
+}
+
 function renderGate() {
   pageContent.innerHTML = `
     <div class="gate">
       <p>Sign in to see the itineraries you've saved from the calendar.</p>
-      <button type="button" class="big-signin-btn" id="gate-signin">Sign in with Google</button>
+      <div id="gate-signin-slot"></div>
     </div>
   `;
-  document.getElementById("gate-signin").addEventListener("click", () => window.DVCAuth.signInWithGoogle());
+  window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
 }
 
 function renderUnconfigured() {
   pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
 }
 
-async function renderSignedIn() {
-  const itineraries = await window.DVCAuth.getItineraries();
-
-  const cardsHTML = itineraries.map(itin => {
-    const totals = calcItineraryTotals(itin);
-    const segRows = itin.segments.map(seg => `
-      <div class="itin-segment-row">
-        <strong>${resortName(seg.resortId, itin.year)}</strong> &mdash; ${roomTypeName(seg.resortId, itin.year, seg.roomTypeId)}
-        &middot; ${formatDisplayDate(seg.checkIn)} &rarr; ${formatDisplayDate(seg.checkOut)}
-      </div>
-    `).join("");
+function cardHTML(itin, totals) {
+  const isPast = itineraryIsPast(itin);
+  // Each fact stated exactly once: a segment row names its resort, room
+  // type, night count, and dates -- nothing repeats it afterward (the old
+  // version restated nights/points/cash a second time in a separate totals
+  // line directly underneath). Points/cash -- the only truly trip-wide
+  // totals, not per-segment -- live once, in the footer stat text below.
+  const segRows = itin.segments.map(seg => {
+    const nights = nightsBetween(seg.checkIn, seg.checkOut);
     return `
-      <div class="itin-card">
-        <div class="itin-name">${itin.name}</div>
-        <div class="itin-segments">${segRows}</div>
-        <div class="itin-meta">
-          <strong>${totals.totalNights}</strong> night${totals.totalNights === 1 ? "" : "s"}
-          &middot; <strong>${totals.totalPoints.toLocaleString()}</strong> pts
-          ${totals.totalCash != null ? `&middot; <strong>${fmt(totals.totalCash)}</strong> cash rate` : ""}
-        </div>
-        <div class="itin-actions">
-          <button type="button" class="small-btn primary" data-load="${itin.id}">Load</button>
-          <button type="button" class="small-btn danger" data-delete="${itin.id}">Delete</button>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  pageContent.innerHTML = `
-    <div class="section">
-      <h2>Saved Itineraries</h2>
-      <div class="section-sub">Saved from the calendar's "Save Itinerary" button. Loading one brings it back into the calendar exactly as saved.</div>
-      ${itineraries.length === 0
-        ? `<div class="empty-note">No saved itineraries yet -- plan a stay on the <a href="index.html">Calendar</a> and save it.</div>`
-        : `<div class="itin-list">${cardsHTML}</div>`
-      }
+    <div class="itin-segment-row">
+      <strong>${resortName(seg.resortId, itin.year)}</strong> &mdash; ${roomTypeName(seg.resortId, itin.year, seg.roomTypeId)}
+      &middot; ${nights} Night${nights === 1 ? "" : "s"}
+      &middot; ${formatDisplayDate(seg.checkIn)} &ndash; ${formatDisplayDate(seg.checkOut)}
     </div>
   `;
+  }).join("");
+  const statsText = `${totals.totalPoints.toLocaleString()} pts${totals.totalCash != null ? ` &middot; ${fmt(totals.totalCash)} cash` : ""}`;
+  const cardResortId = itin.segments[0]?.resortId;
+  return `
+    <div class="itin-card${isPast ? " past" : ""}" style="background-image:${itinCardArtBackground(cardResortId)};">
+      <div class="itin-card-header">
+        <div class="itin-name">${itin.name}${isPast ? `<span class="itin-past-badge">Past</span>` : ""}</div>
+        <div class="itin-card-icons">
+          <button type="button" class="itin-icon-btn" data-load="${itin.id}" aria-label="Edit in calendar" title="Edit in calendar">&#9998;&#65039;</button>
+          <button type="button" class="itin-icon-btn danger" data-delete="${itin.id}" aria-label="Delete itinerary" title="Delete itinerary">&#128465;&#65039;</button>
+        </div>
+      </div>
+      <div class="itin-card-body">
+        <div class="itin-segments">${segRows}</div>
+        <div class="itin-card-footer">
+          <div class="itin-card-stats">${statsText}</div>
+          ${isPast ? "" : `
+          <div class="sync-calendar-wrap">
+            <button type="button" class="sync-pill" data-sync-toggle="${itin.id}">&#128197; Booking Windows</button>
+            <div class="sync-calendar-menu" id="sync-menu-${itin.id}" style="display:none;">
+              ${buildSyncMenuHTML(itin)}
+            </div>
+          </div>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+}
 
+// Re-renders just the filtered/sorted card list (not the Resort/Room Type/
+// Sort controls, which stay in the DOM untouched between renders).
+function renderCards() {
+  const listWrap = document.getElementById("itin-list-wrap");
+  if (!listWrap) return;
+  const visible = getFilteredSortedItineraries();
+
+  listWrap.innerHTML = visible.length === 0
+    ? `<div class="itin-no-results">No saved itineraries match the selected filters.</div>`
+    : `<div class="itin-list">${visible.map(({ itin, totals }) => cardHTML(itin, totals)).join("")}</div>`;
+
+  wireCardEvents();
+}
+
+function wireCardEvents() {
   pageContent.querySelectorAll("[data-load]").forEach(btn => {
     btn.addEventListener("click", () => {
       const itin = itineraries.find(i => i.id === btn.dataset.load);
       if (!itin || !itin.segments.length) return;
+      if (window.DVCTrack) window.DVCTrack.track("re-checker");
       const segs = itin.segments;
       const last = segs[segs.length - 1];
       const completed = segs.slice(0, -1);
@@ -398,6 +1451,140 @@ async function renderSignedIn() {
       renderSignedIn();
     });
   });
+
+  // One dropdown open at a time -- toggling a card's menu closes any other
+  // open one, and clicking anywhere outside a menu closes it too.
+  pageContent.querySelectorAll("[data-sync-toggle]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const menu = document.getElementById(`sync-menu-${btn.dataset.syncToggle}`);
+      const wasOpen = menu.style.display !== "none";
+      pageContent.querySelectorAll(".sync-calendar-menu").forEach(m => { m.style.display = "none"; });
+      menu.style.display = wasOpen ? "none" : "block";
+    });
+  });
+  pageContent.querySelectorAll("[data-sync-ics]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const itin = itineraries.find(i => i.id === btn.dataset.syncIcs);
+      if (itin) exportBookingMilestonesICS(itin);
+    });
+  });
+
+  // Clicking anywhere on the card loads it into the calendar -- same action
+  // as the edit (pencil) icon, just with the whole card as the hit target.
+  // Excluded: Edit/Delete themselves (.itin-icon-btn, so the pencil's own
+  // listener below doesn't ALSO get re-triggered a second time via this
+  // one bubbling up to it, and so Delete's confirm() dialog doesn't get
+  // immediately followed by an unrelated navigation), and the Booking
+  // Windows pill/panel (.sync-calendar-wrap -- covers the pill, the open
+  // panel, and everything inside it), so opening/reading that panel never
+  // gets hijacked into a page navigation away from it.
+  pageContent.querySelectorAll(".itin-card").forEach(card => {
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".itin-icon-btn")) return;
+      if (e.target.closest(".sync-calendar-wrap")) return;
+      const loadBtn = card.querySelector("[data-load]");
+      if (loadBtn) loadBtn.click();
+    });
+  });
+}
+
+async function renderSignedIn() {
+  itineraries = await window.DVCAuth.getItineraries();
+
+  if (itineraries.length === 0) {
+    pageContent.innerHTML = `
+      <div class="section">
+        <h2>Saved Itineraries</h2>
+        <div class="section-sub">Saved from the calendar's "Save Itinerary" button. Loading one brings it back into the calendar exactly as saved.</div>
+        <div class="empty-note">No saved itineraries yet -- plan a stay on the <a href="index.html">Calendar</a> and save it.</div>
+      </div>
+    `;
+    return;
+  }
+
+  pageContent.innerHTML = `
+    <div class="section">
+      <h2>Saved Itineraries</h2>
+      <div class="section-sub">Saved from the calendar's "Save Itinerary" button. Loading one brings it back into the calendar exactly as saved.</div>
+      <div class="itin-toolbar">
+        <div class="itin-field-group">
+          <label>Resort</label>
+          <button type="button" class="picker-trigger" id="itin-resort-trigger" onclick="openItinResortSheet()">
+            <span class="picker-trigger-value" id="itin-resort-trigger-label"></span>
+            <span class="custom-select-arrow"></span>
+          </button>
+        </div>
+        <div class="itin-field-group">
+          <label>Room Type</label>
+          <button type="button" class="picker-trigger" id="itin-roomtype-trigger" onclick="toggleItinRoomTypeGrid()">
+            <span class="picker-trigger-value" id="itin-roomtype-trigger-label"></span>
+            <span class="custom-select-arrow"></span>
+          </button>
+          <div class="room-type-grid" id="itin-roomtype-grid"></div>
+        </div>
+        <div class="itin-field-group">
+          <label for="itin-sort-select">Sort</label>
+          <div class="custom-select custom-select-narrow">
+            <select id="itin-sort-select" class="native-select">
+              <option value="date">Date</option>
+              <option value="points-asc">Points: Low to High</option>
+              <option value="points-desc">Points: High to Low</option>
+              <option value="name">Resort Name</option>
+            </select>
+            <button type="button" class="custom-select-trigger">
+              <span class="custom-select-value"></span>
+              <span class="custom-select-arrow"></span>
+            </button>
+            <div class="custom-select-dropdown"></div>
+          </div>
+        </div>
+      </div>
+      <div id="itin-list-wrap"></div>
+    </div>
+
+    <div class="modal-overlay sheet-overlay" id="itin-resort-sheet">
+      <div class="modal-box sheet">
+        <div class="sheet-handle"></div>
+        <div class="resort-sheet-hero" id="itin-resort-sheet-hero" hidden></div>
+        <div class="modal-header">
+          <h3>Filter by Resort</h3>
+          <button class="modal-close" onclick="closeItinResortSheet()" aria-label="Close">&times;</button>
+        </div>
+        <input type="text" id="itin-resort-sheet-search" class="sheet-search" placeholder="Search resorts&hellip;" autocomplete="off">
+        <div class="sheet-list" id="itin-resort-sheet-list"></div>
+      </div>
+    </div>
+  `;
+
+  syncItinResortTrigger();
+  syncItinRoomTypeTrigger();
+
+  document.getElementById("itin-resort-sheet").addEventListener("click", (e) => {
+    if (e.target.id === "itin-resort-sheet") closeItinResortSheet();
+  });
+  document.getElementById("itin-resort-sheet-search").addEventListener("input", (e) => {
+    renderItinResortSheetList(e.target.value);
+  });
+
+  // Delegated to the grid container itself (not re-attached inside
+  // renderItinRoomTypeGrid(), which reruns every time the grid opens) --
+  // the container persists across those innerHTML rebuilds.
+  document.getElementById("itin-roomtype-grid").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-room-type]");
+    if (chip) pickItinRoomType(chip.dataset.roomType);
+  });
+
+  const sortSelect = document.getElementById("itin-sort-select");
+  sortSelect.value = sortKey;
+  window.DVCUI.initCustomSelect(sortSelect);
+  sortSelect.addEventListener("change", (e) => {
+    sortKey = e.target.value;
+    renderCards();
+  });
+
+  renderCards();
 }
 
 function render(session) {
@@ -420,6 +1607,29 @@ function waitForAuth(attempts) {
   }
 }
 waitForAuth(40);
+
+// Registered once at script load, not inside renderSignedIn() -- document
+// persists for the page's whole lifetime, so a listener added here on
+// every render would stack duplicates (same reasoning as account.html's
+// Escape-key handler). Closes any open sync-calendar dropdown, and the
+// Room Type chip grid, on a click anywhere outside them; the toggle
+// buttons themselves stopPropagation()/are excluded so opening one doesn't
+// immediately re-close it via this same listener.
+document.addEventListener("click", (e) => {
+  pageContent.querySelectorAll(".sync-calendar-menu").forEach(m => { m.style.display = "none"; });
+  const grid = document.getElementById("itin-roomtype-grid");
+  if (grid && grid.classList.contains("open") && !e.target.closest("#itin-roomtype-grid") && !e.target.closest("#itin-roomtype-trigger")) {
+    grid.classList.remove("open");
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  const sheet = document.getElementById("itin-resort-sheet");
+  if (sheet && sheet.classList.contains("open")) closeItinResortSheet();
+  const grid = document.getElementById("itin-roomtype-grid");
+  if (grid) grid.classList.remove("open");
+});
   </script>
 </body>
 </html>

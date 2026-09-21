@@ -2,6 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // GitHub Pages has no server-side redirect/rewrite config -- a request
+    // for "/" and a request for "/index.html" resolve to the exact same
+    // file at the server level, so this is the only way to send the bare
+    // site root to the new home.html dashboard while index.html itself
+    // stays fully reachable as the calendar. Bookmarks, shared links, and
+    // every internal `href="index.html"`/`location.href = "index.html"` in
+    // this app resolve to the explicit "/index.html" path, which never
+    // matches this check -- only a bare "/" (or a trailing-slash directory
+    // request, covering the default username.github.io/repo/ URL shape
+    // too) does. Placed as the very first thing in <head>, before any
+    // stylesheet or data script, so it fires before this page's much
+    // heavier calendar assets start loading.
+    if (location.pathname === "/" || /\/$/.test(location.pathname)) {
+      location.replace("home.html");
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DVC Points Calendar</title>
   <link rel="manifest" href="manifest.json">
@@ -12,7 +29,15 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="styles.css">
+  <!-- Same font as account.html's wallet-card name (.wallet-mini-name here
+       reuses that look) -- without this it silently falls back to the
+       Georgia in the font stack, which isn't wrong, just not the same face
+       a returning owner already recognizes from My Contracts. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <!-- Booking As / Load Trip in the top bar wait on auth.js's Supabase
        session check, which first has to fetch the supabase-js library
        itself from esm.sh -- starting that connection now (in parallel with
@@ -41,11 +66,12 @@
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html" class="active">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
@@ -66,6 +92,7 @@
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -76,46 +103,108 @@
     <div class="subtitle">Disney Vacation Club — Vacation Points Per Night</div>
   </div>
 
+  <div class="suggest-return-banner" id="suggest-return-banner" style="display:none;">
+    <a href="suggest.html" id="suggest-return-link">&larr; Back to Suggest a Stay results</a>
+    <button type="button" id="suggest-return-dismiss" aria-label="Dismiss">&times;</button>
+  </div>
+
   <div class="controls">
-    <div class="control-group">
-      <label>Resort</label>
-      <div class="searchable-select" id="resort-select-wrapper">
-        <input type="text" id="resort-search" placeholder="Search resorts..." autocomplete="off">
-        <div class="searchable-dropdown" id="resort-dropdown"></div>
+    <button type="button" class="controls-toggle" id="controls-toggle" aria-expanded="false">
+      <span id="controls-toggle-label">Resort &amp; Trip Settings</span>
+      <span class="controls-toggle-arrow">&#9662;</span>
+    </button>
+    <div class="controls-groups" id="controls-groups">
+      <div class="control-group">
+        <label>Resort</label>
+        <!-- resort-search/-dropdown/-select-wrapper stay in the DOM (hidden) --
+             app.js's selectResort()/populateResorts() still read/write them as
+             the source of truth; #resort-picker-trigger + #resort-sheet below
+             are the only visible UI now. -->
+        <div class="searchable-select" id="resort-select-wrapper" hidden>
+          <input type="text" id="resort-search" placeholder="Search resorts..." autocomplete="off">
+          <div class="searchable-dropdown" id="resort-dropdown"></div>
+        </div>
+        <button type="button" class="picker-trigger" id="resort-picker-trigger" onclick="openResortSheet()">
+          <span class="picker-trigger-value" id="resort-picker-trigger-label"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
       </div>
-    </div>
-    <div class="control-group">
-      <label for="room-select">Room Type</label>
-      <div class="custom-select">
+      <div class="control-group">
+        <label for="room-select">Room Type</label>
         <select id="room-select" class="native-select"></select>
-        <button type="button" class="custom-select-trigger">
-          <span class="custom-select-value"></span>
+        <button type="button" class="picker-trigger" id="room-type-picker-trigger" onclick="toggleRoomTypeAccordion()">
+          <span class="picker-trigger-value" id="room-type-picker-trigger-label"></span>
           <span class="custom-select-arrow"></span>
         </button>
-        <div class="custom-select-dropdown"></div>
+        <div class="room-type-grid" id="room-type-grid"></div>
       </div>
-    </div>
-    <div class="control-group" id="booking-as-control">
-      <label for="contract-select">Booking As</label>
-      <div class="custom-select">
+      <div class="control-group" id="booking-as-control">
+        <label for="contract-select">Booking As</label>
         <select id="contract-select" class="native-select"></select>
-        <button type="button" class="custom-select-trigger">
-          <span class="custom-select-value"></span>
+        <button type="button" class="picker-trigger" id="booking-as-picker-trigger" onclick="openBookingAsSheet()">
+          <span class="picker-trigger-value" id="booking-as-picker-trigger-label"></span>
           <span class="custom-select-arrow"></span>
         </button>
-        <div class="custom-select-dropdown"></div>
+      </div>
+      <div class="control-group" id="itinerary-load-control">
+        <label id="itinerary-load-label">Load Trip</label>
+        <button type="button" class="picker-trigger" id="itinerary-load-picker-trigger" onclick="openItineraryLoadSheet()" aria-labelledby="itinerary-load-label">
+          <span class="picker-trigger-value">Load a saved itinerary&hellip;</span>
+          <span class="custom-select-arrow"></span>
+        </button>
       </div>
     </div>
-    <div class="control-group" id="itinerary-load-control">
-      <label for="itinerary-load-select">Load Trip</label>
-      <div class="custom-select custom-select-narrow">
-        <select id="itinerary-load-select" class="native-select"></select>
-        <button type="button" class="custom-select-trigger">
-          <span class="custom-select-value"></span>
-          <span class="custom-select-arrow"></span>
-        </button>
-        <div class="custom-select-dropdown"></div>
+  </div>
+
+  <div class="modal-overlay sheet-overlay" id="resort-sheet">
+    <div class="modal-box sheet">
+      <div class="sheet-handle"></div>
+      <div class="resort-sheet-hero" id="resort-sheet-hero" hidden></div>
+      <div class="modal-header">
+        <h3>Choose a Resort</h3>
+        <button class="modal-close" onclick="closeResortSheet()" aria-label="Close">&times;</button>
       </div>
+      <input type="text" id="resort-sheet-search" class="sheet-search" placeholder="Search resorts..." autocomplete="off">
+      <div class="sheet-list" id="resort-sheet-list"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay sheet-overlay" id="booking-as-sheet">
+    <div class="modal-box sheet">
+      <div class="sheet-handle"></div>
+      <div class="modal-header">
+        <h3>Booking As</h3>
+        <button class="modal-close" onclick="closeBookingAsSheet()" aria-label="Close">&times;</button>
+      </div>
+      <div class="sheet-list" id="booking-as-sheet-list"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay sheet-overlay" id="itinerary-load-sheet">
+    <div class="modal-box sheet">
+      <div class="sheet-handle"></div>
+      <div class="modal-header">
+        <h3>Load a Saved Itinerary</h3>
+        <button class="modal-close" onclick="closeItineraryLoadSheet()" aria-label="Close">&times;</button>
+      </div>
+      <div class="sheet-list" id="itinerary-load-sheet-list"></div>
+    </div>
+  </div>
+
+  <!-- Same sheet as #resort-sheet above (hero + search + swatch rows), but
+       picks which resort's OWN dues the "If using your own points" cost
+       tile uses -- a separate concept from state.resortId (which resort's
+       calendar is being browsed), so it gets its own small sheet. -->
+  <div class="modal-overlay sheet-overlay" id="owner-resort-sheet">
+    <div class="modal-box sheet">
+      <div class="sheet-handle"></div>
+      <div class="resort-sheet-hero" id="owner-resort-sheet-hero" hidden></div>
+      <div class="modal-header">
+        <h3>Which Resort Do You Own?</h3>
+        <button class="modal-close" onclick="closeOwnerResortSheet()" aria-label="Close">&times;</button>
+      </div>
+      <input type="text" id="owner-resort-sheet-search" class="sheet-search" placeholder="Search resorts..." autocomplete="off">
+      <div class="sheet-list" id="owner-resort-sheet-list"></div>
     </div>
   </div>
 
@@ -131,19 +220,26 @@
         <div class="calendar-grid-scroll">
           <div id="calendar-grid" class="calendar-grid"></div>
         </div>
-        <div class="legend">
-          <span class="legend-title">Travel Period:</span>
-          <div id="legend-items" class="legend-items"></div>
+        <div class="legend-bar">
+          <span class="legend-group">
+            <span class="legend-title">Travel Period:</span>
+            <div id="legend-items" class="legend-items"></div>
+          </span>
+          <span class="legend-divider">|</span>
+          <span class="legend-group">
+            <span class="legend-title">Crowd Level:</span>
+            <div id="crowd-legend-items" class="legend-items"></div>
+          </span>
+          <span class="legend-divider">|</span>
+          <span class="legend-group">
+            <span class="legend-note">SPECIAL EVENTS: 🎉 ticketed parties &amp; races</span>
+          </span>
+        </div>
+        <div class="legend-sources">
           <a class="source-link" href="https://disneyvacationclub.disney.go.com/vacation-planning/points-charts/" target="_blank" rel="noopener">Source: DVC Points Charts</a>
-        </div>
-        <div class="legend">
-          <span class="legend-title">Crowd Level:</span>
-          <div id="crowd-legend-items" class="legend-items"></div>
+          <span>&middot;</span>
           <a class="source-link" href="https://www.undercovertourist.com/orlando/crowd-calendar/" target="_blank" rel="noopener">Source: Undercover Tourist</a>
-        </div>
-        <div class="legend">
-          <span class="legend-title">Special Events:</span>
-          <span class="legend-note">🎉 marks festivals, holiday parties, and runDisney weekends</span>
+          <span>&middot;</span>
           <a class="source-link" href="https://www.disneyfoodblog.com/wdwcalendar" target="_blank" rel="noopener">Source: Disney Food Blog</a>
         </div>
       </div>
@@ -173,6 +269,12 @@
   <script src="data/undercovertourist_2027.js"></script>
   <script src="data/resort_construction.js"></script>
   <script src="data/disney_events.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="dvc-dates.js"></script>
+  <script src="dvc-ledger.js"></script>
+  <script src="dvc-ui.js"></script>
+  <script src="dvc-track.js"></script>
   <script src="app.js"></script>
 
 </body>

@@ -12,18 +12,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
   <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f5f5f5;
+  background: var(--color-bg-page);
   color: #333;
   min-height: 100vh;
 }
 
 .header {
-  background: linear-gradient(135deg, #1a237e, #4a148c);
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
   color: white;
   padding: 16px 24px;
   text-align: center;
@@ -34,17 +35,17 @@ body {
 
 /* ---- Site nav ---- */
 .site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
-.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
 .site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
 .site-nav-group { display: flex; align-items: center; gap: 12px; }
 .site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
 .site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
 .site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
-.site-nav-links a:hover { color: #4a148c; }
-.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 
 .site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
-.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: #4a148c; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
 
 .account-btn, .account-link-btn {
   font: inherit;
@@ -54,13 +55,13 @@ body {
   border-radius: 20px;
   border: 1px solid #ddd;
   background: #f7f5fa;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   white-space: nowrap;
 }
-.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: var(--color-primary); }
 
 @media (max-width: 800px) {
   .site-nav-toggle { display: flex; }
@@ -91,7 +92,7 @@ body {
 .section h2 {
   font-size: 1.05rem;
   font-weight: 600;
-  color: #1a237e;
+  color: var(--color-secondary);
   margin-bottom: 4px;
 }
 
@@ -101,86 +102,291 @@ body {
   margin-bottom: 16px;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 12px;
-}
-
-.form-field { display: flex; flex-direction: column; gap: 4px; }
-
-.form-field label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: #888;
-  letter-spacing: 0.4px;
-}
-
-.form-field input, .form-field select {
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.88rem;
-  background: white;
-}
-
-.form-field input:focus, .form-field select:focus {
-  outline: none;
-  border-color: #4a148c;
-  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
-}
-
-.purchase-type-toggle { display: flex; gap: 8px; }
-.purchase-type-toggle button {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: white;
-  font-size: 0.82rem;
-  cursor: pointer;
-  color: #555;
-}
-.purchase-type-toggle button.selected { background: #4a148c; border-color: #4a148c; color: white; }
-
-.advanced-toggle {
-  font-size: 0.78rem;
-  color: #4a148c;
-  cursor: pointer;
-  background: none;
+.find-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  background: var(--color-primary);
+  color: white;
   border: none;
-  padding: 4px 0;
-  margin-bottom: 8px;
-  font-weight: 600;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(74,20,140,0.3);
+  transition: background 0.15s, transform 0.1s;
+}
+.find-btn:hover { background: #38106b; }
+.find-btn:active { transform: scale(0.98); }
+
+/* ---- Step-by-Step Decision Wizard --------------------------------------
+   Same accordion pattern established on suggest.html's mobile-first
+   rewrite: only the active step's body is ever in the DOM, completed
+   steps collapse to a tap-to-reopen summary row, steps not yet reached
+   render dimmed. wizardStep = 5 is a "done" sentinel meaning "collapse
+   all four" -- every `s < wizardStep` check is naturally true for 1-4 at
+   that point, so no special case is needed to fully collapse the wizard
+   once results are showing. ---- */
+.wizard-progress { height: 4px; background: #eee; border-radius: 2px; margin-bottom: 18px; overflow: hidden; }
+.wizard-progress-fill { height: 100%; background: var(--color-primary); transition: width 0.2s; }
+
+.wizard { display: flex; flex-direction: column; gap: 10px; }
+
+.wizard-step { border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
+.wizard-step.upcoming { opacity: 0.5; }
+.wizard-step.collapsed { cursor: pointer; }
+.wizard-step.collapsed:hover { border-color: var(--color-primary); }
+
+.wizard-step-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+
+.wizard-step-number {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.82rem;
+  background: #f0f0f0; color: #aaa;
+}
+.wizard-step.active .wizard-step-number { background: var(--color-primary); color: white; }
+.wizard-step-number.done { background: #ece1f7; color: var(--color-primary); }
+
+.wizard-step-title { font-weight: 700; font-size: 0.92rem; color: var(--color-secondary); }
+.wizard-step.upcoming .wizard-step-title { color: #aaa; }
+
+.wizard-step-summary { margin-left: auto; font-size: 0.8rem; color: #888; text-align: right; }
+.wizard-step-chevron { color: #bbb; font-size: 0.8rem; }
+
+.wizard-step-body { padding: 0 16px 18px; }
+
+.wizard-field-label {
+  font-size: 0.7rem; text-transform: uppercase; font-weight: 600;
+  color: #888; letter-spacing: 0.4px; margin-bottom: 6px;
 }
 
-.advanced-fields {
+.wizard-step-body input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem; /* >=16px so iOS Safari never auto-zooms on focus */
+  background: white;
+}
+.wizard-step-body input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74,20,140,0.15);
+}
+
+#w-points { font-size: 1.6rem; font-weight: 700; text-align: center; }
+
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.chip {
+  font: inherit;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #555;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.chip.active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+
+.category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.category-card {
+  min-height: 60px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+}
+.category-card .category-emoji { font-size: 1.3rem; }
+.category-card:hover { border-color: var(--color-primary); }
+.category-card.active { border-color: var(--color-primary); background: #f7f5fa; color: var(--color-primary); }
+
+/* Step 1's Resale/Direct pick -- bigger than a .chip since each choice
+   carries real explanatory text, not just a short label. */
+.choice-card-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.choice-card {
+  flex: 1;
+  min-width: 160px;
+  text-align: left;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: white;
+  font: inherit;
+  cursor: pointer;
+}
+.choice-card:hover { border-color: var(--color-primary); }
+.choice-card.active { border-color: var(--color-primary); background: #f7f5fa; }
+.choice-card-title { font-weight: 700; color: var(--color-secondary); margin-bottom: 4px; }
+.choice-card-desc { font-size: 0.8rem; color: #666; line-height: 1.4; }
+
+/* Step 4's single wide on/off pill -- a checkbox doesn't fit the
+   thumb-target-sized, chip-driven visual language the rest of the wizard
+   uses, so this is a single toggle-style .chip that spans the full row. */
+.toggle-chip {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: white;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.toggle-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.wizard-hint { font-size: 0.76rem; color: #999; margin-top: 8px; line-height: 1.4; }
+
+.wizard-nav { display: flex; gap: 10px; margin-top: 18px; }
+.wizard-nav .find-btn { width: auto; flex: 1; }
+.btn-back {
+  font: inherit;
+  min-height: 48px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #555;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-back:hover { border-color: #999; }
+
+/* ---- Top Matches: curated hero cards -----------------------------------
+   The primary results view -- 2-3 standout resorts, not the full 17-row
+   ranking. Each card is won on a DIFFERENT metric (see pickHeroCards()),
+   not just "top 3 by Cost/Pt/Year", so the badges are each independently
+   true rather than three restatements of the same ranking. */
+.match-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px; }
+/* "Look 2" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md): plain
+   neutral border, no color accent -- this used to have a 2px purple
+   border on every card regardless of rank (not a meaningful per-card
+   signal, just decoration), which was flagged directly as one of several
+   different "how do we frame a card" looks that had drifted across pages.
+   The "BEST OVERALL VALUE" etc. badge pill still carries the brand purple
+   -- that's an actual label, not decorative framing. */
+.match-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 16px;
+  background: white;
+  background-size: cover;
+  background-position: center;
+}
+.match-card-badge {
+  display: inline-block;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.match-card-name { font-weight: 700; color: var(--color-secondary); font-size: 1rem; line-height: 1.3; }
+.match-card-sub { font-size: 0.74rem; color: #888; margin: 2px 0 12px; }
+.match-card-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.match-card-stat-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.3px; color: #999; font-weight: 600; display: block; }
+.match-card-stat-value { font-size: 1.1rem; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.match-card-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #555;
+  padding-top: 10px;
+  border-top: 1px solid #e0d5f0;
+}
+
+/* ---- Progressive disclosure: advanced assumptions + full comparison ---- */
+.advanced-toggle, .view-all-toggle {
+  display: block;
+  width: 100%;
+  text-align: center;
+  min-height: 44px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px dashed #ccc;
+  background: white;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.advanced-toggle:hover, .view-all-toggle:hover { border-color: var(--color-primary); background: #f7f5fa; }
+.advanced-panel {
   display: none;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  padding: 14px;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px 14px;
   background: #faf8fd;
   border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  color: #555;
+}
+.advanced-panel.open { display: flex; }
+.advanced-panel input {
+  width: 90px;
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+
+.perks-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #faf8fd;
+  border: 1px solid #e0d5f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: #444;
+  line-height: 1.5;
   margin-bottom: 12px;
 }
-.advanced-fields.open { display: grid; }
-
-.dues-mode-note {
-  font-size: 0.74rem;
-  color: #999;
-  grid-column: 1 / -1;
-}
+.perks-callout-icon { font-size: 1.1rem; line-height: 1.3; }
+.perks-callout a { color: var(--color-primary); }
 
 .data-freshness {
   font-size: 0.74rem;
   color: #999;
   margin-top: 8px;
 }
-.data-freshness a { color: #4a148c; }
+.data-freshness a { color: var(--color-primary); }
 
-.results-table-wrap { overflow-x: auto; }
+.results-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 .results-table {
   width: 100%;
@@ -196,6 +402,25 @@ body {
   overflow: hidden;
 }
 
+/* Resort stays pinned while the rest of the table scrolls horizontally on
+   narrow viewports -- it's already the table's first column (this page
+   has no separate rank column like compare.html), so only one sticky
+   rule is needed. */
+.results-table th:first-child,
+.results-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: white;
+}
+.results-table thead th:first-child {
+  background: #fff;
+  z-index: 2;
+}
+.results-table tbody tr:hover td:first-child {
+  background: #faf8fd;
+}
+
 .results-table thead th {
   font-size: 0.6rem;
   text-transform: uppercase;
@@ -208,8 +433,8 @@ body {
   line-height: 1.3;
   vertical-align: bottom;
 }
-.results-table thead th:hover { color: #4a148c; }
-.results-table thead th.sorted { color: #4a148c; }
+.results-table thead th:hover { color: var(--color-primary); }
+.results-table thead th.sorted { color: var(--color-primary); }
 
 .results-table td.num {
   font-variant-numeric: tabular-nums;
@@ -217,7 +442,8 @@ body {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.results-table .resort-name { font-weight: 600; color: #1a237e; white-space: normal; }
+.results-table .resort-name { font-weight: 600; color: var(--color-secondary); white-space: normal; }
+.results-table .resort-sub { font-weight: 400; font-size: 0.72rem; color: #888; margin-top: 2px; }
 .results-table .ratio-value { font-weight: 700; font-size: 0.92rem; }
 
 .price-cell { text-align: right; }
@@ -234,12 +460,12 @@ body {
   color: inherit;
 }
 .price-input:hover { border-color: #9575cd; }
-.price-input:focus { outline: none; border-color: #4a148c; box-shadow: 0 0 0 2px rgba(74,20,140,0.15); }
+.price-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(74,20,140,0.15); }
 .price-reset-row { line-height: 1; margin-top: 2px; }
 .price-reset {
   border: none;
   background: none;
-  color: #4a148c;
+  color: var(--color-primary);
   font-size: 0.65rem;
   cursor: pointer;
   padding: 0;
@@ -268,14 +494,21 @@ body {
   cursor: help;
 }
 
-[data-tip]:hover::after {
+/* .tap-open is the touch-tap equivalent of :hover, toggled by the
+   document click delegate near the bottom of this file's script --
+   :hover has no touchscreen equivalent at all, so without it these
+   tooltips would be unreachable on mobile. Same class name/pattern as
+   tokens.css's .tooltip-anchor component (see app.js), ported here since
+   this page's info-icon/restricted-badge tooltips predate that shared
+   component and use their own data-tip + ::after mechanism instead. */
+[data-tip]:hover::after, [data-tip].tap-open::after {
   content: attr(data-tip);
   position: absolute;
   top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   width: 230px;
-  background: #1a237e;
+  background: var(--color-secondary);
   color: white;
   font-size: 0.74rem;
   font-weight: 400;
@@ -291,17 +524,32 @@ body {
   pointer-events: none;
 }
 
-[data-tip]:hover::before {
+[data-tip]:hover::before, [data-tip].tap-open::before {
   content: "";
   position: absolute;
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-bottom-color: #1a237e;
+  border-bottom-color: var(--color-secondary);
   z-index: 200;
   pointer-events: none;
 }
+
+/* A centered tooltip runs off-screen when its anchor sits near the left
+   or right edge of a narrow card (this is exactly what happened on the
+   "Top Matches" cards -- the leftmost stat's tooltip overflowed off the
+   left edge, the rightmost stat's off the right, both cut off mid-word).
+   These modifiers flush the box to whichever side has room instead of
+   centering it, same idea and naming as tokens.css's own
+   .tooltip-anchor.tooltip-align-left/-right for the shared component --
+   this page's [data-tip] mechanism needs its own copy since it predates
+   that component. Higher specificity than the base rule above (extra
+   class) so these win once applied. */
+[data-tip].tip-align-left:hover::after, [data-tip].tip-align-left.tap-open::after { left: 0; transform: none; }
+[data-tip].tip-align-left:hover::before, [data-tip].tip-align-left.tap-open::before { left: 14px; transform: none; }
+[data-tip].tip-align-right:hover::after, [data-tip].tip-align-right.tap-open::after { left: auto; right: 0; transform: none; }
+[data-tip].tip-align-right:hover::before, [data-tip].tip-align-right.tap-open::before { left: auto; right: 14px; transform: none; }
 
 .info-icon {
   display: inline-block;
@@ -317,30 +565,78 @@ body {
   margin-left: 4px;
   vertical-align: 1px;
 }
-.results-table thead th:hover .info-icon { background: #4a148c; color: white; }
+.results-table thead th:hover .info-icon { background: var(--color-primary); color: white; }
 
-.hide-restricted-row {
-  font-size: 0.8rem;
-  color: #555;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* ---- Mobile Card Feed (2026-09-18) -----------------------------------
+   Both .results-table-wrap and .results-cards are always in the DOM
+   (built from the same `sorted` array in renderMatches()) -- the media
+   query below is the only thing that decides which one is visible, so
+   there's no separate render path to keep in sync and .price-input/
+   .price-reset wiring (already querySelectorAll-based) picks up the card
+   copies for free. This is the FULL comparison list, revealed only via
+   "View All Resorts" -- the match-cards above are always visible. ---- */
+.results-cards { display: none; flex-direction: column; gap: 12px; }
+
+.resort-card {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 14px;
+  background: white;
 }
 
-.restricted-legend {
-  font-size: 0.76rem;
-  color: #888;
+.resort-card-header { margin-bottom: 10px; }
+.resort-card-name { font-weight: 600; color: var(--color-secondary); font-size: 0.95rem; line-height: 1.3; }
+.resort-card-sub { font-size: 0.74rem; color: #888; margin-top: 3px; }
+
+/* The single most important number on the card -- Cost/Pt/Year, the same
+   primary ranking metric the desktop table highlights with a green
+   checkmark -- gets its own prominent callout instead of sitting in a
+   column a thumb has to hunt for. */
+.resort-card-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  background: #faf8fd;
+  border-radius: 8px;
+  padding: 10px 12px;
   margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+}
+.resort-card-hero.best { background: #eafaf0; }
+.resort-card-hero-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4px; color: #888; font-weight: 600; }
+.resort-card-hero-value { font-size: 1.3rem; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.resort-card-hero.best .resort-card-hero-value { color: var(--color-good); }
+
+.resort-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
+}
+.resort-card-metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.resort-card-metric-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.3px; color: #999; font-weight: 600; }
+.resort-card-metric-value { font-size: 0.88rem; font-weight: 600; color: #333; font-variant-numeric: tabular-nums; }
+.resort-card-metric-sub { font-size: 0.68rem; font-weight: 400; color: #999; }
+/* Buy-In $/Pt stays editable in the card grid too (same .price-input as
+   the table) -- reuses the desktop width since a card column already has
+   plenty of room, no override needed. */
+.resort-card-metric .price-reset { display: block; margin-top: 2px; }
+
+/* Hidden by default (desktop) -- sorting on mobile has no column headers
+   to click, so this replaces that interaction with an explicit control
+   rather than dropping the ability to re-sort entirely. */
+.mobile-sort-control { display: none; margin-bottom: 14px; }
+.mobile-sort-control label {
+  font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #888;
+  letter-spacing: 0.4px; display: block; margin-bottom: 4px;
+}
+.mobile-sort-control select {
+  width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px;
+  font-size: 0.88rem; background: white;
 }
 
-@media (max-width: 700px) {
-  .form-grid { grid-template-columns: repeat(2, 1fr); }
-  .advanced-fields { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+  .results-table-wrap { display: none; }
+  .results-cards { display: flex; }
+  .mobile-sort-control { display: block; }
 }
   </style>
   <script>
@@ -363,11 +659,12 @@ body {
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
@@ -388,6 +685,7 @@ body {
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -400,98 +698,48 @@ body {
 
   <div class="page">
     <div class="section">
-      <h2>Your Purchase</h2>
-      <div class="section-sub">Fill in how you'd actually buy -- every resort gets ranked under the same assumptions.</div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label for="f-points">Points to Purchase</label>
-          <input type="number" id="f-points" min="1" step="1" value="150">
-        </div>
-        <div class="form-field">
-          <label>Purchase Type</label>
-          <div class="purchase-type-toggle">
-            <button type="button" id="type-resale" class="selected">Resale</button>
-            <button type="button" id="type-direct">Direct</button>
-          </div>
-        </div>
-        <div class="form-field">
-          <label for="f-vacation-years">Years You'll Keep Vacationing</label>
-          <input type="number" id="f-vacation-years" min="1" step="1" placeholder="Full contract length">
-        </div>
-        <div class="form-field">
-          <label for="f-closing">Closing Cost</label>
-          <input type="number" id="f-closing" min="0" step="1" value="1500">
-        </div>
-      </div>
-
-      <button type="button" class="advanced-toggle" id="advanced-toggle">Advanced assumptions &#9662;</button>
-      <div class="advanced-fields" id="advanced-fields">
-        <div class="form-field">
-          <label for="f-point-value">Vacation Value ($/pt/yr)</label>
-          <input type="number" id="f-point-value" min="1" step="1" value="35">
-        </div>
-        <div class="form-field">
-          <label for="f-value-growth">Vacation Value Growth (%/yr)</label>
-          <input type="number" id="f-value-growth" min="0" step="0.1" value="5.0">
-        </div>
-        <div class="form-field">
-          <label for="f-dues-growth">Dues Growth (%/yr)</label>
-          <input type="number" id="f-dues-growth" min="0" step="0.1" value="4.0">
-        </div>
-      </div>
-
-      <div class="hide-restricted-row">
-        <input type="checkbox" id="f-hide-restricted">
-        <label for="f-hide-restricted">Hide resale-restricted resorts</label>
-      </div>
-      <div class="restricted-legend"><span class="restricted-badge" data-tip="Resale points bought at this resort can only ever book stays here -- not any other DVC resort. Direct-purchased points at this same resort don't have this restriction.">resale-restricted</span> = if bought resale, these points can only book this same resort (Riviera, Disneyland Hotel Villas, Fort Wilderness Cabins). Direct purchases at these resorts don't have this limit.</div>
-
-      <div class="data-freshness">
-        Purchase prices as of <strong id="data-as-of"></strong> -- resale and direct pricing change monthly.
-        Check <a href="https://www.fidelityrealestate.com" target="_blank" rel="noopener">Fidelity Real Estate</a>,
-        <a href="https://www.dvcforless.com" target="_blank" rel="noopener">DVC For Less</a>, or
-        <a href="https://dvcnews.com/dvc-program-menu/financial/pricing-a-promotions" target="_blank" rel="noopener">DVCNews</a>
-        for current listings. This is a rough long-term comparison, not financial advice.
-      </div>
+      <h2>Find Your Best-Fit Resort</h2>
+      <div class="section-sub">Answer a few quick questions -- we'll surface the resorts that actually match how you'd buy.</div>
+      <div class="wizard" id="wizard"></div>
     </div>
 
-    <div class="section">
-      <h2>Ranked by Value</h2>
-      <div class="section-sub">Higher ratio = better value. <strong>Cash Ratio</strong> is vs. paying rack rate; <strong>Rent Ratio</strong> is vs. renting points instead of owning. Hover any <span class="info-icon" style="margin-left:0;">?</span> for what a column means.</div>
+    <div class="section" id="results-section" style="display:none;">
+      <h2>Top Matches</h2>
+      <div class="section-sub">Your best-fit resorts based on what you told us. <strong>Cost/Pt/Year</strong> (amortized purchase cost plus today's dues, per point per year) is the primary value metric -- lower is better.</div>
       <div id="results-body"></div>
     </div>
   </div>
 
+  <script src="dvc-track.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
   <script src="data/dues_historical.js"></script>
   <script src="data/cash_value_index.js"></script>
   <script src="data/resort_investment.js"></script>
+  <script src="data/resort_images.js"></script>
   <script>
 const currentRealYear = new Date().getFullYear();
-let purchaseType = "resale";
-let sortKey = "cashRatio";
-let sortDir = "desc";
-// User-typed price overrides, e.g. "found a resale listing for less than
-// the report average." Keyed by "resortId:purchaseType" (not just resortId)
-// so a resale override doesn't silently get reused as a direct price if
-// the user flips the toggle, and vice versa.
-let priceOverrides = {};
+const DATA_AS_OF_LABEL = new Date(INVESTMENT_DATA_AS_OF + "T12:00:00").toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
 
 function fmt(n) { return "$" + Math.round(n).toLocaleString(); }
+function fmtNum(n) { return n.toLocaleString(); }
 
 function resortDisplayName(id) {
   const r = RESORTS.find(r => r.id === id);
   return r ? r.name : id;
 }
 
-// Fixed reference baseline for Rent Ratio -- what renting points from
-// another owner costs, independent of whatever Vacation Value assumption
-// the user's set above. $20/pt matches the app's own rental-rate slider
-// default elsewhere; not exposed as an input since the point of this
-// column is a single, stable "how does owning compare to just renting
-// every time" reference, not another adjustable scenario.
+function restrictedBadgeHTML() {
+  return `<span class="restricted-badge" data-tip="Resale points bought at this resort can only ever book stays here -- not any other DVC resort. Direct-purchased points at this same resort don't have this restriction.">resale-restricted</span>`;
+}
+
+// Fixed reference baseline for Breakeven Horizon -- what renting points
+// from another owner costs, independent of any other assumption on this
+// page. $20/pt matches the app's own rental-rate slider default elsewhere;
+// not exposed as an input since the point of this column is a single,
+// stable "how does owning compare to just renting every time" reference,
+// not another adjustable scenario.
 const RENT_POINT_VALUE = 20;
 const RENT_VALUE_GROWTH = 0.04;
 
@@ -509,12 +757,75 @@ function isHomeOnlyResale(resortId) {
   return access.sevenMoResortIds.size === 0;
 }
 
+// Same category-matching pattern already duplicated across app.js/compare.html/
+// suggest.html -- first room type whose name contains the category's keyword.
+const CATEGORY_KEYWORDS = { studio: "studio", one: "one-bedroom", two: "two-bedroom", three: "three-bedroom" };
+function getRoomTypesForCategory(resort, category) {
+  const keyword = CATEGORY_KEYWORDS[category];
+  return resort.roomTypes.filter(rt => rt.name.toLowerCase().includes(keyword));
+}
+
+// [key, label, emoji] -- key must match a CATEGORY_KEYWORDS entry. Unlike
+// suggest.html there's no "any" option here: the wizard asks for the ONE
+// room size a buyer will stay in most often, since Est. Nightly Cost below
+// needs a single category to be meaningful.
+const CATEGORY_OPTIONS = [
+  ["studio", "Studio", "\u{1F6CF}\u{FE0F}"],
+  ["one", "1-Bedroom", "\u{1F6CB}\u{FE0F}"],
+  ["two", "2-Bedroom", "\u{1F3E0}"],
+  ["three", "3BR / Grand Villa", "\u{1F3F0}"],
+];
+const CATEGORY_LABELS = { studio: "Studios", one: "1-Bedrooms", two: "2-Bedrooms", three: "3-Bedrooms/Grand Villas" };
+
+// Shared between the full table's column-header tooltips AND the "Top
+// Matches" hero cards -- previously only the table explained these
+// metrics, so a user who never expanded "View All Resorts" (i.e. everyone
+// looking only at the curated cards, which is the default/primary view
+// now) had no way to learn what a card's own numbers meant.
+const METRIC_TIPS = {
+  pricePerPoint: purchaseType => `Current ${purchaseType} price per point. Editable -- enter a real listing price to recalculate.`,
+  currentDuesPerPoint: "Today's annual dues per point.",
+  costPerPointYear: "Amortized buy-in plus dues (with growth), spread over the contract's remaining years. Primary ranking metric -- lower is better.",
+  effectiveCostPerPointYear: "Same as Cost/Pt/Year, but spread over your own timeframe instead. Not for ranking resorts against each other -- use Cost/Pt/Year for that.",
+  nightlyRoomCost: "Cost/Pt/Year × points needed for a typical night in this room type. Your ownership cost per night -- not Disney's cash rate.",
+  yearsToBreakeven: "Years of rental-value savings needed to recoup your buy-in. \"Never\" = doesn't break even in the time left on the contract.",
+  lifetimeOutlay: "Total cost over your vacationing years: buy-in plus all dues.",
+  vacationValueScope: "A point's rack-rate cash value and its growth rate. Only affects Cash Ratio.",
+  cashRatio: "Vacation Value ÷ Lifetime Outlay. Higher is better -- a 2.5x means $2.50 of rack-rate value per $1 spent owning.",
+  duesGrowthScope: "Feeds every cost metric here, each averaged over its own timeframe. Can change which resort ranks best.",
+};
+
+const POINT_PRESETS = [100, 150, 200, 250];
+const STEP_TITLES = ["Purchase Intent & Channel", "Target Point Budget", "Primary Room Category", "Usage Horizon & Vibe"];
+
+// Median points-per-night for a resort's room category, across every travel
+// period and both day types (sunThu/friSat) -- normalizes resorts with very
+// different point charts into one comparable "typical night" figure.
+function medianRoomPoints(resort, category) {
+  const roomTypes = getRoomTypesForCategory(resort, category);
+  if (roomTypes.length === 0) return null;
+  const roomTypeId = roomTypes[0].id;
+  const values = [];
+  for (const period of resort.travelPeriods || []) {
+    const sunThu = period.rates && period.rates.sunThu ? period.rates.sunThu[roomTypeId] : undefined;
+    const friSat = period.rates && period.rates.friSat ? period.rates.friSat[roomTypeId] : undefined;
+    if (typeof sunThu === "number") values.push(sunThu);
+    if (typeof friSat === "number") values.push(friSat);
+  }
+  if (values.length === 0) return null;
+  values.sort((a, b) => a - b);
+  const mid = Math.floor(values.length / 2);
+  return values.length % 2 !== 0 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+}
+
 function computeRow(resortId, inputs) {
   const inv = RESORT_INVESTMENT_DATA[resortId];
   if (!inv) return null;
+  const resort = RESORTS.find(r => r.id === resortId);
+  if (!resort) return null;
 
-  const defaultPrice = purchaseType === "direct" ? inv.directPricePerPoint : inv.resalePricePerPoint;
-  const overrideKey = `${resortId}:${purchaseType}`;
+  const defaultPrice = wizardData.purchaseType === "direct" ? inv.directPricePerPoint : inv.resalePricePerPoint;
+  const overrideKey = `${resortId}:${wizardData.purchaseType}`;
   const hasOverride = priceOverrides[overrideKey] != null;
   const pricePerPoint = hasOverride ? priceOverrides[overrideKey] : defaultPrice;
   const initialCost = pricePerPoint * inputs.points + inputs.closingCost;
@@ -524,18 +835,83 @@ function computeRow(resortId, inputs) {
 
   const currentDuesPerPoint = DUES_PER_POINT[resortId] || 0;
 
+  // Compounds duesGrowth forward `years` times and returns the AVERAGE
+  // annual dues-per-point over that window, instead of just returning
+  // today's flat rate. Using today's rate as a stand-in for the whole
+  // holding period was wrong: two resorts can have identical dues today
+  // and wildly different costs 20 years out depending on their growth
+  // trend, and a "true cost of ownership" figure that can't tell them
+  // apart isn't measuring what it claims to.
+  function averageDuesPerPoint(years) {
+    if (years <= 0) return currentDuesPerPoint;
+    let total = 0;
+    for (let t = 0; t < years; t++) total += currentDuesPerPoint * Math.pow(1 + inputs.duesGrowth, t);
+    return total / years;
+  }
+
+  // Cost/Pt/Year: amortized capital (purchase price + closing cost, spread
+  // over the contract's remaining life) plus dues, averaged with growth
+  // over that SAME remaining-life window -- the standard DVC-community
+  // "true cost of ownership" metric, lower = better. Uses years-left-on-
+  // the-contract (not the user's own timeframe below) specifically so
+  // it's comparable across resorts regardless of how long any one buyer
+  // personally plans to keep it -- see Effective Cost/Pt/Year for that.
+  const capitalPerPointYear = yearsRemaining > 0 ? (pricePerPoint + inputs.closingCost / inputs.points) / yearsRemaining : null;
+  const costPerPointYear = capitalPerPointYear != null ? capitalPerPointYear + averageDuesPerPoint(yearsRemaining) : null;
+
+  // Effective Cost/Pt/Year: same idea, but BOTH capital and dues are
+  // averaged over the user's own "How Long Do You Plan to Keep This
+  // Contract" answer instead of the years left on the contract -- a
+  // SEPARATE, personalized what-if number, not a replacement for
+  // costPerPointYear above. It intentionally isn't a fair way to rank
+  // resorts against each other (a short timeframe clamps every resort
+  // toward the same divisor regardless of how long its real contract
+  // life is), so it's surfaced as its own column rather than driving the
+  // primary sort.
+  const effectiveCapitalPerPointYear = vacationYears > 0
+    ? (pricePerPoint * inputs.points + inputs.closingCost) / (inputs.points * vacationYears)
+    : null;
+  const effectiveCostPerPointYear = effectiveCapitalPerPointYear != null
+    ? effectiveCapitalPerPointYear + averageDuesPerPoint(vacationYears)
+    : null;
+
+  const medianPoints = medianRoomPoints(resort, inputs.category);
+  const nightlyRoomCost = costPerPointYear != null && medianPoints != null ? costPerPointYear * medianPoints : null;
+
   let totalDues = 0;
   let totalValue = 0;
-  let totalRentValue = 0;
   for (let t = 0; t < vacationYears; t++) {
     totalDues += currentDuesPerPoint * inputs.points * Math.pow(1 + inputs.duesGrowth, t);
     totalValue += inputs.pointValue * inputs.points * Math.pow(1 + inputs.valueGrowth, t);
-    totalRentValue += RENT_POINT_VALUE * inputs.points * Math.pow(1 + RENT_VALUE_GROWTH, t);
   }
+  const lifetimeOutlay = initialCost + totalDues;
+  // Cash Ratio: rack-rate vacation value delivered (Vacation Value $/pt/yr,
+  // compounding at its own growth rate, over your vacationing years) per
+  // dollar of Lifetime Outlay -- "you get $X of vacation for every $1 you
+  // actually spend owning." Higher is better, unlike every Cost/Pt/Year-
+  // style metric above where lower is better.
+  const cashRatio = lifetimeOutlay > 0 ? totalValue / lifetimeOutlay : 0;
 
-  const finalCost = initialCost + totalDues;
-  const cashRatio = finalCost > 0 ? totalValue / finalCost : 0;
-  const rentRatio = finalCost > 0 ? totalRentValue / finalCost : 0;
+  // Years to breakeven vs. renting instead: the fractional year within
+  // which cumulative (rent value saved - dues paid) crosses the initial
+  // buy-in, interpolated within that year rather than rounded up to the
+  // next whole year -- capped at the years actually left on the contract;
+  // null ("Never") if it never crosses within that window.
+  let cumulative = 0;
+  let yearsToBreakeven = null;
+  for (let t = 1; t <= yearsRemaining; t++) {
+    const rentValueYear = RENT_POINT_VALUE * inputs.points * Math.pow(1 + RENT_VALUE_GROWTH, t - 1);
+    const duesCostYear = currentDuesPerPoint * inputs.points * Math.pow(1 + inputs.duesGrowth, t - 1);
+    const annualSavings = rentValueYear - duesCostYear;
+    const prevCumulative = cumulative;
+    cumulative += annualSavings;
+    if (cumulative >= initialCost) {
+      yearsToBreakeven = annualSavings > 0
+        ? Math.round((t - 1 + (initialCost - prevCumulative) / annualSavings) * 10) / 10
+        : t;
+      break;
+    }
+  }
 
   return {
     resortId,
@@ -545,13 +921,15 @@ function computeRow(resortId, inputs) {
     hasOverride,
     contractExpirationYear: inv.contractExpirationYear,
     yearsRemaining,
+    currentDuesPerPoint,
+    costPerPointYear,
+    effectiveCostPerPointYear,
     vacationYears,
-    totalDues,
-    finalCost,
-    totalValue,
+    nightlyRoomCost,
+    yearsToBreakeven,
+    lifetimeOutlay,
     cashRatio,
-    rentRatio,
-    isRestricted: purchaseType === "resale" && isHomeOnlyResale(resortId),
+    isRestricted: wizardData.purchaseType === "resale" && isHomeOnlyResale(resortId),
   };
 }
 
@@ -569,86 +947,279 @@ function sortRows(rows) {
   const dir = sortDir === "asc" ? 1 : -1;
   return [...rows].sort((a, b) => {
     if (sortKey === "resortName") return a.resortName.localeCompare(b.resortName) * dir;
-    return (a[sortKey] - b[sortKey]) * dir;
+    const av = a[sortKey], bv = b[sortKey];
+    // Nulls (e.g. "never breaks even") always sort last, regardless of direction.
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return (av - bv) * dir;
   });
 }
 
-function renderResults() {
-  const points = Math.max(1, parseInt(document.getElementById("f-points").value, 10) || 150);
-  // Blank means "no cap of my own" -- computeRow() already clamps to each
-  // resort's own remaining contract length, so Infinity here just lets
-  // that clamp be the only limit, which is the "full contract length"
-  // default this field's placeholder promises.
-  const vacationYearsRaw = document.getElementById("f-vacation-years").value;
-  const desiredVacationYears = vacationYearsRaw !== "" ? Math.max(1, parseInt(vacationYearsRaw, 10) || 1) : Infinity;
-  const closingCost = Math.max(0, parseFloat(document.getElementById("f-closing").value) || 0);
-  const pointValue = Math.max(0, parseFloat(document.getElementById("f-point-value").value) || 35);
-  const valueGrowth = (parseFloat(document.getElementById("f-value-growth").value) || 0) / 100;
-  const duesGrowth = (parseFloat(document.getElementById("f-dues-growth").value) || 0) / 100;
-  const hideRestricted = document.getElementById("f-hide-restricted").checked;
+function renderPerksCallout(points) {
+  const el = document.getElementById("perks-callout");
+  if (!el) return;
+  if (wizardData.purchaseType === "direct" && points >= 150) {
+    el.innerHTML = `
+      <div class="perks-callout">
+        <span class="perks-callout-icon">&#128274;</span>
+        <div>
+          <strong>Direct Perks Unlocked.</strong> Buying direct (rather than resale) means every one of these resorts' points can always book any DVC resort at the 7-month window -- no home-resort restriction, unlike some resale contracts (see "resale-restricted" below). 150+ direct points also qualifies you for Disney's "Membership Extras" -- discounts on merchandise/dining and eligibility for the DVC-exclusive Sorcerer Pass annual pass. Disney describes these as incidental benefits that can change or end without notice, so no dollar value is assumed here -- see <a href="https://disneyvacationclub.disney.go.com/faq/member-benefits/discount-on-annual-pass/" target="_blank" rel="noopener">Disney's Membership Extras FAQ</a> for what's currently included.
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = "";
+  }
+}
 
-  const inputs = { points, desiredVacationYears, closingCost, pointValue, valueGrowth, duesGrowth };
+function computeAllRows() {
+  const inputs = {
+    points: wizardData.points,
+    // Blank ("Full Length") means "no cap of my own" -- computeRow()
+    // already clamps to each resort's own remaining contract length, so
+    // Infinity here just lets that clamp be the only limit.
+    desiredVacationYears: wizardData.vacationYears != null ? wizardData.vacationYears : Infinity,
+    closingCost: wizardData.closingCost,
+    duesGrowth: wizardData.duesGrowth / 100,
+    pointValue: wizardData.pointValue,
+    valueGrowth: wizardData.valueGrowth / 100,
+    category: wizardData.category,
+  };
+  let rows = Object.keys(RESORT_INVESTMENT_DATA).map(id => computeRow(id, inputs)).filter(Boolean);
+  if (wizardData.hideRestricted) rows = rows.filter(r => !r.isRestricted);
+  return rows;
+}
 
-  let rows = Object.keys(RESORT_INVESTMENT_DATA)
-    .map(id => computeRow(id, inputs))
-    .filter(Boolean);
+// Each hero slot is won on a DIFFERENT metric so the three badges are each
+// independently true, not three restatements of the same Cost/Pt/Year
+// ranking -- and each slot skips any resort already claimed by an earlier
+// slot so the same resort isn't showcased three times over.
+function pickHeroCards(sorted) {
+  const byNightly = [...sorted].sort((a, b) => (a.nightlyRoomCost ?? Infinity) - (b.nightlyRoomCost ?? Infinity));
+  const byEffective = [...sorted].sort((a, b) => (a.effectiveCostPerPointYear ?? Infinity) - (b.effectiveCostPerPointYear ?? Infinity));
 
-  if (hideRestricted) rows = rows.filter(r => !r.isRestricted);
+  const timeframeLabel = wizardData.vacationYears != null ? `Your ${wizardData.vacationYears}-Year Plan` : "a Full-Length Contract";
 
+  const picks = [];
+  const used = new Set();
+  const tryAdd = (candidates, badge) => {
+    const pick = candidates.find(r => !used.has(r.resortId));
+    if (pick) { used.add(pick.resortId); picks.push({ row: pick, badge }); }
+  };
+  tryAdd(sorted, "Best Overall Value");
+  tryAdd(byNightly, `Best Nightly Cost for ${CATEGORY_LABELS[wizardData.category]}`);
+  tryAdd(byEffective, `Best Fit for ${timeframeLabel}`);
+  return picks;
+}
+
+function matchCardHTML({ row: r, badge }) {
+  // "Look 2" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md):
+  // faded resort art (data/resort_images.js) behind a plain white wash --
+  // the SAME recipe every other plain content card in the app now uses
+  // (compare.html's ranked cards, trips.html's postcards, home.html's
+  // Saved Stays rows), not a bespoke lavender tint. Omitted entirely for a
+  // resort with no art yet, falling back to the plain CSS background.
+  const artImage = typeof getResortImage === "function" ? getResortImage(r.resortId) : null;
+  const artStyle = artImage
+    ? ` style="background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), url('${artImage}')"`
+    : "";
+  return `
+    <div class="match-card"${artStyle}>
+      <div class="match-card-badge">${badge}</div>
+      <div class="match-card-name">${r.resortName}${r.isRestricted ? restrictedBadgeHTML() : ""}</div>
+      <div class="match-card-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)</div>
+      <div class="match-card-stats">
+        <div>
+          <span class="match-card-stat-label">Cost/Pt/Year<span class="info-icon tip-align-left" data-tip="${METRIC_TIPS.costPerPointYear}">?</span></span>
+          <span class="match-card-stat-value">${r.costPerPointYear != null ? "$" + r.costPerPointYear.toFixed(2) : "&mdash;"}</span>
+        </div>
+        <div>
+          <span class="match-card-stat-label">Est. Nightly Cost<span class="info-icon" data-tip="${METRIC_TIPS.nightlyRoomCost}">?</span></span>
+          <span class="match-card-stat-value">${r.nightlyRoomCost != null ? fmt(r.nightlyRoomCost) : "&mdash;"}</span>
+        </div>
+        <div>
+          <span class="match-card-stat-label">Cash Ratio<span class="info-icon tip-align-right" data-tip="${METRIC_TIPS.cashRatio}">?</span></span>
+          <span class="match-card-stat-value">${r.cashRatio.toFixed(2)}x</span>
+        </div>
+      </div>
+      <div class="match-card-price-row">
+        <span>Buy-in</span>
+        <span class="price-input-wrap">$<input type="number" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}">/pt</span>
+        ${r.hasOverride ? `<button type="button" class="price-reset" data-resort="${r.resortId}" title="Reset to default $${r.defaultPrice.toFixed(2)}/pt">reset</button>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function renderMatches() {
+  document.getElementById("results-section").style.display = "block";
+  const rows = computeAllRows();
   const sorted = sortRows(rows);
+  const costPerPointYearBest = bestIndices(sorted.map(r => r.costPerPointYear), "low");
+  const effectiveCostBest = bestIndices(sorted.map(r => r.effectiveCostPerPointYear), "low");
   const cashRatioBest = bestIndices(sorted.map(r => r.cashRatio), "high");
-  const rentRatioBest = bestIndices(sorted.map(r => r.rentRatio), "high");
+
+  renderPerksCallout(wizardData.points);
+  const heroPicks = pickHeroCards(sorted);
 
   const colHeader = (key, label, tip) => `<th data-sort="${key}" class="${sortKey === key ? "sorted" : ""}">${label}${tip ? `<span class="info-icon" data-tip="${tip}">?</span>` : ""}${sortKey === key ? (sortDir === "asc" ? " &uarr;" : " &darr;") : ""}</th>`;
 
+  // Mobile has no column headers to click, so this <select> is the
+  // equivalent re-sort control there -- always ascending (this app's own
+  // convention: "ascending = most sensible first click" for every one of
+  // these metrics, including resort name).
+  const SORT_OPTIONS = [
+    ["costPerPointYear", "Cost/Pt/Year"],
+    ["resortName", "Resort Name"],
+    ["pricePerPoint", "Buy-In $/Pt"],
+    ["currentDuesPerPoint", "Current Dues"],
+    ["cashRatio", "Cash Ratio"],
+    ["effectiveCostPerPointYear", "Effective Cost/Pt/Yr"],
+    ["nightlyRoomCost", "Est. Nightly Cost"],
+    ["yearsToBreakeven", "Breakeven Horizon"],
+    ["lifetimeOutlay", "Lifetime Outlay"],
+  ];
+  const sortSelectHTML = `
+    <div class="mobile-sort-control">
+      <label for="mobile-sort-select">Sort by</label>
+      <select id="mobile-sort-select">
+        ${SORT_OPTIONS.map(([key, label]) => `<option value="${key}" ${sortKey === key ? "selected" : ""}>${label}</option>`).join("")}
+      </select>
+    </div>
+  `;
+
+  const cardHTML = (r, i) => {
+    const isBest = costPerPointYearBest.has(i);
+    return `
+      <div class="resort-card">
+        <div class="resort-card-header">
+          <div class="resort-card-name">${r.resortName}${r.isRestricted ? restrictedBadgeHTML() : ""}</div>
+          <div class="resort-card-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)</div>
+        </div>
+        <div class="resort-card-hero${isBest ? " best" : ""}">
+          <span class="resort-card-hero-label">Cost/Pt/Year</span>
+          <span class="resort-card-hero-value">${r.costPerPointYear != null ? "$" + r.costPerPointYear.toFixed(2) : "&mdash;"}${isBest ? " &#10003;" : ""}</span>
+        </div>
+        <div class="resort-card-grid">
+          <div class="resort-card-metric">
+            <span class="resort-card-metric-label">Buy-In $/Pt</span>
+            <span class="resort-card-metric-value">
+              <span class="price-input-wrap">$<input type="number" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" /></span>
+              ${r.hasOverride ? `<button type="button" class="price-reset" data-resort="${r.resortId}" title="Reset to default $${r.defaultPrice.toFixed(2)}/pt">reset</button>` : ""}
+            </span>
+          </div>
+          <div class="resort-card-metric">
+            <span class="resort-card-metric-label">Current Dues</span>
+            <span class="resort-card-metric-value">$${r.currentDuesPerPoint.toFixed(2)}</span>
+          </div>
+          <div class="resort-card-metric">
+            <span class="resort-card-metric-label">Cash Ratio</span>
+            <span class="resort-card-metric-value">${r.cashRatio.toFixed(2)}x</span>
+          </div>
+          <div class="resort-card-metric">
+            <span class="resort-card-metric-label">Effective Cost/Pt/Yr</span>
+            <span class="resort-card-metric-value">${r.effectiveCostPerPointYear != null ? "$" + r.effectiveCostPerPointYear.toFixed(2) : "&mdash;"} <span class="resort-card-metric-sub">(${r.vacationYears}y)</span></span>
+          </div>
+          <div class="resort-card-metric">
+            <span class="resort-card-metric-label">Est. Nightly Cost</span>
+            <span class="resort-card-metric-value">${r.nightlyRoomCost != null ? fmt(r.nightlyRoomCost) : "&mdash;"}</span>
+          </div>
+          <div class="resort-card-metric">
+            <span class="resort-card-metric-label">Breakeven Horizon</span>
+            <span class="resort-card-metric-value">${r.yearsToBreakeven != null ? r.yearsToBreakeven.toFixed(1) + " yrs" : "Never"}</span>
+          </div>
+          <div class="resort-card-metric">
+            <span class="resort-card-metric-label">Lifetime Outlay</span>
+            <span class="resort-card-metric-value">${fmt(r.lifetimeOutlay)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
   const rowsHTML = sorted.map((r, i) => `
     <tr>
-      <td class="resort-name">${r.resortName}${r.isRestricted ? `<span class="restricted-badge" data-tip="Resale points bought at this resort can only ever book stays here -- not any other DVC resort. Direct-purchased points at this same resort don't have this restriction.">resale-restricted</span>` : ""}</td>
+      <td class="resort-name">
+        ${r.resortName}${r.isRestricted ? restrictedBadgeHTML() : ""}
+        <div class="resort-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)</div>
+      </td>
       <td class="num price-cell">
         <span class="price-input-wrap">$<input type="number" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" /></span>
         ${r.hasOverride ? `<div class="price-reset-row"><button type="button" class="price-reset" data-resort="${r.resortId}" title="Reset to default $${r.defaultPrice.toFixed(2)}/pt">reset</button></div>` : ""}
       </td>
-      <td class="num">${r.contractExpirationYear} (${r.yearsRemaining}y)</td>
-      <td class="num">${r.vacationYears}</td>
-      <td class="num">${fmt(r.totalDues)}</td>
-      <td class="num">${fmt(r.finalCost)}</td>
-      <td class="num">${fmt(r.totalValue)}</td>
-      <td class="num ratio-value" style="${cashRatioBest.has(i) ? "color:#2e7d32" : ""}">${r.cashRatio.toFixed(2)}${cashRatioBest.has(i) ? " &#10003;" : ""}</td>
-      <td class="num ratio-value" style="${rentRatioBest.has(i) ? "color:#2e7d32" : ""}">${r.rentRatio.toFixed(2)}${rentRatioBest.has(i) ? " &#10003;" : ""}</td>
+      <td class="num">$${r.currentDuesPerPoint.toFixed(2)}</td>
+      <td class="num ratio-value" style="${costPerPointYearBest.has(i) ? "color:var(--color-good)" : ""}">${r.costPerPointYear != null ? "$" + r.costPerPointYear.toFixed(2) : "&mdash;"}${costPerPointYearBest.has(i) ? " &#10003;" : ""}</td>
+      <td class="num ratio-value" style="${cashRatioBest.has(i) ? "color:var(--color-good)" : ""}">${r.cashRatio.toFixed(2)}x${cashRatioBest.has(i) ? " &#10003;" : ""}</td>
+      <td class="num" style="${effectiveCostBest.has(i) ? "color:var(--color-secondary); font-weight:700;" : ""}">
+        ${r.effectiveCostPerPointYear != null ? "$" + r.effectiveCostPerPointYear.toFixed(2) : "&mdash;"}
+        <div class="resort-sub">${r.vacationYears}y timeframe</div>
+      </td>
+      <td class="num">${r.nightlyRoomCost != null ? fmt(r.nightlyRoomCost) : "&mdash;"}</td>
+      <td class="num">${r.yearsToBreakeven != null ? r.yearsToBreakeven.toFixed(1) + " yrs" : "Never"}</td>
+      <td class="num">${fmt(r.lifetimeOutlay)}</td>
     </tr>
   `).join("");
 
-  document.getElementById("results-body").innerHTML = `
-    <div class="results-table-wrap">
-      <table class="results-table">
-        <colgroup>
-          <col style="width:20%">
-          <col style="width:11%">
-          <col style="width:11%">
-          <col style="width:8%">
-          <col style="width:10%">
-          <col style="width:10%">
-          <col style="width:12%">
-          <col style="width:9%">
-          <col style="width:9%">
-        </colgroup>
-        <thead>
-          <tr>
-            ${colHeader("resortName", "Resort")}
-            ${colHeader("pricePerPoint", "Price/Pt", `Current ${purchaseType} price per point for this resort (see the "prices as of" note below for source and date). Editable -- type in a real listing price you've found and the whole row recalculates.`)}
-            <th>Contract Expires<span class="info-icon" data-tip="The real year this resort's DVC deed expires, with years remaining from today in parentheses. After this, ownership ends -- no more points, no refund.">?</span></th>
-            ${colHeader("vacationYears", "Vacation Yrs", "How many years this row's math actually covers -- your \"Years You'll Keep Vacationing\" input, capped at whatever's shorter: that number, or this resort's real years remaining.")}
-            ${colHeader("totalDues", "Total Dues", "Sum of annual dues over the Vacation Years, starting at today's real rate and compounding at your Dues Growth assumption.")}
-            ${colHeader("finalCost", "Total Cost", "Everything you'd pay: purchase price × points, plus closing cost, plus Total Dues.")}
-            ${colHeader("totalValue", "Vacation Value", "What those vacation nights would be worth over the years, using your Vacation Value ($/pt/yr) and its growth rate above.")}
-            ${colHeader("cashRatio", "Cash Ratio", "Vacation Value ÷ Total Cost. Higher = more rack-rate value delivered per dollar you'd actually spend, compared to paying cash instead of owning.")}
-            ${colHeader("rentRatio", "Rent Ratio", "Same idea as Cash Ratio, but compared to renting points from another owner instead -- fixed at $20/pt growing 4%/yr, not tied to your Vacation Value inputs above. Shows whether owning beats renting, not just beats paying cash.")}
-          </tr>
-        </thead>
-        <tbody>${rowsHTML}</tbody>
-      </table>
+  const advancedPanelHTML = `
+    <div class="advanced-panel${showAdvanced ? " open" : ""}">
+      <label>Closing Cost <input type="number" id="w-closing" min="0" step="1" value="${wizardData.closingCost}"></label>
+      <label>Dues Growth (%/yr)<span class="info-icon" data-tip="${METRIC_TIPS.duesGrowthScope}">?</span> <input type="number" id="w-dues-growth" min="0" step="0.1" value="${wizardData.duesGrowth}"></label>
+      <label>Vacation Value ($/pt/yr)<span class="info-icon" data-tip="${METRIC_TIPS.vacationValueScope}">?</span> <input type="number" id="w-point-value" min="1" step="1" value="${wizardData.pointValue}"></label>
+      <label>Vacation Value Growth (%/yr) <input type="number" id="w-value-growth" min="0" step="0.1" value="${wizardData.valueGrowth}"></label>
     </div>
   `;
+
+  document.getElementById("results-body").innerHTML = `
+    <div id="perks-callout"></div>
+    <div class="match-cards">${heroPicks.map(matchCardHTML).join("")}</div>
+    <div class="data-freshness">
+      Purchase prices as of <strong>${DATA_AS_OF_LABEL}</strong> -- resale and direct pricing change monthly.
+      Check <a href="https://www.fidelityrealestate.com" target="_blank" rel="noopener">Fidelity Real Estate</a>,
+      <a href="https://www.dvcforless.com" target="_blank" rel="noopener">DVC For Less</a>, or
+      <a href="https://dvcnews.com/dvc-program-menu/financial/pricing-a-promotions" target="_blank" rel="noopener">DVCNews</a>
+      for current listings. This is a rough long-term comparison, not financial advice.
+    </div>
+    <button type="button" class="advanced-toggle" id="advanced-toggle">${showAdvanced ? "Hide" : "Adjust"} assumptions (closing cost, dues &amp; vacation value growth) ${showAdvanced ? "&#9652;" : "&#9662;"}</button>
+    ${advancedPanelHTML}
+    <button type="button" class="view-all-toggle" id="view-all-toggle">${showAllResorts ? "Hide" : "View"} All ${sorted.length} Resorts ${showAllResorts ? "&#9652;" : "&#9662;"}</button>
+    <div class="full-results" style="display:${showAllResorts ? "block" : "none"};">
+      ${sortSelectHTML}
+      <div class="results-table-wrap">
+        <table class="results-table">
+          <colgroup>
+            <col style="width:20%">
+            <col style="width:10%">
+            <col style="width:8%">
+            <col style="width:11%">
+            <col style="width:9%">
+            <col style="width:12%">
+            <col style="width:11%">
+            <col style="width:10%">
+            <col style="width:9%">
+          </colgroup>
+          <thead>
+            <tr>
+              ${colHeader("resortName", "Resort")}
+              ${colHeader("pricePerPoint", "Buy-In $/Pt", METRIC_TIPS.pricePerPoint(wizardData.purchaseType))}
+              ${colHeader("currentDuesPerPoint", "Current Dues", METRIC_TIPS.currentDuesPerPoint)}
+              ${colHeader("costPerPointYear", "Cost/Pt/Year", METRIC_TIPS.costPerPointYear)}
+              ${colHeader("cashRatio", "Cash Ratio", METRIC_TIPS.cashRatio)}
+              ${colHeader("effectiveCostPerPointYear", "Effective Cost/Pt/Yr", METRIC_TIPS.effectiveCostPerPointYear)}
+              ${colHeader("nightlyRoomCost", "Est. Nightly Cost", METRIC_TIPS.nightlyRoomCost)}
+              ${colHeader("yearsToBreakeven", "Breakeven Horizon", METRIC_TIPS.yearsToBreakeven)}
+              ${colHeader("lifetimeOutlay", "Lifetime Outlay", METRIC_TIPS.lifetimeOutlay)}
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      </div>
+      <div class="results-cards">
+        ${sorted.map((r, i) => cardHTML(r, i)).join("")}
+      </div>
+    </div>
+  `;
+
+  renderPerksCallout(wizardData.points);
 
   document.querySelectorAll("th[data-sort]").forEach(th => {
     th.addEventListener("click", () => {
@@ -657,73 +1228,384 @@ function renderResults() {
         sortDir = sortDir === "asc" ? "desc" : "asc";
       } else {
         sortKey = key;
-        sortDir = key === "resortName" ? "asc" : "desc";
+        sortDir = "asc";
       }
-      renderResults();
+      renderMatches();
     });
   });
 
+  const mobileSortSelect = document.getElementById("mobile-sort-select");
+  if (mobileSortSelect) {
+    mobileSortSelect.addEventListener("change", () => {
+      sortKey = mobileSortSelect.value;
+      sortDir = "asc";
+      renderMatches();
+    });
+  }
+
+  // "change" (not "input") on every price/assumption field below so
+  // re-rendering -- which the new value needs, to reflow every downstream
+  // metric and possibly re-sort -- doesn't yank focus out from under the
+  // user mid-keystroke.
   document.querySelectorAll(".price-input").forEach(input => {
-    // "change" (not "input") so re-rendering the table -- which the new
-    // price needs, to reflow Total Cost/Cash Ratio/Rent Ratio and possibly
-    // re-sort -- doesn't yank focus out from under the user mid-keystroke.
     input.addEventListener("change", () => {
       const resortId = input.dataset.resort;
-      const key = `${resortId}:${purchaseType}`;
+      const key = `${resortId}:${wizardData.purchaseType}`;
       const val = parseFloat(input.value);
       if (!isFinite(val) || val <= 0) {
         delete priceOverrides[key];
       } else {
         priceOverrides[key] = val;
       }
-      renderResults();
+      renderMatches();
     });
   });
 
   document.querySelectorAll(".price-reset").forEach(btn => {
     btn.addEventListener("click", () => {
-      delete priceOverrides[`${btn.dataset.resort}:${purchaseType}`];
-      renderResults();
+      delete priceOverrides[`${btn.dataset.resort}:${wizardData.purchaseType}`];
+      renderMatches();
     });
+  });
+
+  const viewAllToggle = document.getElementById("view-all-toggle");
+  if (viewAllToggle) viewAllToggle.addEventListener("click", () => { showAllResorts = !showAllResorts; renderMatches(); });
+
+  const advancedToggle = document.getElementById("advanced-toggle");
+  if (advancedToggle) advancedToggle.addEventListener("click", () => { showAdvanced = !showAdvanced; renderMatches(); });
+
+  const closingInput = document.getElementById("w-closing");
+  if (closingInput) closingInput.addEventListener("change", () => {
+    wizardData.closingCost = Math.max(0, parseFloat(closingInput.value) || 0);
+    renderMatches();
+  });
+  const duesGrowthInput = document.getElementById("w-dues-growth");
+  if (duesGrowthInput) duesGrowthInput.addEventListener("change", () => {
+    wizardData.duesGrowth = parseFloat(duesGrowthInput.value) || 0;
+    renderMatches();
+  });
+
+  const pointValueInput = document.getElementById("w-point-value");
+  if (pointValueInput) pointValueInput.addEventListener("change", () => {
+    wizardData.pointValue = Math.max(1, parseFloat(pointValueInput.value) || 35);
+    renderMatches();
+  });
+  const valueGrowthInput = document.getElementById("w-value-growth");
+  if (valueGrowthInput) valueGrowthInput.addEventListener("change", () => {
+    wizardData.valueGrowth = parseFloat(valueGrowthInput.value) || 0;
+    renderMatches();
   });
 }
 
-function setPurchaseType(type) {
-  purchaseType = type;
-  document.getElementById("type-resale").classList.toggle("selected", type === "resale");
-  document.getElementById("type-direct").classList.toggle("selected", type === "direct");
-  // Direct purchases have no closing cost; resale runs Disney's $500
-  // estoppel/transfer fee plus roughly $1,000 more in title/closing fees.
-  // Only auto-adjust if the field still holds either default, so a manual
-  // edit doesn't get silently overwritten by switching purchase type back
-  // and forth.
-  const closingInput = document.getElementById("f-closing");
-  if (closingInput.value === "1500" || closingInput.value === "0") {
-    closingInput.value = type === "direct" ? "0" : "1500";
+// ---- Wizard state --------------------------------------------------------
+let wizardStep = 1; // 1-4 = that step active, 5 = "done" (all collapsed)
+const wizardData = {
+  purchaseType: "resale",
+  points: null,
+  category: "studio",
+  vacationYears: null, // null = full contract length
+  hideRestricted: false,
+  closingCost: 1500,
+  duesGrowth: 4.0,
+  // Vacation Value: what a point's worth of vacation would cost you in
+  // cash (rack rate), used only for Cash Ratio -- defaults match what
+  // this page shipped with historically (dvcalc.app's live version).
+  pointValue: 35,
+  valueGrowth: 5.0,
+};
+
+// User-typed price overrides, e.g. "found a resale listing for less than
+// the report average." Keyed by "resortId:purchaseType" (not just resortId)
+// so a resale override doesn't silently get reused as a direct price if
+// the user flips the toggle, and vice versa. Deliberately NOT reset
+// between wizard runs -- it's real research the user typed in, not
+// throwaway search state.
+let priceOverrides = {};
+
+let sortKey = "costPerPointYear";
+let sortDir = "asc";
+let showAllResorts = false;
+let showAdvanced = false;
+
+// ---- Wizard rendering -----------------------------------------------------
+function stepSummary(s) {
+  if (s === 1) return wizardData.purchaseType === "direct" ? "Direct" : "Resale";
+  if (s === 2) return wizardData.points ? `${fmtNum(wizardData.points)} points` : "";
+  if (s === 3) return CATEGORY_OPTIONS.find(c => c[0] === wizardData.category)[1];
+  if (s === 4) {
+    const yearsLabel = wizardData.vacationYears != null ? `${wizardData.vacationYears}y` : "Full length";
+    return `${yearsLabel}${wizardData.hideRestricted ? " &middot; hiding restricted" : ""}`;
   }
-  renderResults();
+  return "";
 }
 
-document.getElementById("data-as-of").textContent = new Date(INVESTMENT_DATA_AS_OF + "T12:00:00").toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+function collapsedStepHTML(s) {
+  return `
+    <div class="wizard-step collapsed" data-goto="${s}">
+      <div class="wizard-step-header">
+        <div class="wizard-step-number done">&#10003;</div>
+        <div class="wizard-step-title">${STEP_TITLES[s - 1]}</div>
+        <div class="wizard-step-summary">${stepSummary(s)}</div>
+        <div class="wizard-step-chevron">&#9662;</div>
+      </div>
+    </div>
+  `;
+}
 
-document.getElementById("type-resale").addEventListener("click", () => setPurchaseType("resale"));
-document.getElementById("type-direct").addEventListener("click", () => setPurchaseType("direct"));
-document.getElementById("advanced-toggle").addEventListener("click", () => {
-  document.getElementById("advanced-fields").classList.toggle("open");
-});
-document.getElementById("f-hide-restricted").addEventListener("change", renderResults);
-["f-points", "f-vacation-years", "f-closing", "f-point-value", "f-value-growth", "f-dues-growth"].forEach(id => {
-  document.getElementById(id).addEventListener("input", renderResults);
-});
+function upcomingStepHTML(s) {
+  return `
+    <div class="wizard-step upcoming">
+      <div class="wizard-step-header">
+        <div class="wizard-step-number">${s}</div>
+        <div class="wizard-step-title">${STEP_TITLES[s - 1]}</div>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody1() {
+  return `
+    <div class="wizard-step-body">
+      <div class="choice-card-row">
+        <button type="button" class="choice-card${wizardData.purchaseType === "resale" ? " active" : ""}" data-type="resale">
+          <div class="choice-card-title">Resale</div>
+          <div class="choice-card-desc">Lower price per point. Some resorts restrict resale points to booking only that same resort.</div>
+        </button>
+        <button type="button" class="choice-card${wizardData.purchaseType === "direct" ? " active" : ""}" data-type="direct">
+          <div class="choice-card-title">Direct</div>
+          <div class="choice-card-desc">Higher price, but no home-resort booking restriction, plus access to Membership Extras perks.</div>
+        </button>
+      </div>
+      <div class="wizard-nav">
+        <button type="button" class="find-btn" id="wizard-next-1">Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody2() {
+  return `
+    <div class="wizard-step-body">
+      <label class="wizard-field-label" for="w-points">Points to Purchase</label>
+      <input type="number" id="w-points" min="1" step="1" placeholder="e.g. 150" value="${wizardData.points ?? ""}">
+      <div class="chip-row" id="points-chip-row">
+        ${POINT_PRESETS.map(p => `<button type="button" class="chip${wizardData.points === p ? " active" : ""}" data-points="${p}">${p}</button>`).join("")}
+      </div>
+      <div class="wizard-nav">
+        <button type="button" class="btn-back" id="wizard-back-2">Back</button>
+        <button type="button" class="find-btn" id="wizard-next-2">Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody3() {
+  return `
+    <div class="wizard-step-body">
+      <div class="category-grid">
+        ${CATEGORY_OPTIONS.map(([key, label, emoji]) => `
+          <button type="button" class="category-card${wizardData.category === key ? " active" : ""}" data-category="${key}">
+            <span class="category-emoji">${emoji}</span>${label}
+          </button>
+        `).join("")}
+      </div>
+      <div class="wizard-nav">
+        <button type="button" class="btn-back" id="wizard-back-3">Back</button>
+        <button type="button" class="find-btn" id="wizard-next-3">Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function stepBody4() {
+  return `
+    <div class="wizard-step-body">
+      <label class="wizard-field-label" for="w-vacation-years">How Long Do You Plan to Keep This Contract</label>
+      <input type="number" id="w-vacation-years" min="1" step="1" placeholder="Full contract length" value="${wizardData.vacationYears ?? ""}">
+      <div class="chip-row" id="years-chip-row">
+        <button type="button" class="chip${wizardData.vacationYears === 10 ? " active" : ""}" data-years="10">10 yrs</button>
+        <button type="button" class="chip${wizardData.vacationYears === 20 ? " active" : ""}" data-years="20">20 yrs</button>
+        <button type="button" class="chip${wizardData.vacationYears == null ? " active" : ""}" data-years="full">Full Length</button>
+      </div>
+      <label class="wizard-field-label" style="margin-top:16px;display:block;">Resale-Restricted Resorts</label>
+      <button type="button" class="toggle-chip${wizardData.hideRestricted ? " active" : ""}" id="w-hide-restricted">
+        ${wizardData.hideRestricted ? "Hiding restricted resorts" : "Showing all resorts"}
+      </button>
+      <div class="wizard-hint">Riviera, Disneyland Hotel Villas, and Fort Wilderness Cabins restrict RESALE points to booking only that same resort. Direct purchases there don't have this limit.</div>
+      <div class="wizard-nav">
+        <button type="button" class="btn-back" id="wizard-back-4">Back</button>
+        <button type="button" class="find-btn" id="wizard-next-4">Show My Matches</button>
+      </div>
+    </div>
+  `;
+}
+
+function activeStepHTML(s) {
+  const bodies = { 1: stepBody1, 2: stepBody2, 3: stepBody3, 4: stepBody4 };
+  return `
+    <div class="wizard-step active">
+      <div class="wizard-step-header">
+        <div class="wizard-step-number">${s}</div>
+        <div class="wizard-step-title">${STEP_TITLES[s - 1]}</div>
+      </div>
+      ${bodies[s]()}
+    </div>
+  `;
+}
+
+function renderWizard() {
+  const el = document.getElementById("wizard");
+  const progressStep = Math.min(wizardStep, 4);
+  let html = `<div class="wizard-progress"><div class="wizard-progress-fill" style="width:${(progressStep / 4) * 100}%"></div></div>`;
+  for (let s = 1; s <= 4; s++) {
+    if (s < wizardStep) html += collapsedStepHTML(s);
+    else if (s === wizardStep) html += activeStepHTML(s);
+    else html += upcomingStepHTML(s);
+  }
+  el.innerHTML = html;
+  attachWizardListeners();
+}
+
+function attachWizardListeners() {
+  document.querySelectorAll(".wizard-step.collapsed[data-goto]").forEach(stepEl => {
+    stepEl.addEventListener("click", () => {
+      wizardStep = Number(stepEl.dataset.goto);
+      renderWizard();
+    });
+  });
+
+  // Step 1: Purchase Intent & Channel
+  document.querySelectorAll(".choice-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const type = card.dataset.type;
+      wizardData.purchaseType = type;
+      // Direct purchases have no closing cost; resale runs Disney's $500
+      // estoppel/transfer fee plus roughly $1,000 more in title/closing
+      // fees. Only auto-adjust if the field still holds either default,
+      // so a manual edit doesn't get silently overwritten by switching
+      // purchase type back and forth.
+      if (wizardData.closingCost === 1500 || wizardData.closingCost === 0) {
+        wizardData.closingCost = type === "direct" ? 0 : 1500;
+      }
+      renderWizard();
+    });
+  });
+  const next1 = document.getElementById("wizard-next-1");
+  if (next1) next1.addEventListener("click", () => { wizardStep = 2; renderWizard(); });
+
+  // Step 2: Target Point Budget
+  const pointsInput = document.getElementById("w-points");
+  if (pointsInput) {
+    // "input" (not a full re-render) so the chip highlight can track what's
+    // typed without yanking focus out of the field on every keystroke.
+    pointsInput.addEventListener("input", () => {
+      wizardData.points = parseInt(pointsInput.value, 10) || null;
+      document.querySelectorAll("#points-chip-row .chip").forEach(chip => {
+        chip.classList.toggle("active", Number(chip.dataset.points) === wizardData.points);
+      });
+    });
+  }
+  document.querySelectorAll("#points-chip-row .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      wizardData.points = Number(chip.dataset.points);
+      renderWizard();
+    });
+  });
+  const back2 = document.getElementById("wizard-back-2");
+  if (back2) back2.addEventListener("click", () => { wizardStep = 1; renderWizard(); });
+  const next2 = document.getElementById("wizard-next-2");
+  if (next2) next2.addEventListener("click", () => {
+    const pointsVal = parseInt(document.getElementById("w-points").value, 10);
+    if (!pointsVal || pointsVal <= 0) { alert("Enter how many points you plan to purchase."); return; }
+    wizardData.points = pointsVal;
+    wizardStep = 3;
+    renderWizard();
+  });
+
+  // Step 3: Primary Room Category
+  document.querySelectorAll(".category-card").forEach(card => {
+    card.addEventListener("click", () => {
+      wizardData.category = card.dataset.category;
+      renderWizard();
+    });
+  });
+  const back3 = document.getElementById("wizard-back-3");
+  if (back3) back3.addEventListener("click", () => { wizardStep = 2; renderWizard(); });
+  const next3 = document.getElementById("wizard-next-3");
+  if (next3) next3.addEventListener("click", () => { wizardStep = 4; renderWizard(); });
+
+  // Step 4: Usage Horizon & Vibe
+  const yearsInput = document.getElementById("w-vacation-years");
+  if (yearsInput) {
+    yearsInput.addEventListener("input", () => {
+      const val = parseInt(yearsInput.value, 10);
+      wizardData.vacationYears = val > 0 ? val : null;
+      document.querySelectorAll("#years-chip-row .chip").forEach(chip => {
+        const chipVal = chip.dataset.years === "full" ? null : Number(chip.dataset.years);
+        chip.classList.toggle("active", chipVal === wizardData.vacationYears);
+      });
+    });
+  }
+  document.querySelectorAll("#years-chip-row .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      wizardData.vacationYears = chip.dataset.years === "full" ? null : Number(chip.dataset.years);
+      renderWizard();
+    });
+  });
+  const hideRestrictedBtn = document.getElementById("w-hide-restricted");
+  if (hideRestrictedBtn) hideRestrictedBtn.addEventListener("click", () => {
+    wizardData.hideRestricted = !wizardData.hideRestricted;
+    renderWizard();
+  });
+  const back4 = document.getElementById("wizard-back-4");
+  if (back4) back4.addEventListener("click", () => { wizardStep = 3; renderWizard(); });
+  const next4 = document.getElementById("wizard-next-4");
+  if (next4) next4.addEventListener("click", () => {
+    showAllResorts = false;
+    showAdvanced = false;
+    wizardStep = 5;
+    renderWizard();
+    renderMatches();
+    document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
+  });
+}
 
 function waitForAuthThenRender(attempts) {
   if (window.DVCAuth || attempts <= 0) {
-    renderResults();
+    renderWizard();
   } else {
     setTimeout(() => waitForAuthThenRender(attempts - 1), 50);
   }
 }
 waitForAuthThenRender(40);
+
+// Mobile tap-to-toggle for every [data-tip] element on this page
+// (column-header info icons, restricted badge) -- hover has no
+// touchscreen equivalent at all, so this is the tap fallback; the
+// existing :hover CSS keeps working unchanged for a real mouse. Same
+// "always add, never toggle the same one off" pattern as the
+// .tooltip-anchor delegate in app.js/compare.html, just keyed off
+// data-tip since this page's tooltips use their own bespoke mechanism
+// rather than the shared tooltip-anchor/tooltip-card component.
+// Registered on the CAPTURE phase, not bubble, and stops propagation when
+// an anchor is found -- the column-header info icons sit inside a
+// th[data-sort] that has its own click-to-sort listener; without this, a
+// tap would sort the column first (re-rendering the results and
+// detaching the very node this handler just tried to flag) before this
+// delegate ever got a chance to run.
+document.addEventListener("click", (e) => {
+  const anchor = e.target.closest("[data-tip]");
+  document.querySelectorAll("[data-tip].tap-open").forEach((el) => {
+    if (el !== anchor) el.classList.remove("tap-open");
+  });
+  if (anchor) {
+    anchor.classList.add("tap-open");
+    e.stopPropagation();
+  }
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") document.querySelectorAll("[data-tip].tap-open").forEach((el) => el.classList.remove("tap-open"));
+});
   </script>
 </body>
 </html>

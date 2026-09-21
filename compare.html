@@ -12,18 +12,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
   <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f5f5f5;
+  background: var(--color-bg-page);
   color: #333;
   min-height: 100vh;
 }
 
 .header {
-  background: linear-gradient(135deg, #1a237e, #4a148c);
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
   color: white;
   padding: 16px 24px;
   text-align: center;
@@ -45,17 +46,17 @@ body {
   top: 0;
   z-index: 100;
 }
-.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
 .site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
 .site-nav-group { display: flex; align-items: center; gap: 12px; }
 .site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
 .site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
 .site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
-.site-nav-links a:hover { color: #4a148c; }
-.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 
 .site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
-.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: #4a148c; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
 
 .account-btn, .account-link-btn {
   font: inherit;
@@ -65,13 +66,13 @@ body {
   border-radius: 20px;
   border: 1px solid #ddd;
   background: #f7f5fa;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   white-space: nowrap;
 }
-.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: var(--color-primary); }
 
 @media (max-width: 800px) {
   .site-nav-toggle { display: flex; }
@@ -123,7 +124,7 @@ body {
 .control-group input:focus,
 .control-group select:focus {
   outline: none;
-  border-color: #4a148c;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
@@ -136,7 +137,7 @@ body {
 }
 
 .stay-summary strong {
-  color: #1a237e;
+  color: var(--color-secondary);
   font-style: normal;
 }
 
@@ -155,6 +156,11 @@ body {
   font-size: 0.95rem;
 }
 
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .compare-table {
   width: 100%;
   border-collapse: collapse;
@@ -167,6 +173,46 @@ body {
 .compare-table thead {
   background: #f8f8f8;
   border-bottom: 2px solid #e0e0e0;
+}
+
+/* "#" and "Resort" stay pinned while the rest of the table scrolls
+   horizontally -- # gets a known fixed width so Resort's sticky offset
+   is a constant instead of something measured at runtime. */
+.compare-table th:first-child,
+.compare-table td:first-child {
+  width: 40px;
+  box-sizing: border-box;
+}
+
+.compare-table th:first-child,
+.compare-table td:first-child,
+.compare-table th:nth-child(2),
+.compare-table td:nth-child(2) {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: white;
+}
+
+.compare-table th:nth-child(2),
+.compare-table td:nth-child(2) {
+  left: 40px;
+}
+
+.compare-table thead th:first-child,
+.compare-table thead th:nth-child(2) {
+  background: #f8f8f8;
+  z-index: 3;
+}
+
+.compare-table tbody tr:hover td:first-child,
+.compare-table tbody tr:hover td:nth-child(2) {
+  background: #f8f6ff;
+}
+
+.compare-table tbody tr:first-child td:first-child,
+.compare-table tbody tr:first-child td:nth-child(2) {
+  background: #f1f8e9;
 }
 
 .compare-table th {
@@ -190,11 +236,11 @@ body {
 }
 
 .compare-table th.sortable:hover {
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 .compare-table th.sort-active {
-  color: #4a148c;
+  color: var(--color-primary);
 }
 
 .sort-arrow {
@@ -224,12 +270,123 @@ body {
 }
 
 .compare-table tbody tr:first-child:hover {
-  background: #e8f5e9;
+  background: var(--color-good-bg);
 }
 
 .resort-name {
   font-weight: 600;
   color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.resort-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.best-value-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  background: var(--color-good);
+  color: white;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* border-left on <tr> itself isn't reliably rendered under border-collapse,
+   so the accent goes on the first cell instead. */
+.compare-table tbody tr:first-child td:first-child {
+  border-left: 3px solid var(--color-good);
+}
+
+/* Personalized Home Resort Advantage badge (ownerBadgeHTML()) -- only
+   rendered once a signed-in user's contracts resolve via getUserResortAccess(). */
+.owner-access-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Room name + owner-access badge (roomLineHTML()) -- wraps to a second
+   line on narrow cards rather than forcing the badge to shrink or the
+   resort title above to give up its space. */
+.room-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Forces the badge onto its own line below the room name, every time --
+   letting it sit wherever it happened to fit put its tooltip anchor at a
+   different, unpredictable horizontal position on every card (flush left
+   when it wrapped, often mid-row when it didn't), and a mid-row anchor let
+   the fixed-direction tooltip-align-left card spill past a narrow mobile
+   card's right edge. The wrapper (not the badge itself) takes the forced
+   100% width so the visible chip inside stays naturally sized instead of
+   stretching into a full-width bar; being a flex item blockifies it, so
+   the chip flows to its own left edge regardless of what's above it,
+   which is what makes tooltip-align-left reliably safe everywhere. */
+.owner-badge-line {
+  flex-basis: 100%;
+}
+
+.owner-access-badge.home {
+  background: var(--color-good-bg);
+  color: var(--color-good);
+}
+
+.owner-access-badge.warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.owner-access-badge.restricted {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.owner-access-badge.info {
+  background: #f0f0f0;
+  color: #666;
+}
+
+/* Vibe & Logistics view badges (poolTierHTML()/diningHTML()) */
+.pool-tier-badge,
+.dining-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.pool-tier-badge.signature { background: var(--color-primary-tint-bg); color: var(--color-primary); }
+.pool-tier-badge.themed { background: var(--color-good-bg); color: var(--color-good); }
+.pool-tier-badge.standard { background: #f0f0f0; color: #666; }
+
+.dining-badge.high { background: var(--color-good-bg); color: var(--color-good); }
+.dining-badge.moderate { background: var(--color-warning-bg); color: var(--color-warning); }
+.dining-badge.low { background: #f0f0f0; color: #666; }
+
+.sqft-per-point {
+  font-weight: 600;
 }
 
 .resort-name-select {
@@ -237,13 +394,16 @@ body {
 }
 
 .resort-name-select:hover {
-  color: #4a148c;
+  color: var(--color-primary);
   text-decoration: underline;
 }
 
 .room-name {
   font-size: 0.72rem;
   color: #888;
+}
+
+.room-line {
   margin-top: 2px;
 }
 
@@ -253,33 +413,33 @@ body {
   font-size: 0.8rem;
 }
 
-.rank-num.top { color: #2e7d32; }
+.rank-num.top { color: var(--color-good); }
 
 .pts-value {
   font-weight: 700;
-  color: #1a237e;
+  color: var(--color-secondary);
 }
 
 .rental-value {
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--color-good);
 }
 
 .cash-value {
-  color: #b71c1c;
+  color: var(--color-danger);
 }
 
 .savings-value {
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--color-good);
 }
 
 .savings-badge {
   display: inline-block;
   font-size: 0.6rem;
   font-weight: 600;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--color-good-bg);
+  color: var(--color-good);
   padding: 1px 5px;
   border-radius: 3px;
   margin-left: 4px;
@@ -287,7 +447,7 @@ body {
 
 .na { color: #ccc; }
 .na.clickable { cursor: pointer; }
-.na.clickable:hover { color: #4a148c; }
+.na.clickable:hover { color: var(--color-primary); }
 
 /* Booking Outlook — compact strip (11mo -> 1mo), one column not five */
 .outlook-header-sub {
@@ -313,56 +473,14 @@ body {
 }
 
 .outlook-dot.outlook-none { background: #f0f0f0; }
-.outlook-excellent { background: #2e7d32; }
+.outlook-excellent { background: var(--color-good); }
 .outlook-good { background: #f9a825; }
 .outlook-fair { background: #ef6c00; }
 .outlook-low { background: #d84315; }
-.outlook-very-low { background: #b71c1c; }
+.outlook-very-low { background: var(--color-danger); }
 
-/* Generic hover tooltip, reused for the outlook dots */
-.tooltip-anchor { position: relative; cursor: pointer; user-select: none; }
-
-.tooltip-card {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 150px;
-  background: white;
-  color: #333;
-  border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-  padding: 8px 10px;
-  text-align: center;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.12s ease;
-  z-index: 50;
-}
-
-.tooltip-card::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-bottom-color: white;
-}
-
-.tooltip-anchor.tooltip-align-left .tooltip-card { left: -8px; transform: none; }
-.tooltip-anchor.tooltip-align-left .tooltip-card::before { left: 14px; transform: none; }
-.tooltip-anchor.tooltip-align-right .tooltip-card { left: auto; right: -8px; transform: none; }
-.tooltip-anchor.tooltip-align-right .tooltip-card::before { left: auto; right: 14px; transform: none; }
-
-.tooltip-anchor:hover .tooltip-card,
-.tooltip-anchor:focus .tooltip-card,
-.tooltip-anchor:focus-within .tooltip-card {
-  opacity: 1;
-  visibility: visible;
-}
-
+/* Base .tooltip-anchor/.tooltip-card now come from tokens.css -- only this
+   page's own modifier rules stay here. */
 .outlook-tooltip {
   font-size: 0.7rem;
   font-weight: 600;
@@ -418,7 +536,7 @@ body {
 
 .cash-value.prior-year {
   font-style: italic;
-  color: #b71c1c;
+  color: var(--color-danger);
 }
 
 .prior-year-footnote {
@@ -432,7 +550,7 @@ body {
 .inline-cash-input {
   width: 80px;
   padding: 3px 6px;
-  border: 1px solid #4a148c;
+  border: 1px solid var(--color-primary);
   border-radius: 4px;
   font-size: 0.85rem;
   text-align: right;
@@ -451,6 +569,17 @@ body {
   border-top: 2px solid #e0e0e0;
 }
 
+/* Card-feed equivalent of .section-divider above. */
+.card-section-divider {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #999;
+  letter-spacing: 0.5px;
+  padding: 10px 2px 2px;
+  border-top: 2px solid #e0e0e0;
+}
+
 .no-cash-row {
   opacity: 0.7;
 }
@@ -458,7 +587,7 @@ body {
 .select-resort {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -468,7 +597,7 @@ body {
 }
 
 .owner-cost {
-  color: #4a148c;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -506,7 +635,7 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #4a148c;
+  background: var(--color-primary);
   cursor: pointer;
 }
 
@@ -515,17 +644,9 @@ body {
 }
 
 .settings-bar input[type="checkbox"] {
-  accent-color: #4a148c;
+  accent-color: var(--color-primary);
   cursor: pointer;
   vertical-align: middle;
-}
-
-.settings-bar select {
-  padding: 3px 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  background: white;
 }
 
 .rental-settings {
@@ -550,22 +671,299 @@ body {
 }
 
 .category-pill:hover {
-  border-color: #4a148c;
-  color: #4a148c;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .category-pill.active {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
-  border-color: #4a148c;
+  border-color: var(--color-primary);
+}
+
+/* ---- Financials vs. Vibe & Logistics view toggle ----
+   A bigger, more prominent segmented control than .category-pills above --
+   this swaps the entire table/card content (see render()'s state.view
+   branch), not just a filter, so it reads as the major mode switch it is. */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  margin: 14px 24px 12px;
+}
+.view-toggle-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  color: #555;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.view-toggle-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.view-toggle-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+/* ---- Vibe & Logistics quick filter pills (#vibe-filter-row) ----
+   Shown/hidden and populated by render() -- only meaningful in the
+   experience view, so it's empty markup (display:none) the rest of the
+   time rather than a second static block to keep in sync. flex-wrap
+   (not a horizontal-scroll strip) keeps this at zero horizontal scroll
+   on mobile per the app's mobile guardrails -- three short pills wrap
+   to two rows on a narrow phone instead of needing to scroll. */
+.vibe-filter-row { margin: 0 24px 14px; }
+.vibe-filter-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.vibe-filter-chip {
+  font: inherit;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #555;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.vibe-filter-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.vibe-filter-chip.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+/* ---- Mobile Card Feed (2026-09-18) ----
+   Replaces the earlier "shrink the table + hide secondary columns" approach
+   below 768px (same reasoning as contractvalue.html's Ranked-by-Value
+   table, which tried and rejected that same shrink-to-fit path twice) --
+   a multi-column spreadsheet is the wrong shape for a phone regardless of
+   font size, so instead the table is hidden outright and replaced with one
+   self-contained card per resort/room row. Both .table-responsive and
+   .compare-cards are always in the DOM, built from the exact same
+   withCash/withoutCash arrays in render() -- the media query below is the
+   only thing that decides which is visible, so there's no second render
+   path to keep in sync, and the existing querySelectorAll-based wiring for
+   .editable-cash/.select-resort/.resort-name-select picks up the card
+   copies for free since they reuse the same classes and data attributes. */
+.compare-cards { display: none; flex-direction: column; gap: 12px; }
+
+.compare-card {
+  background: white;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.compare-card.best {
+  background: #f1f8e9;
+  border-color: var(--color-good);
+}
+
+.compare-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.compare-card-rank {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #999;
+}
+.compare-card-rank.best {
+  text-transform: uppercase;
+  color: white;
+  background: var(--color-good);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.compare-card .resort-name { font-size: 0.95rem; }
+.compare-card .room-line { margin-bottom: 10px; }
+
+.compare-card-outlook { margin-bottom: 12px; }
+
+/* Cash Price + Points are the two numbers the user is fundamentally
+   comparing resorts by -- same "give the primary metric its own prominent
+   callout" reasoning as contractvalue.html's .resort-card-hero. */
+.compare-card-hero-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.compare-card-hero {
+  background: #faf8fd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.compare-card-hero-label {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #888;
+  font-weight: 600;
+}
+.compare-card-hero-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+.compare-card-metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.compare-card-metric-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #999;
+  font-weight: 600;
+}
+
+.compare-card-select {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.compare-card-select:hover { background: var(--color-primary-active); }
+
+/* Hidden by default (desktop) -- sorting on mobile has no column headers
+   to click, so this replaces that interaction with an explicit control. */
+.mobile-sort-control { display: none; margin-bottom: 14px; }
+.mobile-sort-control label {
+  font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #888;
+  letter-spacing: 0.4px; display: block; margin-bottom: 4px;
+}
+/* Same shared custom-select component the rest of the app uses (Resort/
+   Room Type on index.html, etc.) instead of the OS-native <select> popup --
+   stretched full-width and given a taller, thumb-friendly trigger since
+   tokens.css's default sizing targets a compact desktop toolbar. */
+.mobile-sort-control .custom-select {
+  width: 100%;
+  max-width: none;
+}
+.mobile-sort-control .custom-select-trigger {
+  padding: 11px 12px;
+  font-size: 0.9rem;
+  border-radius: 8px;
 }
 
 /* Responsive */
 @media (max-width: 800px) {
   .controls { flex-direction: column; align-items: stretch; }
   .category-pills { flex-wrap: wrap; }
-  .compare-table { font-size: 0.78rem; }
-  .compare-table th, .compare-table td { padding: 8px 6px; }
+}
+
+@media (max-width: 768px) {
+  .table-responsive { display: none; }
+  .compare-cards { display: flex; }
+  .mobile-sort-control { display: block; }
+  .view-toggle { margin: 12px 16px 10px; }
+  .vibe-filter-row { margin: 0 16px 10px; }
+  .view-toggle-btn { padding: 9px 8px; font-size: 0.8rem; }
+}
+
+/* ---- Settings bar: thumb-friendly touch targets on mobile ----
+   Below 768px (aligned with the card-feed breakpoint above) this becomes a
+   single-column stack -- a 2-up grid still crushed the rental-rate slider
+   against the WDW-only toggle, and every control's native tap target
+   (checkbox, slider thumb, select) was sized for a mouse, not a thumb. */
+@media (max-width: 768px) {
+  .settings-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+  /* Label text stacks above its control by default (Home resort, Sort by)
+     -- avoids the inline "label text competing with the control for
+     horizontal space" overflow an inline row had for a long resort name
+     (reported directly against a live screenshot: the trigger ran off the
+     right edge of the screen). .toggle-label overrides back to a row
+     immediately below, since a checkbox + its own text is one compact unit
+     that's fine inline and looks odd stacked. */
+  .settings-bar label {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    font-size: 0.82rem;
+  }
+  .settings-label-text {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #888;
+    font-weight: 600;
+  }
+  #owner-dues-label { text-transform: none; font-weight: 400; letter-spacing: 0; }
+  /* Explicit wrapper, not relying on the label's raw text+<strong>+text
+     nodes to collapse into one anonymous flex item on their own -- that
+     wrapped across 3 lines instead (reported against a live screenshot).
+     Not .settings-label-text: this is a live value the user is actively
+     adjusting, not a static field label, so it keeps normal size/case. */
+  .rental-rate-line { white-space: nowrap; }
+  .settings-bar .toggle-label {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+  }
+  .settings-bar .toggle-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .settings-bar input[type="range"] {
+    width: 100%;
+    height: 6px;
+    margin-top: 2px;
+  }
+  .settings-bar input[type="range"]::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+  /* min-width: 0 is the actual fix for the overflow -- a flex item's
+     default min-width is auto (sized to its content), which let a long
+     resort name push .custom-select wider than the settings-bar itself
+     even with width:100% set below; min-width:0 lets it actually shrink
+     so .custom-select-value's existing ellipsis (tokens.css) can kick in. */
+  .settings-bar .custom-select {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+  .settings-bar .custom-select-trigger {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    min-height: 38px;
+  }
 }
   </style>
   <script>
@@ -586,11 +984,12 @@ body {
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html" id="back-link">Calendar</a>
         <a href="compare.html" class="active">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
@@ -611,6 +1010,7 @@ body {
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -642,33 +1042,62 @@ body {
     <div class="stay-summary" id="stay-summary"></div>
   </div>
 
+  <div class="view-toggle" id="view-toggle">
+    <button type="button" class="view-toggle-btn active" data-view="financial">💰 Financials &amp; Points</button>
+    <button type="button" class="view-toggle-btn" data-view="experience">🌴 Vibe &amp; Logistics</button>
+  </div>
+
+  <div class="vibe-filter-row" id="vibe-filter-row" style="display:none;"></div>
+
   <div class="settings-bar">
     <label class="toggle-label">
       <input type="checkbox" id="wdw-only-toggle"> WDW (Orlando) only
     </label>
     <span class="rental-settings" id="rental-settings">
-      <label>Rental rate: <strong>$<span id="rental-rate-val">20</span></strong>/pt
+      <label>
+        <span class="rental-rate-line">Rental rate: <strong>$<span id="rental-rate-val">20</span></strong>/pt</span>
         <input type="range" id="rental-rate" min="15" max="25" step="0.5" value="20">
       </label>
     </span>
-    <label>
-      Home resort:
-      <select id="owner-resort"></select>
-      <span id="owner-dues-label"></span>
+    <label for="owner-resort">
+      <span class="settings-label-text">Home resort: <span id="owner-dues-label"></span></span>
+      <div class="custom-select custom-select-narrow">
+        <select id="owner-resort" class="native-select"></select>
+        <button type="button" class="custom-select-trigger">
+          <span class="custom-select-value"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
+        <div class="custom-select-dropdown"></div>
+      </div>
     </label>
+    <div class="mobile-sort-control" id="mobile-sort-slot"></div>
   </div>
 
   <div class="table-container" id="results">
     <div class="empty-state">Select check-in and check-out dates above to compare resorts</div>
   </div>
 
+  <script src="dvc-track.js"></script>
+  <script src="dvc-ui.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
   <script src="data/availability_data.js"></script>
+  <script src="data/resort_experience.js"></script>
+  <script src="data/resort_images.js"></script>
   <script>
 // ---- State ----
 RESORTS.sort((a, b) => a.name.localeCompare(b.name));
+
+// Same resort-color hash as account.html's wallet cards (WALLET_CARD_GRADIENTS) --
+// duplicated locally rather than shared, same precedent as CATEGORY_KEYWORDS
+// being independently copied across app.js/compare.html/suggest.html.
+const RESORT_DOT_COLORS = ["#4a148c", "#1b5e3a", "#0d47a1", "#7a1734", "#8d5524", "#37474f"];
+function resortDotColor(resortId) {
+  let hash = 0;
+  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
+  return RESORT_DOT_COLORS[hash % RESORT_DOT_COLORS.length];
+}
 
 const state = {
   checkIn: null,
@@ -678,9 +1107,23 @@ const state = {
   rentalRate: DEFAULT_RENTAL_RATE,
   ownerResortId: "saratogaSprings",
   customCashRates: {}, // key: "resortId_roomId", value: total cash price
-  sortBy: "points", // "points" | "cash" | "rentalSavingsPct" | "ownerSavingsPct"
+  sortBy: "points", // key into activeSortColumns() -- financial or experience columns, per `view`
   sortDir: "asc", // "asc" | "desc" — toggles when clicking the already-active column
+  view: "financial", // "financial" | "experience" — which set of columns/cards render() builds
+  // Vibe & Logistics-only quick filters (buildVibeFilterPillsHTML()) --
+  // combine with each other and with wdwOnly/category via plain AND.
+  // Untouched by the financial view; harmless to leave set when switching
+  // views since they only ever get read from the experience branch.
+  vibeFilters: { zeroBus: false, topPool: false, highDining: false },
 };
+
+// Populated once at page load (see loadUserResortAccess() near the bottom)
+// from the signed-in user's own contracts, via the exact same
+// getUserResortAccess() auth.js already uses for the calendar's booking-
+// window personalization -- null until that resolves (signed out, or
+// accounts not configured on this deployment), in which case the
+// Home Resort Advantage callout just doesn't render rather than guessing.
+let userResortAccess = null;
 
 // ---- DOM ----
 const checkInInput = document.getElementById("check-in");
@@ -692,6 +1135,7 @@ const rentalSlider = document.getElementById("rental-rate");
 const rentalLabel = document.getElementById("rental-rate-val");
 const wdwOnlyToggle = document.getElementById("wdw-only-toggle");
 const ownerResortSelect = document.getElementById("owner-resort");
+const initCustomSelect = window.DVCUI.initCustomSelect;
 const ownerDuesLabel = document.getElementById("owner-dues-label");
 
 // ---- Sorting ----
@@ -699,7 +1143,17 @@ const ownerDuesLabel = document.getElementById("owner-dues-label");
 // makes sense to land on the first time it's clicked (cheapest/fewest first
 // for price & points, biggest savings first for percentages — "click once,
 // see the best deal" rather than making the user flip it every time).
-const SORT_COLUMNS = {
+//
+// Two separate column sets, not one shared object -- the Financials and
+// Vibe & Logistics views are answering different questions, so "Sort By"
+// swaps to match whichever is active (activeSortColumns(), keyed off
+// state.view) instead of showing cash/savings options while looking at
+// transportation and pools. "Points" is intentionally in both sets (its
+// key and accessor are identical either way) so switching views doesn't
+// force a sort reset in the common case -- see the view-toggle handler
+// below, which only resets state.sortBy when the current key truly
+// doesn't exist in the new view's set.
+const SORT_COLUMNS_FINANCIAL = {
   cash: {
     label: "Cash Price", accessor: r => r.totalCash, defaultDir: "asc",
     tooltip: "What Disney would charge to book this stay directly, at its published cash (rack) rate.",
@@ -719,12 +1173,35 @@ const SORT_COLUMNS = {
   },
 };
 
+const SORT_COLUMNS_EXPERIENCE = {
+  sqftPerPoint: {
+    label: "Space Efficiency", accessor: r => r.sqftPerPoint, defaultDir: "desc",
+    tooltip: "Square footage per point spent per night -- how much physical room you're getting for what you're paying. Higher is more space for the points.",
+  },
+  transportTier: {
+    label: "Transportation", accessor: r => transportTier(r.experience) ?? 99, defaultDir: "asc",
+    tooltip: "Ranks resorts by transportation convenience: Walk/Skyliner/Monorail first, then Boat, then Bus-only last.",
+  },
+  diningDensity: {
+    label: "Dining Density", accessor: r => DINING_RANK[r.experience?.diningDensity] ?? 0, defaultDir: "desc",
+    tooltip: "Roughly how many notable on-site dining options this resort has, High to Low.",
+  },
+  points: {
+    label: "Points", accessor: r => r.totalPoints, defaultDir: "asc",
+    tooltip: "Total DVC points required for this stay, from the room type's points chart.",
+  },
+};
+
+function activeSortColumns() {
+  return state.view === "financial" ? SORT_COLUMNS_FINANCIAL : SORT_COLUMNS_EXPERIENCE;
+}
+
 function setSortBy(key) {
   if (state.sortBy === key) {
     state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
   } else {
     state.sortBy = key;
-    state.sortDir = SORT_COLUMNS[key].defaultDir;
+    state.sortDir = activeSortColumns()[key].defaultDir;
   }
   render();
 }
@@ -741,11 +1218,132 @@ function headerTooltipHTML(label, desc, align = "") {
 // estimatedCashRates in data.js) -- same component and caveat text as
 // estimateBadgeHTML() in app.js.
 function estimateBadgeHTML() {
-  return `<span class="tooltip-anchor estimate-badge">(!)<div class="tooltip-card estimate-tooltip">Cash prices for this resort are estimated, not observed rates, and may not be fully accurate.</div></span>`;
+  // tooltip-align-right -- .resort-name is a non-wrapping flex row, so this
+  // badge always sits as the LAST item on the line, right after however
+  // much of the (possibly long) resort name fit before it. That puts its
+  // anchor consistently toward the right side of a narrow mobile card, so
+  // the default centered .tooltip-card (210px wide) reliably overflowed
+  // the right edge. Extending leftward from the badge's own right edge is
+  // the direction that stays inside the card here.
+  return `<span class="tooltip-anchor estimate-badge tooltip-align-right">(!)<div class="tooltip-card estimate-tooltip">Cash prices for this resort are estimated, not observed rates, and may not be fully accurate.</div></span>`;
+}
+
+// Personalized Home Resort Advantage badge -- shown next to the resort name
+// in both views (it's relevant regardless of whether you're looking at
+// financials or vibe/logistics), only when userResortAccess actually
+// resolved (signed in with at least one active contract).
+function ownerBadgeHTML(row) {
+  if (!row.ownerAccessBadge) return "";
+  const b = row.ownerAccessBadge;
+  // tooltip-align-left, same reasoning as the outlook dots above: this
+  // badge sits inside a wrapping flex row (roomLineHTML()) at an
+  // unpredictable horizontal position -- often flush against the card's
+  // left edge when it wraps to its own line -- so the default centered
+  // .tooltip-card (210px wide) reliably overflowed the right edge of a
+  // narrow mobile card. Extending rightward from the badge's own left
+  // edge is the one direction that stays inside the card either way.
+  return `<span class="owner-access-badge ${b.type} tooltip-anchor tooltip-align-left">${b.text}${b.title ? `<div class="tooltip-card">${b.title}</div>` : ""}</span>`;
+}
+
+// Room name + owner-access badge share a line below the resort title
+// instead of crowding the title itself -- badge text (e.g. "7-Month Window
+// Not Open Yet") is long enough that packing it into the same flex row as
+// the resort name squeezed the name down to a sliver and forced it to wrap
+// 3 lines on mobile cards. The room name is short, so it comfortably shares
+// a row with the badge instead.
+function roomLineHTML(row) {
+  const badge = ownerBadgeHTML(row);
+  return `<div class="room-line"><span class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</span>${badge ? `<span class="owner-badge-line">${badge}</span>` : ""}</div>`;
+}
+
+// ---- Vibe & Logistics view helpers (data/resort_experience.js) ----
+const POOL_TIER_LABELS = { signature: "★ Signature", themed: "Themed", standard: "Standard" };
+const DINING_LABELS = { high: "High", moderate: "Moderate", low: "Low" };
+// Sortable/filterable rank for dining density -- higher is more options.
+const DINING_RANK = { high: 3, moderate: 2, low: 1 };
+const TRANSPORT_TIER_LABELS = ["Walk / Skyliner / Monorail", "Boat", "Bus-Only"];
+
+// Convenience tier for a resort's Disney transportation, used by both the
+// "Transportation Convenience" sort and the "Zero-Bus Required" filter --
+// 0 = walk/Skyliner/monorail available (no bus needed at all), 1 = boat is
+// the best option, 2 = bus (or a bus-based shuttle, e.g. Aulani) is the
+// only option, null = no Disney transportation system at all (Hilton
+// Head/Vero Beach are standalone, off-property resorts, not merely
+// "bus-only"). Ranked instead of exp.transportation's raw array order
+// since that lists every option, not just the best one.
+function transportTier(exp) {
+  if (!exp || !exp.transportation || exp.transportation.length === 0) return null;
+  if (exp.transportation.some(t => t === "Walking" || t === "Skyliner" || t === "Monorail")) return 0;
+  if (exp.transportation.some(t => t === "Boat")) return 1;
+  return 2;
+}
+
+function transportationHTML(exp) {
+  if (!exp) return "&mdash;";
+  const label = exp.transportation.length > 0 ? exp.transportation.join(" / ") : "N/A";
+  return `<span class="tooltip-anchor">${label}<div class="tooltip-card">${exp.walkability}</div></span>`;
+}
+
+function poolTierHTML(exp) {
+  if (!exp) return "&mdash;";
+  const label = POOL_TIER_LABELS[exp.poolTier] || exp.poolTier;
+  return `<span class="pool-tier-badge ${exp.poolTier} tooltip-anchor">${label}<div class="tooltip-card">${exp.poolNote}</div></span>`;
+}
+
+function diningHTML(exp) {
+  if (!exp) return "&mdash;";
+  const label = DINING_LABELS[exp.diningDensity] || exp.diningDensity;
+  return `<span class="dining-badge ${exp.diningDensity} tooltip-anchor">${label}<div class="tooltip-card">${exp.diningNote}</div></span>`;
+}
+
+// ---- Vibe & Logistics quick filters (#vibe-filter-row) ----
+// Tap-to-toggle pills, not radio-style exclusive options -- all three can
+// be active together (AND), same as wdwOnly/category already combine with
+// everything else. A resort with no RESORT_EXPERIENCE entry at all fails
+// every one of these (can't confirm it clears the bar), rather than
+// passing by default.
+function rowPassesVibeFilters(row) {
+  const f = state.vibeFilters;
+  if (f.zeroBus) {
+    // Deliberately NOT transportTier() <= 1 here -- that ranks a resort by
+    // its BEST available option, so Old Key West (["Bus","Boat"], boat
+    // reaching only Disney Springs, not the parks) or Saratoga Springs
+    // (["Bus","Boat","Walking"], same story) would still pass despite
+    // their own Transportation cell visibly showing "Bus" right next to
+    // this filter -- a direct, spot-the-bug contradiction. "Zero-Bus
+    // Required" needs to mean it, literally: no Bus (or bus-based
+    // Shuttle/Bus, e.g. Aulani) entry anywhere in the resort's
+    // transportation list, and at least one real entry to begin with (an
+    // empty list -- Hilton Head/Vero Beach -- means no Disney transportation
+    // system at all, not a bus-free one).
+    const t = row.experience?.transportation;
+    if (!t || t.length === 0 || t.some(x => x.includes("Bus"))) return false;
+  }
+  if (f.topPool && (!row.experience || row.experience.poolTier === "standard")) return false;
+  if (f.highDining && (!row.experience || row.experience.diningDensity !== "high")) return false;
+  return true;
+}
+
+function buildVibeFilterPillsHTML() {
+  const chip = (key, emoji, label) =>
+    `<button type="button" class="vibe-filter-chip${state.vibeFilters[key] ? " active" : ""}" data-filter="${key}">${emoji} ${label}</button>`;
+  return `
+    <div class="vibe-filter-pills">
+      ${chip("zeroBus", "\u{1F686}", "Zero-Bus Required")}
+      ${chip("topPool", "\u{1F3CA}", "Top-Tier Pools")}
+      ${chip("highDining", "\u{1F355}", "Foodie / High Dining")}
+    </div>
+  `;
+}
+
+function hideVibeFilterRow() {
+  const el = document.getElementById("vibe-filter-row");
+  el.style.display = "none";
+  el.innerHTML = "";
 }
 
 function sortHeaderHTML(key) {
-  const col = SORT_COLUMNS[key];
+  const col = activeSortColumns()[key];
   const active = state.sortBy === key;
   const arrow = active ? `<span class="sort-arrow">${state.sortDir === "asc" ? "&#9650;" : "&#9660;"}</span>` : "";
   return `<th class="num sortable${active ? " sort-active" : ""}" data-sort="${key}">${headerTooltipHTML(col.label, col.tooltip, col.align)}${arrow}</th>`;
@@ -875,6 +1473,18 @@ function getStayAvailability(resortId, roomTypeId, dates) {
   return scores;
 }
 
+// Whole calendar months between today and a check-in date, matching DVC's
+// own "X months out" booking-window semantics (a window opens on the same
+// day-of-month, X months before check-in) -- so a result of 7 means the
+// 7-month window opens today; anything above 7 means it hasn't opened yet.
+function monthsUntilCheckIn(dateStr) {
+  const today = new Date();
+  const checkIn = new Date(dateStr + "T00:00:00");
+  let months = (checkIn.getFullYear() - today.getFullYear()) * 12 + (checkIn.getMonth() - today.getMonth());
+  if (checkIn.getDate() < today.getDate()) months -= 1;
+  return months;
+}
+
 function availabilityLabel(score, stayLength) {
   if (score === null) return null;
   if (score <= 0.1) return { text: "Not Likely", cls: "outlook-very-low" };
@@ -893,12 +1503,24 @@ function buildOutlookStripHTML(resortId, roomTypeId, stayDates) {
   const avail = getStayAvailability(resortId, roomTypeId, stayDates);
   if (!avail) return `<span class="na">—</span>`;
   const stayLength = stayDates.length;
-  const dots = BOOKING_WINDOWS.map((w, i) => {
+  // Every dot anchors left, full stop -- no per-index left/center/right
+  // picking. The 5 dots sit clustered tightly together (not spread across
+  // the row), so they're all at roughly the same horizontal position
+  // regardless of container width; a "rightmost dot gets right-align"
+  // rule (right, meaning the tooltip's right edge pins to the anchor and
+  // it extends LEFTWARD from there) actually made overflow WORSE for a
+  // dot that's really still over on the container's left side, same as
+  // the default centered tooltip did for the middle dots. Reported
+  // directly against a live mobile screenshot: a dot's tooltip was
+  // spilling out past the left edge of its (narrow, Mobile Card Feed)
+  // card. Anchoring every dot's tooltip to extend rightward from its own
+  // left edge is the one direction that's actually safe here, in both the
+  // wide desktop table cell and the narrow mobile card.
+  const dots = BOOKING_WINDOWS.map((w) => {
     const label = availabilityLabel(avail[w.key], stayLength);
     if (!label) return `<div class="outlook-dot outlook-none"></div>`;
-    const align = i === 0 ? "tooltip-align-left" : i === BOOKING_WINDOWS.length - 1 ? "tooltip-align-right" : "";
     return `
-      <div class="outlook-dot ${label.cls} tooltip-anchor ${align}">
+      <div class="outlook-dot ${label.cls} tooltip-anchor tooltip-align-left">
         <div class="tooltip-card outlook-tooltip">${w.label}: ${label.text}</div>
       </div>`;
   }).join("");
@@ -936,6 +1558,8 @@ function render() {
   if (stayDates.length === 0) {
     staySummary.innerHTML = "";
     resultsContainer.innerHTML = `<div class="empty-state">Select check-in and check-out dates above to compare resorts</div>`;
+    document.getElementById("mobile-sort-slot").innerHTML = "";
+    hideVibeFilterRow();
     return;
   }
 
@@ -974,6 +1598,78 @@ function render() {
       const ownerDues = DUES_PER_POINT[state.ownerResortId] || 0;
       const ownerCost = result.totalPoints * ownerDues;
 
+      // Space Efficiency: physical square footage per point spent PER
+      // NIGHT (not per point across the whole stay, which would just
+      // shrink for a longer stay without saying anything about the room
+      // itself) -- "how much room do I get for what I'm paying per night,"
+      // comparable across resorts and room categories regardless of how
+      // many nights this particular search happens to be. sqftByCategory
+      // is a typical/representative figure, not an exact per-room-type
+      // spec -- see data/resort_experience.js's own header note.
+      const experience = RESORT_EXPERIENCE[resort.id] || null;
+      const sqft = experience?.sqftByCategory?.[state.category] ?? null;
+      const pointsPerNight = result.totalPoints / nights;
+      const sqftPerPoint = sqft != null && pointsPerNight > 0 ? sqft / pointsPerNight : null;
+
+      // Personalized Home Resort Advantage -- reuses the exact same
+      // getUserResortAccess() auth.js already computes for the calendar's
+      // own booking-window personalization (see waitForAuthPersonalization()
+      // below), rather than a second copy of that access logic here.
+      //
+      // The 7-month case used to be a single static "risk" warning any time
+      // the resort wasn't a home resort, regardless of what the real
+      // per-stay outlook data said -- so a resort whose 7-month window has
+      // historically been Excellent for this exact date/room still got
+      // flagged as risky, which contradicted the (correct) green outlook
+      // dot sitting right next to it. Two things actually matter instead:
+      // (1) how far out the user is looking -- if today is still more than
+      // 7 months before check-in, the 7-month window for THIS stay hasn't
+      // opened yet at all, which is a real, current lockout regardless of
+      // historical odds; (2) once that window has opened (or this search
+      // is within 7 months of check-in), defer to the same historical
+      // availability data the outlook strip already shows for the 7-month
+      // column specifically, rather than a blanket assumption.
+      let ownerAccessBadge = null;
+      if (userResortAccess) {
+        if (userResortAccess.homeResortIds.has(resort.id)) {
+          ownerAccessBadge = { type: "home", text: "Your Home Resort" };
+        } else if (userResortAccess.restrictedResortIds.has(resort.id)) {
+          ownerAccessBadge = { type: "restricted", text: "\u{1F6AB} Not bookable with your points", title: "None of your contracts can book this resort -- it's outside your home resort(s) and your resale points here are home-resort-restricted." };
+        } else if (userResortAccess.sevenMoResortIds.has(resort.id)) {
+          const monthsOut = stayDates.length > 0 ? monthsUntilCheckIn(stayDates[0]) : null;
+          if (monthsOut !== null && monthsOut >= 7) {
+            ownerAccessBadge = {
+              type: "warning",
+              text: "\u{1F512} 7-Month Window Not Open Yet",
+              title: `Not your home resort -- owners here can already book at 11 months out, but you can't book this stay until the 7-month mark (about ${monthsOut - 7} month${monthsOut - 7 === 1 ? "" : "s"} from now).`,
+            };
+          } else {
+            const avail = getStayAvailability(resort.id, rt.id, stayDates);
+            const label = avail ? availabilityLabel(avail["7Mo"], stayDates.length) : null;
+            const isRisky = label && (label.cls === "outlook-low" || label.cls === "outlook-very-low" || label.cls === "outlook-fair");
+            if (isRisky) {
+              ownerAccessBadge = {
+                type: "warning",
+                text: "⚠️ Non-Owner 7-Month Risk",
+                title: `Not your home resort -- bookable only at the 7-month mark, not 11. Historically ${label.text.toLowerCase()} availability for this date and room type at that window.`,
+              };
+            } else if (label) {
+              ownerAccessBadge = {
+                type: "info",
+                text: "7-Month Window",
+                title: `Not your home resort -- bookable only at the 7-month mark, not 11. Historically ${label.text.toLowerCase()} availability for this date and room type at that window, so this shouldn't be a hard get.`,
+              };
+            } else {
+              ownerAccessBadge = {
+                type: "info",
+                text: "7-Month Window",
+                title: "Not your home resort -- bookable only at the 7-month mark, not 11. No historical availability data for this date and room type to gauge how competitive it typically is.",
+              };
+            }
+          }
+        }
+      }
+
       rows.push({
         resort,
         room: rt,
@@ -993,6 +1689,10 @@ function render() {
         ownerSavings: effectiveCash ? effectiveCash - ownerCost : null,
         ownerSavingsPct: effectiveCash
           ? Math.round(((effectiveCash - ownerCost) / effectiveCash) * 100) : null,
+        experience,
+        sqft,
+        sqftPerPoint,
+        ownerAccessBadge,
       });
     }
   }
@@ -1004,22 +1704,29 @@ function render() {
   // Sort by whichever column is active, in the active direction. The "no cash
   // data" group can only ever sort by points, since it has neither a cash
   // price nor any savings figure.
-  const accessor = SORT_COLUMNS[state.sortBy].accessor;
+  const accessor = activeSortColumns()[state.sortBy].accessor;
   const dirMul = state.sortDir === "desc" ? -1 : 1;
   withCash.sort((a, b) => (accessor(a) - accessor(b)) * dirMul);
   withoutCash.sort((a, b) => a.totalPoints - b.totalPoints);
 
   if (withCash.length === 0 && withoutCash.length === 0) {
     resultsContainer.innerHTML = `<div class="empty-state">No resorts have ${state.category} rooms for these dates</div>`;
+    document.getElementById("mobile-sort-slot").innerHTML = "";
+    hideVibeFilterRow();
     return;
   }
 
-  // Build table -- owner and rental columns always show now (an owner might
-  // still rent out points, or vice versa, so there's no reason to hide either).
-  const ownerCol = true;
-  const rentalCol = true;
-  const colCount = 5 + (rentalCol ? 2 : 0) + (ownerCol ? 2 : 0);
-  let html = `<table class="compare-table">
+  const anyPriorYear = withCash.some(r => r.isPriorYearCash);
+  let html;
+
+  if (state.view === "financial") {
+    hideVibeFilterRow();
+    // Owner and rental columns always show now (an owner might still rent
+    // out points, or vice versa, so there's no reason to hide either).
+    const ownerCol = true;
+    const rentalCol = true;
+    const colCount = 5 + (rentalCol ? 2 : 0) + (ownerCol ? 2 : 0);
+    html = `<div class="table-responsive"><table class="compare-table">
     <thead>
       <tr>
         <th>#</th>
@@ -1027,73 +1734,271 @@ function render() {
         <th>${headerTooltipHTML("Booking Outlook", "How hard this stay has historically been to book, checked at each window from 11 months out down to 1 month out. Hover a dot below for that window's status.", "tooltip-align-left")} <span class="outlook-header-sub">11&rarr;1mo</span></th>
         ${sortHeaderHTML("cash")}
         ${sortHeaderHTML("points")}
-        ${rentalCol ? `<th class="num">${headerTooltipHTML("Rental Cost", "Estimated cost to rent these points from a DVC owner, at the rental rate set above.")}</th>` : ""}
+        ${rentalCol ? `<th class="num col-secondary">${headerTooltipHTML("Rental Cost", "Estimated cost to rent these points from a DVC owner, at the rental rate set above.")}</th>` : ""}
         ${rentalCol ? sortHeaderHTML("rentalSavingsPct") : ""}
-        ${ownerCol ? `<th class="num">${headerTooltipHTML("Dues Cost", "What an owner would pay in annual dues for the points this stay requires, at the selected resort's per-point dues rate.")}</th>` : ""}
+        ${ownerCol ? `<th class="num col-secondary">${headerTooltipHTML("Dues Cost", "What an owner would pay in annual dues for the points this stay requires, at the selected resort's per-point dues rate.")}</th>` : ""}
         ${ownerCol ? sortHeaderHTML("ownerSavingsPct") : ""}
         <th></th>
       </tr>
     </thead>
     <tbody>`;
 
-  const anyPriorYear = withCash.some(r => r.isPriorYearCash);
-
-  withCash.forEach((row, i) => {
-    const rank = i + 1;
-    const priorYearMark = row.isPriorYearCash ? '*' : '';
-    const cashClass = row.isCustomCash ? 'cash-value custom' : row.isPriorYearCash ? 'cash-value prior-year' : 'cash-value';
-    const cashDisplay = `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${row.fallbackYear} rates` : 'Click to edit'}">$${Math.round(row.totalCash).toLocaleString()}${priorYearMark}</span>`;
-    html += `<tr>
+    withCash.forEach((row, i) => {
+      const rank = i + 1;
+      const priorYearMark = row.isPriorYearCash ? '*' : '';
+      const cashClass = row.isCustomCash ? 'cash-value custom' : row.isPriorYearCash ? 'cash-value prior-year' : 'cash-value';
+      const cashDisplay = `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${row.fallbackYear} rates` : 'Click to edit'}">$${Math.round(row.totalCash).toLocaleString()}${priorYearMark}</span>`;
+      html += `<tr>
       <td class="rank-num ${rank === 1 ? 'top' : ''}">${rank}</td>
       <td>
-        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}${row.resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
-        <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
+        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}"><span class="resort-dot" style="background: ${resortDotColor(row.resort.id)}"></span>${row.resort.name}${row.resort.estimatedCashRates ? estimateBadgeHTML() : ""}${rank === 1 ? '<span class="best-value-badge">Best Value</span>' : ""}</div>
+        ${roomLineHTML(row)}
       </td>
       <td>${row.outlookHTML}</td>
       <td class="num editable-cash">${cashDisplay}</td>
       <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
-      ${rentalCol ? `<td class="num rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
+      ${rentalCol ? `<td class="num col-secondary rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
       ${rentalCol ? `<td class="num"><span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span></td>` : ""}
-      ${ownerCol ? `<td class="num owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
+      ${ownerCol ? `<td class="num col-secondary owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
       ${ownerCol ? `<td class="num"><span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span></td>` : ""}
       <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
     </tr>`;
-  });
+    });
 
-  if (withoutCash.length > 0) {
-    html += `<tr class="section-divider"><td colspan="${colCount}">No cash rate data available</td></tr>`;
+    if (withoutCash.length > 0) {
+      html += `<tr class="section-divider"><td colspan="${colCount}">No cash rate data available</td></tr>`;
 
-    withoutCash.forEach((row) => {
-      html += `<tr class="no-cash-row">
+      withoutCash.forEach((row) => {
+        html += `<tr class="no-cash-row">
         <td class="rank-num">—</td>
         <td>
-          <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">${row.resort.name}${row.resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
-          <div class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</div>
+          <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}"><span class="resort-dot" style="background: ${resortDotColor(row.resort.id)}"></span>${row.resort.name}${row.resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
+          ${roomLineHTML(row)}
         </td>
         <td>${row.outlookHTML}</td>
         <td class="num editable-cash"><span class="na clickable" data-key="${row.rowKey}" title="Click to add cash price">+ add price</span></td>
         <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
-        ${rentalCol ? `<td class="num rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
+        ${rentalCol ? `<td class="num col-secondary rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
         ${rentalCol ? `<td class="num"><span class="na">—</span></td>` : ""}
-        ${ownerCol ? `<td class="num owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
+        ${ownerCol ? `<td class="num col-secondary owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
         ${ownerCol ? `<td class="num"><span class="na">—</span></td>` : ""}
         <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
       </tr>`;
+      });
+    }
+
+    html += `</tbody></table></div>`;
+
+    // ---- Mobile Card Feed -- see the CSS comment above .compare-cards for
+    // why this is built from the exact same withCash/withoutCash arrays
+    // rather than a second query/sort pass. rank === null marks a no-cash-data
+    // row (same "—" rank / "+ add price" / "—" savings treatment the table's
+    // .no-cash-row uses).
+    const cardHTML = (row, rank) => {
+      const isBest = rank === 1;
+      const priorYearMark = row.isPriorYearCash ? '*' : '';
+      const cashClass = row.isCustomCash ? 'cash-value custom' : row.isPriorYearCash ? 'cash-value prior-year' : 'cash-value';
+      const cashInner = rank != null
+        ? `<span class="${cashClass}" data-key="${row.rowKey}" title="${row.isPriorYearCash ? `Based on ${row.fallbackYear} rates` : 'Click to edit'}">$${Math.round(row.totalCash).toLocaleString()}${priorYearMark}</span>`
+        : `<span class="na clickable" data-key="${row.rowKey}" title="Click to add cash price">+ add price</span>`;
+      // Faded resort art behind the card (data/resort_images.js), when that
+      // resort has any -- a translucent version of whichever flat color
+      // .compare-card/.compare-card.best already use, so the #1 Best Value
+      // card's green tint still reads as "best" at a glance, just with the
+      // resort's own scenery showing through it. Omitted entirely (falls
+      // back to the plain CSS class background) for a resort with no art
+      // yet.
+      const artImage = typeof getResortImage === "function" ? getResortImage(row.resort.id) : null;
+      const artWash = isBest ? "rgba(241, 248, 233, 0.88)" : "rgba(255, 255, 255, 0.92)";
+      const artStyle = artImage ? ` style="background-image: linear-gradient(${artWash}, ${artWash}), url('${artImage}')"` : "";
+      return `
+      <div class="compare-card${isBest ? " best" : ""}"${artStyle}>
+        <div class="compare-card-header">
+          <span class="compare-card-rank${isBest ? " best" : ""}">${isBest ? "#1 Best Value" : rank != null ? "#" + rank : "&mdash;"}</span>
+        </div>
+        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}"><span class="resort-dot" style="background: ${resortDotColor(row.resort.id)}"></span>${row.resort.name}${row.resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
+        ${roomLineHTML(row)}
+        <div class="compare-card-outlook">${row.outlookHTML}</div>
+        <div class="compare-card-hero-row">
+          <div class="compare-card-hero">
+            <span class="compare-card-hero-label">Cash Price</span>
+            <span class="compare-card-hero-value editable-cash">${cashInner}</span>
+          </div>
+          <div class="compare-card-hero">
+            <span class="compare-card-hero-label">Points</span>
+            <span class="compare-card-hero-value pts-value">${row.totalPoints.toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="compare-card-grid">
+          <div class="compare-card-metric">
+            <span class="compare-card-metric-label">Rental Savings</span>
+            ${rank != null ? `<span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span>` : `<span class="na">&mdash;</span>`}
+          </div>
+          <div class="compare-card-metric">
+            <span class="compare-card-metric-label">Owner Savings</span>
+            ${rank != null ? `<span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span>` : `<span class="na">&mdash;</span>`}
+          </div>
+        </div>
+        <button type="button" class="select-resort compare-card-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select This Resort</button>
+      </div>
+    `;
+    };
+
+    html = html + `
+    <div class="compare-cards">
+      ${withCash.map((row, i) => cardHTML(row, i + 1)).join("")}
+      ${withoutCash.length > 0 ? `<div class="card-section-divider">No cash rate data available</div>` : ""}
+      ${withoutCash.map((row) => cardHTML(row, null)).join("")}
+    </div>
+  `;
+
+    if (anyPriorYear) {
+      const fallbackYears = [...new Set(withCash.filter(r => r.isPriorYearCash).map(r => r.fallbackYear))];
+      const yearsLabel = fallbackYears.length === 1 ? `${fallbackYears[0]} pricing` : "a different year's pricing";
+      html += `<div class="prior-year-footnote">* Cash rates based on ${yearsLabel}</div>`;
+    }
+  } else {
+    // ---- Vibe & Logistics view ----
+    // Cash-availability doesn't matter for qualitative attributes, so this
+    // uses every row (not the withCash/withoutCash split), filtered by the
+    // active quick-filter pills (buildVibeFilterPillsHTML()) and sorted by
+    // whichever column is currently active -- Points always has a real
+    // value to sort by; a cash-dependent sort just won't mean much here
+    // visually since that column isn't shown, which is a minor cosmetic
+    // quirk, not a broken feature.
+    const vibeFilterRow = document.getElementById("vibe-filter-row");
+    vibeFilterRow.style.display = "";
+    vibeFilterRow.innerHTML = buildVibeFilterPillsHTML();
+
+    const experienceRows = rows.filter(rowPassesVibeFilters).sort((a, b) => (accessor(a) - accessor(b)) * dirMul);
+
+    if (experienceRows.length === 0) {
+      resultsContainer.innerHTML = `<div class="empty-state">No resorts match these filters -- try clearing one of the pills above</div>`;
+      document.getElementById("mobile-sort-slot").innerHTML = "";
+      return;
+    }
+
+    html = `<div class="table-responsive"><table class="compare-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Resort</th>
+        <th>${headerTooltipHTML("Booking Outlook", "How hard this stay has historically been to book, checked at each window from 11 months out down to 1 month out. Hover a dot below for that window's status.", "tooltip-align-left")} <span class="outlook-header-sub">11&rarr;1mo</span></th>
+        ${sortHeaderHTML("transportTier")}
+        <th>${headerTooltipHTML("Pool", "The resort's pool tier -- hover/tap for what's actually there.")}</th>
+        ${sortHeaderHTML("diningDensity")}
+        ${sortHeaderHTML("points")}
+        <th class="num">${headerTooltipHTML("Sq Ft", "Typical square footage for this room category at this resort -- a representative figure, not an exact per-unit spec. See data/resort_experience.js.")}</th>
+        ${sortHeaderHTML("sqftPerPoint")}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+    experienceRows.forEach((row, i) => {
+      const rank = i + 1;
+      html += `<tr>
+      <td class="rank-num ${rank === 1 ? 'top' : ''}">${rank}</td>
+      <td>
+        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}"><span class="resort-dot" style="background: ${resortDotColor(row.resort.id)}"></span>${row.resort.name}</div>
+        ${roomLineHTML(row)}
+      </td>
+      <td>${row.outlookHTML}</td>
+      <td>${transportationHTML(row.experience)}</td>
+      <td>${poolTierHTML(row.experience)}</td>
+      <td>${diningHTML(row.experience)}</td>
+      <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
+      <td class="num">${row.sqft != null ? row.sqft.toLocaleString() + " sqft" : "&mdash;"}</td>
+      <td class="num sqft-per-point">${row.sqftPerPoint != null ? row.sqftPerPoint.toFixed(1) : "&mdash;"}</td>
+      <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
+    </tr>`;
     });
+
+    html += `</tbody></table></div>`;
+
+    const cardHTML = (row, rank) => `
+      <div class="compare-card">
+        <div class="compare-card-header">
+          <span class="compare-card-rank">#${rank}</span>
+        </div>
+        <div class="resort-name resort-name-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}"><span class="resort-dot" style="background: ${resortDotColor(row.resort.id)}"></span>${row.resort.name}</div>
+        ${roomLineHTML(row)}
+        <div class="compare-card-outlook">${row.outlookHTML}</div>
+        <div class="compare-card-grid">
+          <div class="compare-card-metric">
+            <span class="compare-card-metric-label">Transportation</span>
+            ${transportationHTML(row.experience)}
+          </div>
+          <div class="compare-card-metric">
+            <span class="compare-card-metric-label">Pool</span>
+            ${poolTierHTML(row.experience)}
+          </div>
+          <div class="compare-card-metric">
+            <span class="compare-card-metric-label">Dining</span>
+            ${diningHTML(row.experience)}
+          </div>
+          <div class="compare-card-metric">
+            <span class="compare-card-metric-label">Points</span>
+            <span class="pts-value">${row.totalPoints.toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="compare-card-hero-row">
+          <div class="compare-card-hero">
+            <span class="compare-card-hero-label">Sq Ft</span>
+            <span class="compare-card-hero-value">${row.sqft != null ? row.sqft.toLocaleString() : "&mdash;"}</span>
+          </div>
+          <div class="compare-card-hero">
+            <span class="compare-card-hero-label">Sq Ft / Pt</span>
+            <span class="compare-card-hero-value">${row.sqftPerPoint != null ? row.sqftPerPoint.toFixed(1) : "&mdash;"}</span>
+          </div>
+        </div>
+        <button type="button" class="select-resort compare-card-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select This Resort</button>
+      </div>
+    `;
+
+    html = html + `
+    <div class="compare-cards">
+      ${experienceRows.map((row, i) => cardHTML(row, i + 1)).join("")}
+    </div>
+  `;
   }
 
-  html += `</tbody></table>`;
-  if (anyPriorYear) {
-    const fallbackYears = [...new Set(withCash.filter(r => r.isPriorYearCash).map(r => r.fallbackYear))];
-    const yearsLabel = fallbackYears.length === 1 ? `${fallbackYears[0]} pricing` : "a different year's pricing";
-    html += `<div class="prior-year-footnote">* Cash rates based on ${yearsLabel}</div>`;
-  }
+  // Lives in the static #mobile-sort-slot inside .settings-bar (not
+  // prepended above the results) so it reads as a 4th settings control
+  // alongside WDW-only/rental-rate/home-resort instead of its own
+  // standalone row -- same mobile-only visibility as the rest of that bar.
+  document.getElementById("mobile-sort-slot").innerHTML = `
+    <label for="mobile-sort-select"><span class="settings-label-text">Sort by</span></label>
+    <div class="custom-select">
+      <select id="mobile-sort-select" class="native-select">
+        ${Object.entries(activeSortColumns()).map(([key, col]) => `<option value="${key}" ${state.sortBy === key ? "selected" : ""}>${col.label}</option>`).join("")}
+      </select>
+      <button type="button" class="custom-select-trigger">
+        <span class="custom-select-value"></span>
+        <span class="custom-select-arrow"></span>
+      </button>
+      <div class="custom-select-dropdown"></div>
+    </div>
+  `;
+
   resultsContainer.innerHTML = html;
 
   // Attach sort-header handlers
   resultsContainer.querySelectorAll(".sortable").forEach(th => {
     th.addEventListener("click", () => setSortBy(th.dataset.sort));
   });
+
+  // Mobile card feed's sort control -- setSortBy() already resets to that
+  // column's own default direction on a key change, same as clicking a
+  // fresh table header, so no separate direction handling needed here.
+  const mobileSortSelect = document.getElementById("mobile-sort-select");
+  if (mobileSortSelect) {
+    mobileSortSelect.addEventListener("change", () => setSortBy(mobileSortSelect.value));
+    // Rebuilt fresh every render (it's part of `html` above), so this needs
+    // a fresh init each time too -- unlike ownerResortSelect, which is only
+    // ever populated once at page load.
+    initCustomSelect(mobileSortSelect);
+  }
 
   // Attach inline edit handlers for cash price cells
   resultsContainer.querySelectorAll(".editable-cash span[data-key]").forEach(span => {
@@ -1180,6 +2085,36 @@ categoryPills.addEventListener("click", (e) => {
   render();
 });
 
+document.getElementById("view-toggle").addEventListener("click", (e) => {
+  const btn = e.target.closest(".view-toggle-btn");
+  if (!btn) return;
+  document.querySelectorAll(".view-toggle-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.view = btn.dataset.view;
+  // "points" exists in both column sets, so switching views only needs a
+  // sort reset when the current key is financial-only (cash/savings) or
+  // experience-only (space efficiency/transportation/dining) -- otherwise
+  // the active sort just carries over unchanged.
+  const cols = activeSortColumns();
+  if (!cols[state.sortBy]) {
+    state.sortBy = Object.keys(cols)[0];
+    state.sortDir = cols[state.sortBy].defaultDir;
+  }
+  render();
+});
+
+// Vibe & Logistics quick filter pills -- delegated on the static row
+// (rebuilt fresh by render() every time, so a per-pill listener would
+// need re-attaching each render anyway; this one listener covers it
+// regardless of what's currently inside).
+document.getElementById("vibe-filter-row").addEventListener("click", (e) => {
+  const chip = e.target.closest(".vibe-filter-chip");
+  if (!chip) return;
+  const key = chip.dataset.filter;
+  state.vibeFilters[key] = !state.vibeFilters[key];
+  render();
+});
+
 rentalSlider.addEventListener("input", (e) => {
   state.rentalRate = parseFloat(e.target.value);
   rentalLabel.textContent = state.rentalRate % 1 === 0 ? state.rentalRate : state.rentalRate.toFixed(1);
@@ -1247,7 +2182,63 @@ if (paramCategory && ["studio", "one", "two", "three"].includes(paramCategory)) 
 }
 
 populateOwnerResorts();
+initCustomSelect(ownerResortSelect);
 render();
+
+// Mobile tap-to-toggle for every .tooltip-anchor on this page (column
+// header explanations, restricted/estimate badges, walkability/pool/
+// dining badges, booking-outlook dots) -- hover has no touchscreen
+// equivalent at all, so this is the tap fallback; the existing
+// tokens.css :hover rule keeps working unchanged for a real mouse. Same
+// pattern as app.js/index.html: always ADDS tap-open on the tapped
+// anchor (never toggles the same one back off), since a tap can also
+// trigger a lingering synthetic hover on some mobile browsers, and
+// closes every other open tooltip instead so only one is open at a time.
+// Registered on the CAPTURE phase, not bubble, and stops propagation when
+// an anchor is found -- several tooltip-anchors here (the column-header
+// info icons) sit inside a th[data-sort] that has its own click-to-sort
+// listener; without this, a tap would sort the column first (re-rendering
+// the table and detaching the very node this handler just tried to flag)
+// before this delegate ever got a chance to run.
+document.addEventListener("click", (e) => {
+  const anchor = e.target.closest(".tooltip-anchor");
+  document.querySelectorAll(".tooltip-anchor.tap-open").forEach((el) => {
+    if (el !== anchor) el.classList.remove("tap-open");
+  });
+  if (anchor) {
+    anchor.classList.add("tap-open");
+    e.stopPropagation();
+  }
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") document.querySelectorAll(".tooltip-anchor.tap-open").forEach((el) => el.classList.remove("tap-open"));
+});
+
+// ---- Personalized Home Resort Advantage ----
+// auth.js is loaded as a <script type="module">, which (unlike this plain
+// inline script) defers until after the document has parsed -- window.DVCAuth
+// isn't guaranteed to exist yet by the time this line runs, so this polls
+// for it briefly rather than assuming, same convention account.html/
+// trips.html already use for the same reason. Once found, onAuthChange()
+// both fires immediately with whatever session already exists AND on every
+// future sign-in/out, so a user who signs in mid-visit gets the callout
+// without needing to reload.
+function waitForAuthPersonalization(attempts) {
+  if (window.DVCAuth) {
+    window.DVCAuth.onAuthChange(async (session) => {
+      if (!session) { userResortAccess = null; render(); return; }
+      const contracts = await window.DVCAuth.getContracts();
+      const activeContracts = contracts.filter(c => c.is_active);
+      if (activeContracts.length === 0) { userResortAccess = null; render(); return; }
+      const allResortIds = [...new Set(RESORTS.map(r => r.id))];
+      userResortAccess = window.DVCAuth.getUserResortAccess(activeContracts, allResortIds);
+      render();
+    });
+  } else if (attempts > 0) {
+    setTimeout(() => waitForAuthPersonalization(attempts - 1), 50);
+  }
+}
+waitForAuthPersonalization(40);
 
 // Set return flag when clicking back to calendar
 document.getElementById("back-link").addEventListener("click", () => {
