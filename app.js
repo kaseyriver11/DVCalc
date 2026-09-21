@@ -47,7 +47,6 @@ const resortDropdown = document.getElementById("resort-dropdown");
 const resortWrapper = document.getElementById("resort-select-wrapper");
 const roomSelect = document.getElementById("room-select");
 const contractSelect = document.getElementById("contract-select");
-const itineraryLoadSelect = document.getElementById("itinerary-load-select");
 const monthLabel = document.getElementById("month-label");
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
@@ -56,57 +55,19 @@ const legendItems = document.getElementById("legend-items");
 const selectionHint = document.getElementById("selection-hint");
 const summaryContainer = document.getElementById("summary");
 const actionButtons = document.getElementById("action-buttons");
+const controlsToggle = document.getElementById("controls-toggle");
+const controlsGroups = document.getElementById("controls-groups");
+const controlsToggleLabel = document.getElementById("controls-toggle-label");
 
-// ---- Custom Select (styled dropdown wrapper around a native <select>) ----
-// Keeps the native <select> as the source of truth (existing .value reads/writes
-// and "change" listeners elsewhere keep working untouched) while presenting a
-// rounded, app-styled trigger + option list instead of the OS-native popup.
-function initCustomSelect(selectEl) {
-  const wrapper = selectEl.closest(".custom-select");
-  const trigger = wrapper.querySelector(".custom-select-trigger");
-  const valueEl = trigger.querySelector(".custom-select-value");
-  const dropdown = wrapper.querySelector(".custom-select-dropdown");
-
-  function render() {
-    valueEl.textContent = selectEl.options[selectEl.selectedIndex]?.textContent || "";
-    dropdown.innerHTML = Array.from(selectEl.options).map(opt => `
-      <div class="custom-select-option${opt.value === selectEl.value ? " selected" : ""}" data-value="${opt.value}">${opt.textContent}</div>
-    `).join("");
-  }
-
-  trigger.addEventListener("click", () => {
-    const willOpen = !wrapper.classList.contains("open");
-    document.querySelectorAll(".custom-select.open").forEach(el => el.classList.remove("open"));
-    if (willOpen) {
-      render();
-      wrapper.classList.add("open");
-    }
-  });
-
-  dropdown.addEventListener("click", (e) => {
-    const opt = e.target.closest(".custom-select-option");
-    if (!opt) return;
-    selectEl.value = opt.dataset.value;
-    selectEl.dispatchEvent(new Event("change", { bubbles: true }));
-    wrapper.classList.remove("open");
-    render();
-  });
-
-  selectEl._customSelectRender = render;
-  render();
-}
-
-document.addEventListener("click", (e) => {
-  document.querySelectorAll(".custom-select.open").forEach(el => {
-    if (!el.contains(e.target)) el.classList.remove("open");
-  });
-});
-
-// Re-syncs every custom dropdown's displayed label/options with its native <select>.
-// Called from renderCalendar(), which already runs after every action that can
-// change room type or points year.
+// Re-syncs the Room Type picker's trigger label + accordion selection with
+// state.roomTypeId. Called from renderCalendar(), which already runs after
+// every action that can change room type (resort switch, year switch,
+// itinerary load, the accordion pick itself). Booking As/Load Trip's own
+// sheets re-render from renderBookingAsControl()/renderItineraryLoadControl()
+// directly instead, since those are driven by account data loading/changing
+// rather than every calendar render.
 function syncCustomSelects() {
-  [roomSelect, contractSelect, itineraryLoadSelect].forEach(sel => sel._customSelectRender && sel._customSelectRender());
+  renderRoomTypeAccordion();
 }
 
 // ---- Helpers ----
@@ -118,6 +79,14 @@ function formatDate(year, month, day) {
   const mm = String(month + 1).padStart(2, "0");
   const dd = String(day).padStart(2, "0");
   return `${year}-${mm}-${dd}`;
+}
+
+// Same approach as itineraries.html's own copy -- used wherever a picker
+// sheet below interpolates free-typed search text back into its own HTML.
+function escapeHTML(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function formatDisplayDate(dateStr) {
@@ -192,6 +161,13 @@ const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 // ---- Availability Confidence ----
 const NON_WDW_RESORT_IDS = new Set(["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"]);
 
+// disney_events.js categories that run for weeks at a time (a whole festival
+// or the general holiday season) rather than on specific nights -- shown as
+// a single "active during your stay" line in the Special Events & Festivals
+// card instead of a marker on every calendar cell they touch.
+const BROAD_EVENT_CATEGORIES = new Set(["festival", "seasonal"]);
+const EVENT_CATEGORY_LABEL = { hardTicketEvent: "Ticketed Event", runDisney: "Race Weekend", singleDay: "Single Day" };
+
 function getKeyDatesPeriod(dateStr, resortId) {
   const date = new Date(dateStr + "T12:00:00");
   const month = date.getMonth();
@@ -261,21 +237,26 @@ function getStayAvailability(resortId, roomTypeId, dates) {
 
 function availabilityLabel(score, stayLength) {
   if (score === null) return null;
-  if (score <= 0.1) return { text: "Not Likely", cls: "avail-very-low", dotCls: "avail-dot-very-low" };
+  if (score <= 0.1) return { text: "Not Likely", short: "NL", cls: "avail-very-low", dotCls: "avail-dot-very-low" };
 
   // Score = average consecutive days available
   // Ratio = how well the typical opening fits your stay
   const ratio = score / stayLength;
 
-  if (ratio >= 1.0) return { text: "Excellent", cls: "avail-excellent", dotCls: "avail-dot-excellent" };
-  if (ratio >= 0.75) return { text: "Good", cls: "avail-good", dotCls: "avail-dot-good" };
-  if (ratio >= 0.5) return { text: "Fair", cls: "avail-fair", dotCls: "avail-dot-fair" };
-  if (ratio >= 0.25) return { text: "Low", cls: "avail-low", dotCls: "avail-dot-low" };
-  return { text: "Not Likely", cls: "avail-very-low", dotCls: "avail-dot-very-low" };
+  if (ratio >= 1.0) return { text: "Excellent", short: "Ex", cls: "avail-excellent", dotCls: "avail-dot-excellent" };
+  if (ratio >= 0.75) return { text: "Good", short: "Gd", cls: "avail-good", dotCls: "avail-dot-good" };
+  if (ratio >= 0.5) return { text: "Fair", short: "Fr", cls: "avail-fair", dotCls: "avail-dot-fair" };
+  if (ratio >= 0.25) return { text: "Low", short: "Lo", cls: "avail-low", dotCls: "avail-dot-low" };
+  return { text: "Not Likely", short: "NL", cls: "avail-very-low", dotCls: "avail-dot-very-low" };
 }
 
-// Builds the compact 5-window color-block row (11mo -> 1mo), each block hoverable
-// for the full status label via the shared tooltip-card component.
+// Builds the compact 5-window color-block row (11mo -> 1mo), each block
+// hoverable/tappable for the full status label via the shared tooltip-card
+// component. The bar itself is only ~34px wide -- too narrow for the full
+// word ("Excellent", "Not Likely") at a legible size -- but a 2-letter code
+// baked directly into the color still gives an at-a-glance read without
+// requiring a tap, unlike a bare color block. The full word stays one
+// tap/hover away in the tooltip for anyone who wants it spelled out.
 function buildAvailabilityDotsHTML(avail, stayLength) {
   return BOOKING_WINDOWS.map((w, i) => {
     const label = availabilityLabel(avail[w.key], stayLength);
@@ -285,6 +266,7 @@ function buildAvailabilityDotsHTML(avail, stayLength) {
       <div class="avail-dot-col">
         <span class="avail-dot-label">${w.shortLabel}</span>
         <div class="avail-dot ${label.dotCls} tooltip-anchor ${align}">
+          <span class="avail-dot-code">${label.short}</span>
           <div class="avail-dot-tooltip tooltip-card">${w.label}: ${label.text}</div>
         </div>
       </div>`;
@@ -450,7 +432,6 @@ function editSegment(index) {
   roomSelect.value = state.roomTypeId;
   updateHint();
   renderCalendar();
-  renderLegend();
   renderSummary();
 }
 
@@ -526,10 +507,10 @@ function selectResort(id) {
   resortSearch.value = resort.name;
   resortDropdown.classList.remove("open");
   resortWrapper.classList.remove("open");
+  syncResortPickerTrigger();
   populateRoomTypes();
   updateHint();
   renderCalendar();
-  renderLegend();
   renderSummary();
 }
 
@@ -547,6 +528,216 @@ function populateRoomTypes() {
   const stillValid = resort.roomTypes.some(rt => rt.id === state.roomTypeId);
   if (!stillValid) state.roomTypeId = resort.roomTypes[0].id;
   roomSelect.value = state.roomTypeId;
+}
+
+// ---- Resort Picker Sheet ----
+// The old searchable-select <input> (still in the DOM, hidden -- see the
+// HTML comment above #resort-select-wrapper) is the reason long resort
+// names used to clip on narrow screens: an <input> just cuts off overflow
+// text with no wrap. The trigger button below shows the SHORT name (always
+// fits), and the sheet's rows use white-space:normal so a long full name
+// wraps onto a second line instead of clipping.
+function syncResortPickerTrigger() {
+  const label = document.getElementById("resort-picker-trigger-label");
+  const resort = getResort();
+  if (label && resort) label.textContent = shorthandResortName(resort.id, resort.name);
+  applyResortArtBackground(document.getElementById("resort-picker-trigger"), resort ? getResortImage(resort.id) : null);
+}
+
+// Same translucent lavender wash (--color-primary-tint-bg at 82%) used
+// everywhere a resort's art (data/resort_images.js) fades in behind an
+// element's own content instead of a flat tint fill: the Resort trigger
+// button, the drawer's collapsed summary bar, and the selected row in the
+// Resort sheet's own list (renderResortSheetList() below). One shared
+// string builder so all three stay in sync if the tint ever changes.
+function resortArtWashCSS(imagePath) {
+  return `linear-gradient(rgba(236, 225, 247, 0.82), rgba(236, 225, 247, 0.82)), url('${imagePath}')`;
+}
+
+// Shared by the Resort trigger button above and the drawer's collapsed
+// summary bar (updateActiveContextBar() below) -- sets/clears the wash via
+// a live element's style, vs. renderResortSheetList() below which needs
+// the same CSS value baked into an HTML string instead. No-ops (clears
+// back to the element's plain CSS background) when the resort has no art
+// yet, which is still most of them.
+function applyResortArtBackground(el, imagePath) {
+  if (!el) return;
+  if (imagePath) {
+    el.style.backgroundImage = resortArtWashCSS(imagePath);
+    el.classList.add("has-art");
+  } else {
+    el.style.backgroundImage = "";
+    el.classList.remove("has-art");
+  }
+}
+
+// Sets a plain (non-faded) background image, no tint wash -- used only by
+// the Resort sheet's hero banner below, which IS the full photo rather
+// than a faded-behind-text treatment.
+function setThumbImage(el, imagePath) {
+  if (!el) return;
+  if (imagePath) {
+    el.style.backgroundImage = `url('${imagePath}')`;
+    el.hidden = false;
+  } else {
+    el.style.backgroundImage = "";
+    el.hidden = true;
+  }
+}
+
+function openResortSheet() {
+  const search = document.getElementById("resort-sheet-search");
+  search.value = "";
+  renderResortSheetList("");
+  const resort = getResort();
+  setThumbImage(document.getElementById("resort-sheet-hero"), resort ? getResortImage(resort.id) : null);
+  document.getElementById("resort-sheet").classList.add("open");
+}
+
+function closeResortSheet() {
+  document.getElementById("resort-sheet").classList.remove("open");
+}
+
+function renderResortSheetList(filter) {
+  const listEl = document.getElementById("resort-sheet-list");
+  if (!listEl) return;
+  const query = filter.toLowerCase();
+  const matches = resortsForYear(state.year).filter(r => r.name.toLowerCase().includes(query));
+  listEl.innerHTML = matches.length === 0
+    ? `<div class="sheet-empty">No resorts match "${escapeHTML(filter)}".</div>`
+    : matches.map(r => {
+      const isSelected = r.id === state.resortId;
+      // Selected row only -- same reasoning as the trigger/drawer bar: this
+      // marks WHICH resort is active, so the fade only needs to show up on
+      // that one row, not on every row that happens to have art.
+      const image = isSelected ? getResortImage(r.id) : null;
+      const artStyle = image ? ` style="background-image:${resortArtWashCSS(image)}"` : "";
+      return `
+      <button type="button" class="resort-pick-row${isSelected ? " selected" : ""}${image ? " has-art" : ""}" onclick="pickResort('${r.id}')"${artStyle}>
+        <span class="resort-pick-swatch" style="background:${resortAccentColor(r.id)}"></span>
+        <span>${r.name}</span>
+      </button>
+    `;
+    }).join("");
+}
+
+function pickResort(id) {
+  selectResort(id);
+  closeResortSheet();
+}
+
+// ---- Room Type Accordion ----
+// Inline, not a sheet (see the redesign discussion) -- a short flat list
+// with no search need, meant to stay low-friction right where the other
+// trip settings live rather than adding an extra tap-in/tap-out.
+function roomTypeIcon(name) {
+  const n = name.toLowerCase();
+  if (n.includes("grand villa")) return "\u{1F3E1}"; // house
+  if (n.includes("two-bedroom")) return "\u{1F3E0}"; // house (2)
+  if (n.includes("one-bedroom")) return "\u{1F6CB}️"; // couch
+  if (n.includes("cabin")) return "\u{1F3D5}️"; // camping/cabin
+  if (n.includes("studio")) return "\u{1F6CF}️"; // bed
+  return "\u{1F6CF}️";
+}
+
+// Strips the " - View Category" suffix for the compact chip label -- the
+// full name (with view) still shows in the picker trigger and the native
+// <select>'s own options, just not repeated on every chip in a 2-column grid.
+function roomTypeShortName(name) {
+  return name.split(" - ")[0];
+}
+
+function renderRoomTypeAccordion() {
+  const resort = getResort();
+  if (!resort) return;
+  const current = resort.roomTypes.find(rt => rt.id === state.roomTypeId);
+  const triggerLabel = document.getElementById("room-type-picker-trigger-label");
+  if (triggerLabel && current) {
+    triggerLabel.textContent = `${roomTypeIcon(current.name)} ${current.name} (sleeps ${current.sleeps})`;
+  }
+  const grid = document.getElementById("room-type-grid");
+  if (!grid) return;
+  // The short label (stripping " - View Category") is only unambiguous
+  // when a resort has just ONE room type of that shape -- fine for a
+  // resort like Copper Creek (5 room types, 5 distinct short names), but
+  // Animal Kingdom Villas has 4 differently-priced "Deluxe Studio"
+  // variants (Value/Resort View/Savanna View/Club Concierge) that all
+  // shortened to the same "Deluxe Studio" label with no way to tell them
+  // apart in the grid -- a user flagged this exact case (2026-09-20).
+  // Counting how many room types collapse to each short name and falling
+  // back to the FULL name whenever more than one does keeps the clean
+  // short label for the common case while restoring the distinguishing
+  // detail exactly where it's actually needed.
+  const shortNameCounts = {};
+  resort.roomTypes.forEach(rt => {
+    const short = roomTypeShortName(rt.name);
+    shortNameCounts[short] = (shortNameCounts[short] || 0) + 1;
+  });
+  grid.innerHTML = resort.roomTypes.map(rt => {
+    const short = roomTypeShortName(rt.name);
+    const label = shortNameCounts[short] > 1 ? rt.name : short;
+    return `
+    <button type="button" class="room-type-chip${rt.id === state.roomTypeId ? " selected" : ""}" onclick="pickRoomType('${rt.id}')">
+      <span class="room-type-icon">${roomTypeIcon(rt.name)}</span>
+      <span class="room-type-name">${label}</span>
+      <span class="room-type-sleeps">Sleeps ${rt.sleeps}</span>
+    </button>
+  `;
+  }).join("");
+}
+
+function toggleRoomTypeAccordion() {
+  const grid = document.getElementById("room-type-grid");
+  if (grid) grid.classList.toggle("open");
+}
+
+function pickRoomType(id) {
+  roomSelect.value = id;
+  roomSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  const grid = document.getElementById("room-type-grid");
+  if (grid) grid.classList.remove("open");
+}
+
+// ---- Shared resort accent color ----
+// Same hash-to-a-fixed-palette approach as account.html's wallet-card
+// gradients (not shared code -- this page doesn't load account.html's
+// script -- but the SAME algorithm/palette, so a resort's color reads
+// consistently between the Resort sheet's dot and the Booking As sheet's
+// wallet-mini-card for that resort).
+const RESORT_ACCENT_GRADIENTS = [
+  ["#4a148c", "#1a237e"],
+  ["#1b5e3a", "#0d3b26"],
+  ["#0d47a1", "#082a63"],
+  ["#7a1734", "#4a0e20"],
+  ["#8d5524", "#5c3612"],
+  ["#37474f", "#1c262b"],
+];
+function resortAccentHash(resortId) {
+  let hash = 0;
+  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
+  return hash % RESORT_ACCENT_GRADIENTS.length;
+}
+function resortAccentColor(resortId) {
+  return RESORT_ACCENT_GRADIENTS[resortAccentHash(resortId)][0];
+}
+function hexToRgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+// Same tinted-gradient-over-photo blend as account.html's walletCardGradient()
+// -- with every resort now having real art (data/resort_images.js,
+// 2026-09-20), a flat two-tone gradient reads as a placeholder next to it.
+// Tinting the gradient down to 0.82 alpha over the photo keeps the dark
+// wallet-card look (white text, gold ring) while actually showing the
+// resort underneath; falls back to the plain flat gradient if a resort has
+// no art yet.
+function resortAccentGradient(resortId) {
+  const [a, b] = RESORT_ACCENT_GRADIENTS[resortAccentHash(resortId)];
+  const image = getResortImage(resortId);
+  if (image) {
+    return `linear-gradient(135deg, ${hexToRgba(a, 0.82)}, ${hexToRgba(b, 0.82)}), url('${image}')`;
+  }
+  return `linear-gradient(135deg, ${a}, ${b})`;
 }
 
 // ---- Selection Hint ----
@@ -691,60 +882,68 @@ function buildEventTooltipHTML(dateStr, events) {
   `;
 }
 
-function buildCrowdSummaryHTML(dates) {
-  const dayEntries = dates.map(d => ({ date: d, crowd: getCrowdForDate(d) })).filter(e => e.crowd);
-  if (dayEntries.length === 0) return "";
+// Replaces the old Crowd Forecast card -- crowd levels are already
+// benchmarked in Stay Insights' distribution chart and on every calendar
+// cell, so a third restatement here didn't earn its space. This surfaces
+// something the other two views don't: which festivals and ticketed events
+// actually overlap the picked stay. Broad, weeks-long windows (festival/
+// seasonal) get one "active during your stay" line; genuinely date-specific
+// events (ticketed parties, race weekends, single-day) list which nights of
+// the stay they land on, since those are worth planning around.
+function buildSpecialEventsHTML(resort, stayDates) {
+  if (NON_WDW_RESORT_IDS.has(resort.id)) return "";
+  if (stayDates.length === 0 || typeof getEventsForDate !== "function") return "";
 
-  const crowdValues = dayEntries.map(e => e.crowd.crowd);
-  const avgExact = crowdValues.reduce((sum, c) => sum + c, 0) / crowdValues.length;
-  const avg = Math.round(avgExact);
-  const min = Math.min(...crowdValues);
-  const max = Math.max(...crowdValues);
-  const avgLabel = dayEntries.find(e => e.crowd.crowd === avg)?.crowd.label
-    || dayEntries.slice().sort((a, b) => Math.abs(a.crowd.crowd - avg) - Math.abs(b.crowd.crowd - avg))[0].crowd.label;
+  const byEvent = new Map();
+  stayDates.forEach(d => {
+    getEventsForDate(d).forEach(e => {
+      if (!byEvent.has(e.name)) byEvent.set(e.name, { event: e, dates: [] });
+      byEvent.get(e.name).dates.push(d);
+    });
+  });
 
-  // Two hovers, two different questions: the average pill answers "what's
-  // typical," the range answers "which specific nights are busier" -- so
-  // each gets its own tooltip rather than a static two-row layout that
-  // stated both numbers but explained neither.
-  const avgTooltipHTML = `
-    <div class="crowd-avg-tooltip tooltip-card">
-      <div class="crowd-tooltip-header">Stay Average</div>
-      <div class="crowd-tooltip-sub">${avgExact.toFixed(1)} avg across ${crowdValues.length} night${crowdValues.length !== 1 ? "s" : ""}</div>
-    </div>
-  `;
+  if (byEvent.size === 0) {
+    return `
+      <div class="summary-card">
+        <h3>Special Events &amp; Festivals</h3>
+        <div class="special-event-empty">No major festivals or ticketed events scheduled during this stay.</div>
+      </div>
+    `;
+  }
 
-  const dayRowsHTML = dayEntries.map(e => `
-    <div class="crowd-tooltip-day-row">
-      <span>${formatShortDate(e.date)}</span>
-      <span class="crowd-pill ${crowdClass(e.crowd.label)}">${e.crowd.crowd}</span>
+  const festivals = [];
+  const dateSpecific = [];
+  byEvent.forEach(entry => (BROAD_EVENT_CATEGORIES.has(entry.event.category) ? festivals : dateSpecific).push(entry));
+
+  const festivalsHTML = festivals.map(({ event }) => `
+    <div class="special-event">
+      <div class="special-event-name">${event.name}</div>
+      <div class="special-event-dates">${formatShortDate(event.startDate)} &ndash; ${formatShortDate(event.endDate)}</div>
+      <div class="special-event-desc">${event.description}</div>
     </div>
   `).join("");
 
-  const rangeTooltipHTML = min !== max ? `
-    <div class="crowd-range-tooltip tooltip-card">
-      <div class="crowd-tooltip-header">Each Night</div>
-      <div class="crowd-tooltip-days">${dayRowsHTML}</div>
+  const dateSpecificHTML = dateSpecific.map(({ event, dates }) => `
+    <div class="special-event ticketed">
+      <div class="special-event-badge">${EVENT_CATEGORY_LABEL[event.category] || "Event"}</div>
+      <div class="special-event-name">${event.name}</div>
+      <div class="special-event-dates">Active on ${dates.map(d => formatShortDate(d)).join(", ")}</div>
+      <div class="special-event-desc">${event.description}</div>
     </div>
-  ` : "";
+  `).join("");
 
   return `
     <div class="summary-card">
-      <h3>Crowd Forecast</h3>
-      <div class="crowd-forecast-line">
-        <span class="crowd-forecast-avg tooltip-anchor tooltip-align-left">
-          <span class="crowd-pill ${crowdClass(avgLabel)}">${avg}</span> ${avgLabel}
-          ${avgTooltipHTML}
-        </span>
-        ${min !== max ? `
-        <span class="crowd-forecast-sep">&middot;</span>
-        <span class="crowd-forecast-range tooltip-anchor tooltip-align-right">
-          Range ${min}&ndash;${max}
-          ${rangeTooltipHTML}
-        </span>
-        ` : ""}
-      </div>
-      <a class="source-link" href="https://www.undercovertourist.com/orlando/crowd-calendar/" target="_blank" rel="noopener">Source: Undercover Tourist Crowd Calendar</a>
+      <h3>Special Events &amp; Festivals</h3>
+      ${festivals.length > 0 ? `
+      <div class="special-event-group-label">Active Festivals</div>
+      <div class="special-event-list">${festivalsHTML}</div>
+      ` : ""}
+      ${dateSpecific.length > 0 ? `
+      <div class="special-event-group-label">Date-Specific Events</div>
+      <div class="special-event-list">${dateSpecificHTML}</div>
+      ` : ""}
+      <a class="resort-alert-footer" href="https://www.disneyfoodblog.com/wdwcalendar" target="_blank" rel="noopener">Disney Food Blog</a>
     </div>
   `;
 }
@@ -1340,7 +1539,6 @@ function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {
   if (roomTypeId) state.roomTypeId = roomTypeId;
   resortSearch.value = getResort().name;
   populateRoomTypes(); // keeps the current room type if it still exists, else falls back
-  renderLegend();
   state.checkIn = checkInStr;
   state.checkOut = dateStrPlusDays(checkInStr, nights);
   state.month = Number(checkInStr.split("-")[1]) - 1;
@@ -1360,6 +1558,39 @@ let userContracts = [];          // every contract for the signed-in user (activ
 let userContractYearPoints = []; // that user's contract_year_points rows, across all contracts
 let selectedContractId = null;   // which one the user is browsing "as", or null
 
+// ---- Smart Draw (point allocation recommendation) UI state ----
+// Session-derived, not calendar selection state -- same reasoning as
+// userContracts/itinerary state above.
+let smartDrawApplyStatus = null;  // null | "applying" | "applied" | "error"
+let smartDrawUndoSnapshot = null; // { contractId, year, previous: {remaining,banked,borrowed} } | null
+let smartDrawManualOpen = false;
+// { pointsNeeded, banked, borrowed, remaining } -- only trusted while
+// pointsNeeded still matches the active stay's cost, so switching to a
+// different/longer stay silently falls back to a fresh recommendation
+// instead of carrying over a manual split that no longer adds up.
+let smartDrawManualDraws = null;
+
+// ---- Multi-Contract Split (points across MULTIPLE contracts) UI state ----
+// Deliberately named "multiContractSplit", never "splitMode"/"split" alone
+// -- isSplitMode() elsewhere in this file means a SPLIT STAY (multiple
+// resorts in one itinerary), a completely different concept from this
+// (one stay, paid for out of more than one contract's points).
+let multiContractSplitMode = false;
+// { pointsNeeded, byContractId: { [contractId]: points } } -- same
+// staleness guard as smartDrawManualDraws: only trusted while pointsNeeded
+// matches the active stay, so switching stays discards a stale split
+// rather than silently carrying over amounts that no longer add up.
+let multiContractAllocations = null;
+let multiSplitApplyStatus = null;  // null | "applying" | "applied" | "error"
+let multiSplitUndoSnapshot = null; // { pointsNeeded, previousByContractId: {id: {remaining,banked,borrowed,holding}} } | null
+
+// ---- 11-to-7 Swap Simulator (Task 04) UI state ----
+// Only meaningful while booking the actual home resort at 11 months --
+// see buildSwapSimulatorHTML()'s own gating comment.
+let swapSimulatorMode = false;
+let swapTargetResortId = null;
+let swapTargetRoomTypeId = null;
+
 function getActiveContracts() {
   return userContracts.filter(c => c.is_active);
 }
@@ -1368,15 +1599,12 @@ function getSelectedContract() {
   return getActiveContracts().find(c => c.id === selectedContractId) || null;
 }
 
-// 1-indexed deposit month for each use year -- mirrors account.html's copy
-// of this same table exactly. See that file's comment on
-// USE_YEAR_START_MONTH for why the label a use year's points carry is its
-// deposit year, not the year it later expires in.
-const USE_YEAR_START_MONTH = { Feb: 2, Mar: 3, Apr: 4, Jun: 6, Aug: 8, Sep: 9, Oct: 10, Dec: 12 };
-
+// Shared with account.html -- see dvc-dates.js (loaded before this file).
+// Previously a separate copy here used the browser's local time instead of
+// Eastern time, which could disagree with account.html's deadline math for
+// visitors outside Eastern right around a use-year boundary.
 function currentUYYear(useYear) {
-  const today = new Date();
-  return today.getMonth() + 1 >= USE_YEAR_START_MONTH[useYear] ? today.getFullYear() : today.getFullYear() - 1;
+  return window.DVCDates.currentUYYear(useYear, window.DVCDates.todayInEastern());
 }
 
 // The currently-active use year's ledger row for a contract (see
@@ -1387,16 +1615,44 @@ function getCurrentYearRow(c) {
   const year = currentUYYear(c.use_year);
   const row = userContractYearPoints.find(r => r.contract_id === c.id && r.use_year_label === year);
   return row
-    ? { year, remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0 }
-    : { year, remaining: c.points_per_year, banked: 0, borrowed: 0 };
+    ? { year, remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0, holding: row.points_holding || 0, holdingEnteredAt: row.points_holding_entered_at || null }
+    : { year, remaining: c.points_per_year, banked: 0, borrowed: 0, holding: 0, holdingEnteredAt: null };
 }
 
 // Points a contract can actually spend right now: its currently-active use
-// year's remaining balance plus whatever's banked in from last year or
-// borrowed in from next year.
+// year's remaining balance plus whatever's banked in from last year,
+// borrowed in from next year, or parked in Holding from a near-check-in
+// cancellation (see dvc-ledger.js).
 function getAvailablePoints(c) {
-  const { remaining, banked, borrowed } = getCurrentYearRow(c);
-  return remaining + banked + borrowed;
+  const { remaining, banked, borrowed, holding } = getCurrentYearRow(c);
+  return remaining + banked + borrowed + holding;
+}
+
+// Which point buckets to draw from for a stay, in priority order: Holding
+// first (can't be banked/borrowed and must be rebooked within 60 days of
+// entering holding, per dvc-ledger.js -- the most "use it or lose it"
+// bucket of the four), then banked-in points (already irreversible, can't
+// be re-banked if unused), then already-borrowed-in points (same
+// irreversibility), then native current-year points last (still bankable
+// up until this use year's own deadline). Pure function, no DOM/network --
+// callers write `after` via the same upsertContractYearPoints()
+// account.html's wallet-card steppers use.
+function computeSmartDraw(currentRow, pointsNeeded) {
+  let need = pointsNeeded;
+  const drawHolding = Math.min(currentRow.holding, need); need -= drawHolding;
+  const drawBanked = Math.min(currentRow.banked, need); need -= drawBanked;
+  const drawBorrowed = Math.min(currentRow.borrowed, need); need -= drawBorrowed;
+  const drawRemaining = Math.min(currentRow.remaining, need); need -= drawRemaining;
+  return {
+    draws: { holding: drawHolding, banked: drawBanked, borrowed: drawBorrowed, remaining: drawRemaining },
+    shortfall: Math.max(0, need),
+    after: {
+      holding: currentRow.holding - drawHolding,
+      banked: currentRow.banked - drawBanked,
+      borrowed: currentRow.borrowed - drawBorrowed,
+      remaining: currentRow.remaining - drawRemaining,
+    },
+  };
 }
 
 // How many months out someone can book a given resort under a single
@@ -1442,6 +1698,18 @@ function monthsFromTodayCutoff(months) {
   return formatDate(cutoff.getFullYear(), cutoff.getMonth(), cutoff.getDate());
 }
 
+// The actual calendar date a booking window OPENS for a given check-in date
+// -- checkIn minus N months, YYYY-MM-DD. Used by the Multi-Contract Split
+// allocator to tell an owner exactly when a non-home (7-month) contract's
+// window opens for the stay they're planning, not just that it isn't open
+// yet (monthsFromTodayCutoff() above answers that half).
+function monthsBeforeCheckIn(dateStr, months) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setMonth(dt.getMonth() - months);
+  return formatDate(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+
 async function refreshUserContracts() {
   if (window.DVCAuth) {
     [userContracts, userContractYearPoints] = await Promise.all([
@@ -1460,6 +1728,13 @@ async function refreshUserContracts() {
 
 function setSelectedContract(id) {
   selectedContractId = id || null;
+  // A stale Smart Draw recommendation/undo for the previous contract would
+  // be actively misleading once the selection changes -- drop it rather
+  // than let it linger pointed at the wrong contract-year row.
+  smartDrawApplyStatus = null;
+  smartDrawUndoSnapshot = null;
+  smartDrawManualOpen = false;
+  smartDrawManualDraws = null;
   renderBookingAsControl();
   renderSummary();
   renderCalendar();
@@ -1555,14 +1830,28 @@ function getFullItinerarySegments() {
   return segs;
 }
 
+// Same short "Sep 11" shape as formatDisplayDate(), just without the
+// weekday -- suggestItineraryName() below is the only caller that wants a
+// bare date; every other formatDisplayDate() call site (check-in/check-out
+// labels, etc.) still wants the weekday for a real date, not a name.
+function formatShortDate(dateStr) {
+  const date = new Date(dateStr + "T12:00:00");
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function suggestItineraryName() {
   const segs = getFullItinerarySegments();
   if (segs.length === 0) return "";
   if (segs.length === 1) {
     const resort = RESORTS.find(r => r.id === segs[0].resortId && r.year === state.year);
-    return `${resort ? resort.name : segs[0].resortId}, ${formatDisplayDate(segs[0].checkIn)}`;
+    const fullName = resort ? resort.name : segs[0].resortId;
+    const name = shorthandResortName(segs[0].resortId, fullName);
+    const roomType = resort ? resort.roomTypes.find(rt => rt.id === segs[0].roomTypeId) : null;
+    const parts = [name, formatShortDate(segs[0].checkIn)];
+    if (roomType) parts.push(roomType.name);
+    return parts.join(", ");
   }
-  return `${segs.length}-Resort Trip, ${formatDisplayDate(segs[0].checkIn)}`;
+  return `${segs.length}-Resort Trip, ${formatShortDate(segs[0].checkIn)}`;
 }
 
 function openItinerarySaveForm() {
@@ -1686,9 +1975,17 @@ function renderTripRail() {
     const tooltipHTML = clickable ? `
       <div class="trip-tooltip tooltip-card ${tooltipAlign}">${isContext ? "Add this night" : "Remove this night"}</div>
     ` : "";
+    // Context days get a much fainter fill than real stay nights (both used
+    // to share the same "${color}20" tint, which -- combined with a 3px
+    // dashed-vs-solid border being a subtle difference at this size -- made
+    // a context day and the first real night hard to tell apart at a
+    // glance). A near-white fill reads immediately as "not part of the stay
+    // yet," leaving the dashed period-color edge as just a hint of what
+    // period it'd join.
+    const bgAlpha = isContext ? "08" : "20";
     return `
       <div class="trip-strip-day${isContext ? " context" : ""}${isEdge ? " editable" : ""}${clickable ? " tooltip-anchor" : ""}"
-        style="background: ${color}20; border-left-color: ${color};"
+        style="background: ${color}${bgAlpha}; border-left-color: ${color};"
         ${clickable ? `onclick="adjustTripEdge('${dateStr}')" tabindex="0"` : ""}>
         <div class="trip-strip-num">${dayNum}</div>
         <div class="trip-strip-pts" style="color: ${color};">${points ?? "—"}</div>
@@ -1764,8 +2061,10 @@ function adjustTripEdge(dateStr) {
 
   if (dateStr < checkIn) {
     state.checkIn = dateStr;
+    if (window.DVCTrack) window.DVCTrack.track("just-one-more-night");
   } else if (dateStr >= checkOut) {
     state.checkOut = dateStrPlusDays(dateStr, 1);
+    if (window.DVCTrack) window.DVCTrack.track("just-one-more-night");
   } else if (dateStr === checkIn) {
     const newCheckIn = dateStrPlusDays(dateStr, 1);
     if (newCheckIn >= checkOut) { clearSelection(); return; }
@@ -1785,6 +2084,7 @@ function adjustTripEdge(dateStr) {
 
 function renderCalendar() {
   syncCustomSelects();
+  updateActiveContextBar();
 
   const resort = getResort();
   const year = state.year;
@@ -1805,6 +2105,8 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const stayDates = new Set(getStayDates());
   const prevSegDates = getAllPreviousSegmentDates();
+  const now = new Date();
+  const todayStr = formatDate(now.getFullYear(), now.getMonth(), now.getDate());
 
   const selectedContract = getSelectedContract();
   const contractWindowMonths = selectedContract ? getContractWindowMonths(selectedContract, resort.id) : null;
@@ -1817,9 +2119,19 @@ function renderCalendar() {
     calendarGrid.appendChild(el);
   }
 
+  // Collected while building the grid below, then handed to
+  // renderLegend()/renderCrowdLegend() at the end of this function -- the
+  // legend only ever needs to list what's actually on-screen THIS month,
+  // not every period/crowd tier that could theoretically ever appear for
+  // this resort. Saves real vertical space on a phone, where the old
+  // always-show-everything legend competed with the calendar grid itself.
+  const activePeriodNames = new Set();
+  const activeCrowdLabels = new Set();
+
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = formatDate(year, month, d);
     const period = getTravelPeriod(resort, dateStr);
+    if (period) activePeriodNames.add(period.name);
     const points = getPointsForDate(resort, dateStr, state.roomTypeId);
     const cashResult = getCashRateWithFallback(resort, dateStr, state.roomTypeId);
     const cashRate = cashResult ? cashResult.rate : null;
@@ -1832,12 +2144,15 @@ function renderCalendar() {
     const isCheckOut = dateStr === state.checkOut;
     const isPrevSegment = prevSegDates.has(dateStr);
 
+    const isPast = dateStr < todayStr;
+
     const el = document.createElement("div");
     el.className = "day-cell";
     if (isPrevSegment) el.classList.add("prev-segment");
     if (isStayNight) el.classList.add("selected");
     if (isCheckIn) el.classList.add("checkin");
     if (isCheckOut) el.classList.add("checkout");
+    if (isPast) el.classList.add("past-date");
     if (contractRestricted || (contractCutoff && dateStr > contractCutoff)) {
       el.classList.add("contract-not-yet-bookable");
     }
@@ -1861,26 +2176,36 @@ function renderCalendar() {
 
     const cashLabel = cashRate ? `<span class="day-cash${cashIsPriorYear ? ' prior-year' : ''}">$${Math.round(cashRate).toLocaleString()}${cashIsPriorYear ? '*' : ''}</span>` : "";
     const crowd = getCrowdForDate(dateStr);
+    if (crowd) activeCrowdLabels.add(crowd.label);
     const crowdLabel = crowd ? `
       <span class="day-crowd tooltip-anchor ${crowdClass(crowd.label)} ${tooltipAlign}">
         ${crowd.crowd}
         ${buildCrowdTooltipHTML(dateStr, crowd)}
       </span>` : "";
-    const dayEvents = getEventsForDate(dateStr);
+    // Only date-specific events (a ticketed party, a race morning) earn the
+    // 🎉 marker here -- a multi-week festival/seasonal window would otherwise
+    // paint it across all 30+ days it runs, which is what originally
+    // cluttered the grid. Those broader windows are still surfaced, just in
+    // the Special Events & Festivals card instead of on every affected cell.
+    const dayEvents = getEventsForDate(dateStr).filter(e => !BROAD_EVENT_CATEGORIES.has(e.category));
     const eventLabel = dayEvents.length > 0 ? `
       <span class="day-event tooltip-anchor ${tooltipAlign}">
         🎉
         ${buildEventTooltipHTML(dateStr, dayEvents)}
       </span>` : "";
 
-    const toplineHTML = (cashLabel || crowdLabel || eventLabel) ? `<div class="day-topline">${cashLabel}${crowdLabel}${eventLabel}</div>` : "";
-
+    // Date number, crowd badge, and event icon are each pinned to their own
+    // corner of .day-cell (top-left / top-right / bottom-right) so none of
+    // them can collide regardless of which combination is present -- see
+    // Mobile Responsiveness Guardrails. Cash rate is a normal-flow sibling
+    // of the point cost inside .day-body, not another corner badge.
     el.innerHTML = `
-      ${toplineHTML}
+      <span class="day-number">${d}</span>
+      ${crowdLabel}
+      ${eventLabel}
       <div class="day-body${period ? " tooltip-anchor" : ""} ${tooltipAlign}">
-        <span class="day-number">${d}</span>
         <span class="day-points" style="color: ${period ? period.color : '#333'}">${points ?? "—"}</span>
-        <span class="day-type-label">${isWeekend ? "Fri/Sat" : "Sun-Thu"}</span>
+        ${cashLabel}
         ${periodTooltipHTML}
       </div>
     `;
@@ -1888,13 +2213,36 @@ function renderCalendar() {
     el.addEventListener("click", () => handleDateClick(dateStr));
     calendarGrid.appendChild(el);
   }
+
+  renderLegend(activePeriodNames);
+  renderCrowdLegend(activeCrowdLabels);
 }
 
 // ---- Legend ----
-function renderLegend() {
+// Filtering the legend down to just what's on-screen this month only makes
+// sense on mobile, where vertical space is scarce (see the comment above
+// activePeriodNames in renderCalendar()). On desktop there's room to just
+// show every period/crowd tier the resort has, so the legend also works as
+// a static reference, not just a key for this specific month.
+const MOBILE_LEGEND_QUERY = window.matchMedia("(max-width: 800px)");
+// Re-render on crossing the breakpoint (e.g. rotating a device, resizing a
+// desktop window) so the legend switches between full and filtered lists
+// without needing a fresh page load.
+MOBILE_LEGEND_QUERY.addEventListener("change", () => renderCalendar());
+
+// activePeriodNames: a Set of period.name values actually present on the
+// currently rendered month's grid (see renderCalendar() above) -- on mobile,
+// filters the resort's full period list down to just those, so e.g. an
+// all-"Preferred" October doesn't also list Adventure/Choice/Dream/etc.
+// nobody can see this month. Falls back to every period when called with
+// no filter, or on desktop, where the full list is always shown.
+function renderLegend(activePeriodNames) {
   const resort = getResort();
+  const periods = (activePeriodNames && MOBILE_LEGEND_QUERY.matches)
+    ? resort.travelPeriods.filter(p => activePeriodNames.has(p.name))
+    : resort.travelPeriods;
   legendItems.innerHTML = "";
-  for (const period of resort.travelPeriods) {
+  for (const period of periods) {
     const item = document.createElement("div");
     item.className = "legend-item";
     item.innerHTML = `
@@ -1913,10 +2261,16 @@ const CROWD_LEGEND = [
   { label: "Extreme", range: "9-10" },
 ];
 
-function renderCrowdLegend() {
+// activeCrowdLabels: same filtering idea as renderLegend() above (mobile
+// only), against CROWD_LEGEND's fixed 5 tiers instead of a resort's period
+// list.
+function renderCrowdLegend(activeCrowdLabels) {
   const el = document.getElementById("crowd-legend-items");
   if (!el) return;
-  el.innerHTML = CROWD_LEGEND.map(l => `
+  const tiers = (activeCrowdLabels && MOBILE_LEGEND_QUERY.matches)
+    ? CROWD_LEGEND.filter(l => activeCrowdLabels.has(l.label))
+    : CROWD_LEGEND;
+  el.innerHTML = tiers.map(l => `
     <div class="legend-item">
       <span class="crowd-pill ${crowdClass(l.label)}">${l.range}</span>
       ${l.label}
@@ -2074,6 +2428,52 @@ function buildResortAlertsHTML(resort, stayDates) {
 // additive for anyone not using the account features. The per-stay
 // eligibility/points feedback this used to render lives in
 // buildContractEligibilityHTML() instead, embedded in the "Your Stay" card.
+// ---- Active Context Summary Bar (#controls-toggle, mobile-only) ----
+// On mobile the Resort/Room Type/Booking As/Load Trip drawer (#controls-
+// groups) collapses by default (see styles.css's 800px media query) so the
+// four stacked dropdowns don't eat half the screen before any calendar
+// content shows -- but a collapsed drawer with a static "Resort & Trip
+// Settings" label left the user with zero visible context for what resort/
+// room/contract is actually driving the calendar's point numbers. This
+// builds that context line instead: "Resort Name · Room Type · Booking As".
+// Booking As is only appended when the user actually has an active
+// contract to browse as (getActiveContracts().length > 0) -- same
+// condition renderBookingAsControl() already uses to show/hide that whole
+// control, so the summary never dangles a "Just Browsing" segment on
+// someone who was never offered the option in the first place.
+function buildActiveContextSummary() {
+  const resort = getResort();
+  if (!resort) return "Resort & Trip Settings";
+  const roomType = resort.roomTypes.find(rt => rt.id === state.roomTypeId);
+  const parts = [resort.name, roomType ? roomType.name : null];
+  if (getActiveContracts().length > 0) {
+    const contract = getSelectedContract();
+    parts.push(contract ? `${contract.nickname || resortNameForId(contract.home_resort_id)} Contract` : "Just Browsing");
+  }
+  return parts.filter(Boolean).join(" · ");
+}
+
+// Called from renderCalendar() (the shared hook every resort/room/contract
+// change already funnels through -- selectResort(), the room-select change
+// listener, setSelectedContract(), refreshUserContracts()'s auth resolve,
+// and the initial post-session-restore render at the bottom of this file),
+// so the bar updates in real time and is correct from the very first paint
+// without a separate init call of its own. Re-checks which state to show
+// every time rather than caching "open" -- renderCalendar() can run while
+// the drawer is already open (e.g. changing room type without collapsing
+// it first), and the label needs to keep reading "Hide Trip Settings" in
+// that case, not flicker over to the summary text underneath it.
+function updateActiveContextBar() {
+  if (!controlsToggle || !controlsGroups || !controlsToggleLabel) return;
+  const isOpen = controlsGroups.classList.contains("open");
+  controlsToggleLabel.textContent = isOpen ? "Hide Trip Settings" : buildActiveContextSummary();
+
+  // Collapsed-only -- expanded, it's showing "Hide Trip Settings" over the
+  // plain tint background, same look as before this resort-art feature.
+  const resort = getResort();
+  applyResortArtBackground(controlsToggle, !isOpen && resort ? getResortImage(resort.id) : null);
+}
+
 function renderBookingAsControl() {
   const el = document.getElementById("booking-as-control");
   if (!el) return;
@@ -2089,16 +2489,711 @@ function renderBookingAsControl() {
     return `<option value="${c.id}">${label}</option>`;
   }).join("");
   contractSelect.value = selectedContractId || "";
-  if (contractSelect._customSelectRender) contractSelect._customSelectRender();
+  syncBookingAsPickerTrigger();
+  renderBookingAsSheetList();
+}
+
+// Same lavender-wash-over-photo treatment as the Resort trigger
+// (applyResortArtBackground(), .has-art) once a contract is selected, plus
+// a small UY pill -- so the closed control reads as "this resort" the same
+// way the Resort picker does, rather than a plain dropdown. A flat
+// two-tone gradient was tried first, but with every resort now having real
+// art (data/resort_images.js), the photo is what actually makes it
+// recognizable at a glance.
+function syncBookingAsPickerTrigger() {
+  const trigger = document.getElementById("booking-as-picker-trigger");
+  const label = document.getElementById("booking-as-picker-trigger-label");
+  if (!trigger || !label) return;
+  const contract = getSelectedContract();
+  if (contract) {
+    const name = contract.nickname || resortNameForId(contract.home_resort_id);
+    label.innerHTML = `${escapeHTML(name)}<span class="booking-as-trigger-pill">${contract.use_year} UY</span>`;
+    applyResortArtBackground(trigger, getResortImage(contract.home_resort_id));
+  } else {
+    label.textContent = "Just browsing (no contract)";
+    applyResortArtBackground(trigger, null);
+  }
+}
+
+// ---- Booking As Sheet ----
+// Wallet-mini-cards, same visual language as account.html's My Contracts
+// deck (see .wallet-mini-card in styles.css) so picking a contract here
+// feels like the same object a returning owner already recognizes.
+function renderBookingAsSheetList() {
+  const listEl = document.getElementById("booking-as-sheet-list");
+  if (!listEl) return;
+  const contracts = getActiveContracts();
+  const browsingSelected = !selectedContractId;
+  const cardsHTML = contracts.map(c => {
+    const points = getAvailablePoints(c);
+    const name = c.nickname || resortNameForId(c.home_resort_id);
+    return `
+      <button type="button" class="wallet-mini-btn" onclick="pickContract('${c.id}')">
+        <div class="wallet-mini-card${c.id === selectedContractId ? " selected" : ""}" style="background:${resortAccentGradient(c.home_resort_id)};">
+          <div class="wallet-mini-top">
+            <div class="wallet-mini-name">${name}</div>
+            <div style="text-align:right;">
+              <div class="wallet-mini-points-num">${points.toLocaleString()}</div>
+              <div class="wallet-mini-points-label">AVAILABLE</div>
+            </div>
+          </div>
+          <div class="wallet-mini-bottom">
+            <span class="wallet-mini-pill">${c.use_year} UY</span>
+            <span class="wallet-mini-pill">${c.points_per_year.toLocaleString()}/yr</span>
+          </div>
+        </div>
+      </button>
+    `;
+  }).join("");
+  listEl.innerHTML = `
+    <button type="button" class="wallet-mini-btn" onclick="pickContract('')">
+      <div class="wallet-mini-card browsing${browsingSelected ? " selected" : ""}">Just browsing (no contract)</div>
+    </button>
+    ${cardsHTML}
+  `;
+}
+
+function pickContract(id) {
+  contractSelect.value = id;
+  contractSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  closeBookingAsSheet();
+}
+
+function openBookingAsSheet() {
+  renderBookingAsSheetList();
+  document.getElementById("booking-as-sheet").classList.add("open");
+}
+
+function closeBookingAsSheet() {
+  document.getElementById("booking-as-sheet").classList.remove("open");
+}
+
+// Re-renders whichever card currently shows buildContractEligibilityHTML's
+// output -- the trip rail in review mode, or the normal summary panel
+// otherwise. Smart Draw's action handlers call this instead of assuming
+// renderSummary() is always the active render path.
+function rerenderStaySummary() {
+  if (isReviewMode()) renderTripRail(); else renderSummary();
+}
+
+// The draw actually shown/applied: the auto recommendation, unless manual
+// mode is open AND its stashed amounts were computed for this exact
+// pointsNeeded (see smartDrawManualDraws's comment above).
+function smartDrawEffectiveDraws(currentRow, pointsNeeded) {
+  if (smartDrawManualOpen && smartDrawManualDraws && smartDrawManualDraws.pointsNeeded === pointsNeeded) {
+    const m = smartDrawManualDraws;
+    return {
+      draws: { holding: m.holding, banked: m.banked, borrowed: m.borrowed, remaining: m.remaining },
+      shortfall: Math.max(0, pointsNeeded - (m.holding + m.banked + m.borrowed + m.remaining)),
+      after: {
+        holding: currentRow.holding - m.holding,
+        banked: currentRow.banked - m.banked,
+        borrowed: currentRow.borrowed - m.borrowed,
+        remaining: currentRow.remaining - m.remaining,
+      },
+    };
+  }
+  return computeSmartDraw(currentRow, pointsNeeded);
+}
+
+// The recommendation card itself: a segmented bar (same visual language as
+// account.html's wallet-card ledger rows, tokens.css), one plain-language
+// line per nonzero bucket, guardrail call-outs, and the Apply/Undo/manual
+// controls. Advisory only -- see the guardrail copy below and the
+// footer disclaimer for why this never claims to touch a real booking.
+function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
+  const { draws, after, shortfall } = smartDrawEffectiveDraws(currentRow, pointsNeeded);
+
+  const barHTML = `
+    <div class="ledger-bar">
+      <div class="ledger-bar-seg ledger-seg-banked" style="flex-grow:${draws.banked}"></div>
+      <div class="ledger-bar-seg ledger-seg-current" style="flex-grow:${draws.remaining}"></div>
+      <div class="ledger-bar-seg ledger-seg-borrowed" style="flex-grow:${draws.borrowed}"></div>
+      <div class="ledger-bar-seg ledger-seg-holding" style="flex-grow:${draws.holding}"></div>
+    </div>
+  `;
+
+  const lines = [];
+  if (draws.holding > 0) {
+    // Same real deadline as My Contracts' ledger (dvc-ledger.js's
+    // holdingRebookDeadline()) -- only computable when the owner has
+    // entered a holding date there; falls back to the generic rule text
+    // otherwise rather than guessing a date.
+    let holdingDetail = "must be used, can't be re-banked";
+    if (currentRow.holdingEnteredAt && window.DVCLedger && window.DVCDates) {
+      const enteredMs = Date.parse(currentRow.holdingEnteredAt + "T00:00:00Z");
+      const todayObj = window.DVCDates.todayInEastern();
+      const todayMs = window.DVCDates.dateOnlyUTC(todayObj.year, todayObj.month, todayObj.day);
+      const useYearExpiresMs = window.DVCDates.useYearExpiration(contract.use_year, currentRow.year);
+      const deadline = window.DVCLedger.holdingRebookDeadline(enteredMs, useYearExpiresMs, todayMs);
+      if (deadline) holdingDetail = `rebook by ${window.DVCDates.formatDeadlineDate(deadline.ms)} (${deadline.daysUntil}d)`;
+    }
+    lines.push(`<div><span class="smart-draw-line-swatch" style="background:var(--color-info)"></span>${draws.holding.toLocaleString()} pts Holding &mdash; ${holdingDetail}</div>`);
+  }
+  if (draws.banked > 0) lines.push(`<div><span class="smart-draw-line-swatch" style="background:var(--color-warning)"></span>${draws.banked.toLocaleString()} pts Banked ${currentRow.year - 1} &mdash; expires first</div>`);
+  if (draws.remaining > 0) lines.push(`<div><span class="smart-draw-line-swatch" style="background:var(--color-primary)"></span>${draws.remaining.toLocaleString()} pts Current ${currentRow.year}</div>`);
+  if (draws.borrowed > 0) lines.push(`<div><span class="smart-draw-line-swatch" style="background:var(--color-secondary)"></span>${draws.borrowed.toLocaleString()} pts Borrowed &mdash; already pulled from ${currentRow.year + 1}</div>`);
+
+  const guardrails = [];
+  if (shortfall > 0) {
+    guardrails.push(`<div class="smart-draw-guardrail danger">Short by ${shortfall.toLocaleString()} pts on this contract even using everything available &mdash; <a href="account.html">borrow more in My Contracts</a>, pick a different contract, or shorten the stay.</div>`);
+  }
+  if (after.remaining > 0 && window.DVCDates) {
+    const deadline = window.DVCDates.nextDeadlineForUseYear(contract.use_year, window.DVCDates.todayInEastern());
+    // Same shared urgency scale/copy as account.html and home.html
+    // (2026-09-20) -- this used to be hardcoded "warning" no matter how
+    // many days were actually left.
+    const tier = window.DVCDates.urgencyTier(deadline.daysUntil);
+    const deadlineCopy = window.DVCDates.formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil);
+    guardrails.push(`<div class="smart-draw-guardrail ${tier}">${after.remaining.toLocaleString()} pts left on this contract after this trip &mdash; bank them by ${deadlineCopy} or they can't roll into ${currentRow.year + 1}.</div>`);
+  }
+  if (stayDates.length > 0) {
+    const today = new Date(); today.setHours(12, 0, 0, 0);
+    const checkInDate = new Date(stayDates[0] + "T12:00:00");
+    const daysUntilCheckIn = Math.round((checkInDate - today) / 86400000);
+    // Advisory only: dvcalc has no visibility into whether a real Disney
+    // reservation exists for this stay at all, so this is framed as "if
+    // you later need to change a real booking this close to check-in,"
+    // not a claim about what this Apply action itself does.
+    if (daysUntilCheckIn <= 30) {
+      guardrails.push(`<div class="smart-draw-guardrail warning">Check-in is ${daysUntilCheckIn <= 0 ? "today or already past" : `${daysUntilCheckIn} day${daysUntilCheckIn === 1 ? "" : "s"} away`} &mdash; if you later modify or cancel this reservation with Disney this close to check-in, those points move to a Holding Account (must be rebooked within 60 days, can't be banked).</div>`);
+    }
+  }
+
+  const applying = smartDrawApplyStatus === "applying";
+  const applied = smartDrawApplyStatus === "applied";
+
+  let manualHTML = "";
+  if (smartDrawManualOpen) {
+    const manualTotal = draws.holding + draws.banked + draws.borrowed + draws.remaining;
+    const stepper = (field, label, max) => `
+      <div class="ledger-stepper ${field}">
+        <span class="ledger-stepper-label">${label}</span>
+        <div class="ledger-stepper-row">
+          <input type="number" min="0" max="${max}" step="1" value="${draws[field]}" onchange="setSmartDrawManual('${field}', this.value, ${max}, ${pointsNeeded})">
+        </div>
+      </div>
+    `;
+    manualHTML = `
+      <div class="smart-draw-manual-total">${manualTotal.toLocaleString()} of ${pointsNeeded.toLocaleString()} pts allocated</div>
+      <div class="ledger-steppers">
+        ${stepper("holding", "Holding", currentRow.holding)}
+        ${stepper("banked", "Banked", currentRow.banked)}
+        ${stepper("remaining", "Current", currentRow.remaining)}
+        ${stepper("borrowed", "Borrowed", currentRow.borrowed)}
+      </div>
+    `;
+  }
+
+  const undoBannerHTML = (smartDrawUndoSnapshot && smartDrawUndoSnapshot.contractId === contract.id)
+    ? `<div class="smart-draw-undo-banner">&check; Applied &middot; <button type="button" class="smart-draw-undo-btn" onclick="undoSmartDraw()">Undo</button></div>`
+    : "";
+
+  return `
+    <div class="smart-draw-card">
+      <div class="smart-draw-title">Suggested draw for this trip</div>
+      ${barHTML}
+      <div class="smart-draw-lines">${lines.join("")}</div>
+      ${guardrails.join("")}
+      ${manualHTML}
+      <div class="smart-draw-actions">
+        <button type="button" class="smart-draw-apply-btn" onclick="applySmartDraw('${contract.id}')" ${applying ? "disabled" : ""}>${applying ? "Applying…" : applied ? "Applied ✓" : "Apply to Trip"}</button>
+        <button type="button" class="smart-draw-manual-toggle" onclick="toggleSmartDrawManual(${pointsNeeded})">${smartDrawManualOpen ? "Use recommended split" : "Adjust manually"}</button>
+      </div>
+      ${undoBannerHTML}
+      <div class="smart-draw-footer">Advisory allocation based on DVC point longevity rules. Does not execute bookings in your official Disney account.</div>
+    </div>
+  `;
+}
+
+async function applySmartDraw(contractId) {
+  const contract = userContracts.find(c => c.id === contractId);
+  const resort = getResort();
+  if (!contract || !resort) return;
+  const stayDates = getStayDates();
+  const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
+  if (totals.points == null) return;
+  const currentRow = getCurrentYearRow(contract);
+  const draw = smartDrawEffectiveDraws(currentRow, totals.points);
+
+  smartDrawApplyStatus = "applying";
+  rerenderStaySummary();
+
+  const previous = { remaining: currentRow.remaining, banked: currentRow.banked, borrowed: currentRow.borrowed, holding: currentRow.holding };
+  const result = await window.DVCAuth.upsertContractYearPoints({
+    contract_id: contract.id,
+    use_year_label: currentRow.year,
+    points_remaining: draw.after.remaining,
+    points_banked: draw.after.banked,
+    points_borrowed: draw.after.borrowed,
+    points_holding: draw.after.holding,
+  });
+
+  if (result.error) {
+    smartDrawApplyStatus = "error";
+    rerenderStaySummary();
+    return;
+  }
+
+  const existing = userContractYearPoints.find(r => r.contract_id === contract.id && r.use_year_label === currentRow.year);
+  if (existing) Object.assign(existing, result.data);
+  else userContractYearPoints.push(result.data);
+
+  smartDrawApplyStatus = "applied";
+  smartDrawUndoSnapshot = { contractId: contract.id, year: currentRow.year, previous };
+  smartDrawManualOpen = false;
+  smartDrawManualDraws = null;
+  rerenderStaySummary();
+
+  // 8s, not the 1500ms save-confirmation-toast convention used elsewhere
+  // (account.html's .qe-status, the itinerary save button) -- those are
+  // pure confirmations with nothing to react to, while this one is
+  // reversible and worth a real chance to notice before it's gone.
+  setTimeout(() => {
+    if (smartDrawUndoSnapshot && smartDrawUndoSnapshot.contractId === contract.id && smartDrawUndoSnapshot.year === currentRow.year) {
+      smartDrawUndoSnapshot = null;
+      smartDrawApplyStatus = null;
+      rerenderStaySummary();
+    }
+  }, 8000);
+}
+
+async function undoSmartDraw() {
+  if (!smartDrawUndoSnapshot) return;
+  const { contractId, year, previous } = smartDrawUndoSnapshot;
+  const result = await window.DVCAuth.upsertContractYearPoints({
+    contract_id: contractId,
+    use_year_label: year,
+    points_remaining: previous.remaining,
+    points_banked: previous.banked,
+    points_borrowed: previous.borrowed,
+    points_holding: previous.holding,
+  });
+  if (!result.error) {
+    const existing = userContractYearPoints.find(r => r.contract_id === contractId && r.use_year_label === year);
+    if (existing) Object.assign(existing, result.data);
+  }
+  smartDrawUndoSnapshot = null;
+  smartDrawApplyStatus = null;
+  rerenderStaySummary();
+}
+
+function toggleSmartDrawManual(pointsNeeded) {
+  smartDrawManualOpen = !smartDrawManualOpen;
+  if (smartDrawManualOpen && (!smartDrawManualDraws || smartDrawManualDraws.pointsNeeded !== pointsNeeded)) {
+    const contract = getSelectedContract();
+    const currentRow = contract ? getCurrentYearRow(contract) : null;
+    const auto = currentRow ? computeSmartDraw(currentRow, pointsNeeded) : null;
+    smartDrawManualDraws = auto ? { pointsNeeded, ...auto.draws } : { pointsNeeded, holding: 0, banked: 0, borrowed: 0, remaining: 0 };
+  }
+  rerenderStaySummary();
+}
+
+function setSmartDrawManual(field, rawValue, max, pointsNeeded) {
+  const value = Math.max(0, Math.min(max, parseInt(rawValue, 10) || 0));
+  if (!smartDrawManualDraws || smartDrawManualDraws.pointsNeeded !== pointsNeeded) {
+    smartDrawManualDraws = { pointsNeeded, holding: 0, banked: 0, borrowed: 0, remaining: 0 };
+  }
+  smartDrawManualDraws[field] = value;
+  rerenderStaySummary();
+}
+
+// ---- Multi-Contract Split (Task 07) ----------------------------------
+// Splitting one stay's points across more than one contract. Only offered
+// when there are 2+ active contracts, real dates are picked, and it's a
+// single-resort stay (not a split STAY across resorts -- see the state
+// var's own comment on why these two "split" concepts stay clearly
+// separate in naming). Every contract that can't book this resort at all
+// (getContractWindowMonths() === null) is left out of the split entirely --
+// unlike a merely-not-open-yet 7-month window, that's a hard block, not a
+// timing issue, so there's nothing to allocate there.
+function eligibleSplitContracts(resort) {
+  return getActiveContracts().filter(c => getContractWindowMonths(c, resort.id) != null);
+}
+
+// Greedy per-contract fill, same "drain one before touching the next"
+// spirit as computeSmartDraw()'s own within-contract bucket order --
+// just one level up, across contracts instead of across buckets. Purely a
+// starting point for the sliders, not a claim of optimality; the whole
+// point of sliders is that the owner can override it.
+function computeDefaultMultiSplit(contracts, pointsNeeded) {
+  let need = pointsNeeded;
+  const byContractId = {};
+  for (const c of contracts) {
+    const row = getCurrentYearRow(c);
+    const available = row.remaining + row.banked + row.borrowed + row.holding;
+    const draw = Math.min(available, Math.max(0, need));
+    byContractId[c.id] = draw;
+    need -= draw;
+  }
+  return byContractId;
+}
+
+function getMultiSplitAllocations(contracts, pointsNeeded) {
+  if (!multiContractAllocations || multiContractAllocations.pointsNeeded !== pointsNeeded) {
+    multiContractAllocations = { pointsNeeded, byContractId: computeDefaultMultiSplit(contracts, pointsNeeded) };
+  }
+  return multiContractAllocations.byContractId;
+}
+
+function toggleMultiContractSplit() {
+  multiContractSplitMode = !multiContractSplitMode;
+  multiContractAllocations = null; // start fresh each time split mode is (re-)opened
+  multiSplitApplyStatus = null;
+  multiSplitUndoSnapshot = null;
+  rerenderStaySummary();
+}
+
+// Item 2 of Task 07: warn if a contract's points are being allocated to a
+// stay at a resort that isn't its home resort, before that contract's
+// 7-month window has actually opened for these specific dates. Only
+// meaningful for months === 7 -- an 11-month home-resort contract's window
+// is open the moment you own it (no separate "not yet open" state), and a
+// null (fully blocked) contract is already excluded from the split
+// entirely by eligibleSplitContracts().
+function contractWindowNotYetOpenWarning(contract, resort, stayDates) {
+  if (stayDates.length === 0) return null;
+  if (getContractWindowMonths(contract, resort.id) !== 7) return null;
+  const checkIn = stayDates[0];
+  const cutoff = monthsFromTodayCutoff(7);
+  if (checkIn <= cutoff) return null; // already open
+  const opensOn = monthsBeforeCheckIn(checkIn, 7);
+  return `${resort.name} isn't this contract's home resort &mdash; its 7-month window doesn't open until <strong>${formatDisplayDate(opensOn)}</strong>. You can allocate points now, but the reservation itself can't be confirmed with Disney until then.`;
+}
+
+// Lightweight live update on every slider drag tick -- mirrors account.html's
+// updateLedgerRowTotal()/app.js's own updateSmartDrawManual-style pattern:
+// direct DOM writes for the row being dragged plus the shared totals line,
+// no full re-render (which would reset every slider's thumb position and
+// make dragging feel broken).
+function updateMultiSplitRowLive(contractId, value, available, pointsNeeded) {
+  const row = document.querySelector(`.multi-split-row[data-contract-id="${contractId}"]`);
+  if (!row) return;
+  row.querySelector(".multi-split-allocated-num").textContent = value.toLocaleString();
+  row.querySelector(".multi-split-after-num").textContent = (available - value).toLocaleString();
+
+  const allocations = multiContractAllocations?.byContractId || {};
+  const totalAllocated = Object.entries(allocations).reduce((sum, [id, v]) => sum + (id === contractId ? value : v), 0);
+  const totalsEl = document.getElementById("multi-split-totals");
+  if (totalsEl) totalsEl.outerHTML = buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded);
+}
+
+function setMultiSplitAllocation(contractId, rawValue, max, pointsNeeded) {
+  const value = Math.max(0, Math.min(max, parseInt(rawValue, 10) || 0));
+  if (!multiContractAllocations || multiContractAllocations.pointsNeeded !== pointsNeeded) {
+    multiContractAllocations = { pointsNeeded, byContractId: {} };
+  }
+  multiContractAllocations.byContractId[contractId] = value;
+  updateMultiSplitRowLive(contractId, value, max, pointsNeeded);
+}
+
+function buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded) {
+  const diff = pointsNeeded - totalAllocated;
+  let text, tone;
+  if (diff === 0) { text = `&check; ${totalAllocated.toLocaleString()} of ${pointsNeeded.toLocaleString()} pts allocated`; tone = "ok"; }
+  else if (diff > 0) { text = `${totalAllocated.toLocaleString()} of ${pointsNeeded.toLocaleString()} pts allocated &mdash; ${diff.toLocaleString()} pts still needed`; tone = "warning"; }
+  else { text = `${totalAllocated.toLocaleString()} of ${pointsNeeded.toLocaleString()} pts allocated &mdash; ${Math.abs(diff).toLocaleString()} pts over, reduce a slider`; tone = "danger"; }
+  return `<div class="multi-split-totals ${tone}" id="multi-split-totals">${text}</div>`;
+}
+
+function buildMultiContractSplitHTML(resort, stayDates) {
+  const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
+  if (totals.points == null) return "";
+  const pointsNeeded = totals.points;
+  const contracts = eligibleSplitContracts(resort);
+
+  if (contracts.length === 0) {
+    return `
+      <div class="multi-split-card smart-draw-card">
+        <div class="smart-draw-title">Split Across Contracts</div>
+        <div class="smart-draw-guardrail warning">None of your active contracts can book ${resort.name}.</div>
+        <button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">&larr; Use one contract</button>
+      </div>
+    `;
+  }
+
+  const allocations = getMultiSplitAllocations(contracts, pointsNeeded);
+  const totalAllocated = Object.values(allocations).reduce((a, b) => a + b, 0);
+
+  const rowsHTML = contracts.map(c => {
+    const currentRow = getCurrentYearRow(c);
+    const available = currentRow.remaining + currentRow.banked + currentRow.borrowed + currentRow.holding;
+    const allocated = Math.min(allocations[c.id] || 0, available);
+    const warning = contractWindowNotYetOpenWarning(c, resort, stayDates);
+    return `
+      <div class="multi-split-row" data-contract-id="${c.id}">
+        <div class="multi-split-row-header">
+          <span class="multi-split-row-name">${c.nickname || resortName(c.home_resort_id)}</span>
+          <span class="multi-split-row-stat"><span class="multi-split-allocated-num">${allocated.toLocaleString()}</span> / ${available.toLocaleString()} pts</span>
+        </div>
+        <input type="range" class="multi-split-slider" min="0" max="${available}" step="1" value="${allocated}"
+          oninput="setMultiSplitAllocation('${c.id}', this.value, ${available}, ${pointsNeeded})">
+        <div class="multi-split-row-footer">
+          <span class="multi-split-after-label">After this trip:</span> <span class="multi-split-after-num">${(available - allocated).toLocaleString()}</span> pts left
+        </div>
+        ${warning ? `<div class="smart-draw-guardrail warning">${warning}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  const applying = multiSplitApplyStatus === "applying";
+  const applied = multiSplitApplyStatus === "applied";
+  const canApply = totalAllocated === pointsNeeded;
+
+  const undoBannerHTML = multiSplitUndoSnapshot
+    ? `<div class="smart-draw-undo-banner">&check; Applied &middot; <button type="button" class="smart-draw-undo-btn" onclick="undoMultiSplit()">Undo</button></div>`
+    : "";
+
+  return `
+    <div class="multi-split-card smart-draw-card">
+      <div class="smart-draw-title">Split Across ${contracts.length} Contracts</div>
+      ${buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded)}
+      <div class="multi-split-rows">${rowsHTML}</div>
+      <div class="smart-draw-actions">
+        <button type="button" class="smart-draw-apply-btn" onclick="applyMultiSplit('${resort.id}')" ${applying || !canApply ? "disabled" : ""}>${applying ? "Applying…" : applied ? "Applied ✓" : "Apply Split"}</button>
+        <button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">&larr; Use one contract</button>
+      </div>
+      ${undoBannerHTML}
+      <div class="smart-draw-footer">Each contract draws in Holding &rarr; Banked &rarr; Borrowed &rarr; Current order, same priority Smart Draw uses. Advisory only -- does not execute bookings in your official Disney account.</div>
+    </div>
+  `;
+}
+
+async function applyMultiSplit(resortId) {
+  const resort = RESORTS.find(r => r.id === resortId) || getResort();
+  const stayDates = getStayDates();
+  const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
+  if (totals.points == null) return;
+  const contracts = eligibleSplitContracts(resort);
+  const allocations = getMultiSplitAllocations(contracts, totals.points);
+
+  multiSplitApplyStatus = "applying";
+  rerenderStaySummary();
+
+  const previousByContractId = {};
+  const errors = [];
+  for (const c of contracts) {
+    const allocated = allocations[c.id] || 0;
+    if (allocated <= 0) continue;
+    const currentRow = getCurrentYearRow(c);
+    previousByContractId[c.id] = { remaining: currentRow.remaining, banked: currentRow.banked, borrowed: currentRow.borrowed, holding: currentRow.holding };
+    const draw = computeSmartDraw(currentRow, allocated);
+    const result = await window.DVCAuth.upsertContractYearPoints({
+      contract_id: c.id,
+      use_year_label: currentRow.year,
+      points_remaining: draw.after.remaining,
+      points_banked: draw.after.banked,
+      points_borrowed: draw.after.borrowed,
+      points_holding: draw.after.holding,
+    });
+    if (result.error) {
+      errors.push(c.id);
+      continue;
+    }
+    const existing = userContractYearPoints.find(r => r.contract_id === c.id && r.use_year_label === currentRow.year);
+    if (existing) Object.assign(existing, result.data);
+    else userContractYearPoints.push(result.data);
+  }
+
+  if (errors.length > 0) {
+    multiSplitApplyStatus = "error";
+    rerenderStaySummary();
+    return;
+  }
+
+  multiSplitApplyStatus = "applied";
+  multiSplitUndoSnapshot = { pointsNeeded: totals.points, previousByContractId };
+  rerenderStaySummary();
+
+  // Same 8s reversible-action visibility window as Smart Draw's own undo.
+  setTimeout(() => {
+    if (multiSplitUndoSnapshot && multiSplitUndoSnapshot.pointsNeeded === totals.points) {
+      multiSplitUndoSnapshot = null;
+      multiSplitApplyStatus = null;
+      rerenderStaySummary();
+    }
+  }, 8000);
+}
+
+async function undoMultiSplit() {
+  if (!multiSplitUndoSnapshot) return;
+  const { previousByContractId } = multiSplitUndoSnapshot;
+  for (const [contractId, previous] of Object.entries(previousByContractId)) {
+    const currentRow = getCurrentYearRow(userContracts.find(c => c.id === contractId));
+    const result = await window.DVCAuth.upsertContractYearPoints({
+      contract_id: contractId,
+      use_year_label: currentRow.year,
+      points_remaining: previous.remaining,
+      points_banked: previous.banked,
+      points_borrowed: previous.borrowed,
+      points_holding: previous.holding,
+    });
+    if (!result.error) {
+      const existing = userContractYearPoints.find(r => r.contract_id === contractId && r.use_year_label === currentRow.year);
+      if (existing) Object.assign(existing, result.data);
+    }
+  }
+  multiSplitUndoSnapshot = null;
+  multiSplitApplyStatus = null;
+  rerenderStaySummary();
+}
+
+// ---- 11-to-7 Swap Simulator (Task 04) -----------------------------------
+// A sandbox for the common DVC strategy of confirming the home resort at 11
+// months as a safety net, then trying to swap to a different resort/room
+// once the 7-month all-resorts window opens -- lets an owner see the real
+// numbers (both booking-window dates, the point delta, and any extra
+// borrowing the swap would need) before committing to that plan.
+function toggleSwapSimulator() {
+  swapSimulatorMode = !swapSimulatorMode;
+  swapTargetResortId = null;
+  swapTargetRoomTypeId = null;
+  rerenderStaySummary();
+}
+
+function setSwapTargetResort(resortId) {
+  swapTargetResortId = resortId || null;
+  swapTargetRoomTypeId = null; // reset -- the new resort's room types are a different list
+  rerenderStaySummary();
+}
+
+function setSwapTargetRoomType(roomTypeId) {
+  swapTargetRoomTypeId = roomTypeId || null;
+  rerenderStaySummary();
+}
+
+function buildSwapSimulatorHTML(contract, resort, stayDates) {
+  if (!swapSimulatorMode) {
+    return `<div class="swap-sim-offer"><button type="button" class="smart-draw-manual-toggle" onclick="toggleSwapSimulator()">&#128260; Planning to swap at 7 months? &rarr;</button></div>`;
+  }
+
+  const targetCandidates = resortsForYear(state.year).filter(r => r.id !== resort.id);
+  const targetResort = swapTargetResortId ? targetCandidates.find(r => r.id === swapTargetResortId) : null;
+  const targetRoomTypes = targetResort ? targetResort.roomTypes : [];
+  const resolvedRoomTypeId = targetResort
+    ? (targetRoomTypes.some(rt => rt.id === swapTargetRoomTypeId) ? swapTargetRoomTypeId : targetRoomTypes[0]?.id)
+    : null;
+
+  const resortOptionsHTML = `<option value="">Pick a resort&hellip;</option>` +
+    targetCandidates.map(r => `<option value="${r.id}"${r.id === swapTargetResortId ? " selected" : ""}>${r.name}</option>`).join("");
+
+  const pickerHTML = `
+    <div class="swap-sim-picker-row">
+      <div class="custom-select swap-sim-select">
+        <select id="swap-target-resort-select" class="native-select">${resortOptionsHTML}</select>
+        <button type="button" class="custom-select-trigger"><span class="custom-select-value"></span><span class="custom-select-arrow"></span></button>
+        <div class="custom-select-dropdown"></div>
+      </div>
+      ${targetResort ? `
+      <div class="custom-select swap-sim-select">
+        <select id="swap-target-room-select" class="native-select">
+          ${targetRoomTypes.map(rt => `<option value="${rt.id}"${rt.id === resolvedRoomTypeId ? " selected" : ""}>${rt.name}</option>`).join("")}
+        </select>
+        <button type="button" class="custom-select-trigger"><span class="custom-select-value"></span><span class="custom-select-arrow"></span></button>
+        <div class="custom-select-dropdown"></div>
+      </div>` : ""}
+    </div>
+  `;
+
+  let resultsHTML = "";
+  if (targetResort && resolvedRoomTypeId) {
+    const homeEntry = computeStayEntry(resort, state.roomTypeId, stayDates);
+    const targetEntry = computeStayEntry(targetResort, resolvedRoomTypeId, stayDates);
+    if (homeEntry.points != null && targetEntry.points != null) {
+      const delta = targetEntry.points - homeEntry.points;
+      const deltaClass = delta > 0 ? "warning" : delta < 0 ? "ok" : "neutral";
+      const deltaText = delta > 0 ? `+${delta.toLocaleString()}` : delta < 0 ? `${delta.toLocaleString()}` : "±0";
+
+      const elevenMoOpens = monthsBeforeCheckIn(stayDates[0], 11);
+      const sevenMoOpens = monthsBeforeCheckIn(stayDates[0], 7);
+
+      // Borrowing risk: deliberately NOT computeSmartDraw() here -- that
+      // function draws from whatever's already RECORDED as borrowed in the
+      // ledger, which understates what the contract could actually cover
+      // (DVC allows borrowing up to 100% of next year's allotment, not just
+      // however much happens to already be borrowed -- see dvc-ledger.js's
+      // MAX_BORROW_RATIO). This treats borrowing as elastic capacity
+      // instead: how much of each stay's cost is left over after
+      // non-borrowed buckets (Remaining/Banked/Holding), and whether that
+      // leftover fits within the contract's real borrowing ceiling.
+      const currentRow = getCurrentYearRow(contract);
+      const nonBorrowedAvailable = currentRow.remaining + currentRow.banked + currentRow.holding;
+      const maxBorrowable = contract.points_per_year; // same proxy validateBorrowedPoints() uses -- no separate "next year's adjusted allotment" concept in this data model
+      const homeBorrowNeeded = Math.max(0, homeEntry.points - nonBorrowedAvailable);
+      const targetBorrowNeeded = Math.max(0, targetEntry.points - nonBorrowedAvailable);
+      const extraBorrowNeeded = Math.max(0, targetBorrowNeeded - homeBorrowNeeded);
+      const cantCoverAtAll = targetBorrowNeeded > maxBorrowable;
+      const shortfall = targetBorrowNeeded - maxBorrowable;
+
+      resultsHTML = `
+        <div class="swap-sim-windows">
+          <div class="swap-sim-window-row"><span>11-month window (home)</span><strong>${formatDisplayDate(elevenMoOpens)}</strong></div>
+          <div class="swap-sim-window-row"><span>7-month window (swap)</span><strong>${formatDisplayDate(sevenMoOpens)}</strong></div>
+        </div>
+        <div class="swap-sim-delta ${deltaClass}">
+          <div class="swap-sim-delta-label">Point Delta</div>
+          <div class="swap-sim-delta-num">${deltaText} pts</div>
+          <div class="swap-sim-delta-detail">${resort.name} (${homeEntry.points.toLocaleString()} pts) &rarr; ${targetResort.name} (${targetEntry.points.toLocaleString()} pts)</div>
+        </div>
+        ${cantCoverAtAll
+          ? `<div class="smart-draw-guardrail danger">This contract can't cover ${targetResort.name} even after borrowing its full next-year allotment &mdash; short by ${shortfall.toLocaleString()} pts. Consider a different contract, or Split Across Contracts above.</div>`
+          : extraBorrowNeeded > 0
+          ? `<div class="smart-draw-guardrail warning">Covering the swap needs about ${extraBorrowNeeded.toLocaleString()} more borrowed pts than your ${resort.name} stay alone would. Borrowing is final &mdash; if ${targetResort.name} isn't actually available when the 7-month window opens, those extra points stay borrowed regardless, with no swap left to use them on.</div>`
+          : `<div class="smart-draw-guardrail" style="background:var(--color-good-bg);border-left:3px solid var(--color-good);color:var(--color-good);">No extra borrowing needed for this swap &mdash; your ${resort.name} stay already covers it.</div>`}
+      `;
+    }
+  }
+
+  return `
+    <div class="swap-sim-card smart-draw-card">
+      <div class="smart-draw-title">11-to-7 Swap Simulator</div>
+      ${pickerHTML}
+      ${resultsHTML}
+      <div class="smart-draw-actions">
+        <button type="button" class="smart-draw-manual-toggle" onclick="toggleSwapSimulator()">&larr; Not planning a swap</button>
+      </div>
+      <div class="smart-draw-footer">Advisory only -- doesn't check real-time room availability or execute a swap with Disney.</div>
+    </div>
+  `;
+}
+
+function attachSwapSimulatorListeners() {
+  const resortSelect = document.getElementById("swap-target-resort-select");
+  if (resortSelect) {
+    window.DVCUI.initCustomSelect(resortSelect);
+    resortSelect.addEventListener("change", (e) => setSwapTargetResort(e.target.value));
+  }
+  const roomSelect = document.getElementById("swap-target-room-select");
+  if (roomSelect) {
+    window.DVCUI.initCustomSelect(roomSelect);
+    roomSelect.addEventListener("change", (e) => setSwapTargetRoomType(e.target.value));
+  }
 }
 
 // Per-stay eligibility ("home resort, bookable 11 months out" / "resale-
 // restricted") and points-remaining feedback for the contract selected in
 // the top-bar "Booking As" control, embedded inside the "Your Stay" card.
-// Empty string if no contract is selected -- purely additive.
+// Also owns the Multi-Contract Split toggle/card (Task 07) -- only offered
+// with 2+ active contracts, real dates picked, and a single-resort stay
+// (not a split STAY -- see multiContractSplitMode's own comment). Living
+// in this one function, rather than a separate call site, means both
+// renderSummary() and renderTripRail() (review mode) get split support for
+// free, since they already both call this function.
 function buildContractEligibilityHTML(resort, stayDates) {
+  const canSplit = getActiveContracts().length >= 2 && stayDates.length > 0 && !isSplitMode();
+
+  if (multiContractSplitMode && canSplit) {
+    return `<div class="summary-divider"></div>${buildMultiContractSplitHTML(resort, stayDates)}`;
+  }
+
+  const splitOfferHTML = canSplit
+    ? `<div class="multi-split-offer"><button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">Split points across contracts instead &rarr;</button></div>`
+    : "";
+
   const contract = getSelectedContract();
-  if (!contract) return "";
+  if (!contract) {
+    return splitOfferHTML ? `<div class="summary-divider"></div>${splitOfferHTML}` : "";
+  }
 
   let html = "";
   const months = getContractWindowMonths(contract, resort.id);
@@ -2113,12 +3208,19 @@ function buildContractEligibilityHTML(resort, stayDates) {
   }
 
   const currentRow = getCurrentYearRow(contract);
-  const available = currentRow.remaining + currentRow.banked + currentRow.borrowed;
-  const hasBankOrBorrow = currentRow.banked > 0 || currentRow.borrowed > 0;
+  const available = currentRow.remaining + currentRow.banked + currentRow.borrowed + currentRow.holding;
+  const hasBankOrBorrow = currentRow.banked > 0 || currentRow.borrowed > 0 || currentRow.holding > 0;
 
   if (stayDates.length > 0 && !isSplitMode()) {
     const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
-    if (totals.points != null) {
+    if (totals.points != null && (months === 11 || months === 7)) {
+      html += buildSmartDrawHTML(contract, currentRow, totals.points, stayDates);
+      // Swap Simulator only makes sense when booking the actual HOME
+      // resort at 11 months with intent to try swapping later -- a
+      // 7-month (non-home) stay is already the "swapped-to" side of that
+      // scenario, not the starting point.
+      if (months === 11) html += buildSwapSimulatorHTML(contract, resort, stayDates);
+    } else if (totals.points != null) {
       const leftover = available - totals.points;
       const over = leftover < 0;
       html += `
@@ -2131,12 +3233,12 @@ function buildContractEligibilityHTML(resort, stayDates) {
   } else {
     html += `
       <div class="contract-points">
-        ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${currentRow.remaining.toLocaleString()} remaining + ${currentRow.banked.toLocaleString()} banked + ${currentRow.borrowed.toLocaleString()} borrowed)` : ""}
+        ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${currentRow.remaining.toLocaleString()} remaining + ${currentRow.banked.toLocaleString()} banked + ${currentRow.borrowed.toLocaleString()} borrowed${currentRow.holding > 0 ? ` + ${currentRow.holding.toLocaleString()} holding` : ""})` : ""}
       </div>
     `;
   }
 
-  return `<div class="summary-divider"></div>${html}`;
+  return `<div class="summary-divider"></div>${html}${splitOfferHTML}`;
 }
 
 // Shared "stay actions" cluster (+ Add Another Resort, Compare All Resorts,
@@ -2180,14 +3282,21 @@ function attachStayActionButtonListeners() {
       if (e.key === "Escape") closeItinerarySaveForm();
     });
   }
+  // Swap Simulator's target-resort/room custom-selects also live inside
+  // this same card -- wiring them here (rather than a separate call site)
+  // means every renderSummary()/renderTripRail() path that already calls
+  // this function picks them up for free, same reasoning buildContractEligibilityHTML's
+  // own doc comment gives for living in one shared function.
+  attachSwapSimulatorListeners();
 }
 
 // Renders the "Load Trip" saved-itinerary picker into the top control bar
 // (#itinerary-load-control) rather than the summary panel -- same
 // reasoning as renderBookingAsControl() above. Hidden entirely if signed
-// out or nothing saved yet. Selecting an option applies it immediately and
-// the dropdown resets to the placeholder -- it's a one-shot action
-// trigger, not a persistent "currently loaded" indicator, since the
+// out or nothing saved yet. Tapping a card in the sheet (see the Load Trip
+// Sheet section below) applies it immediately and the trigger always shows
+// the same static "Load a saved itinerary..." label -- it's a one-shot
+// action trigger, not a persistent "currently loaded" indicator, since the
 // calendar's real state (resort/dates/segments) is what actually reflects
 // what's loaded.
 function renderItineraryLoadControl() {
@@ -2199,10 +3308,64 @@ function renderItineraryLoadControl() {
   }
 
   el.style.display = "flex";
-  itineraryLoadSelect.innerHTML = `<option value="">Load a saved itinerary&hellip;</option>` +
-    userItineraries.map(itin => `<option value="${itin.id}">${itin.name}</option>`).join("");
-  itineraryLoadSelect.value = "";
-  if (itineraryLoadSelect._customSelectRender) itineraryLoadSelect._customSelectRender();
+  renderItineraryLoadSheetList();
+}
+
+// A lightweight nights/points summary for one saved itinerary, used only by
+// the Load Trip sheet's cards -- deliberately NOT calcSegmentTotals() (this
+// file's own totals function), since that implicitly reads state.year for
+// its resort lookup; a not-yet-loaded itinerary needs its OWN year instead
+// of whatever year the calendar currently happens to be browsing.
+function summarizeItinerary(itin) {
+  let nights = 0, points = 0;
+  for (const seg of itin.segments) {
+    const resort = RESORTS.find(r => r.id === seg.resortId && r.year === itin.year);
+    const dates = getSegmentDates(seg);
+    nights += dates.length;
+    for (const dateStr of dates) {
+      const dateResort = getResortForStayDate(seg.resortId, dateStr, resort);
+      points += getPointsForDate(dateResort, dateStr, seg.roomTypeId) || 0;
+    }
+  }
+  return { nights, points };
+}
+
+// ---- Load Trip Sheet ----
+// Same name/meta shape as itineraries.html's own card list, trimmed to just
+// what helps pick the right trip here -- see .itin-mini-card in styles.css.
+function renderItineraryLoadSheetList() {
+  const listEl = document.getElementById("itinerary-load-sheet-list");
+  if (!listEl) return;
+  if (userItineraries.length === 0) {
+    listEl.innerHTML = `<div class="sheet-empty">No saved itineraries yet.</div>`;
+    return;
+  }
+  listEl.innerHTML = userItineraries.map(itin => {
+    const { nights, points } = summarizeItinerary(itin);
+    return `
+      <button type="button" class="itin-mini-btn" onclick="pickItinerary('${itin.id}')">
+        <div class="itin-mini-card">
+          <div class="itin-mini-name">${itin.name}</div>
+          <div class="itin-mini-meta">${nights} night${nights === 1 ? "" : "s"} &middot; ${points.toLocaleString()} pts</div>
+        </div>
+      </button>
+    `;
+  }).join("");
+}
+
+function pickItinerary(id) {
+  const itin = userItineraries.find(i => i.id === id);
+  if (itin) loadItineraryIntoCalendar(itin);
+  closeItineraryLoadSheet();
+}
+
+function openItineraryLoadSheet() {
+  renderItineraryLoadSheetList();
+  document.getElementById("itinerary-load-sheet").classList.add("open");
+}
+
+function closeItineraryLoadSheet() {
+  document.getElementById("itinerary-load-sheet").classList.remove("open");
 }
 
 function renderSummary() {
@@ -2367,13 +3530,12 @@ function renderSummary() {
     </div>
   `;
 
+  const specialEventsHTML = !inSplitMode ? buildSpecialEventsHTML(resort, stayDates) : "";
   const resortAlertsHTML = !inSplitMode ? buildResortAlertsHTML(resort, stayDates) : "";
 
   const availabilityHTML = !inSplitMode
     ? buildAvailabilityHTML(state.resortId, state.roomTypeId, stayDates)
     : buildSplitAvailabilityHTML(state.segments, state.resortId, state.roomTypeId, stayDates);
-
-  const crowdHTML = buildCrowdSummaryHTML(stayDates);
 
   const stayInsightsHTML = !inSplitMode ? buildStayInsightsHTML(resort, state.roomTypeId, stayDates) : "";
 
@@ -2410,7 +3572,10 @@ function renderSummary() {
         ${state.ownerEnabled ? `
         <div class="cost-tile">
           <div class="cost-tile-label">If using your own points</div>
-          <select id="owner-resort" class="cost-tile-select">${buildOwnerResortOptionsHTML()}</select>
+          <button type="button" class="picker-trigger cost-tile-trigger" id="owner-resort-trigger" onclick="openOwnerResortSheet()">
+            <span class="picker-trigger-value" id="owner-resort-trigger-label"></span>
+            <span class="custom-select-arrow"></span>
+          </button>
           <div class="cost-tile-value owner">$${ownerCost.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</div>
           <div class="cost-tile-sub">${totalPoints} pts · $${ownerDues.toFixed(2)}/pt annual dues</div>
         </div>
@@ -2436,26 +3601,23 @@ function renderSummary() {
   // Review mode (a complete single-resort stay, calendar collapsed to the
   // trip rail -- see renderLayoutMode()) gets more horizontal room, so it
   // leads with the "answer" (Cost Comparison), then Stay Insights full-width
-  // right under it, then splits the rest into two independently-packed
-  // columns (insights-columns, not a shared grid row) instead of stacking
-  // everything single-file. "Your Stay" and Clear Selection are skipped
-  // here -- the trip rail already covers both.
+  // right under it, then the remaining cards stacked full-width. "Your Stay"
+  // and Clear Selection are skipped here -- the trip rail already covers
+  // both.
   if (isReviewMode()) {
     summaryContainer.innerHTML = `
       ${costComparisonHTML}
       ${stayInsightsHTML}
-      <div class="insights-columns">
-        <div class="insights-col">${availabilityHTML}</div>
-        <div class="insights-col">${crowdHTML}</div>
-      </div>
+      ${availabilityHTML}
+      ${specialEventsHTML}
       ${resortAlertsHTML}
     `;
   } else {
     summaryContainer.innerHTML = `
       ${yourStayCardHTML}
+      ${specialEventsHTML}
       ${resortAlertsHTML}
       ${availabilityHTML}
-      ${crowdHTML}
       ${stayInsightsHTML}
       ${costComparisonHTML}
       ${clearButtonHTML}
@@ -2487,15 +3649,11 @@ function renderSummary() {
     });
   }
 
-  // Attach listeners for the owner-resort select and rental-rate input, now
-  // rendered inline inside the Cost Comparison tiles (rebuilt every render).
-  const ownerResortSelect = document.getElementById("owner-resort");
-  if (ownerResortSelect) {
-    ownerResortSelect.addEventListener("change", (e) => {
-      state.ownerResortId = e.target.value;
-      renderSummary();
-    });
-  }
+  // The owner-resort trigger button is rendered inline inside the Cost
+  // Comparison tiles (rebuilt every render) -- it opens #owner-resort-sheet
+  // via its own onclick, so all that's needed here is to sync its label/art
+  // to the current state.ownerResortId, same as syncResortPickerTrigger().
+  syncOwnerResortTrigger();
 
   const rentalRateInput = document.getElementById("rental-rate");
   if (rentalRateInput) {
@@ -2533,8 +3691,65 @@ const alternativesModalEl = document.getElementById("alternatives-modal");
 alternativesModalEl.addEventListener("click", (e) => {
   if (e.target === alternativesModalEl) closeAlternativesModal();
 });
+// Picker sheets (Resort/Booking As/Load Trip): same backdrop-click and
+// Escape-to-close convention as the Alternatives modal above -- one
+// listener per sheet for the backdrop (each needs its own closeX()), one
+// shared Escape handler that closes whichever happens to be open.
+const PICKER_SHEETS = [
+  { id: "resort-sheet", close: closeResortSheet },
+  { id: "booking-as-sheet", close: closeBookingAsSheet },
+  { id: "itinerary-load-sheet", close: closeItineraryLoadSheet },
+  { id: "owner-resort-sheet", close: closeOwnerResortSheet },
+];
+for (const { id, close } of PICKER_SHEETS) {
+  const el = document.getElementById(id);
+  el.addEventListener("click", (e) => { if (e.target === el) close(); });
+}
+
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && alternativesModalOpen) closeAlternativesModal();
+  if (e.key !== "Escape") return;
+  if (alternativesModalOpen) closeAlternativesModal();
+  for (const { id, close } of PICKER_SHEETS) {
+    if (document.getElementById(id).classList.contains("open")) close();
+  }
+  document.querySelectorAll(".tooltip-anchor.tap-open").forEach((el) => el.classList.remove("tap-open"));
+});
+
+document.getElementById("resort-sheet-search").addEventListener("input", (e) => {
+  renderResortSheetList(e.target.value);
+});
+
+document.getElementById("owner-resort-sheet-search").addEventListener("input", (e) => {
+  renderOwnerResortSheetList(e.target.value);
+});
+
+// Mobile tap-to-toggle for every .tooltip-anchor on this page (crowd/event
+// day badges, availability outlook dots, value-score badge, distribution
+// bars, crowd forecast average/range, cash-estimate badges) -- hover has
+// no touchscreen equivalent at all, so this is the tap fallback; the
+// existing tokens.css :hover rule keeps working unchanged for a real
+// mouse. Always ADDS tap-open on the tapped anchor rather than toggling it
+// (never removes it from the SAME anchor just tapped) -- a tap can also
+// trigger a lingering synthetic hover on some mobile browsers, and this
+// app has already learned (the documented "fixes click-stuck hovers" fix,
+// and this session's own account.html/trips.html popovers) that a
+// toggle-based click can immediately re-close what that hover just opened.
+// Tapping anywhere else on the page (the `else` branch below, `anchor` is
+// null) or Escape above closes everything instead.
+// .day-body (the per-day period-color tooltip) and .trip-strip-day (the
+// trip rail's add/remove-night control) are excluded: both already have
+// their own primary click action (selecting a date; editing the stay), and
+// .day-body's period-color meaning is already spelled out as always-visible
+// text in the Travel Period legend (renderLegend()), so it doesn't need a
+// second, tap-triggered explanation popping up on every date selection.
+document.addEventListener("click", (e) => {
+  const anchor = e.target.closest(".tooltip-anchor");
+  document.querySelectorAll(".tooltip-anchor.tap-open").forEach((el) => {
+    if (el !== anchor) el.classList.remove("tap-open");
+  });
+  if (anchor && !anchor.classList.contains("day-body") && !anchor.classList.contains("trip-strip-day")) {
+    anchor.classList.add("tap-open");
+  }
 });
 
 // Searchable resort dropdown
@@ -2576,16 +3791,19 @@ roomSelect.addEventListener("change", (e) => {
   renderSummary();
 });
 
-contractSelect.addEventListener("change", (e) => setSelectedContract(e.target.value));
+// Active Context Summary Bar toggle -- mobile-only (#controls-toggle is
+// display:none above the 800px breakpoint, see styles.css), no-op-if-
+// absent guard kept anyway since this is the one spot in app.js that used
+// to live in the shared nav.js include.
+if (controlsToggle && controlsGroups) {
+  controlsToggle.addEventListener("click", () => {
+    const isOpen = controlsGroups.classList.toggle("open");
+    controlsToggle.setAttribute("aria-expanded", String(isOpen));
+    updateActiveContextBar();
+  });
+}
 
-itineraryLoadSelect.addEventListener("change", (e) => {
-  const id = e.target.value;
-  if (!id) return;
-  const itin = userItineraries.find(i => i.id === id);
-  if (itin) loadItineraryIntoCalendar(itin);
-  itineraryLoadSelect.value = "";
-  if (itineraryLoadSelect._customSelectRender) itineraryLoadSelect._customSelectRender();
-});
+contractSelect.addEventListener("change", (e) => setSelectedContract(e.target.value));
 
 prevBtn.addEventListener("click", () => {
   state.month--;
@@ -2598,7 +3816,6 @@ prevBtn.addEventListener("click", () => {
       const resort = getResort();
       if (resort) {
         populateRoomTypes();
-        renderLegend();
       }
     } else {
       state.month = 0; // clamp to Jan of current year
@@ -2619,7 +3836,6 @@ nextBtn.addEventListener("click", () => {
       const resort = getResort();
       if (resort) {
         populateRoomTypes();
-        renderLegend();
       }
     } else {
       state.month = 11; // clamp to Dec of current year
@@ -2630,7 +3846,7 @@ nextBtn.addEventListener("click", () => {
 });
 
 // Unique resorts (deduplicated by id — dues don't change by year), sorted by name,
-// for the owner-resort <select> rendered inline inside the Cost Comparison card.
+// for the owner-resort sheet's list (renderOwnerResortSheetList() below).
 const OWNER_RESORT_OPTIONS = (() => {
   const seen = new Set();
   const unique = [];
@@ -2643,10 +3859,62 @@ const OWNER_RESORT_OPTIONS = (() => {
   return unique.sort((a, b) => a.name.localeCompare(b.name));
 })();
 
-function buildOwnerResortOptionsHTML() {
-  return OWNER_RESORT_OPTIONS.map(resort =>
-    `<option value="${resort.id}" ${resort.id === state.ownerResortId ? "selected" : ""}>${resort.name}</option>`
-  ).join("");
+// ---- Owner Resort Picker Sheet ----
+// Same sheet/list visual language as the main Resort picker (#resort-sheet
+// above -- hero art, search, color-swatch rows), reused here for a
+// different question: which resort's dues the "If using your own points"
+// cost tile computes with, independent of state.resortId (which resort's
+// calendar is being browsed).
+function getOwnerResortMeta() {
+  return OWNER_RESORT_OPTIONS.find(r => r.id === state.ownerResortId) || null;
+}
+
+function syncOwnerResortTrigger() {
+  const trigger = document.getElementById("owner-resort-trigger");
+  const label = document.getElementById("owner-resort-trigger-label");
+  if (!trigger || !label) return;
+  const meta = getOwnerResortMeta();
+  label.textContent = meta ? shorthandResortName(meta.id, meta.name) : "Choose a resort";
+  applyResortArtBackground(trigger, meta ? getResortImage(meta.id) : null);
+}
+
+function openOwnerResortSheet() {
+  const search = document.getElementById("owner-resort-sheet-search");
+  search.value = "";
+  renderOwnerResortSheetList("");
+  const meta = getOwnerResortMeta();
+  setThumbImage(document.getElementById("owner-resort-sheet-hero"), meta ? getResortImage(meta.id) : null);
+  document.getElementById("owner-resort-sheet").classList.add("open");
+}
+
+function closeOwnerResortSheet() {
+  document.getElementById("owner-resort-sheet").classList.remove("open");
+}
+
+function renderOwnerResortSheetList(filter) {
+  const listEl = document.getElementById("owner-resort-sheet-list");
+  if (!listEl) return;
+  const query = filter.toLowerCase();
+  const matches = OWNER_RESORT_OPTIONS.filter(r => r.name.toLowerCase().includes(query));
+  listEl.innerHTML = matches.length === 0
+    ? `<div class="sheet-empty">No resorts match "${escapeHTML(filter)}".</div>`
+    : matches.map(r => {
+      const isSelected = r.id === state.ownerResortId;
+      const image = isSelected ? getResortImage(r.id) : null;
+      const artStyle = image ? ` style="background-image:${resortArtWashCSS(image)}"` : "";
+      return `
+      <button type="button" class="resort-pick-row${isSelected ? " selected" : ""}${image ? " has-art" : ""}" onclick="pickOwnerResort('${r.id}')"${artStyle}>
+        <span class="resort-pick-swatch" style="background:${resortAccentColor(r.id)}"></span>
+        <span>${r.name}</span>
+      </button>
+    `;
+    }).join("");
+}
+
+function pickOwnerResort(id) {
+  state.ownerResortId = id;
+  closeOwnerResortSheet();
+  renderSummary();
 }
 
 // ---- State Persistence (for compare page round-trip) ----
@@ -2672,6 +3940,21 @@ sessionStorage.removeItem("dvc_calendar_state");
 sessionStorage.removeItem("dvc_switch_resort");
 sessionStorage.removeItem("dvc_return_to_calendar");
 
+// ---- "Back to Suggest a Stay" banner ----
+// Deliberately a separate, NOT one-shot flag from dvc_return_to_calendar
+// above (which gets consumed+cleared on every load regardless) -- this
+// one needs to keep the banner offering a way back for the rest of the
+// session, not just the single page view right after suggest.html's
+// redirect, since there's otherwise no path back to those results at all.
+if (sessionStorage.getItem("dvc_suggest_return")) {
+  document.getElementById("suggest-return-banner").style.display = "";
+}
+document.getElementById("suggest-return-dismiss").addEventListener("click", () => {
+  document.getElementById("suggest-return-banner").style.display = "none";
+  sessionStorage.removeItem("dvc_suggest_return");
+  sessionStorage.removeItem("dvc_suggest_state");
+});
+
 if (savedState) {
   try {
     const restored = JSON.parse(savedState);
@@ -2696,12 +3979,8 @@ if (savedState) {
 resortSearch.value = getResort().name;
 populateRoomTypes();
 roomSelect.value = state.roomTypeId;
-initCustomSelect(roomSelect);
-initCustomSelect(contractSelect);
-initCustomSelect(itineraryLoadSelect);
+syncResortPickerTrigger();
 updateHint();
 renderCalendar();
-renderLegend();
-renderCrowdLegend();
 renderSummary();
 initAccountPersonalization(40);

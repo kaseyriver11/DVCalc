@@ -10,7 +10,7 @@
 -- carried forward into this year from last year's banking, points_borrowed
 -- is points pulled forward from next year. All three are manually
 -- maintained by the account owner, same as points_per_year already is --
--- DVCalc has no way to see a member's real-time points ledger.
+-- DVC Companion has no way to see a member's real-time points ledger.
 
 alter table contracts add column if not exists points_remaining integer check (points_remaining is null or points_remaining >= 0);
 alter table contracts add column if not exists points_banked integer not null default 0 check (points_banked >= 0);

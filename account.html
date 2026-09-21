@@ -12,6 +12,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -23,7 +27,7 @@ body {
 }
 
 .header {
-  background: linear-gradient(135deg, #1a237e, #4a148c);
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
   color: white;
   padding: 16px 24px;
   text-align: center;
@@ -34,17 +38,17 @@ body {
 
 /* ---- Site nav ---- */
 .site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
-.site-nav-brand { font-weight: 700; font-size: 1rem; color: #4a148c; text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
 .site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
 .site-nav-group { display: flex; align-items: center; gap: 12px; }
 .site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
 .site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
 .site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
-.site-nav-links a:hover { color: #4a148c; }
-.site-nav-links a.active { color: #4a148c; border-bottom-color: #4a148c; font-weight: 600; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 
 .site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
-.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: #4a148c; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
 
 .account-btn, .account-link-btn {
   font: inherit;
@@ -54,13 +58,13 @@ body {
   border-radius: 20px;
   border: 1px solid #ddd;
   background: #f7f5fa;
-  color: #4a148c;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   white-space: nowrap;
 }
-.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: #4a148c; }
+.account-btn:hover, .account-link-btn:hover { background: var(--color-primary-tint-bg); border-color: var(--color-primary); }
 
 @media (max-width: 800px) {
   .site-nav-toggle { display: flex; }
@@ -92,7 +96,7 @@ body {
 .gate p { margin-bottom: 18px; font-size: 0.95rem; }
 
 .big-signin-btn {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -101,7 +105,7 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.big-signin-btn:hover { background: #38106b; }
+.big-signin-btn:hover { background: var(--color-primary-active); }
 
 .section {
   background: white;
@@ -114,7 +118,7 @@ body {
 .section h2 {
   font-size: 1.05rem;
   font-weight: 600;
-  color: #1a237e;
+  color: var(--color-secondary);
   margin-bottom: 14px;
 }
 
@@ -125,107 +129,472 @@ body {
   margin-bottom: 16px;
 }
 
-.empty-note {
-  color: #999;
-  font-style: italic;
+/* First-time concierge hero, shown instead of the contract deck when the
+   user has no contracts yet -- a soft glass-like dashed card rather than a
+   plain "no contracts" line, since this is the very first thing a brand
+   new signed-in user sees on this page. */
+.empty-vault-hero {
+  text-align: center;
+  padding: 40px 24px;
+  margin-bottom: 16px;
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(74,20,140,0.07), rgba(26,35,126,0.07));
+  backdrop-filter: blur(2px);
+}
+
+.empty-vault-hero-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 8px;
+}
+
+.empty-vault-hero-sub {
   font-size: 0.88rem;
-  padding: 8px 0 16px;
+  color: #666;
+  line-height: 1.5;
+  max-width: 420px;
+  margin: 0 auto 20px;
 }
 
 .contract-list {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
-.contract-card {
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  padding: 12px 16px;
+/* Deck mode swaps the flat side-by-side row for a vertical overlapping
+   stack -- see the .wallet-deck .wallet-card rules below for the overlap
+   itself. */
+.contract-list.wallet-deck {
+  display: block;
+}
+
+/* ---- Wallet card ----
+   A pure card FACE now -- fixed, realistic card proportions, no ledger
+   content inside it at all. The ledger (steppers, bars, +Plan a year,
+   Edit/Delete) lives in #active-contract-details below the deck instead,
+   so the card stays a small, sleek object instead of growing to fit
+   however many use-year rows a contract happens to have. */
+.wallet-card {
+  max-width: 380px;
+  width: 100%;
+  height: 215px;
+  border-radius: 16px;
+  padding: 20px 24px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* Inset gold line first (foil edge), elevation shadow after. */
+  box-shadow: inset 0 0 0 1.5px rgba(212,175,55,0.4), 0 12px 28px rgba(0,0,0,0.25);
+  position: relative;
+  /* Only matters when walletCardGradient() below layers a resort photo
+     under its gradient (data/resort_images.js) -- harmless no-op on a
+     plain gradient background otherwise. */
+  background-size: cover;
+  background-position: center;
+}
+
+/* Decorative-only clipping layer -- NOT overflow:hidden on .wallet-card
+   itself, since the "Bank by" deadline pill's hover tooltip is an
+   absolutely-positioned descendant sitting right at the card's bottom
+   edge; clipping the whole card would clip the tooltip too (it did,
+   before this was split out -- the tooltip fired but rendered invisible,
+   cropped away). This inner layer clips only the sheen/watermark below,
+   while real content (z-index:1 on .wallet-card-top/-points/-bottom) and
+   its tooltip stay free to overflow past the card's own box. */
+.wallet-card-decor {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* A faint diagonal sheen, like light catching a physical card -- purely
+   decorative, sits above the gradient but below all real content. */
+.wallet-card-decor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 55%);
+}
+
+/* An engraved sunburst/compass-rose watermark, tucked in a back corner --
+   decorative only, low-opacity enough to read as a pressed motif rather
+   than compete with the real content sitting above it (z-index below). */
+.wallet-card-decor::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  width: 130px;
+  height: 130px;
+  background-image: url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Cg stroke=%27white%27 stroke-width=%271%27%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2750%27 y2=%275%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2773%27 y2=%2712%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2790%27 y2=%2730%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2795%27 y2=%2750%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2790%27 y2=%2770%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2773%27 y2=%2788%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2750%27 y2=%2795%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2727%27 y2=%2788%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2710%27 y2=%2770%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%275%27 y2=%2750%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2710%27 y2=%2730%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2727%27 y2=%2712%27/%3E%3C/g%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%273%27 fill=%27white%27/%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27none%27 stroke=%27white%27 stroke-width=%270.5%27/%3E%3C/svg%3E');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* filter, not opacity -- opacity makes the card semi-transparent, which
+   in a stacked deck lets whichever card sits BEHIND it visually bleed
+   through the overlap zone (an actual rendering glitch: "250 POINTS/YR"
+   from the card underneath showing straight through a deactivated card's
+   face). grayscale+brightness dims/desaturates without introducing any
+   transparency, and reads as a much more obvious "this one's off" signal
+   than a subtle 45%-opacity fade did -- reported directly as "the only
+   difference was the word itself" against the old treatment. */
+.wallet-card.inactive { filter: grayscale(0.85) brightness(0.82); }
+
+.wallet-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+/* A soft radial glow sitting behind the resort name, like illuminated
+   signage -- a negative-z-index layer on the name's own wrapper rather
+   than a shared ancestor, so it doesn't bleed into the badge column. */
+.wallet-card-top-left { position: relative; }
+.wallet-card-top-left::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: -12px;
+  right: -12px;
+  height: 48px;
+  background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.22), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.wallet-card-name {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+.wallet-card-nickname { font-size: 0.76rem; opacity: 0.82; margin-top: 2px; position: relative; }
+
+.wallet-card-top-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+
+/* Compact points/UY readout, kept in the top peek band so it's visible
+   even while this card is collapsed under others in the deck -- the big
+   .wallet-card-points-num below is only visible once the card is active
+   or unstacked. */
+.wallet-card-peek-stats { display: flex; gap: 5px; }
+.wallet-card-peek-pill {
+  background: rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wallet-card-points {
+  position: relative;
+  z-index: 1;
+}
+.wallet-card-points-num { font-size: 1.85rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.wallet-card-points-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+.wallet-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.wallet-card-bottom-left { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.wallet-card-pill {
+  background: rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-weight: 600;
+  font-size: 0.68rem;
+  position: relative;
+}
+
+/* Small icon dot for a notable perk/restriction (Blue Card, resale limits)
+   -- deliberately tiny and wordless on the card face itself (full label is
+   in the tooltip) so it reads as a subtle marker, not a shouty callout.
+   Amber for a caution (same amber-on-cream treatment contractvalue.html's
+   .restricted-badge uses for the identical concept), cool blue for a perk
+   worth celebrating rather than flagging. */
+.wallet-card-perk-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: help;
+}
+.wallet-card-perk-dot.restricted { background: #f6e5db; color: #a3401f; }
+.wallet-card-perk-dot.blue-card { background: var(--color-info-bg); color: var(--color-info); }
+
+/* Explicit tap-to-toggle state (see the document click handler) alongside
+   tokens.css's own hover/focus-within rules for this .tooltip-anchor --
+   additive, not a replacement, so a mouse user's hover still works too. */
+.wallet-card-perk-dot.tooltip-open .tooltip-card {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* A standout glass chip, not another muted pill -- the deadline is the one
+   piece of information on the face worth drawing the eye to. */
+.wallet-card-deadline-pill {
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  white-space: nowrap;
+}
+
+/* ---- Active contract details ----
+   Standalone panel below the deck -- same white-card treatment as the
+   calendar's summary-side cards, since this now carries all the ledger
+   controls the card face used to (see renderActiveContractDetails()). */
+/* border-top color is set inline per render (walletCardPrimaryColor()), so
+   the panel reads as a continuation of whichever card is active rather
+   than a generic detached box. */
+#active-contract-details {
+  background: white;
+  border-radius: var(--radius-md);
+  border-top: 4px solid var(--color-primary);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  margin-top: 20px;
+}
+
+.wallet-details-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 
-.contract-card.inactive { opacity: 0.55; }
-
-.contract-main { flex: 1; min-width: 200px; }
-
-.contract-name { font-weight: 600; color: #1a237e; font-size: 0.95rem; }
-
-.contract-meta {
-  font-size: 0.8rem;
+.wallet-details-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wallet-details-name { font-weight: 700; color: #222; font-size: 1.1rem; }
+.wallet-details-nickname-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
   color: #666;
-  margin-top: 3px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  background: #f0f0f0;
+  border-radius: 999px;
+  padding: 2px 9px;
 }
 
-.contract-deadline {
-  font-size: 0.78rem;
-  color: #888;
-  margin-top: 6px;
-}
-.contract-deadline strong { color: #4a148c; }
-
-/* Points ledger: one row per use-year cycle. use_year_label is the year a
-   cycle's points DEPOSIT in (see currentUYYear()'s comment) -- often not
-   the calendar year someone would guess at a glance, hence spelling the
-   year out per row instead of a static "Banked/Remaining/Borrowed" label. */
-.points-ledger {
-  border-collapse: collapse;
-  margin-top: 8px;
-  font-size: 0.78rem;
-}
-
-.points-ledger th {
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  color: #999;
+/* Membership Extras / resale-restriction status, shown next to the
+   nickname badge -- same pill shape, colored per evaluateContractPerks()'s
+   badgeVariant (auth.js) rather than another hardcoded gray. */
+.perk-badge {
+  font-size: 0.7rem;
   font-weight: 700;
-  text-align: center;
-  padding: 0 4px 3px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  cursor: help;
 }
-.points-ledger th:first-child { text-align: left; }
+.perk-badge-info { color: var(--color-info); background: var(--color-info-bg); }
+.perk-badge-warning { color: #a3401f; background: #f6e5db; }
 
-.points-ledger td { padding: 2px 4px; text-align: center; }
+.wallet-details-actions { display: flex; gap: 8px; }
+/* Ghost buttons -- no border/background of their own -- so Edit/
+   Deactivate/Delete read as quiet secondary actions instead of a toolbar
+   competing with the tabs and balance fields for attention. */
+.wallet-details-actions button {
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border: none;
+  background: none;
+  color: #999;
+  cursor: pointer;
+}
+.wallet-details-actions button:hover { background: #f0f0f0; color: var(--color-primary); }
+.wallet-details-actions button.danger:hover { background: var(--color-danger-bg); color: var(--color-danger); }
 
-.ledger-year { text-align: left; color: #666; font-weight: 600; white-space: nowrap; }
+/* ---- Wallet deck (2+ contracts) ----
+   Cards overlap via negative top margin so only the top ~70px (name,
+   nickname, membership mark, and the compact points/UY readout) of each
+   background card peeks out -- later cards paint over the
+   top of earlier ones in normal DOM/paint order, so no manual z-index
+   bookkeeping is needed for the collapsed state. Only .active-card gets an
+   explicit z-index, to guarantee it lifts above neighbors on either side.
+   A single contract never gets the .wallet-deck class at all (see
+   renderContractList()), so it always renders flat/full, unstacked. */
+.wallet-deck .wallet-card {
+  margin-left: auto;
+  margin-right: auto;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.wallet-deck .wallet-card:not(:first-child) {
+  margin-top: -145px;
+}
 
-/* The row actually spendable right now -- a full-row tint plus a left
-   accent stripe and bolder year text, since a "NOW" badge next to the year
-   threw off the column's vertical alignment with the other rows. The
-   stripe is an inset box-shadow on the first cell (not the <tr> itself) --
-   box-shadow on table rows paints unreliably under border-collapse. */
-tr.ledger-current { background: #ece1f7; }
-tr.ledger-current td:first-child { box-shadow: inset 3px 0 0 #4a148c; }
-tr.ledger-current .ledger-year { color: #4a148c; font-weight: 700; }
-tr.ledger-current input { border-color: #4a148c; background: white; }
+.wallet-deck .wallet-card:not(.active-card):hover {
+  transform: translateY(-10px);
+}
 
-.points-ledger input {
-  width: 56px;
-  padding: 4px 2px;
+/* Activating a card never touches margin-top -- changing a margin forces
+   a layout reflow that cascades through every following sibling, visible
+   as the whole stack "resettling" underneath. transform + box-shadow are
+   compositor-only, so the active card can lift and glow without the deck
+   flow shifting at all; z-index alone is what guarantees it paints above
+   whichever neighbor is overlapping it. */
+.wallet-deck .wallet-card.active-card {
+  transform: translateY(-16px);
+  z-index: 10;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.4);
+  cursor: default;
+}
+
+/* ---- Wallet-card points ledger ----
+   One row per use-year cycle. use_year_label is the year a cycle's points
+   DEPOSIT in (see currentUYYear()'s comment) -- often not the calendar year
+   someone would guess at a glance, hence spelling the year out per row
+   instead of a static "Banked/Remaining/Borrowed" label. Replaces the old
+   plain <table> with a segmented bar (proportional Banked/Current/Borrowed)
+   plus inline +/- steppers, so adjusting a balance feels like using the
+   rest of the app instead of filling out a spreadsheet. */
+.ledger-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* One tab per use-year row -- only the selected tab's row renders below,
+   instead of stacking every year's numbers at once. */
+.ledger-year-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.ledger-year-tab {
+  border: 1px solid #ddd;
+  background: white;
+  color: #666;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.ledger-year-tab:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.ledger-year-tab.selected { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.ledger-year-tab.add-year { border-style: dashed; color: #999; }
+.ledger-year-tab.add-year:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+.ledger-row {
+  background: #fafafa;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+/* Always the highlighted treatment now -- white (not tinted gray) since
+   it's the only row shown, with a colored border and a soft lifted shadow. */
+.ledger-row.ledger-current {
+  background: #ffffff;
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(74,20,140,0.08);
+}
+
+.ledger-primary-stat {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ledger-primary-num { font-size: 1.7rem; font-weight: 800; color: var(--color-secondary); line-height: 1; }
+.ledger-primary-label { font-size: 0.78rem; color: #666; margin-top: 3px; }
+
+.ledger-deadline-warning {
+  font-size: 0.78rem;
+  color: var(--color-warning);
+  font-weight: 600;
+  margin-top: 8px;
+}
+.ledger-deadline-warning.calm { color: var(--color-good); }
+.ledger-deadline-warning.warning { color: var(--color-warning); }
+.ledger-deadline-warning.danger { color: var(--color-danger); font-weight: 700; }
+.ledger-deadline-warning.muted { color: #999; font-weight: 500; }
+
+.ledger-row .ledger-bar { margin-top: 12px; }
+
+/* Root cause of the "looks like a form" complaint: .ledger-stepper had no
+   explicit width, and .ledger-stepper-row's width:100% (below, on the
+   input) resolved against the INPUT's own default browser intrinsic size
+   (~170-190px) rather than any layout constraint -- fine on desktop where
+   3 of those fit comfortably side by side, but on a phone they can't, so
+   they wrap and each reads as one big gray box rather than a compact
+   trio. Grid with 3 equal columns forces each stat into its own even
+   share of the available width at any viewport, which is what actually
+   fixes the sizing (not just a mobile media query tweak). */
+.ledger-steppers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+/* 4 equal columns get tight below ~360px (guardrail #9 still applies --
+   this stays grid, not flex, just fewer columns) -- 2x2 keeps each stepper
+   comfortably tappable instead of squeezing four into one row. */
+@media (max-width: 420px) {
+  .ledger-steppers { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ledger-holding-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.76rem;
+  color: #666;
+}
+.ledger-holding-date-row.muted { opacity: 0.55; }
+.ledger-holding-date-row input[type="date"] {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 4px 6px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  font-size: 0.78rem;
-  font-family: inherit;
-  text-align: center;
+  color: inherit;
 }
-
-.points-ledger input:focus {
-  outline: none;
-  border-color: #4a148c;
-  box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
-}
-
-.ledger-total { font-weight: 700; color: #1a237e; }
-
-.ledger-expires { color: #888; font-size: 0.74rem; white-space: nowrap; }
 
 .ledger-remove-year {
   border: none;
@@ -236,7 +605,12 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
   cursor: pointer;
   padding: 2px 4px;
 }
-.ledger-remove-year:hover { color: #c62828; }
+.ledger-remove-year:hover { color: var(--color-danger); }
+
+/* Segmented bar + stepper CSS (.ledger-bar, .ledger-stepper*, .stepper-btn)
+   moved to tokens.css -- the calendar's Smart Draw recommendation card
+   reuses this exact visual language, and index.html doesn't see this
+   page's local <style> block. */
 
 .ledger-footer {
   display: flex;
@@ -247,24 +621,10 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
 
 .qe-status {
   font-size: 0.7rem;
-  color: #2e7d32;
+  color: var(--color-good);
+  transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.qe-status.error { color: #c62828; }
-
-.badge {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  padding: 2px 7px;
-  border-radius: 4px;
-}
-.badge-direct { background: #e8f5e9; color: #2e7d32; }
-.badge-resale { background: #fff3e0; color: #e65100; }
-.badge-inactive { background: #eee; color: #888; }
-
-.contract-actions { display: flex; gap: 8px; }
+.qe-status.error { color: var(--color-danger); }
 
 .small-btn {
   font-size: 0.78rem;
@@ -276,11 +636,11 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
   color: #555;
   cursor: pointer;
 }
-.small-btn:hover { border-color: #4a148c; color: #4a148c; }
-.small-btn.danger:hover { border-color: #c62828; color: #c62828; }
+.small-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.small-btn.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
 
 .add-btn {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -289,25 +649,180 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
   font-weight: 600;
   cursor: pointer;
 }
-.add-btn:hover { background: #38106b; }
+.add-btn:hover { background: var(--color-primary-active); }
 
-.contract-form {
-  border-top: 1px solid #eee;
-  margin-top: 16px;
-  padding-top: 16px;
-  display: none;
+/* Live preview inside the Add/Edit Contract modal -- the actual
+   .wallet-card face (same markup as the real deck, via
+   buildWalletCardFaceHTML()), just scaled down to fit the modal, so what
+   the user sees while building a contract is exactly what lands in their
+   vault, not a simplified stand-in. */
+.wallet-card.modal-preview-card {
+  max-width: 100%;
+  height: 150px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  transition: background 0.3s ease;
 }
-.contract-form.open { display: block; }
+.modal-preview-card .wallet-card-name { font-size: 1rem; }
+.modal-preview-card .wallet-card-points-num { font-size: 1.5rem; }
 
-.form-grid {
+/* ---- Card Studio (3-step Add/Edit Contract modal) ---- */
+.studio-stepper {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.studio-stepper-pill {
+  flex: 1;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: #eee;
+  color: #999;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 7px 6px;
+  text-align: center;
+  cursor: default;
+}
+.studio-stepper-pill.active { background: var(--color-primary); color: white; }
+/* Only clickable while editing an existing contract -- a brand-new
+   contract walks the steps in order (see the resort-chip and Next/Back
+   handlers), so free jumping is reserved for revisiting an already-saved
+   one. */
+.studio-stepper.jumpable .studio-stepper-pill { cursor: pointer; }
+.studio-stepper.jumpable .studio-stepper-pill:hover:not(.active) { background: #ddd; color: #666; }
+
+.studio-panel { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+
+.studio-step-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.resort-chip-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 16px;
+  /* minmax(0, 1fr), not a bare 1fr -- grid tracks default to a content-based
+     minimum size, so a long resort name ("The Villas at Disney's Grand
+     Floridian Resort & Spa") would otherwise refuse to shrink and force
+     the whole grid (and modal) wider than the viewport on a narrow phone. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.resort-chip {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.55;
+  overflow-wrap: break-word;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+}
+.resort-chip:hover { opacity: 0.8; transform: scale(1.02); }
+/* A single crisp white ring + soft primary-color glow, not the old
+   inset-white-plus-outset-purple double ring (looked like two stacked
+   boxes in live mobile testing). The purple ring is INSET, not an outward
+   box-shadow spread -- .resort-chip-grid's overflow-y:auto forces
+   overflow-x to also compute as non-visible (a CSS Overflow Module
+   interop rule, same one noted on index.html's .calendar-grid-scroll),
+   so an outward-spreading ring on a chip flush against the grid's left/
+   right edge got clipped there, looking cut off on both sides on mobile's
+   single-column layout. Inset never needs room outside the chip's own
+   box, so it can't be clipped regardless of container padding. */
+.resort-chip.selected {
+  opacity: 1;
+  border-color: #ffffff;
+  box-shadow: inset 0 0 0 3px var(--color-primary), 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
-.form-field { display: flex; flex-direction: column; gap: 4px; }
-.form-field.full { grid-column: 1 / -1; }
+/* Round Use Year buttons, studio-only -- the base .use-year-chip pill
+   styling (also unused anywhere else) stays the fallback shape. */
+.use-year-chips.round { display: flex; flex-wrap: wrap; gap: 8px; }
+.use-year-chips.round .use-year-chip {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.studio-perks-note {
+  font-size: 0.76rem;
+  color: #888;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.field-hint {
+  font-size: 0.74rem;
+  color: #888;
+  margin-top: 4px;
+  min-height: 1em;
+}
+
+.studio-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.studio-nav-right { display: flex; gap: 10px; }
+.ghost-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 9px 12px;
+}
+.ghost-btn:hover { color: var(--color-primary); }
+
+/* Quick-preset point chips: same pill language as .use-year-chip, just a
+   shortcut into the (still fully editable) Points per Year input below. */
+.points-preset-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+
+.points-preset-chip {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: var(--radius-pill);
+  background: white;
+  font-size: 0.76rem;
+  cursor: pointer;
+  color: #555;
+}
+.points-preset-chip.selected { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.points-preset-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Points per Year's own input, styled as the step's centerpiece rather
+   than a regular form field -- large and centered, since it's the one
+   number every downstream calculation actually depends on. */
+.points-input-large {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-secondary);
+  padding: 12px 10px;
+}
+
+/* min-width: 0 stays a defensive default even outside the old grid layout
+   -- flex items have the same "content forces a wider box than intended"
+   failure mode a number input or the custom-select's min-width can trigger. */
+.form-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
 .form-field label {
   font-size: 0.7rem;
@@ -327,7 +842,7 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
 
 .form-field input:focus, .form-field select:focus {
   outline: none;
-  border-color: #4a148c;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(74,20,140,0.15);
 }
 
@@ -344,15 +859,34 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
   color: #555;
 }
 .purchase-type-toggle button.selected {
-  background: #4a148c;
-  border-color: #4a148c;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
 }
+
+/* Use Year chips: same segmented-toggle visual language as
+   .purchase-type-toggle above, generalized from 2 buttons to 8 -- wraps on
+   narrow screens instead of squeezing into one row. */
+.use-year-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.use-year-chip {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: var(--radius-pill);
+  background: white;
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: #555;
+}
+.use-year-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.use-year-chip.selected { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+
+.use-year-deadline { font-size: 0.76rem; color: var(--color-text-muted); margin-top: 6px; }
 
 .form-actions { display: flex; gap: 10px; }
 
 .save-btn {
-  background: #4a148c;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -361,7 +895,7 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
   font-weight: 600;
   cursor: pointer;
 }
-.save-btn:hover { background: #38106b; }
+.save-btn:hover { background: var(--color-primary-active); }
 
 .cancel-btn {
   background: white;
@@ -374,72 +908,233 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
 }
 
 .form-error {
-  color: #c62828;
+  color: var(--color-danger);
   font-size: 0.82rem;
   margin-bottom: 10px;
 }
 
-.save-warning {
-  font-size: 0.8rem;
-  color: #8a6d00;
-  background: #fff8e1;
-  border: 1px solid #ffe082;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin-bottom: 12px;
+/* The single most urgent fact on the page, across every active contract --
+   sits above everything else, since it's the answer to "do I need to act on
+   something right now," not a setting. */
+.deadline-countdown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 10px;
 }
+.deadline-countdown-icon { font-size: 1.4rem; flex-shrink: 0; }
+.deadline-countdown-label {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+.deadline-countdown-detail { font-size: 0.86rem; margin-top: 2px; }
 
-/* A slim status strip rather than its own boxed section -- previously a
-   full card at the bottom of the page, so whether reminders were even on
-   wasn't visible without scrolling past every contract first. Living here
-   at the top keeps that visible on load without competing for attention
-   with the contracts themselves. */
-.reminder-bar {
+.deadline-countdown.calm { background: var(--color-primary-tint-bg); color: var(--color-primary); }
+.deadline-countdown.warning { background: #fff3e0; color: #a3401f; }
+.deadline-countdown.danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.deadline-countdown.danger .deadline-countdown-detail strong { color: inherit; }
+
+/* ---- "Your Contracts" title row: the bell/gear icon that opens
+   Notification Settings sits in its corner rather than its own row above
+   the page -- a standalone row left dead space between the deadline
+   banner and the contracts card since it had nothing else to share the
+   row with. Replaces the old always-visible checkbox row, which read as a
+   leftover web form rather than something native-app-like. */
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.section-title-row h2 { margin-bottom: 0; }
+.notif-settings-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-light);
+  background: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.notif-settings-btn:hover { border-color: var(--color-primary); }
+
+/* ---- Membership card: lives above "Your Contracts" as its own small
+   section, same grouping idea as the notif-settings gear -- an
+   account-level setting, not a contract. See docs/subscriptions_plan.md
+   Phase 4. */
+.membership-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.membership-card-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: #999; font-weight: 700; margin-bottom: 2px; }
+.membership-card-status { font-size: 0.95rem; font-weight: 700; color: #333; }
+.membership-card-status.is-active { color: var(--color-primary); }
+.membership-card-status.is-warning { color: #a3401f; }
+.membership-card-detail { font-size: 0.8rem; color: #777; margin-top: 2px; }
+/* Task 10 pricing-anchor line -- a touch bolder/colored than the plain
+   detail line above it, since this one's carrying the actual persuasion
+   (price framing), not just a feature description. */
+.membership-card-anchor { font-size: 0.78rem; color: var(--color-primary); font-weight: 600; margin-top: 4px; }
+.membership-card-btn {
+  flex-shrink: 0;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 9px 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.membership-card-btn:hover { background: var(--color-primary-active); }
+.membership-card-btn:disabled { opacity: 0.6; cursor: default; }
+.membership-card-btn.secondary { background: #f7f5fa; color: var(--color-primary); border: 1px solid #ddd; }
+.membership-card-btn.secondary:hover { background: var(--color-primary-tint-bg); }
+.membership-card-msg { flex-basis: 100%; font-size: 0.78rem; color: var(--color-danger); }
+.membership-checkout-banner {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+.membership-checkout-banner.success { background: var(--color-primary-tint-bg); color: var(--color-primary); }
+.membership-checkout-banner.cancelled { background: #f0f0f0; color: #666; }
+
+/* ---- Notification Center: a short dismissible list of other active
+   contracts' notable statuses, below whichever one is already the lead
+   .deadline-countdown banner above. ---- */
+.notification-center {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.notification-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: 8px;
   font-size: 0.8rem;
-  color: #666;
-  padding: 8px 4px 14px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid #eee;
 }
+.notification-item.calm { background: var(--color-primary-tint-bg); color: var(--color-primary); }
+.notification-item.warning { background: #fff3e0; color: #a3401f; }
+.notification-item.danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.notification-item-icon { flex-shrink: 0; }
+.notification-item-text { flex: 1; min-width: 0; }
+.notification-item-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.notification-item-cal {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.notification-item-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.notification-item-dismiss:hover { opacity: 1; }
 
-.reminder-bar-icon { font-size: 0.95rem; }
-
-.reminder-bar-check, .reminder-bar-lead {
+/* ---- Notification Settings modal ---- */
+.notif-settings-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-light);
 }
+.notif-settings-label { font-size: 0.88rem; font-weight: 600; color: #222; }
+.notif-settings-desc { font-size: 0.76rem; color: var(--color-text-muted); margin-top: 2px; }
+/* The lead-time row is the last one in the modal -- no divider below it. */
+.notif-lead-row { border-bottom: none; }
 
-/* Recolors the native checkbox to the app's purple instead of the
-   browser-default blue, which read as a mismatched, generic-looking
-   "boxy" control against the rest of the page's crisp purple styling. */
-.reminder-bar-check input[type="checkbox"] {
-  accent-color: #4a148c;
-  width: 15px;
-  height: 15px;
+/* Simple toggle switch, distinct from the checkbox convention used
+   elsewhere -- reads as an app "settings" control rather than a form field. */
+.notif-toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.notif-toggle input { opacity: 0; width: 0; height: 0; }
+.notif-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 999px;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
+.notif-toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+.notif-toggle input:checked + .notif-toggle-slider { background: var(--color-primary); }
+.notif-toggle input:checked + .notif-toggle-slider::before { transform: translateX(18px); }
 
-.reminder-bar input[type="number"] {
-  width: 48px;
-  padding: 3px 6px;
+.notif-lead-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+.notif-lead-row label { font-size: 0.8rem; font-weight: 600; color: #666; }
+.notif-lead-input { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #666; }
+.notif-lead-input input {
+  width: 52px;
+  padding: 4px 6px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
+
+.notif-settings-status {
+  min-height: 1.2em;
+  font-size: 0.8rem;
+  color: var(--color-good);
+  margin-top: 10px;
+}
+.notif-settings-status.error { color: var(--color-danger); }
 
 .danger-zone {
   border: 1px solid #f5c6c6;
+  /* .section only carries margin-bottom (for spacing between stacked
+     sections above it), so with nothing below #active-contract-details to
+     push away from, Danger Zone sat flush against the ledger card. */
+  margin-top: 20px;
 }
 .danger-zone h2 { color: #a3401f; }
 .delete-account-btn {
   background: white;
-  color: #b3261e;
-  border: 1px solid #b3261e;
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
   border-radius: 6px;
   padding: 9px 20px;
   font-size: 0.85rem;
@@ -447,11 +1142,80 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
   cursor: pointer;
   margin-top: 10px;
 }
-.delete-account-btn:hover { background: #fdecea; }
+.delete-account-btn:hover { background: var(--color-danger-bg); }
 .delete-account-btn:disabled { opacity: 0.6; cursor: default; }
 
 @media (max-width: 560px) {
-  .form-grid { grid-template-columns: 1fr; }
+  .resort-chip-grid { grid-template-columns: 1fr; }
+}
+
+/* Fluid Card Studio layout on phones -- the modal's own steps are already
+   single-column (flex-direction:column) at any width, so the one row that
+   actually needs to stack is the nav bar: up to 4 buttons (Cancel, Back,
+   Skip Financial Details, Review & Save Deed) side by side would either
+   wrap awkwardly or get clipped on a ~360px-wide phone. column-reverse
+   puts the primary action above Cancel when stacked, matching the usual
+   mobile pattern of the main CTA sitting higher/first. */
+@media (max-width: 600px) {
+  .studio-nav { flex-direction: column-reverse; align-items: stretch; gap: 8px; }
+  .studio-nav-right { flex-direction: column; width: 100%; }
+  .studio-nav-right button, .studio-nav > .cancel-btn { width: 100%; }
+}
+
+/* ---- Wallet deck + ledger on mobile (2026-09-18) ---------------------
+   Reported directly against real screenshots: the card stack wasn't
+   behaving like a wallet at all on a phone (each card showing almost
+   fully instead of a tight peek), and the Banked/Current/Borrowed ledger
+   read as three oversized gray form fields instead of a status readout. */
+@media (max-width: 600px) {
+  /* Root cause of the "cards show almost fully" bug: the peek band's
+     height is fixed (via margin-top below) assuming a ONE-LINE resort
+     name, but at the desktop font size a long name (e.g. "Copper Creek
+     Villas & Cabins at Disney's Wilderness Lodge") wraps to 2-3 lines in
+     a narrower mobile card, pushing real content past the intended peek
+     zone. Shrinking the card and forcing the name/nickname to a single
+     truncated line (the full name is already repeated in
+     #active-contract-details once a card is active) makes the peek
+     height reliable regardless of name length -- the actual fix, not
+     just a smaller font. */
+  .wallet-card {
+    height: 168px;
+    padding: 16px 18px;
+  }
+  .wallet-card-name {
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 190px;
+  }
+  .wallet-card-nickname {
+    font-size: 0.68rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 190px;
+  }
+  .wallet-card-points-num { font-size: 1.5rem; }
+  /* Tighter peek (55px of a 168px card, same ~1/3 proportion the desktop
+     215px/70px peek uses) now that the header height above is reliable. */
+  .wallet-deck .wallet-card:not(:first-child) {
+    margin-top: -113px;
+  }
+
+  /* Edit/Deactivate/Delete no longer share a line with the resort name --
+     on a narrow phone that line had no room left for 3 buttons once a
+     nickname badge was also present, so it crowded/clipped. Full-width
+     stacked rows instead: name+badge, then actions, each with room to
+     wrap on their own. */
+  .wallet-details-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .wallet-details-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
 }
   </style>
   <script>
@@ -474,11 +1238,12 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVCalc</a>
+    <a href="index.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="home.html">Home</a>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
@@ -499,6 +1264,7 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
         <span class="site-nav-group-label">My Account</span>
         <a href="account.html" class="active">My Contracts</a>
         <a href="trips.html">Membership Value</a>
+        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -515,87 +1281,65 @@ tr.ledger-current input { border-color: #4a148c; background: white; }
     </div>
   </div>
 
+  <script src="dvc-track.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="dvc-dates.js"></script>
+  <script src="dvc-ledger.js"></script>
+  <script src="dvc-ui.js"></script>
   <script>
+const { currentUYYear, todayInEastern, nextDeadlineForUseYear, isBankingWindowOpen, formatDeadlineDate, useYearExpiration, dateOnlyUTC, USE_YEAR_START_MONTH, urgencyTier, formatDeadlineWithCountdown } = window.DVCDates;
+const { initCustomSelect } = window.DVCUI;
 const USE_YEARS = ["Feb", "Mar", "Apr", "Jun", "Aug", "Sep", "Oct", "Dec"];
+
+// Wallet card face colors. No per-resort brand palette exists in the data
+// layer (only per-season colors, used for calendar tinting -- see Phase 1
+// notes), so this is a small curated set of jewel-tone gradients, picked
+// by a stable hash of home_resort_id rather than list position, so the
+// same resort always gets the same card color across renders/sessions
+// instead of shifting if contracts are reordered or one is deleted.
+const WALLET_CARD_GRADIENTS = [
+  ["#4a148c", "#1a237e"], // brand indigo/purple (also the fallback for hash 0)
+  ["#1b5e3a", "#0d3b26"], // emerald
+  ["#0d47a1", "#082a63"], // sapphire
+  ["#7a1734", "#4a0e20"], // garnet
+  ["#8d5524", "#5c3612"], // bronze
+  ["#37474f", "#1c262b"], // slate
+];
+function hexToRgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+// Layers a translucent version of the card's own hash-based jewel-tone
+// gradient over the resort's real art (data/resort_images.js), when that
+// resort has any -- same wash-over-photo technique as index.html's picker
+// redesign (2026-09-20), just using each card's OWN two colors instead of
+// one shared tint, so a card a member already recognizes by color doesn't
+// suddenly change identity, it just reveals the actual resort underneath.
+// Falls back to the plain two-tone gradient for a resort with no art yet.
+function walletCardGradient(resortId) {
+  let hash = 0;
+  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
+  const [a, b] = WALLET_CARD_GRADIENTS[hash % WALLET_CARD_GRADIENTS.length];
+  const image = typeof getResortImage === "function" ? getResortImage(resortId) : null;
+  if (image) {
+    return `linear-gradient(135deg, ${hexToRgba(a, 0.82)}, ${hexToRgba(b, 0.82)}), url('${image}')`;
+  }
+  return `linear-gradient(135deg, ${a}, ${b})`;
+}
+
+// Same hash as walletCardGradient(), just the first stop -- used for
+// #active-contract-details' accent top border so it visually reads as a
+// continuation of whichever card is active.
+function walletCardPrimaryColor(resortId) {
+  let hash = 0;
+  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
+  return WALLET_CARD_GRADIENTS[hash % WALLET_CARD_GRADIENTS.length][0];
+}
 const pageContent = document.getElementById("page-content");
-
-// Banking/borrowing deadline: always 8 months after the use year's start
-// month, same calendar date every year regardless of which specific
-// 12-month cycle you're in. {month, day} below is 1-indexed and is the
-// deadline itself -- not the use-year start -- so "next deadline" is just
-// "the next time this month/day occurs on or after today," which handles
-// both same-year deadlines (Feb, Mar, Apr) and next-year ones (Jun, Aug,
-// Sep, Oct, Dec) with one rule instead of hardcoding which roll over.
-// Mirrors the Edge Function's copy of this table exactly -- see
-// supabase/functions/send-banking-reminders/index.ts.
-const DEADLINE_BY_USE_YEAR = {
-  Feb: { month: 9, day: 30 },  // Sep 30
-  Mar: { month: 10, day: 31 }, // Oct 31
-  Apr: { month: 11, day: 30 }, // Nov 30
-  Jun: { month: 1, day: 31 },  // Jan 31
-  Aug: { month: 3, day: 31 },  // Mar 31
-  Sep: { month: 4, day: 30 },  // Apr 30
-  Oct: { month: 5, day: 31 },  // May 31
-  Dec: { month: 7, day: 31 },  // Jul 31
-};
-
-// 1-indexed deposit month for each use year (Jan=1). DVC labels a use
-// year's points by the calendar year they DEPOSIT in, not the year they
-// expire in -- confirmed against an official planDisney Q&A and multiple
-// DVC community sources (2026-09-11 research): a Dec-UY member's "2026
-// points" deposit Dec 1, 2026 and run through Nov 30, 2027, NOT the cycle
-// already underway in Sept 2026 (which is "2025 points", deposited Dec 1,
-// 2025). The points ledger table (see buildLedgerRows()) always shows the
-// current and next labeled year, plus however many further-future years
-// the owner has chosen to plan ahead for.
-const USE_YEAR_START_MONTH = { Feb: 2, Mar: 3, Apr: 4, Jun: 6, Aug: 8, Sep: 9, Oct: 10, Dec: 12 };
-
-// The calendar year label of the use-year cycle active right now -- the
-// most recent deposit that's already happened. If this year's deposit
-// month hasn't arrived yet, the active cycle is still last year's.
-function currentUYYear(useYear, today) {
-  const startMonth = USE_YEAR_START_MONTH[useYear];
-  return today.month >= startMonth ? today.year : today.year - 1;
-}
-
-// "Today" as a calendar date in Eastern time, independent of the
-// visitor's own timezone -- otherwise someone browsing from a timezone
-// hours ahead/behind ET could see a deadline flip a day early or late
-// right around midnight ET.
-function todayInEastern() {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric", month: "2-digit", day: "2-digit",
-  }).formatToParts(new Date());
-  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  return { year: Number(map.year), month: Number(map.month), day: Number(map.day) };
-}
-
-function dateOnlyUTC(year, month, day) {
-  return Date.UTC(year, month - 1, day);
-}
-
-function nextDeadlineForUseYear(useYear, today) {
-  const { month, day } = DEADLINE_BY_USE_YEAR[useYear];
-  const todayMs = dateOnlyUTC(today.year, today.month, today.day);
-  let candidateMs = dateOnlyUTC(today.year, month, day);
-  if (candidateMs < todayMs) candidateMs = dateOnlyUTC(today.year + 1, month, day);
-  return { ms: candidateMs, daysUntil: Math.round((candidateMs - todayMs) / 86400000) };
-}
-
-// timeZone: "UTC" is required, not cosmetic -- ms is always a UTC-midnight
-// marker for a plain calendar date (built via dateOnlyUTC()), with no
-// real time-of-day meaning. Without pinning the format to UTC,
-// toLocaleDateString re-renders it in the *viewer's* local timezone, which
-// silently shows one day earlier for anyone west of UTC (i.e. the entire
-// US) -- a real bug caught while adding the ledger's "To Be Used By"
-// column, whose dates come from this same helper.
-function formatDeadlineDate(ms) {
-  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-}
 
 // Unique resorts (data.js has one entry per resort per year -- dedupe by id).
 function uniqueResorts() {
@@ -621,19 +1365,8 @@ function resortName(id) {
 function getYearPointsRow(yearPointsByContract, contractId, year, pointsPerYear) {
   const found = (yearPointsByContract[contractId] || []).find(r => r.use_year_label === year);
   return found
-    ? { points_remaining: found.points_remaining, points_banked: found.points_banked, points_borrowed: found.points_borrowed }
-    : { points_remaining: pointsPerYear, points_banked: 0, points_borrowed: 0 };
-}
-
-// The last date a use year's points -- remaining, banked-in, or
-// borrowed-in, all three alike -- are still usable for a stay, regardless
-// of which of those three buckets they're sitting in or where they
-// originally came from. That's the day before the NEXT use year's deposit
-// date, so this is really just "the day before currentUYYear(useYear,
-// {year: uyLabel+1, month: startMonth, day: 1})'s cycle begins" -- e.g. a
-// Dec-UY row labeled 2025 is usable through Nov 30, 2026.
-function useYearExpiration(useYear, uyLabel) {
-  return dateOnlyUTC(uyLabel + 1, USE_YEAR_START_MONTH[useYear], 0);
+    ? { points_remaining: found.points_remaining, points_banked: found.points_banked, points_borrowed: found.points_borrowed, points_holding: found.points_holding || 0, points_holding_entered_at: found.points_holding_entered_at || null }
+    : { points_remaining: pointsPerYear, points_banked: 0, points_borrowed: 0, points_holding: 0, points_holding_entered_at: null };
 }
 
 // Which year-rows to show for a contract's ledger: always the current and
@@ -660,15 +1393,21 @@ function buildLedgerRows(contract, yearPointsByContract, today) {
 }
 
 let editingId = null; // contract id currently being edited, or null for "adding new"
+let isEditingMode = false; // drives the stepper's jump-to-any-step vs. linear-onboarding behavior
+let activeWalletCardId = null; // which card is expanded to the front of the deck (2+ contracts only)
+let activeLedgerYearTab = null; // which use-year row #active-contract-details currently shows
+let justIssuedContractId = null; // brand-new contract's id, so its first render gets the shimmer
+let currentProfile = null; // last-fetched profile row, kept for the Notification Settings modal to read/patch without a re-fetch
+let currentSubscription = null; // last-fetched subscriptions row, kept for the membership card's click handler to read without a re-fetch
 
 function renderGate() {
   pageContent.innerHTML = `
     <div class="gate">
       <p>Sign in to save your DVC contracts and unlock personalized booking windows on the calendar.</p>
-      <button type="button" class="big-signin-btn" id="gate-signin">Sign in with Google</button>
+      <div id="gate-signin-slot"></div>
     </div>
   `;
-  document.getElementById("gate-signin").addEventListener("click", () => window.DVCAuth.signInWithGoogle());
+  window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
 }
 
 function renderUnconfigured() {
@@ -679,11 +1418,317 @@ function renderUnconfigured() {
   `;
 }
 
+// One active contract's real status for its CURRENT use-year cycle, judged
+// against its ledger row rather than blindly trusting nextDeadlineForUseYear()
+// -- that function always returns a future date, which silently misleads once
+// there's nothing left to act on, or once this cycle's own window has already
+// closed and it's actually reporting a LATER cycle's deadline instead. Kinds:
+//   "bankable" -- remaining points exist and the banking window is still open
+//   "use-by"   -- remaining points exist but the window already closed this
+//                 cycle; the only thing left to track is the use-year expiration
+//   "accounted" -- nothing left in the remaining bucket (used, fully banked
+//                 out, or fully borrowed away) -- no ledger action needed
+// Only the CURRENT-cycle "remaining" bucket is ever eligible for banking --
+// points already borrowed IN came from next year's allotment and can't
+// themselves be re-banked, and points already banked OUT are already
+// accounted for. Using row.points_remaining alone (not remaining+borrowed)
+// keeps both of those out of the "bankable" total automatically.
+function evaluateContractDeadlineStatus(contract, yearPointsByContract, today) {
+  const uyYear = currentUYYear(contract.use_year, today);
+  const row = getYearPointsRow(yearPointsByContract, contract.id, uyYear, contract.points_per_year);
+  const bankablePoints = row.points_remaining;
+  if (bankablePoints <= 0) {
+    return { kind: "accounted", contract };
+  }
+  if (isBankingWindowOpen(contract.use_year, uyYear, today)) {
+    return { kind: "bankable", contract, deadline: nextDeadlineForUseYear(contract.use_year, today) };
+  }
+  const expiresMs = useYearExpiration(contract.use_year, uyYear);
+  const todayMs = dateOnlyUTC(today.year, today.month, today.day);
+  return { kind: "use-by", contract, expiresMs, daysUntil: Math.round((expiresMs - todayMs) / 86400000) };
+}
+
+// The single most useful thing to surface across every active contract
+// (Multi-Contract Aggregation) -- deadlines have only ever been shown
+// per-card until now, so an owner with several contracts had no one place
+// to see which one needs attention soonest. An open bankable deadline wins
+// first since there's a real action available right now; failing that, the
+// earliest "use by" milestone for a contract whose window already closed;
+// failing that (every active contract fully accounted for), a neutral
+// all-clear. No active contracts at all suppresses the banner entirely.
+function computeEarliestDeadline(contracts, yearPointsByContract, today) {
+  const active = contracts.filter(c => c.is_active);
+  if (active.length === 0) return null;
+  const statuses = active.map(c => evaluateContractDeadlineStatus(c, yearPointsByContract, today));
+
+  const bankable = statuses.filter(s => s.kind === "bankable");
+  if (bankable.length > 0) {
+    return bankable.reduce((a, b) => (b.deadline.ms < a.deadline.ms ? b : a));
+  }
+
+  const useBy = statuses.filter(s => s.kind === "use-by");
+  if (useBy.length > 0) {
+    return useBy.reduce((a, b) => (b.expiresMs < a.expiresMs ? b : a));
+  }
+
+  return { kind: "accounted" };
+}
+
+// Membership card states, mapped from the raw Stripe status strings
+// stored in subscriptions.status (see docs/subscriptions_plan.md Phase 2 --
+// this function has to handle every status the webhook writes). No row at
+// all reads the same as "free" -- the user just hasn't started a checkout
+// yet, which is a normal state, not an error.
+// Task 10: dynamic pricing-anchor micro-copy for the Free/upsell state --
+// the actual "paywall" moment in this app (pre-signin renderGate() doesn't
+// mention price at all, so anchoring there would be premature; this card's
+// Free branch, with its existing hardcoded "$49.99/yr" button, is where a
+// visitor actually sees and weighs the price). MEMBERSHIP_PRICE is the
+// single source of truth for that number now, shared with the button text
+// below, instead of two independently-hardcoded copies that could drift.
+const MEMBERSHIP_PRICE = 49.99;
+// Used only when the visitor has no contract yet to personalize against --
+// a well-known, moderate-cost WDW resort, not cherry-picked for the most
+// flattering number (every resort in DUES_PER_POINT is a real 2026 rate).
+const DEFAULT_ANCHOR_RESORT_ID = "saratogaSprings";
+
+function pricingAnchorMicroCopy(contracts) {
+  const anchorContract = (contracts || []).find(c => c.is_active) || (contracts || [])[0];
+  const resortId = anchorContract ? anchorContract.home_resort_id : DEFAULT_ANCHOR_RESORT_ID;
+  const duesPerPoint = DUES_PER_POINT[resortId];
+  if (!duesPerPoint) return ""; // no real dues data for this resort -- skip rather than show a wrong number
+  const equivalentPoints = MEMBERSHIP_PRICE / duesPerPoint;
+  return `Less than the annual dues on ${equivalentPoints.toFixed(1)} points at ${resortName(resortId)} &mdash; cheaper than what one missed banking deadline can cost you.`;
+}
+
+function membershipCardState(sub, contracts) {
+  const status = sub?.status;
+  const renewDate = sub?.current_period_end ? new Date(sub.current_period_end).toISOString().slice(0, 10) : null;
+
+  if (!sub || status === "incomplete" || status === "canceled") {
+    return {
+      statusClass: "",
+      statusText: "Free",
+      detail: "Upgrade to Active Member to connect your own contracts, points ledger, and deadline reminders.",
+      anchorText: pricingAnchorMicroCopy(contracts),
+      buttonText: `Upgrade -- $${MEMBERSHIP_PRICE}/yr`,
+      buttonClass: "",
+      action: "upgrade",
+    };
+  }
+  if (status === "past_due" || status === "unpaid") {
+    return {
+      statusClass: "is-warning",
+      statusText: "Payment issue",
+      detail: "Your last charge didn't go through. Update your card to keep your membership active.",
+      buttonText: "Manage Membership",
+      buttonClass: "secondary",
+      action: "manage",
+    };
+  }
+  if (sub.cancel_at_period_end && renewDate) {
+    return {
+      statusClass: "",
+      statusText: "Canceled",
+      detail: `Access continues through ${renewDate}, then reverts to Free.`,
+      buttonText: "Manage Membership",
+      buttonClass: "secondary",
+      action: "manage",
+    };
+  }
+  if (status === "trialing") {
+    // No "(trial)" suffix here -- the detail line right below already says
+    // it, and every status/detail pair in this function otherwise avoids
+    // stating the same fact twice.
+    return {
+      statusClass: "is-active",
+      statusText: "Active Member",
+      detail: renewDate ? `Free trial -- first charge on ${renewDate} unless you cancel before then.` : "Free trial in progress.",
+      buttonText: "Manage Membership",
+      buttonClass: "secondary",
+      action: "manage",
+    };
+  }
+  // active, or any other not-yet-seen Stripe status -- default to the
+  // "you have access" framing rather than silently showing Free.
+  return {
+    statusClass: "is-active",
+    statusText: "Active Member",
+    detail: renewDate ? `Renews ${renewDate}.` : "",
+    buttonText: "Manage Membership",
+    buttonClass: "secondary",
+    action: "manage",
+  };
+}
+
+function buildMembershipCardHTML(sub, contracts) {
+  const s = membershipCardState(sub, contracts);
+  return `
+    <div class="membership-card">
+      <div>
+        <div class="membership-card-label">Membership</div>
+        <div class="membership-card-status ${s.statusClass}">${s.statusText}</div>
+        ${s.detail ? `<div class="membership-card-detail">${s.detail}</div>` : ""}
+        ${s.anchorText ? `<div class="membership-card-anchor">${s.anchorText}</div>` : ""}
+      </div>
+      <button type="button" class="membership-card-btn ${s.buttonClass}" id="membership-action-btn" data-action="${s.action}">${s.buttonText}</button>
+      <div class="membership-card-msg" id="membership-action-msg" style="display:none;"></div>
+    </div>
+  `;
+}
+
+// The Checkout redirect (create-checkout-session's success_url/cancel_url)
+// lands back here as ?checkout=success|cancelled -- this banner is just
+// the confirmation; the actual subscriptions row is written by the
+// stripe-webhook Edge Function, which may land a second or two after the
+// redirect (see startCheckoutSuccessPoll()), so "success" here means
+// "Stripe took the payment," not "we've confirmed the row updated yet."
+function buildCheckoutReturnBannerHTML() {
+  const status = new URLSearchParams(window.location.search).get("checkout");
+  if (status === "success") {
+    return `<div class="membership-checkout-banner success" id="checkout-return-banner">Payment received -- activating your membership&hellip;</div>`;
+  }
+  if (status === "cancelled") {
+    return `<div class="membership-checkout-banner cancelled" id="checkout-return-banner">Checkout canceled -- no charge was made.</div>`;
+  }
+  return "";
+}
+
+function buildDeadlineCountdownHTML(earliest) {
+  if (!earliest) return "";
+
+  if (earliest.kind === "accounted") {
+    return `
+    <div class="deadline-countdown calm">
+      <span class="deadline-countdown-icon">✅</span>
+      <div class="deadline-countdown-text">
+        <div class="deadline-countdown-label">Ledger Status</div>
+        <div class="deadline-countdown-detail">All points are accounted for -- nothing currently needs banking or borrowing.</div>
+      </div>
+    </div>
+  `;
+  }
+
+  if (earliest.kind === "use-by") {
+    // Color follows the unified urgency scale (proximity to actual
+    // forfeiture) -- the 🔒 icon is the separate "banking specifically
+    // is closed" signal, independent of how urgent that color reads.
+    const { contract, expiresMs, daysUntil } = earliest;
+    return `
+    <div class="deadline-countdown ${urgencyTier(daysUntil)}">
+      <span class="deadline-countdown-icon">🔒</span>
+      <div class="deadline-countdown-text">
+        <div class="deadline-countdown-label">Use-Year Expiration</div>
+        <div class="deadline-countdown-detail">
+          <strong>${resortName(contract.home_resort_id)}</strong> &mdash; this cycle's banking window has closed; remaining points must be used by
+          <strong>${formatDeadlineWithCountdown(expiresMs, daysUntil)}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+  }
+
+  // kind === "bankable"
+  const { contract, deadline } = earliest;
+  return `
+    <div class="deadline-countdown ${urgencyTier(deadline.daysUntil)}">
+      <span class="deadline-countdown-icon">⏳</span>
+      <div class="deadline-countdown-text">
+        <div class="deadline-countdown-label">Your Earliest Deadline</div>
+        <div class="deadline-countdown-detail">
+          <strong>${resortName(contract.home_resort_id)}</strong> &mdash; bank/borrow by
+          <strong>${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ---- Notification Center ----
+// A short list of OTHER active contracts' notable statuses -- whichever one
+// is already the lead banner above (buildDeadlineCountdownHTML) is excluded
+// so the same fact isn't shown twice. Fully "accounted" contracts never
+// appear here; there's nothing to act on. Each item can be dismissed for
+// its current use-year cycle (localStorage, this browser only -- a fresh
+// cycle naturally gets a new id, so dismissing one deadline can't
+// accidentally suppress a future one for the same contract).
+const DISMISSED_NOTIFS_KEY = "dvc_dismissed_notifications";
+
+function getDismissedNotificationIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DISMISSED_NOTIFS_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+
+function dismissNotification(id) {
+  const ids = getDismissedNotificationIds();
+  ids.add(id);
+  try {
+    localStorage.setItem(DISMISSED_NOTIFS_KEY, JSON.stringify([...ids]));
+  } catch {
+    // Private browsing / storage disabled -- dismissal just won't persist
+    // across a reload, not worth surfacing an error for.
+  }
+}
+
+// Google Calendar's "render" web-intent URL -- opens a pre-filled event
+// creation screen in a new tab. No .ics download to double-tap on mobile,
+// no backend involved.
+function googleCalendarLink(contract, dateMs, isBankable) {
+  const ymd = new Date(dateMs).toISOString().slice(0, 10).replace(/-/g, "");
+  const nextDay = new Date(dateMs + 86400000).toISOString().slice(0, 10).replace(/-/g, "");
+  const title = isBankable
+    ? `Bank/borrow deadline -- ${resortName(contract.home_resort_id)} DVC points`
+    : `Use-year expiration -- ${resortName(contract.home_resort_id)} DVC points`;
+  const details = isBankable
+    ? "Points not banked or borrowed by this date follow DVC's standard use-year rules. Added via DVC Companion."
+    : "Remaining points for this use year must be used by this date. Added via DVC Companion.";
+  const params = new URLSearchParams({ action: "TEMPLATE", text: title, dates: `${ymd}/${nextDay}`, details });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function buildNotificationCenterHTML(contracts, yearPointsByContract, today, leadContractId) {
+  const dismissed = getDismissedNotificationIds();
+  const items = contracts
+    .filter(c => c.is_active && c.id !== leadContractId)
+    .map(c => ({ contract: c, status: evaluateContractDeadlineStatus(c, yearPointsByContract, today) }))
+    .filter(({ status }) => status.kind !== "accounted")
+    .map(({ contract, status }) => ({ contract, status, id: `${contract.id}:${status.kind}:${currentUYYear(contract.use_year, today)}` }))
+    .filter(({ id }) => !dismissed.has(id));
+
+  if (items.length === 0) return "";
+
+  return `
+    <div class="notification-center" id="notification-center-list">
+      ${items.map(({ contract, status, id }) => {
+        const isBankable = status.kind === "bankable";
+        const dateMs = isBankable ? status.deadline.ms : status.expiresMs;
+        const daysUntil = isBankable ? status.deadline.daysUntil : status.daysUntil;
+        const text = isBankable
+          ? `Bank/borrow by ${formatDeadlineWithCountdown(dateMs, daysUntil)}`
+          : `Banking window closed &mdash; use by ${formatDeadlineWithCountdown(dateMs, daysUntil)}`;
+        return `
+        <div class="notification-item ${urgencyTier(daysUntil)}" data-notif-id="${id}">
+          <span class="notification-item-icon">${isBankable ? "⏳" : "🔒"}</span>
+          <div class="notification-item-text"><strong>${resortName(contract.home_resort_id)}</strong> &mdash; ${text}</div>
+          <div class="notification-item-actions">
+            <a class="notification-item-cal" href="${googleCalendarLink(contract, dateMs, isBankable)}" target="_blank" rel="noopener">+ Calendar</a>
+            <button type="button" class="notification-item-dismiss" data-dismiss="${id}" aria-label="Dismiss">&times;</button>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+}
+
 async function renderSignedIn() {
-  const [contracts, profile, yearPoints] = await Promise.all([
+  const [contracts, profile, yearPoints, subscription] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getProfile(),
     window.DVCAuth.getContractYearPoints(),
+    window.DVCAuth.getSubscription(),
   ]);
 
   const yearPointsByContract = {};
@@ -692,65 +1737,168 @@ async function renderSignedIn() {
   }
 
   const resorts = uniqueResorts();
+  const today = todayInEastern();
+  currentProfile = profile;
+  currentSubscription = subscription;
+  const earliestDeadline = computeEarliestDeadline(contracts, yearPointsByContract, today);
+  // A global opt-out for the in-app channel (Notification Settings) hides
+  // both the hero banner and the Notification Center list below it -- email
+  // stays independent and keeps working either way.
+  const inAppEnabled = profile?.in_app_notifications_enabled !== false;
 
   pageContent.innerHTML = `
-    <div class="reminder-bar">
-      <span class="reminder-bar-icon">${profile?.reminder_opt_in ? "🔔" : "🔕"}</span>
-      <label class="reminder-bar-check"><input type="checkbox" id="r-opt-in" ${profile?.reminder_opt_in ? "checked" : ""}> Email reminders before banking/borrowing deadlines</label>
-      <label class="reminder-bar-lead">Lead time <input type="number" id="r-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days</label>
-      <button type="button" class="small-btn" id="save-reminders">Save</button>
-    </div>
+    ${buildCheckoutReturnBannerHTML()}
+    ${buildMembershipCardHTML(subscription, contracts)}
+    ${inAppEnabled ? buildDeadlineCountdownHTML(earliestDeadline) : ""}
+    ${inAppEnabled ? buildNotificationCenterHTML(contracts, yearPointsByContract, today, earliestDeadline?.contract?.id) : ""}
 
-    <div class="section">
-      <h2>Your Contracts</h2>
-      <div class="section-sub">Own more than one? Add each separately -- DVCalc will combine what they unlock together.</div>
-      <div class="contract-list" id="contract-list"></div>
-      <button type="button" class="add-btn" id="show-add-form">+ Add Contract</button>
-      <div class="contract-form" id="contract-form">
-        <div class="form-error" id="form-error" style="display:none;"></div>
-        <div class="form-grid">
-          <div class="form-field full">
-            <label for="f-nickname">Nickname (optional)</label>
-            <input type="text" id="f-nickname" placeholder="e.g. Mom's contract">
-          </div>
-          <div class="form-field">
-            <label for="f-resort">Home Resort</label>
-            <select id="f-resort">
-              ${resorts.map(r => `<option value="${r.id}">${r.name}</option>`).join("")}
-            </select>
-          </div>
-          <div class="form-field">
-            <label for="f-useyear">Use Year</label>
-            <select id="f-useyear">
-              ${USE_YEARS.map(y => `<option value="${y}">${y}</option>`).join("")}
-            </select>
-          </div>
-          <div class="form-field">
-            <label for="f-points">Points per Year</label>
-            <input type="number" id="f-points" min="1" step="1" placeholder="e.g. 150">
-          </div>
-          <div class="form-field">
-            <label>Purchase Type</label>
-            <div class="purchase-type-toggle">
-              <button type="button" id="f-type-direct" class="selected">Direct</button>
-              <button type="button" id="f-type-resale">Resale</button>
-            </div>
-          </div>
-          <div class="form-field">
-            <label for="f-price">Purchase Price (optional)</label>
-            <input type="number" id="f-price" min="0" step="1" placeholder="Total $ paid">
-          </div>
-          <div class="form-field">
-            <label for="f-date">Purchase Date (optional)</label>
-            <input type="date" id="f-date">
-          </div>
+    <div class="modal-overlay" id="notif-settings-modal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Notification Settings</h3>
+          <button type="button" class="modal-close" id="notif-settings-close" aria-label="Close">&times;</button>
         </div>
-        <div class="form-actions">
-          <button type="button" class="save-btn" id="save-contract">Save Contract</button>
-          <button type="button" class="cancel-btn" id="cancel-contract">Cancel</button>
+        <div class="notif-settings-row">
+          <div>
+            <div class="notif-settings-label">In-App Banners</div>
+            <div class="notif-settings-desc">Show the earliest-deadline banner and Notification Center when you open the app.</div>
+          </div>
+          <label class="notif-toggle"><input type="checkbox" id="n-inapp-enabled" ${profile?.in_app_notifications_enabled !== false ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
+        </div>
+        <div class="notif-settings-row">
+          <div>
+            <div class="notif-settings-label">Push Notifications</div>
+            <div class="notif-settings-desc">Critical deadline alerts from your browser, even with the app closed.</div>
+          </div>
+          <label class="notif-toggle"><input type="checkbox" id="n-push-enabled" ${profile?.push_enabled ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
+        </div>
+        <div class="notif-settings-row">
+          <div>
+            <div class="notif-settings-label">Email Reminders</div>
+            <div class="notif-settings-desc">A longer-lead-time backstop, sent to your account email.</div>
+          </div>
+          <label class="notif-toggle"><input type="checkbox" id="n-email-enabled" ${profile?.reminder_opt_in ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
+        </div>
+        <div class="notif-settings-row notif-lead-row">
+          <label for="n-lead-days">Email lead time</label>
+          <div class="notif-lead-input"><input type="number" id="n-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days before a deadline</div>
+        </div>
+        <div class="notif-settings-status" id="notif-settings-status"></div>
+        <div class="studio-nav">
+          <button type="button" class="cancel-btn" id="notif-settings-cancel">Close</button>
+          <button type="button" class="save-btn" id="notif-settings-save">Save</button>
         </div>
       </div>
     </div>
+
+    <div class="section">
+      <div class="section-title-row">
+        <h2>Your Contracts</h2>
+        <button type="button" class="notif-settings-btn" id="notif-settings-btn" aria-label="Notification settings" title="Notification settings">
+          ${profile?.reminder_opt_in || profile?.push_enabled || inAppEnabled ? "🔔" : "🔕"}
+        </button>
+      </div>
+      <div class="section-sub">Own more than one? Add each separately -- DVC Companion will combine what they unlock together.</div>
+      <div class="contract-list" id="contract-list"></div>
+      <button type="button" class="add-btn" id="show-add-form">+ Add Contract</button>
+      <div class="modal-overlay" id="contract-modal">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3 id="contract-modal-title">Add Contract</h3>
+            <button type="button" class="modal-close" id="contract-modal-close" aria-label="Close">&times;</button>
+          </div>
+          <div class="wallet-card modal-preview-card" id="modal-card-preview"></div>
+
+          <div class="studio-stepper" id="studio-stepper">
+            <button type="button" class="studio-stepper-pill" data-step-dot="1">1. Resort</button>
+            <button type="button" class="studio-stepper-pill" data-step-dot="2">2. Points &amp; Use Year</button>
+            <button type="button" class="studio-stepper-pill" data-step-dot="3">3. Details</button>
+          </div>
+          <div class="form-error" id="form-error" style="display:none;"></div>
+
+          <div class="studio-wizard-viewport">
+            <div class="studio-wizard-track" id="studio-wizard-track">
+              <div class="studio-step-pane" data-step-panel="1">
+                <div class="studio-panel">
+                  <label class="studio-step-label">Pick Your Home Resort</label>
+                  <div class="resort-chip-grid" id="resort-chip-grid">
+                    ${resorts.map(r => `<button type="button" class="resort-chip" data-resort="${r.id}" style="background:${walletCardGradient(r.id)}">${r.name}</button>`).join("")}
+                  </div>
+                  <select id="f-resort" class="native-select">
+                    ${resorts.map(r => `<option value="${r.id}">${r.name}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+
+              <div class="studio-step-pane" data-step-panel="2">
+                <div class="studio-panel">
+                  <div class="form-field">
+                    <label>Use Year</label>
+                    <div class="use-year-chips round" id="f-useyear-chips">
+                      ${USE_YEARS.map(y => `<button type="button" class="use-year-chip" data-year="${y}">${y}</button>`).join("")}
+                    </div>
+                    <div class="use-year-deadline" id="f-useyear-deadline"></div>
+                  </div>
+                  <div class="form-field">
+                    <label for="f-points">Points per Year</label>
+                    <div class="points-preset-chips" id="f-points-presets">
+                      ${[50, 100, 150, 200, 250].map(n => `<button type="button" class="points-preset-chip" data-points="${n}">${n}</button>`).join("")}
+                    </div>
+                    <input type="number" id="f-points" class="points-input-large" min="1" step="1" placeholder="e.g. 150">
+                  </div>
+                </div>
+              </div>
+
+              <div class="studio-step-pane" data-step-panel="3">
+                <div class="studio-panel">
+                  <div class="form-field">
+                    <label>Purchase Type</label>
+                    <div class="purchase-type-toggle">
+                      <button type="button" id="f-type-direct" class="selected">Direct</button>
+                      <button type="button" id="f-type-resale">Resale</button>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label for="f-nickname">Nickname (optional)</label>
+                    <input type="text" id="f-nickname" placeholder="e.g. Mom's contract">
+                  </div>
+                  <div class="form-field">
+                    <label for="f-price">Purchase Price (optional)</label>
+                    <input type="number" id="f-price" min="0" step="1" placeholder="Total $ paid">
+                  </div>
+                  <div class="form-field">
+                    <label for="f-acquisition-year">Acquisition Year (optional)</label>
+                    <input type="number" id="f-acquisition-year" min="1991" max="${new Date().getFullYear()}" step="1" placeholder="e.g. ${new Date().getFullYear()}">
+                  </div>
+                  <div class="studio-perks-note">Entering your buy-in price and acquisition year unlocks lifetime cost-of-ownership tracking.</div>
+                  <div class="form-field">
+                    <label>Blue Card Status</label>
+                    <div class="purchase-type-toggle" id="f-bluecard-toggle">
+                      <button type="button" id="f-bluecard-auto" class="selected" data-override="">Auto-Detect</button>
+                      <button type="button" id="f-bluecard-eligible" data-override="true">Eligible</button>
+                      <button type="button" id="f-bluecard-ineligible" data-override="false">Not Eligible</button>
+                    </div>
+                    <div class="field-hint" id="bluecard-auto-hint"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="studio-nav">
+            <button type="button" class="cancel-btn" id="cancel-contract">Cancel</button>
+            <div class="studio-nav-right">
+              <button type="button" class="ghost-btn" id="studio-back">&lt; Back</button>
+              <button type="button" class="ghost-btn" id="studio-skip-save" style="display:none;">Skip Financial Details</button>
+              <button type="button" class="save-btn" id="studio-next">Next: Financials &rarr;</button>
+              <button type="button" class="save-btn" id="save-contract" style="display:none;">Save Deed to Vault</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="active-contract-details"></div>
 
     <div class="section danger-zone">
       <h2>Danger Zone</h2>
@@ -763,17 +1911,141 @@ async function renderSignedIn() {
 
   document.getElementById("show-add-form").addEventListener("click", () => openForm(null));
   document.getElementById("cancel-contract").addEventListener("click", closeForm);
+  document.getElementById("contract-modal-close").addEventListener("click", closeForm);
+  // Click the dimmed backdrop (not the box itself) to close, same convention
+  // as index.html's "Find Alternatives" modal.
+  document.getElementById("contract-modal").addEventListener("click", (e) => {
+    if (e.target.id === "contract-modal") closeForm();
+  });
   document.getElementById("save-contract").addEventListener("click", () => saveForm(contracts));
-  document.getElementById("f-type-direct").addEventListener("click", () => setPurchaseType("direct"));
-  document.getElementById("f-type-resale").addEventListener("click", () => setPurchaseType("resale"));
-  document.getElementById("save-reminders").addEventListener("click", saveReminderPrefs);
+  document.getElementById("studio-next").addEventListener("click", () => showStudioStep(modalStep + 1));
+  document.getElementById("studio-back").addEventListener("click", () => showStudioStep(modalStep - 1));
+  // Saves immediately with whatever Step 3 already defaults to (Direct,
+  // no nickname/price/date) -- for someone who just wants their booking
+  // windows active now and doesn't care about the House Money tracker yet.
+  document.getElementById("studio-skip-save").addEventListener("click", () => saveForm(contracts));
+  // Stepper pills only navigate while editing an existing contract (see
+  // .studio-stepper.jumpable) -- a brand-new contract walks the steps in
+  // order via the resort-chip auto-advance and Next/Back below.
+  document.getElementById("studio-stepper").addEventListener("click", (e) => {
+    const pill = e.target.closest(".studio-stepper-pill");
+    if (!pill || !isEditingMode) return;
+    showStudioStep(Number(pill.dataset.stepDot));
+  });
+  document.getElementById("f-type-direct").addEventListener("click", () => { setPurchaseType("direct"); updateModalCardPreview(); });
+  document.getElementById("f-type-resale").addEventListener("click", () => { setPurchaseType("resale"); updateModalCardPreview(); });
+  document.getElementById("f-bluecard-toggle").addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const raw = btn.dataset.override;
+    setBlueCardOverride(raw === "true" ? true : raw === "false" ? false : null);
+    updateModalCardPreview();
+  });
+  // Step 1: tapping a resort chip is the only way to change resort now --
+  // the native <select> stays in the DOM purely as saveForm()'s value store.
+  // Picking one immediately slides to Step 2 for a brand-new contract, like
+  // a native onboarding flow -- editing an existing contract (reached via
+  // the jumpable stepper) leaves the user right where they navigated to.
+  document.getElementById("resort-chip-grid").addEventListener("click", (e) => {
+    const chip = e.target.closest(".resort-chip");
+    if (!chip) return;
+    document.querySelectorAll(".resort-chip").forEach(c => c.classList.remove("selected"));
+    chip.classList.add("selected");
+    document.getElementById("f-resort").value = chip.dataset.resort;
+    updateModalCardPreview();
+    if (!isEditingMode) showStudioStep(2);
+  });
+  document.getElementById("f-useyear-chips").addEventListener("click", (e) => {
+    const btn = e.target.closest(".use-year-chip");
+    if (!btn) return;
+    setUseYear(btn.dataset.year);
+    updateModalCardPreview();
+  });
+  document.getElementById("f-points-presets").addEventListener("click", (e) => {
+    const btn = e.target.closest(".points-preset-chip");
+    if (!btn) return;
+    document.querySelectorAll(".points-preset-chip").forEach(c => c.classList.remove("selected"));
+    btn.classList.add("selected");
+    document.getElementById("f-points").value = btn.dataset.points;
+    updateModalCardPreview();
+    updateStudioNextLabel();
+    // Tapping a preset is one discrete, complete action -- same reasoning
+    // as a resort chip auto-advancing Step 1 -> 2, so this advances
+    // straight to Step 3 instead of making the user also tap "Next"/
+    // "Review & Save Deed" for a value they've already fully committed to.
+    if (modalStep === 2) showStudioStep(3);
+  });
+  document.getElementById("f-points").addEventListener("input", () => { updateModalCardPreview(); updateStudioNextLabel(); });
+  // "change" (fires on blur/Enter), not "input" (fires every keystroke) --
+  // auto-advancing on the first digit of a multi-digit number would yank
+  // the user to Step 3 before they finish typing "250". Blurring the field
+  // (tabbing away, or tapping elsewhere) is the discrete "I'm done with
+  // this value" signal a preset-chip tap already gives for free.
+  document.getElementById("f-points").addEventListener("change", () => {
+    const points = parseInt(document.getElementById("f-points").value, 10);
+    if (points > 0 && modalStep === 2) showStudioStep(3);
+  });
+  document.getElementById("f-nickname").addEventListener("input", updateModalCardPreview);
+  // Blue Card eligibility and resale-restriction status both depend on
+  // acquisition year -- refresh the live preview as soon as it's picked,
+  // same as every other Step 3 field that feeds the card face.
+  document.getElementById("f-acquisition-year").addEventListener("input", updateModalCardPreview);
   document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
 
-  // Row-level edit/delete/reactivate buttons (delegated, since the list re-renders).
-  document.getElementById("contract-list").addEventListener("click", async (e) => {
+  // Notification Settings modal -- same open/close/backdrop-click
+  // conventions as the Card Studio modal above.
+  document.getElementById("notif-settings-btn").addEventListener("click", openNotifSettings);
+  document.getElementById("notif-settings-close").addEventListener("click", closeNotifSettings);
+  document.getElementById("notif-settings-cancel").addEventListener("click", closeNotifSettings);
+  document.getElementById("notif-settings-modal").addEventListener("click", (e) => {
+    if (e.target.id === "notif-settings-modal") closeNotifSettings();
+  });
+  document.getElementById("notif-settings-save").addEventListener("click", saveNotificationSettings);
+
+  document.getElementById("membership-action-btn").addEventListener("click", handleMembershipAction);
+
+  const checkoutBanner = document.getElementById("checkout-return-banner");
+  if (checkoutBanner) {
+    // Strip the param so a refresh/re-share of this URL doesn't re-show
+    // the banner or re-trigger the poll below.
+    window.history.replaceState({}, "", window.location.pathname);
+    if (checkoutBanner.classList.contains("success")) startCheckoutSuccessPoll();
+  }
+
+  // Notification Center dismiss buttons -- delegated since the list
+  // re-renders on every page load and each item's own lifetime is short.
+  document.getElementById("notification-center-list")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-dismiss]");
+    if (!btn) return;
+    dismissNotification(btn.dataset.dismiss);
+    btn.closest(".notification-item").remove();
+  });
+
+  // Wallet deck: clicking a card's face brings it to the front. The ledger
+  // panel and action row live in #active-contract-details now, not inside
+  // the card, so there's no "outside panel/actions" exclusion needed here
+  // any more -- any click on a card face is a click to activate it. The
+  // perk dot is the one exception: tapping it should open its tooltip (see
+  // the document-level click handler below), not re-render the whole deck
+  // out from under it.
+  document.getElementById("contract-list").addEventListener("click", (e) => {
+    if (e.target.closest(".wallet-card-perk-dot")) return;
+    const card = e.target.closest(".wallet-card[data-contract-id]");
+    if (card && document.getElementById("contract-list").classList.contains("wallet-deck")) {
+      activeWalletCardId = card.dataset.contractId;
+      activeLedgerYearTab = null; // let the new card default to its own current year
+      renderContractList(contracts, resorts, yearPointsByContract);
+    }
+  });
+
+  // Row-level edit/delete/reactivate buttons and ledger controls for the
+  // active contract (delegated, since the panel re-renders on every tab
+  // switch and on every card switch).
+  document.getElementById("active-contract-details").addEventListener("click", async (e) => {
     const editBtn = e.target.closest("[data-edit]");
     const deleteBtn = e.target.closest("[data-delete]");
     const toggleBtn = e.target.closest("[data-toggle-active]");
+    const yearTab = e.target.closest(".ledger-year-tab[data-select-year]");
 
     if (editBtn) {
       const c = contracts.find(c => c.id === editBtn.dataset.edit);
@@ -782,6 +2054,14 @@ async function renderSignedIn() {
     if (deleteBtn) {
       if (!confirm("Delete this contract? This can't be undone.")) return;
       await window.DVCAuth.deleteContract(deleteBtn.dataset.delete);
+      // Only clear the active selection if the deleted contract WAS the
+      // active one -- renderContractList()'s own fallback then picks a new
+      // default from the post-delete list. Deleting some other (background)
+      // card shouldn't switch the user away from what they're looking at.
+      if (deleteBtn.dataset.delete === activeWalletCardId) {
+        activeWalletCardId = null;
+        activeLedgerYearTab = null;
+      }
       renderSignedIn();
     }
     if (toggleBtn) {
@@ -790,6 +2070,11 @@ async function renderSignedIn() {
         await window.DVCAuth.updateContract(c.id, { is_active: !c.is_active });
         renderSignedIn();
       }
+    }
+
+    if (yearTab) {
+      activeLedgerYearTab = Number(yearTab.dataset.selectYear);
+      renderActiveContractDetails(contracts, yearPointsByContract);
     }
 
     const addYearBtn = e.target.closest("[data-add-year]");
@@ -805,93 +2090,394 @@ async function renderSignedIn() {
     }
   });
 
-  // Ledger table inputs: live per-row total on every keystroke, real save
+  // Ledger row inputs: live per-row total/bar on every keystroke, real save
   // once the user leaves a field. Separate listeners (not the click
   // delegate above) since number inputs fire "input"/"change", not "click".
-  document.getElementById("contract-list").addEventListener("input", (e) => {
-    const row = e.target.closest("tr[data-year]");
-    if (!row || !e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed")) return;
-    updateLedgerRowTotal(row);
+  document.getElementById("active-contract-details").addEventListener("input", (e) => {
+    const row = e.target.closest(".ledger-row");
+    if (!row) return;
+    if (e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed, .ledger-holding")) {
+      updateLedgerRowTotal(row);
+    }
+    // Auto-fill today's date the first time an owner enters a positive
+    // Holding balance from empty -- covers the common case (recording a
+    // cancellation as it happens) without an extra click; a backdated entry
+    // just means editing the date field afterward.
+    if (e.target.matches(".ledger-holding")) {
+      const holdingValue = parseInt(e.target.value, 10) || 0;
+      const dateInput = row.querySelector(".ledger-holding-date");
+      if (holdingValue > 0 && dateInput && !dateInput.value) {
+        dateInput.value = todayDateInputValue();
+      }
+    }
   });
 
-  document.getElementById("contract-list").addEventListener("change", (e) => {
-    const row = e.target.closest("tr[data-year]");
-    if (!row || !e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed")) return;
-    const table = row.closest(".points-ledger");
-    saveLedgerRow(row, table.dataset.contractId, Number(row.dataset.year), yearPointsByContract);
+  document.getElementById("active-contract-details").addEventListener("change", (e) => {
+    const row = e.target.closest(".ledger-row");
+    if (!row || !e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed, .ledger-holding, .ledger-holding-date")) return;
+    saveLedgerRow(row, row.dataset.contractId, Number(row.dataset.year), yearPointsByContract);
   });
 }
 
+// Short "Jan 31" form for the card face's compact deadline pill -- the
+// shared formatDeadlineDate() (dvc-dates.js) always includes the year,
+// which is the right call for the ledger's "Use by" column but too long
+// for a pill that has to fit next to the UY/purchase-type pills.
+function formatShortDate(ms) {
+  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+// Card face inner markup only (no outer .wallet-card wrapper/background) --
+// shared by the real deck below AND the Card Studio's live preview
+// (updateModalCardPreview()), so what a user sees while building a
+// contract is pixel-identical to what lands in their vault.
+// Card face only flags something when it's notable (Blue Card eligible, or
+// resale-restricted) -- a plain non-eligible direct or grandfathered-resale
+// contract gets no pill, keeping the face uncluttered for the common case.
+function perkPillTooltip(perks) {
+  if (perks.resaleRestrictionType === "restricted_home_resort_only") {
+    return "Bought resale at this resort -- these points can only ever book stays here, not any other DVC resort. Direct-purchased points at this same resort don't have this limit.";
+  }
+  if (perks.resaleRestrictionType === "general_resale") {
+    return "Bought resale on or after March 21, 2011 -- these points can't be redeemed through the Disney Collection (cash Disney hotel rooms, cruises, Adventures by Disney). Booking DVC resorts at 7 months is unaffected.";
+  }
+  if (perks.isBlueCardOverridden) {
+    return "Manually marked Blue Card eligible -- annual pass, merchandise, and dining discounts reserved for qualifying direct owners. Set on this contract's Details step, overriding the automatic year-based detection.";
+  }
+  return "This contract's points were purchased direct and meet Disney's minimum for Blue Card Membership Extras -- annual pass, merchandise, and dining discounts reserved for qualifying direct owners.";
+}
+
+// A small icon dot rather than the full spelled-out label (e.g. "NO DISNEY
+// COLLECTION") -- that read as a big, shouty callout on an otherwise sleek
+// card, especially for a resale limitation nobody needs announced at that
+// size. The full label still appears in the tooltip and in the Active
+// Contract Details header below (buildActivePerkBadgeHTML()), where a
+// labeled fact fits the context instead of looking like a warning stamp.
+function buildPerkPillHTML(perks) {
+  if (!perks || perks.badgeVariant === "neutral") return "";
+  const cls = perks.badgeVariant === "info" ? "blue-card" : "restricted";
+  const icon = perks.badgeVariant === "info" ? "★" : "!";
+  return `<span class="wallet-card-perk-dot ${cls} tooltip-anchor tooltip-align-left" role="img" aria-label="${perks.badgeText}">${icon}<div class="tooltip-card"><strong>${perks.badgeText}</strong><br>${perkPillTooltip(perks)}</div></span>`;
+}
+
+function buildWalletCardFaceHTML({ resortId, nickname, pointsPerYear, useYear, purchaseType, purchaseDate, blueCardOverride, isActive, deadline }) {
+  const points = pointsPerYear > 0 ? pointsPerYear.toLocaleString() : "—";
+  const perks = window.DVCAuth?.evaluateContractPerks({
+    purchase_type: purchaseType,
+    purchase_date: purchaseDate || null,
+    points_per_year: pointsPerYear,
+    home_resort_id: resortId,
+    blue_card_override: blueCardOverride ?? null,
+  });
+  return `
+    <div class="wallet-card-decor"></div>
+    <div class="wallet-card-top">
+      <div class="wallet-card-top-left">
+        <div class="wallet-card-name">${resortName(resortId)}</div>
+        ${nickname ? `<div class="wallet-card-nickname">${nickname}</div>` : ""}
+      </div>
+      <div class="wallet-card-top-right">
+        <div class="wallet-card-peek-stats">
+          <span class="wallet-card-peek-pill">${points} pts</span>
+          <span class="wallet-card-peek-pill">${useYear.toUpperCase()}</span>
+        </div>
+      </div>
+    </div>
+    <div class="wallet-card-points">
+      <div class="wallet-card-points-num">${points}</div>
+      <div class="wallet-card-points-label">POINTS / YR</div>
+    </div>
+    <div class="wallet-card-bottom">
+      <div class="wallet-card-bottom-left">
+        <span class="wallet-card-pill">${useYear.toUpperCase()} UY</span>
+        <span class="wallet-card-pill">${purchaseType.toUpperCase()}</span>
+        ${isActive ? "" : `<span class="wallet-card-pill">INACTIVE</span>`}
+        ${buildPerkPillHTML(perks)}
+      </div>
+      ${deadline ? `
+      <div class="wallet-card-deadline-pill tooltip-anchor tooltip-align-right">
+        ⏳ Bank by ${formatShortDate(deadline.ms)}
+        <div class="tooltip-card">Bank/borrow deadline: ${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}. Points not banked into next year or borrowed from it by then follow DVC's standard rules for the ${useYear} use year.</div>
+      </div>` : ""}
+    </div>
+  `;
+}
+
+// Card FACES only -- a fixed-size, credit-card-shaped deck. All ledger
+// detail lives in renderActiveContractDetails() below, kept in sync here
+// so every caller of renderContractList() automatically updates both.
 function renderContractList(contracts, resorts, yearPointsByContract) {
   const list = document.getElementById("contract-list");
+  const addFormBtn = document.getElementById("show-add-form");
   if (contracts.length === 0) {
-    list.innerHTML = `<div class="empty-note">No contracts yet -- add your first one below.</div>`;
+    addFormBtn.style.display = "none";
+    list.className = "contract-list";
+    list.innerHTML = `
+      <div class="empty-vault-hero" id="empty-vault-hero">
+        <div class="empty-vault-hero-title">Your Digital Vault is Waiting</div>
+        <div class="empty-vault-hero-sub">Add your first contract to unlock personalized 11-month booking windows and track your road to House Money.</div>
+        <button type="button" class="add-btn" id="hero-create-btn">Issue Your First Deed &rarr;</button>
+      </div>
+    `;
+    document.getElementById("hero-create-btn").addEventListener("click", () => openForm(null));
+    activeWalletCardId = null;
+    renderActiveContractDetails(contracts, yearPointsByContract);
     return;
   }
+  addFormBtn.style.display = "";
+  // Only the just-saved brand-new contract (if any) gets the shimmer, and
+  // only on this one render -- clearing the flag now means a later
+  // re-render (switching cards, editing a different contract) won't
+  // replay the animation on a card that isn't actually new any more.
+  const justIssued = justIssuedContractId;
+  justIssuedContractId = null;
+  // Deck mode only kicks in at 2+ contracts -- a single contract always
+  // renders flat/full (see the .wallet-deck-scoped CSS), nothing to stack.
+  const isDeck = contracts.length >= 2;
+  if (!contracts.some(c => c.id === activeWalletCardId)) {
+    activeWalletCardId = contracts[0].id;
+  }
+  list.className = "contract-list" + (isDeck ? " wallet-deck" : "");
   const today = todayInEastern();
-  list.innerHTML = contracts.map(c => {
-    const deadline = c.is_active ? nextDeadlineForUseYear(c.use_year, today) : null;
-    const uyYear = currentUYYear(c.use_year, today);
-    const rows = buildLedgerRows(c, yearPointsByContract, today);
-    const canAddYear = rows.length < MAX_LEDGER_ROWS;
-    const nextAddableYear = rows[rows.length - 1].year + 1;
+  // The active card always renders LAST -- not just z-index-boosted in
+  // place -- so it's physically the front card in the stack (nothing after
+  // it to overlap it), matching how a real card fan works. Everyone else
+  // keeps their relative order behind it.
+  const renderOrder = isDeck
+    ? [...contracts.filter(c => c.id !== activeWalletCardId), ...contracts.filter(c => c.id === activeWalletCardId)]
+    : contracts;
+  list.innerHTML = renderOrder.map(c => {
+    // Card face's deadline pill only shows for a genuinely open, actionable
+    // banking window -- "use-by"/"accounted" get their nuanced messaging in
+    // the ledger panel below instead of a misleading "Bank by" pill here.
+    const status = c.is_active ? evaluateContractDeadlineStatus(c, yearPointsByContract, today) : null;
+    const deadline = status?.kind === "bankable" ? status.deadline : null;
+    const isActiveCard = isDeck && c.id === activeWalletCardId;
+    const shimmer = c.id === justIssued ? " newly-issued" : "";
     return `
-    <div class="contract-card ${c.is_active ? "" : "inactive"}">
-      <div class="contract-main">
-        <div class="contract-name">${c.nickname || resortName(c.home_resort_id)}</div>
-        <div class="contract-meta">
-          <span>${resortName(c.home_resort_id)}</span>
-          <span>&middot;</span>
-          <span>${c.use_year} UY</span>
-          <span>&middot;</span>
-          <span>${c.points_per_year.toLocaleString()} pts/yr</span>
-          <span class="badge ${c.purchase_type === "direct" ? "badge-direct" : "badge-resale"}">${c.purchase_type}</span>
-          ${c.is_active ? "" : `<span class="badge badge-inactive">inactive</span>`}
-        </div>
-        ${deadline ? `<div class="contract-deadline">Next banking/borrowing deadline: <strong>${formatDeadlineDate(deadline.ms)}</strong> (${deadline.daysUntil} day${deadline.daysUntil === 1 ? "" : "s"})</div>` : ""}
-        <table class="points-ledger" data-contract-id="${c.id}">
-          <thead>
-            <tr>
-              <th>Use Year</th><th>Remaining</th><th>Banked</th><th>Borrowed</th><th>Total</th><th>To Be Used By</th><th></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(row => `
-              <tr data-year="${row.year}" class="${row.year === uyYear ? "ledger-current" : ""}">
-                <td class="ledger-year">${row.year}</td>
-                <td><input type="number" class="ledger-remaining" min="0" step="1" value="${row.points_remaining}"></td>
-                <td><input type="number" class="ledger-banked" min="0" step="1" value="${row.points_banked}"></td>
-                <td><input type="number" class="ledger-borrowed" min="0" step="1" value="${row.points_borrowed}"></td>
-                <td class="ledger-total">${(row.points_remaining + row.points_banked + row.points_borrowed).toLocaleString()}</td>
-                <td class="ledger-expires">${formatDeadlineDate(row.expiresMs)}</td>
-                <td>${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-        <div class="ledger-footer">
-          ${canAddYear ? `<button type="button" class="small-btn" data-add-year="${nextAddableYear}" data-contract-id="${c.id}">+ Plan ${nextAddableYear}</button>` : ""}
-          <span class="qe-status" data-status-for="${c.id}"></span>
-        </div>
-      </div>
-      <div class="contract-actions">
-        <button type="button" class="small-btn" data-edit="${c.id}">Edit</button>
-        <button type="button" class="small-btn" data-toggle-active="${c.id}">${c.is_active ? "Deactivate" : "Reactivate"}</button>
-        <button type="button" class="small-btn danger" data-delete="${c.id}">Delete</button>
-      </div>
+    <div class="wallet-card ${c.is_active ? "" : "inactive"}${isActiveCard ? " active-card" : ""}${shimmer}" data-contract-id="${c.id}" style="background: ${walletCardGradient(c.home_resort_id)};">
+      ${buildWalletCardFaceHTML({
+        resortId: c.home_resort_id,
+        nickname: c.nickname,
+        pointsPerYear: c.points_per_year,
+        useYear: c.use_year,
+        purchaseType: c.purchase_type,
+        purchaseDate: c.purchase_date,
+        blueCardOverride: c.blue_card_override,
+        isActive: c.is_active,
+        deadline,
+      })}
     </div>
   `;
   }).join("");
+  if (isDeck) applyDeckPeekSpacing();
+  renderActiveContractDetails(contracts, yearPointsByContract);
 }
 
-// Recomputes one ledger row's total from its three inputs' current
-// (possibly unsaved) values -- fires on every keystroke, purely
-// client-side, no network call.
+// Resort names vary a lot in length -- some wrap to 2 lines, some have a
+// nickname line too. A fixed peek height (the old flat -145px margin)
+// truncates a longer name behind whichever card overlaps it. Instead,
+// measure each card's actual title-block height and give the NEXT card
+// just enough negative margin to clear it, so every card's title stays
+// fully visible no matter how it wraps.
+function applyDeckPeekSpacing() {
+  const cards = [...document.querySelectorAll("#contract-list.wallet-deck > .wallet-card")];
+  // Below 600px (matching this file's own @media (max-width: 600px) deck
+  // rules), the mobile stylesheet already sets a fixed, reliable peek
+  // margin against a fixed 168px card height -- name/nickname are truncated
+  // to one line there specifically so that fixed number holds regardless of
+  // content. Setting an inline margin-top here would win over it (inline
+  // beats any class selector, media query or not) using the DESKTOP
+  // CARD_HEIGHT (215) against an actually-168px-tall card, producing a much
+  // tighter overlap than intended -- clear our own override instead and let
+  // the CSS rule apply.
+  if (window.innerWidth <= 600) {
+    cards.forEach((card, i) => {
+      card.style.marginTop = "";
+      card.style.zIndex = String(i + 1);
+    });
+    return;
+  }
+  const CARD_HEIGHT = 215;
+  const TOP_PADDING = 20;
+  const PEEK_BUFFER = 10;
+  // .active-card additionally lifts -16px via transform (a purely visual
+  // shift that doesn't move it in layout flow) -- account for that on top
+  // of the margin, or the active card's extra lift eats straight into
+  // whichever card's title is peeking out just behind it.
+  const ACTIVE_LIFT = 16;
+  for (let i = 1; i < cards.length; i++) {
+    const prevTop = cards[i - 1].querySelector(".wallet-card-top");
+    const lift = cards[i].classList.contains("active-card") ? ACTIVE_LIFT : 0;
+    const peekHeight = Math.max(70, TOP_PADDING + prevTop.offsetHeight + PEEK_BUFFER + lift);
+    cards[i].style.marginTop = `-${CARD_HEIGHT - peekHeight}px`;
+  }
+  // Explicit, unambiguous paint order -- each card gets a numeric z-index
+  // matching its DOM position (the active card, always last, naturally
+  // lands highest) instead of leaning on implicit same-stacking-context
+  // DOM-order painting, which some browsers get wrong once several
+  // position:relative siblings overlap via negative margins -- that can let
+  // a covered card's text bleed through the one stacked in front of it.
+  cards.forEach((card, i) => { card.style.zIndex = String(i + 1); });
+}
+
+// The ledger (use-year rows, bars, steppers, +Plan a year) and Edit/
+// Deactivate/Delete actions for whichever card is active -- lives below
+// the deck, not inside the card face. Empty when there are no contracts.
+function renderActiveContractDetails(contracts, yearPointsByContract) {
+  const el = document.getElementById("active-contract-details");
+  const c = contracts.find(c => c.id === activeWalletCardId);
+  if (!c) {
+    el.innerHTML = "";
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "";
+  el.style.borderTopColor = walletCardPrimaryColor(c.home_resort_id);
+  const perks = window.DVCAuth?.evaluateContractPerks({
+    purchase_type: c.purchase_type,
+    purchase_date: c.purchase_date || null,
+    points_per_year: c.points_per_year,
+    home_resort_id: c.home_resort_id,
+    blue_card_override: c.blue_card_override,
+  });
+  const today = todayInEastern();
+  const uyYear = currentUYYear(c.use_year, today);
+  const rows = buildLedgerRows(c, yearPointsByContract, today);
+  const canAddYear = rows.length < MAX_LEDGER_ROWS;
+  const nextAddableYear = rows[rows.length - 1].year + 1;
+
+  // Default (or recover from a stale selection, e.g. after removing a
+  // planned year) to the current cycle -- one row shown at a time, not a
+  // stacked table of every year at once.
+  if (!rows.some(r => r.year === activeLedgerYearTab)) {
+    activeLedgerYearTab = uyYear;
+  }
+  const row = rows.find(r => r.year === activeLedgerYearTab);
+  const total = row.points_remaining + row.points_banked + row.points_borrowed + row.points_holding;
+  const isCurrentTab = row.year === uyYear;
+  // dvc-ledger.js's borrow-cap rule is checked against the contract's
+  // annual allotment -- there's no separate "next year's adjusted
+  // allotment" concept in this data model, just points_per_year.
+  const borrowCheck = window.DVCLedger?.validateBorrowedPoints(row.points_borrowed, c.points_per_year);
+  // The banking deadline math is only meaningful for the cycle actually
+  // active right now -- a "Plan Ahead" row gets its own expiration date
+  // instead of a fabricated deadline.
+  const status = isCurrentTab && c.is_active ? evaluateContractDeadlineStatus(c, yearPointsByContract, today) : null;
+  const todayMs = dateOnlyUTC(today.year, today.month, today.day);
+  const enteredMs = row.points_holding_entered_at ? Date.parse(row.points_holding_entered_at + "T00:00:00Z") : null;
+  const holdingStatus = row.points_holding > 0 && window.DVCLedger
+    ? window.DVCLedger.holdingRebookDeadline(enteredMs, row.expiresMs, todayMs)
+    : null;
+
+  el.innerHTML = `
+    <div class="wallet-details-header">
+      <div class="wallet-details-title">
+        <span class="wallet-details-name">${resortName(c.home_resort_id)}</span>
+        ${c.nickname ? `<span class="wallet-details-nickname-badge">${c.nickname}</span>` : ""}
+        ${perks && perks.badgeVariant !== "neutral" ? `<span class="perk-badge perk-badge-${perks.badgeVariant} tooltip-anchor">${perks.badgeText}<div class="tooltip-card">${perkPillTooltip(perks)}</div></span>` : ""}
+      </div>
+      <div class="wallet-details-actions">
+        <button type="button" data-edit="${c.id}">Edit</button>
+        <button type="button" data-toggle-active="${c.id}">${c.is_active ? "Deactivate" : "Reactivate"}</button>
+        <button type="button" class="danger" data-delete="${c.id}">Delete</button>
+      </div>
+    </div>
+
+    <div class="ledger-year-tabs">
+      ${rows.map(r => `<button type="button" class="ledger-year-tab${r.year === activeLedgerYearTab ? " selected" : ""}" data-select-year="${r.year}">${r.year === uyYear ? "Current Year" : "Plan Ahead"} (${r.year})</button>`).join("")}
+      ${canAddYear ? `<button type="button" class="ledger-year-tab add-year" data-add-year="${nextAddableYear}" data-contract-id="${c.id}">+ Plan ${nextAddableYear}</button>` : ""}
+    </div>
+
+    <div class="ledger-rows" data-contract-id="${c.id}">
+      <div class="ledger-row ledger-current" data-year="${row.year}" data-contract-id="${c.id}">
+        <div class="ledger-primary-stat">
+          <div>
+            <div class="ledger-primary-num">${total.toLocaleString()}</div>
+            <div class="ledger-primary-label">${row.year} Use Year &middot; Points Available</div>
+          </div>
+          ${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}
+        </div>
+        ${status?.kind === "bankable"
+          ? `<div class="ledger-deadline-warning ${urgencyTier(status.deadline.daysUntil)}">⏳ Bank/borrow by ${formatDeadlineWithCountdown(status.deadline.ms, status.deadline.daysUntil)}</div>`
+          : status?.kind === "use-by"
+          ? `<div class="ledger-deadline-warning ${urgencyTier(status.daysUntil)}">🔒 Banking window closed -- use by ${formatDeadlineWithCountdown(status.expiresMs, status.daysUntil)}</div>`
+          : status?.kind === "accounted"
+          ? `<div class="ledger-deadline-warning muted">✅ All points accounted for this year</div>`
+          : `<div class="ledger-deadline-warning muted">For use between ${formatDeadlineDate(dateOnlyUTC(row.year, USE_YEAR_START_MONTH[c.use_year], 1))} and ${formatDeadlineDate(row.expiresMs)}</div>`}
+        ${row.points_holding > 0
+          ? holdingStatus
+            ? `<div class="ledger-deadline-warning${holdingStatus.daysUntil <= 14 ? "" : " muted"}">🅿️ Rebook holding pts by ${formatDeadlineDate(holdingStatus.ms)} (${holdingStatus.daysUntil}d)</div>`
+            : `<div class="ledger-deadline-warning">🅿️ ${row.points_holding.toLocaleString()} pts in Holding &mdash; set the date they entered holding below to see the real rebook deadline</div>`
+          : ""}
+        <div class="ledger-bar">
+          <div class="ledger-bar-seg ledger-seg-banked" style="flex-grow:${row.points_banked}"></div>
+          <div class="ledger-bar-seg ledger-seg-current" style="flex-grow:${row.points_remaining}"></div>
+          <div class="ledger-bar-seg ledger-seg-borrowed" style="flex-grow:${row.points_borrowed}"></div>
+          <div class="ledger-bar-seg ledger-seg-holding" style="flex-grow:${row.points_holding}"></div>
+        </div>
+        <div class="ledger-steppers">
+          <div class="ledger-stepper banked">
+            <span class="ledger-stepper-label">Banked</span>
+            <div class="ledger-stepper-row">
+              <input type="number" class="ledger-banked" min="0" step="1" value="${row.points_banked}">
+            </div>
+          </div>
+          <div class="ledger-stepper current">
+            <span class="ledger-stepper-label">Current</span>
+            <div class="ledger-stepper-row">
+              <input type="number" class="ledger-remaining" min="0" step="1" value="${row.points_remaining}">
+            </div>
+          </div>
+          <div class="ledger-stepper borrowed">
+            <span class="ledger-stepper-label">Borrowed</span>
+            <div class="ledger-stepper-row">
+              <input type="number" class="ledger-borrowed" min="0" step="1" value="${row.points_borrowed}">
+            </div>
+          </div>
+          <div class="ledger-stepper holding">
+            <span class="ledger-stepper-label tooltip-anchor">Holding<div class="tooltip-card">${window.DVCLedger?.HOLDING_RULES_TEXT || ""}</div></span>
+            <div class="ledger-stepper-row">
+              <input type="number" class="ledger-holding" min="0" step="1" value="${row.points_holding}">
+            </div>
+          </div>
+        </div>
+        <div class="ledger-holding-date-row${row.points_holding > 0 ? "" : " muted"}">
+          <label for="ledger-holding-date-${c.id}">Entered holding on</label>
+          <input type="date" id="ledger-holding-date-${c.id}" class="ledger-holding-date" value="${row.points_holding_entered_at || ""}">
+        </div>
+        ${borrowCheck && !borrowCheck.valid
+          ? `<div class="ledger-validation-note">⚠ ${row.points_borrowed.toLocaleString()} pts borrowed exceeds next year's full ${borrowCheck.maxAllowed.toLocaleString()}-pt allotment on this contract -- double-check this against your real Member Services balance.</div>`
+          : ""}
+      </div>
+    </div>
+    <div class="ledger-footer">
+      <span class="qe-status" data-status-for="${c.id}"></span>
+    </div>
+  `;
+}
+
+// Recomputes one ledger row's total and bar segments from its four
+// inputs' current (possibly unsaved) values -- fires on every keystroke,
+// purely client-side, no network call.
 function updateLedgerRowTotal(row) {
   const remaining = parseInt(row.querySelector(".ledger-remaining").value, 10) || 0;
   const banked = parseInt(row.querySelector(".ledger-banked").value, 10) || 0;
   const borrowed = parseInt(row.querySelector(".ledger-borrowed").value, 10) || 0;
-  row.querySelector(".ledger-total").textContent = (remaining + banked + borrowed).toLocaleString();
+  const holding = parseInt(row.querySelector(".ledger-holding").value, 10) || 0;
+  row.querySelector(".ledger-primary-num").textContent = (remaining + banked + borrowed + holding).toLocaleString();
+  row.querySelector(".ledger-seg-banked").style.flexGrow = banked;
+  row.querySelector(".ledger-seg-current").style.flexGrow = remaining;
+  row.querySelector(".ledger-seg-borrowed").style.flexGrow = borrowed;
+  row.querySelector(".ledger-seg-holding").style.flexGrow = holding;
+}
+
+// "YYYY-MM-DD" for today in Eastern time (matches a <input type="date">'s
+// expected value format) -- used to auto-fill the Holding entered-date
+// field, same Eastern-time convention every other deadline calc here uses.
+function todayDateInputValue() {
+  const t = todayInEastern();
+  return `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}`;
 }
 
 function ledgerStatusEl(contractId) {
@@ -911,6 +2497,8 @@ async function saveLedgerRow(row, contractId, year, yearPointsByContract) {
     points_remaining: Math.max(0, parseInt(row.querySelector(".ledger-remaining").value, 10) || 0),
     points_banked: Math.max(0, parseInt(row.querySelector(".ledger-banked").value, 10) || 0),
     points_borrowed: Math.max(0, parseInt(row.querySelector(".ledger-borrowed").value, 10) || 0),
+    points_holding: Math.max(0, parseInt(row.querySelector(".ledger-holding").value, 10) || 0),
+    points_holding_entered_at: row.querySelector(".ledger-holding-date").value || null,
   };
 
   const statusEl = ledgerStatusEl(contractId);
@@ -936,7 +2524,7 @@ async function saveLedgerRow(row, contractId, year, yearPointsByContract) {
 
 // "+ Plan a year": creates a zeroed row for the next year up front (rather
 // than waiting for the user to type something) so it immediately appears
-// as an editable table row, same as any other year.
+// as an editable ledger row, same as any other year.
 async function addLedgerYear(contract, year, yearPointsByContract) {
   const result = await window.DVCAuth.upsertContractYearPoints({
     contract_id: contract.id,
@@ -944,12 +2532,15 @@ async function addLedgerYear(contract, year, yearPointsByContract) {
     points_remaining: contract.points_per_year,
     points_banked: 0,
     points_borrowed: 0,
+    points_holding: 0,
+    points_holding_entered_at: null,
   });
   if (result.error) {
     alert(`Couldn't add ${year}: ${result.error}`);
     return;
   }
   (yearPointsByContract[contract.id] ||= []).push(result.data);
+  activeLedgerYearTab = year; // select the tab the user just created
   renderSignedIn();
 }
 
@@ -960,6 +2551,9 @@ async function removeLedgerYear(contractId, year, yearPointsByContract) {
     await window.DVCAuth.deleteContractYearPoints(row.id);
     yearPointsByContract[contractId] = rows.filter(r => r.id !== row.id);
   }
+  // renderActiveContractDetails() falls back to the current-year row on its
+  // own if the removed year was selected -- no need to check here first.
+  if (year === activeLedgerYearTab) activeLedgerYearTab = null;
   renderSignedIn();
 }
 
@@ -972,24 +2566,161 @@ function getSelectedPurchaseType() {
   return document.getElementById("f-type-direct").classList.contains("selected") ? "direct" : "resale";
 }
 
+// Blue Card override: tri-state DOM-as-state, same convention as
+// get/setPurchaseType above. "" (Auto-Detect) maps to null -- the DB
+// column and evaluateContractPerks() both treat null as "use the
+// automatic year-based determination," not a third real value.
+function setBlueCardOverride(value) {
+  const target = value === true ? "f-bluecard-eligible" : value === false ? "f-bluecard-ineligible" : "f-bluecard-auto";
+  document.querySelectorAll("#f-bluecard-toggle button").forEach(btn => {
+    btn.classList.toggle("selected", btn.id === target);
+  });
+}
+
+function getSelectedBlueCardOverride() {
+  const selected = document.querySelector("#f-bluecard-toggle button.selected");
+  const raw = selected?.dataset.override;
+  return raw === "true" ? true : raw === "false" ? false : null;
+}
+
+// Use Year chips: DOM-as-state, same convention as get/setPurchaseType
+// above -- the ".selected" class on a chip button IS the current value,
+// not a mirrored JS variable. Selecting one live-updates the deadline
+// line below the chips so switching use years shows its own deadline
+// immediately, before the contract is even saved.
+function setUseYear(year) {
+  document.querySelectorAll(".use-year-chip").forEach(btn => btn.classList.toggle("selected", btn.dataset.year === year));
+  const d = nextDeadlineForUseYear(year, todayInEastern());
+  document.getElementById("f-useyear-deadline").textContent = `Banking/borrowing deadline: ${formatDeadlineWithCountdown(d.ms, d.daysUntil)}`;
+}
+
+function getSelectedUseYear() {
+  return document.querySelector(".use-year-chip.selected")?.dataset.year || USE_YEARS[0];
+}
+
+// Mirrors the real wallet card exactly (buildWalletCardFaceHTML(), same as
+// the deck), so the modal previews what the saved contract will actually
+// look like -- called on open and after every field change in any step,
+// since all three steps stay mounted in the DOM at once (see the wizard
+// track) and can be edited in any order once in edit mode.
+// The rest of the app (Blue Card eligibility, resale-restriction dates,
+// trips.html's amortization schedule) all key off a real purchase_date
+// string -- storing January 1st of the acquisition year, rather than
+// adding a second "acquisition_year" column/field everywhere, keeps every
+// one of those consumers working unchanged. Trade-off: a contract actually
+// bought mid-year loses month-level precision against a threshold that
+// falls later in that same calendar year (e.g. the 2016-04-04 Blue Card
+// minimum, or the 2011-03-21 general-resale cutoff) -- acceptable given
+// most owners only remember the rough year anyway, but worth knowing if a
+// borderline-year contract's Blue Card/resale status looks off by one year.
+function acquisitionYearToPurchaseDate(yearInputEl) {
+  const year = parseInt(yearInputEl.value, 10);
+  return year ? `${year}-01-01` : null;
+}
+
+function updateModalCardPreview() {
+  const resortId = document.getElementById("f-resort").value;
+  const points = parseInt(document.getElementById("f-points").value, 10) || 0;
+  const nickname = document.getElementById("f-nickname").value.trim();
+  const useYear = getSelectedUseYear();
+  const purchaseType = getSelectedPurchaseType();
+  const purchaseDate = acquisitionYearToPurchaseDate(document.getElementById("f-acquisition-year"));
+  const blueCardOverride = getSelectedBlueCardOverride();
+  const deadline = nextDeadlineForUseYear(useYear, todayInEastern());
+  const preview = document.getElementById("modal-card-preview");
+  preview.style.background = walletCardGradient(resortId);
+  preview.innerHTML = buildWalletCardFaceHTML({
+    resortId, nickname, pointsPerYear: points, useYear, purchaseType, purchaseDate, blueCardOverride, isActive: true, deadline,
+  });
+
+  // Shows what auto-detection alone would say, regardless of which toggle
+  // is currently selected -- so overriding it is an informed choice
+  // ("auto says X, but I know it's actually Y") rather than a guess.
+  const autoPerks = window.DVCAuth?.evaluateContractPerks({
+    purchase_type: purchaseType, purchase_date: purchaseDate || null, points_per_year: points, home_resort_id: resortId,
+  });
+  const hint = document.getElementById("bluecard-auto-hint");
+  if (hint && autoPerks) {
+    hint.textContent = autoPerks.isBlueCardEligible
+      ? "Auto-detected: Blue Card eligible"
+      : "Auto-detected: not Blue Card eligible";
+  }
+}
+
+// Card Studio step navigation -- slides the .studio-wizard-track to the
+// requested step via transform (see tokens.css), updates the stepper pills,
+// and swaps Next/Back/Save Deed visibility. instant:true skips the slide
+// animation entirely (used when opening straight into Step 3 to edit an
+// existing contract, so the modal doesn't visibly animate through 1 and 2
+// on open).
+let modalStep = 1;
+function showStudioStep(step, { instant = false } = {}) {
+  modalStep = step;
+  const track = document.getElementById("studio-wizard-track");
+  if (instant) {
+    track.classList.add("no-transition");
+    track.offsetHeight; // force a reflow so the transform below applies with no transition
+  }
+  track.style.transform = `translateX(-${(step - 1) * 100}%)`;
+  if (instant) {
+    track.offsetHeight;
+    track.classList.remove("no-transition");
+  }
+  document.querySelectorAll(".studio-stepper-pill").forEach(p => {
+    p.classList.toggle("active", Number(p.dataset.stepDot) === step);
+  });
+  document.getElementById("studio-back").style.visibility = step === 1 ? "hidden" : "visible";
+  document.getElementById("studio-next").style.display = step === 2 ? "" : "none";
+  document.getElementById("studio-skip-save").style.display = step === 2 ? "" : "none";
+  document.getElementById("save-contract").style.display = step === 3 ? "" : "none";
+  if (step === 2) updateStudioNextLabel();
+}
+
+// "Fast-Pass" flow: once Points per Year actually has a value, the Next
+// button stops sounding like just another step and starts sounding like
+// the finish line -- Step 3 is entirely optional fields, so a user who's
+// filled in the two REQUIRED fields (Use Year always has a default; Points
+// is the one that matters) is realistically one tap from done either way.
+function updateStudioNextLabel() {
+  const points = parseInt(document.getElementById("f-points").value, 10);
+  document.getElementById("studio-next").textContent = points > 0 ? "Review & Save Deed →" : "Next: Financials →";
+}
+
 function openForm(contract) {
   editingId = contract ? contract.id : null;
+  isEditingMode = !!contract;
+  document.getElementById("studio-stepper").classList.toggle("jumpable", isEditingMode);
   document.getElementById("form-error").style.display = "none";
   document.getElementById("f-nickname").value = contract?.nickname || "";
-  document.getElementById("f-resort").value = contract?.home_resort_id || uniqueResorts()[0].id;
-  document.getElementById("f-useyear").value = contract?.use_year || USE_YEARS[0];
+  const resortId = contract?.home_resort_id || uniqueResorts()[0].id;
+  document.getElementById("f-resort").value = resortId;
+  document.querySelectorAll(".resort-chip").forEach(chip => chip.classList.toggle("selected", chip.dataset.resort === resortId));
+  setUseYear(contract?.use_year || USE_YEARS[0]);
   document.getElementById("f-points").value = contract?.points_per_year || "";
+  document.querySelectorAll(".points-preset-chip").forEach(chip => chip.classList.toggle("selected", chip.dataset.points == contract?.points_per_year));
   document.getElementById("f-price").value = contract?.purchase_price || "";
-  document.getElementById("f-date").value = contract?.purchase_date || "";
+  // Editing an existing contract shows its real acquisition year; a brand
+  // new one defaults to the current year, since most owners entering this
+  // for the first time are doing so at (or right after) purchase.
+  document.getElementById("f-acquisition-year").value = contract?.purchase_date
+    ? parseInt(contract.purchase_date.slice(0, 4), 10)
+    : new Date().getFullYear();
   setPurchaseType(contract?.purchase_type || "direct");
-  document.getElementById("contract-form").classList.add("open");
-  document.getElementById("save-contract").textContent = contract ? "Save Changes" : "Save Contract";
-  document.getElementById("contract-form").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  setBlueCardOverride(contract?.blue_card_override ?? null);
+  document.getElementById("contract-modal-title").textContent = contract ? "Edit Contract" : "Add Contract";
+  document.getElementById("save-contract").textContent = contract ? "Save Changes" : "Save Deed to Vault";
+  updateModalCardPreview();
+  // A brand-new contract walks the guided onboarding from Step 1; editing
+  // an existing one skips straight to Step 3 (its most-likely-to-be-tweaked
+  // step) with no slide animation, and the stepper pills become clickable
+  // (.jumpable, toggled above) so any step can be revisited directly.
+  showStudioStep(isEditingMode ? 3 : 1, { instant: isEditingMode });
+  document.getElementById("contract-modal").classList.add("open");
 }
 
 function closeForm() {
   editingId = null;
-  document.getElementById("contract-form").classList.remove("open");
+  document.getElementById("contract-modal").classList.remove("open");
 }
 
 async function saveForm() {
@@ -1006,11 +2737,12 @@ async function saveForm() {
   const payload = {
     nickname: document.getElementById("f-nickname").value.trim() || null,
     home_resort_id: document.getElementById("f-resort").value,
-    use_year: document.getElementById("f-useyear").value,
+    use_year: getSelectedUseYear(),
     points_per_year: points,
     purchase_type: getSelectedPurchaseType(),
     purchase_price: document.getElementById("f-price").value ? parseFloat(document.getElementById("f-price").value) : null,
-    purchase_date: document.getElementById("f-date").value || null,
+    purchase_date: acquisitionYearToPurchaseDate(document.getElementById("f-acquisition-year")),
+    blue_card_override: getSelectedBlueCardOverride(),
   };
 
   const result = editingId
@@ -1023,20 +2755,139 @@ async function saveForm() {
     return;
   }
 
-  pendingWarning = result.warning || null;
+  // A brand-new contract's card gets a one-time shimmer on its first
+  // render in the deck (see renderContractList()) -- editing an existing
+  // one never should, since it isn't newly issued.
+  if (!editingId) justIssuedContractId = result.data.id;
+
   closeForm();
   renderSignedIn();
 }
 
-async function saveReminderPrefs() {
-  const btn = document.getElementById("save-reminders");
-  btn.textContent = "Saving...";
-  await window.DVCAuth.updateProfile({
-    reminder_opt_in: document.getElementById("r-opt-in").checked,
-    reminder_lead_days: parseInt(document.getElementById("r-lead-days").value, 10) || 14,
+// Upgrade -> create-checkout-session, Manage -> create-portal-session --
+// both just redirect the whole page to the URL Stripe returns; there's no
+// in-page payment form to build (see docs/subscriptions_plan.md Phase 4).
+async function handleMembershipAction() {
+  const btn = document.getElementById("membership-action-btn");
+  const msgEl = document.getElementById("membership-action-msg");
+  const action = btn.dataset.action;
+  btn.disabled = true;
+  btn.textContent = "Redirecting…";
+  msgEl.style.display = "none";
+
+  const result = action === "manage"
+    ? await window.DVCAuth.manageMembership()
+    : await window.DVCAuth.subscribeToMembership();
+
+  if (result.error || !result.url) {
+    btn.disabled = false;
+    btn.textContent = action === "manage" ? "Manage Membership" : "Upgrade -- $49.99/yr";
+    msgEl.textContent = result.error || "Something went wrong -- try again.";
+    msgEl.style.display = "block";
+    return;
+  }
+  window.location.href = result.url;
+}
+
+// The stripe-webhook function may land its subscriptions row update a
+// second or two after Stripe redirects the browser back here, so a single
+// getSubscription() right on load can race it and still show "Free."
+// Polls a handful of times before giving up -- re-rendering the whole
+// page (renderSignedIn) each time is simplest and already idempotent.
+function startCheckoutSuccessPoll(attempt = 0) {
+  const MAX_ATTEMPTS = 6;
+  setTimeout(async () => {
+    const sub = await window.DVCAuth.getSubscription();
+    if (sub && sub.status !== "incomplete") {
+      renderSignedIn();
+      return;
+    }
+    if (attempt < MAX_ATTEMPTS) startCheckoutSuccessPoll(attempt + 1);
+  }, 1500);
+}
+
+function openNotifSettings() {
+  document.getElementById("notif-settings-status").textContent = "";
+  document.getElementById("notif-settings-modal").classList.add("open");
+}
+
+function closeNotifSettings() {
+  document.getElementById("notif-settings-modal").classList.remove("open");
+}
+
+// Push Notifications foundation -- registers a service worker and requests
+// a browser push subscription. There's no send-side backend deployed yet
+// (that needs a VAPID keypair + a Supabase Edge Function using web-push,
+// mirroring supabase/functions/send-banking-reminders/) -- this just wires
+// up the client-side half and records what it gets, so that pipeline has a
+// real subscription to send to once it exists.
+const PUSH_VAPID_PUBLIC_KEY = ""; // fill in once a push-sending backend is deployed
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function enablePushNotifications() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    alert("Push notifications aren't supported in this browser.");
+    return null;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return null;
+
+  const registration = await navigator.serviceWorker.register("service-worker.js");
+  if (!PUSH_VAPID_PUBLIC_KEY) {
+    // The client-side half is real (permission granted, service worker
+    // registered) -- there's just nothing to actually push to yet without a
+    // deployed sending backend. Recorded as a placeholder so the intent is
+    // visible once that backend exists.
+    alert("Push permission granted. The notification-sending backend isn't deployed yet, so you won't receive pushes until that's set up.");
+    return { pending: true };
+  }
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
   });
-  btn.textContent = "Saved";
-  setTimeout(() => { btn.textContent = "Save"; }, 1500);
+  return subscription.toJSON();
+}
+
+async function saveNotificationSettings() {
+  const statusEl = document.getElementById("notif-settings-status");
+  const saveBtn = document.getElementById("notif-settings-save");
+  statusEl.textContent = "Saving…";
+  statusEl.classList.remove("error");
+  saveBtn.disabled = true;
+
+  const patch = {
+    reminder_opt_in: document.getElementById("n-email-enabled").checked,
+    reminder_lead_days: parseInt(document.getElementById("n-lead-days").value, 10) || 14,
+    in_app_notifications_enabled: document.getElementById("n-inapp-enabled").checked,
+  };
+
+  const wantsPush = document.getElementById("n-push-enabled").checked;
+  if (wantsPush && !currentProfile?.push_enabled) {
+    const subscription = await enablePushNotifications();
+    patch.push_enabled = !!subscription;
+    patch.push_subscription = subscription || null;
+    if (!subscription) document.getElementById("n-push-enabled").checked = false;
+  } else if (!wantsPush) {
+    patch.push_enabled = false;
+    patch.push_subscription = null;
+  }
+
+  const { error } = await window.DVCAuth.updateProfile(patch);
+  saveBtn.disabled = false;
+  if (error) {
+    statusEl.textContent = "Couldn't save";
+    statusEl.classList.add("error");
+    return;
+  }
+  currentProfile = { ...currentProfile, ...patch };
+  statusEl.textContent = "Saved";
+  setTimeout(() => { closeNotifSettings(); renderSignedIn(); }, 700);
 }
 
 async function handleDeleteAccount() {
@@ -1079,6 +2930,35 @@ function waitForAuth(attempts) {
   }
 }
 waitForAuth(40);
+
+// Registered once at script load, not inside renderSignedIn() -- unlike
+// the modal's own click-outside listener (rebound every render, since the
+// element itself is recreated), `document` persists for the page's whole
+// lifetime, so a listener added here every render would stack duplicates.
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.getElementById("contract-modal")?.classList.contains("open")) closeForm();
+  if (e.key === "Escape" && document.getElementById("notif-settings-modal")?.classList.contains("open")) closeNotifSettings();
+});
+
+// The perk dot's tooltip is otherwise hover/focus-only (tokens.css's
+// .tooltip-anchor rules), which has no equivalent on a touchscreen -- a
+// phone has no cursor to hover with, and there's nothing else on the card
+// to receive focus and reveal it via :focus-within. This adds an explicit
+// tap-to-toggle on top of that (not a replacement -- hover still works for
+// mouse users), closing any other open dot first so only one shows at a
+// time, and closing on a tap anywhere else on the page. Deliberately a
+// plain class toggle rather than tabindex/:focus (see the "fixes
+// click-stuck hovers" fix elsewhere in this app's history) -- that
+// approach left a tapped tooltip stuck open on mobile with no clear way to
+// dismiss it; toggling explicitly here means a second tap (on the dot or
+// anywhere else) always closes it.
+document.addEventListener("click", (e) => {
+  const dot = e.target.closest(".wallet-card-perk-dot");
+  document.querySelectorAll(".wallet-card-perk-dot.tooltip-open").forEach((d) => {
+    if (d !== dot) d.classList.remove("tooltip-open");
+  });
+  if (dot) dot.classList.toggle("tooltip-open");
+});
   </script>
 </body>
 </html>
