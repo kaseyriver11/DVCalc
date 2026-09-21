@@ -1202,6 +1202,20 @@ body {
   .wallet-deck .wallet-card:not(:first-child) {
     margin-top: -113px;
   }
+  /* .active-card (unconditional rule, ~line 476) applies its own extra
+     translateY(-16px) visual lift on top of whatever margin-top a card
+     already has -- the desktop JS path (applyDeckPeekSpacing()'s
+     ACTIVE_LIFT) already compensates for that when computing each card's
+     margin, but this fixed mobile margin didn't, so whichever card
+     happened to be active ate 16px straight out of the peek gap for the
+     card behind it (reported directly against a screenshot: normal gap
+     between the first two cards, near-zero gap into the active one).
+     -97px = -113px + 16px, same math as ACTIVE_LIFT. Higher specificity
+     (.active-card adds a class) than the rule above, so this wins for
+     whichever card is active without needing !important. */
+  .wallet-deck .wallet-card.active-card:not(:first-child) {
+    margin-top: -97px;
+  }
 
   /* Edit/Deactivate/Delete no longer share a line with the resort name --
      on a narrow phone that line had no room left for 3 buttons once a
