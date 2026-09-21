@@ -401,11 +401,19 @@ function openEmailCodeModal() {
   overlay.querySelector('[data-field="email"]').focus();
 }
 
-// Small unobtrusive text-link appended after every Google button (see
-// renderSignInButton() above) -- deliberately plain/minimal rather than
-// styled per-context, since it has to look reasonable in wildly different
-// layouts (compact nav pill, full-page gate, home.html card widget) with
-// no per-page customization.
+// A real "or" divider + a second pill-shaped button, appended after every
+// Google button (see renderSignInButton() above) -- a first version used a
+// plain underlined text link here, which read as a disclaimer/fallback
+// bolted onto the real (Google) button rather than an equally legitimate
+// second option, and it also left-aligned itself inside containers that
+// don't center block content, landing visually disconnected from Google's
+// centered pill above it (a real user-reported "looks rough" bug, not
+// just taste). This mirrors Google's own button shape/size instead, and
+// both the divider and the button center themselves via their own
+// width:fit-content + margin:auto rather than depending on whatever
+// layout/alignment each page's own container happens to use -- has to
+// look reasonable in wildly different contexts (compact nav pill,
+// full-page gate, home.html card widget) with no per-page customization.
 function appendEmailCodeTrigger(container) {
   // Inject styles here too, not just from ensureEmailCodeModal() -- that
   // only ran on first CLICK, so the trigger itself rendered as an
@@ -413,10 +421,16 @@ function appendEmailCodeTrigger(container) {
   // actually clicked it once. injectEmailCodeStyles() is idempotent, so
   // calling it from both places is harmless.
   injectEmailCodeStyles();
+
+  const divider = document.createElement("div");
+  divider.className = "dvc-emailcode-divider";
+  divider.textContent = "or";
+  container.appendChild(divider);
+
   const link = document.createElement("button");
   link.type = "button";
   link.className = "dvc-emailcode-trigger";
-  link.textContent = "or sign in with email";
+  link.innerHTML = `<span class="dvc-emailcode-trigger-icon">&#9993;</span>Sign in with Email`;
   link.addEventListener("click", openEmailCodeModal);
   container.appendChild(link);
 }
@@ -432,19 +446,51 @@ function injectEmailCodeStyles() {
   emailCodeStylesInjected = true;
   const style = document.createElement("style");
   style.textContent = `
+.dvc-emailcode-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 130px;
+  max-width: 100%;
+  margin: 10px auto 8px;
+  color: #aaa;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.dvc-emailcode-divider::before,
+.dvc-emailcode-divider::after {
+  content: "";
+  flex: 1;
+  min-width: 20px;
+  height: 1px;
+  background: #e2e2e2;
+}
+
 .dvc-emailcode-trigger {
-  display: block;
-  background: none;
-  border: none;
-  padding: 6px 0 0;
-  margin: 0;
-  font-size: 0.78rem;
-  color: #666;
-  text-decoration: underline;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 7px 18px;
+  background: white;
+  border: 1px solid #d5d5d5;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
   cursor: pointer;
   font-family: inherit;
+  white-space: nowrap;
 }
-.dvc-emailcode-trigger:hover { color: #4a148c; }
+.dvc-emailcode-trigger:hover { border-color: #4a148c; color: #4a148c; background: #faf8fd; }
+.dvc-emailcode-trigger-icon { font-size: 0.9rem; line-height: 1; }
 
 .dvc-emailcode-overlay {
   display: none;
