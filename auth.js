@@ -343,7 +343,7 @@ function ensureEmailCodeModal() {
       <button type="button" class="dvc-emailcode-close" aria-label="Close">&times;</button>
       <div class="dvc-emailcode-step" data-step="email">
         <h3>Sign in with Email</h3>
-        <p>We'll send a 6-digit code to your email -- no password needed.</p>
+        <p>We'll send a one-time code to your email -- no password needed.</p>
         <input type="email" class="dvc-emailcode-input" data-field="email" placeholder="you@example.com" autocomplete="email" inputmode="email">
         <div class="dvc-emailcode-error" data-error="email"></div>
         <button type="button" class="dvc-emailcode-submit" data-action="send">Send Code</button>
@@ -351,7 +351,7 @@ function ensureEmailCodeModal() {
       <div class="dvc-emailcode-step" data-step="code" style="display:none;">
         <h3>Enter Your Code</h3>
         <p>We sent a code to <strong data-sent-to></strong>.</p>
-        <input type="text" class="dvc-emailcode-input dvc-emailcode-code" data-field="token" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        <input type="text" class="dvc-emailcode-input dvc-emailcode-code" data-field="token" placeholder="Enter code" inputmode="numeric" autocomplete="one-time-code">
         <div class="dvc-emailcode-error" data-error="code"></div>
         <button type="button" class="dvc-emailcode-submit" data-action="verify">Verify &amp; Sign In</button>
         <button type="button" class="dvc-emailcode-linkbtn" data-action="resend">Resend code</button>
