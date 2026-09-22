@@ -1164,7 +1164,7 @@ const SORT_COLUMNS_FINANCIAL = {
   },
   rentalSavingsPct: {
     label: "Savings (Renting)", accessor: r => r.rentalSavingsPct, defaultDir: "desc",
-    tooltip: "How much cheaper renting these points from a DVC owner is than paying Disney's cash rate for the same stay.",
+    tooltip: "How much cheaper using your own points (at your dues rate) is than renting the equivalent points from another DVC owner at your set rental rate.",
   },
   ownerSavingsPct: {
     label: "Savings (Owning)", accessor: r => r.ownerSavingsPct, defaultDir: "desc",
@@ -1683,9 +1683,22 @@ function render() {
         hasBuiltInCash: result.totalCash !== null,
         rentalCost,
         ownerCost,
-        rentalSavings: effectiveCash ? effectiveCash - rentalCost : null,
-        rentalSavingsPct: effectiveCash
-          ? Math.round(((effectiveCash - rentalCost) / effectiveCash) * 100) : null,
+        // Savings (Renting): reframed 2026-09-22 (real user feedback) --
+        // this used to be effectiveCash - rentalCost, i.e. "how much
+        // cheaper renting these points is than paying Disney cash," which
+        // never even looked at the owner's own cost. For an audience of
+        // DVC owners comparing where to spend points they already have,
+        // that's the wrong comparison and duplicates what "Savings
+        // (Owning)" below already answers (both were effectively "vs
+        // cash"). What an owner actually wants to know is "how much am I
+        // saving by using MY points instead of renting equivalent ones,"
+        // i.e. rentalCost - ownerCost. Gated on ownerDues > 0 (not
+        // effectiveCash) since the formula no longer needs a cash price
+        // at all -- it does need a real dues rate, or ownerCost is
+        // meaninglessly 0 and this would misreport 100% savings.
+        rentalSavings: ownerDues > 0 ? rentalCost - ownerCost : null,
+        rentalSavingsPct: ownerDues > 0
+          ? Math.round(((rentalCost - ownerCost) / rentalCost) * 100) : null,
         ownerSavings: effectiveCash ? effectiveCash - ownerCost : null,
         ownerSavingsPct: effectiveCash
           ? Math.round(((effectiveCash - ownerCost) / effectiveCash) * 100) : null,
