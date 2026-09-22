@@ -3,7 +3,7 @@
 // with: node --test tests/
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateBorrowedPoints, pointsEnterHolding, holdingRebookDeadline, MAX_BORROW_RATIO, HOLDING_REBOOK_DAYS } = require("../dvc-ledger.js");
+const { validateBorrowedPoints, pointsEnterHolding, holdingExpiration, MAX_BORROW_RATIO, HOLDING_BOOKING_WINDOW_DAYS } = require("../dvc-ledger.js");
 
 const DAY = 86400000;
 
@@ -59,32 +59,18 @@ test("pointsEnterHolding: negative days (after check-in) is not holding", () => 
   assert.equal(pointsEnterHolding(-3), false);
 });
 
-test("holdingRebookDeadline: null entered date means no deadline to compute", () => {
-  assert.equal(holdingRebookDeadline(null, Date.UTC(2026, 10, 30), Date.UTC(2026, 9, 1)), null);
+test("holding expiration uses the full use year, never a 60-day entry clock", () => {
+  const expires = Date.UTC(2027, 8, 30), today = Date.UTC(2026, 9, 1);
+  assert.equal(holdingExpiration(expires, today).ms, expires);
+  assert.ok(holdingExpiration(expires, today).daysUntil > 60);
 });
-
-test("holdingRebookDeadline: 60 days from entry, well before use-year expiration", () => {
-  const entered = Date.UTC(2026, 9, 1); // Oct 1, 2026
-  const useYearExpires = Date.UTC(2027, 8, 30); // Sep 30, 2027 -- far out
-  const today = entered;
-  const result = holdingRebookDeadline(entered, useYearExpires, today);
-  assert.equal(result.ms, entered + HOLDING_REBOOK_DAYS * DAY);
-  assert.equal(result.daysUntil, HOLDING_REBOOK_DAYS);
+test("holding expiry countdown uses UTC dates", () => {
+  assert.equal(holdingExpiration(Date.UTC(2026, 9, 15), Date.UTC(2026, 9, 1)).daysUntil, 14);
 });
-
-test("holdingRebookDeadline: capped at use-year expiration when that comes first", () => {
-  const entered = Date.UTC(2026, 9, 1); // Oct 1, 2026
-  const useYearExpires = Date.UTC(2026, 9, 15); // Oct 15, 2026 -- expires in 14 days, well inside the 60-day window
-  const today = entered;
-  const result = holdingRebookDeadline(entered, useYearExpires, today);
-  assert.equal(result.ms, useYearExpires);
-  assert.equal(result.daysUntil, 14);
+test("holding expiry is due today on the last use-year day", () => {
+  const date = Date.UTC(2026, 8, 30);
+  assert.equal(holdingExpiration(date, date).daysUntil, 0);
 });
-
-test("holdingRebookDeadline: daysUntil counts down as today advances", () => {
-  const entered = Date.UTC(2026, 9, 1);
-  const useYearExpires = Date.UTC(2027, 8, 30);
-  const today = entered + 45 * DAY;
-  const result = holdingRebookDeadline(entered, useYearExpires, today);
-  assert.equal(result.daysUntil, 15);
+test("60 days describes the booking window", () => {
+  assert.equal(HOLDING_BOOKING_WINDOW_DAYS, 60);
 });

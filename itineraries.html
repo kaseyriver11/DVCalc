@@ -691,29 +691,29 @@ body {
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Plan a Stay</span>
+        <span class="site-nav-group-label">Overview</span>
         <a href="home.html">Home</a>
-        <a href="index.html">Calendar</a>
-        <a href="compare.html">Compare Resorts</a>
-        <a href="suggest.html">Suggest a Stay</a>
+        <a href="badges.html">Achievements</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Trip Planning</span>
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html" class="active">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Buying Guide</span>
-        <a href="contractvalue.html">Contract Value</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Account</span>
+        <span class="site-nav-group-label">My Membership</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
-        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1437,6 +1437,9 @@ function wireCardEvents() {
         checkOut: last.checkOut,
         month: Number(last.checkIn.split("-")[1]) - 1,
         segments: completed,
+        itineraryEdit: { id: itin.id, name: itin.name, ownerId: window.DVCAuth.getSession()?.user?.id },
+        bookingContractId: itin.booking_contract_id || null,
+        bookingOwnerId: window.DVCAuth.getSession()?.user?.id,
       };
       sessionStorage.setItem("dvc_calendar_state", JSON.stringify(restoredState));
       sessionStorage.setItem("dvc_return_to_calendar", "1");

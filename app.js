@@ -768,6 +768,7 @@ function handleDateClick(dateStr) {
     if (prevDates.has(dateStr)) return; // can't click on previous segment dates
     if (dateStr <= state.checkIn) return; // must be after locked check-in
     state.checkOut = dateStr;
+    trackElevenMonthSniper();
     updateHint();
     renderCalendar();
     renderSummary();
@@ -799,6 +800,7 @@ function handleDateClick(dateStr) {
     } else {
       state.checkOut = dateStr;
       forceExpandCalendar = false; // a freshly-completed stay collapses into review mode
+      trackElevenMonthSniper();
     }
   }
   updateHint();
@@ -1603,30 +1605,60 @@ function currentUYYear(useYear) {
   return window.DVCDates.currentUYYear(useYear, window.DVCDates.todayInEastern());
 }
 
-// The currently-active use year's ledger row for a contract (see
-// account.html's contract_year_points table), or a default if the owner
-// hasn't customized that year in My Contracts yet -- same default the
-// ledger table itself shows for an untouched year.
-function getCurrentYearRow(c) {
-  const year = currentUYYear(c.use_year);
+// A planning balance belongs to the stay's use year, not the booking date.
+// With no check-in selected, show today's cycle. Untouched years retain
+// the same annual-allotment default as My Contracts and are labeled estimates.
+function getStayYearRow(c, date = state.checkIn) {
+  const parts = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.split('-').map(Number) : null;
+  const year = parts ? window.DVCDates.currentUYYear(c.use_year, { year: parts[0], month: parts[1], day: parts[2] }) : currentUYYear(c.use_year);
   const row = userContractYearPoints.find(r => r.contract_id === c.id && r.use_year_label === year);
-  return row
-    ? { year, remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0, holding: row.points_holding || 0, holdingEnteredAt: row.points_holding_entered_at || null }
-    : { year, remaining: c.points_per_year, banked: 0, borrowed: 0, holding: 0, holdingEnteredAt: null };
+  return row?.balance_confirmed_at
+    ? { year, recorded: true, remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0, holding: row.points_holding || 0, holdingEnteredAt: row.points_holding_entered_at || null }
+    : { year, recorded: false, remaining: 0, banked: 0, borrowed: 0, holding: 0, holdingEnteredAt: null };
 }
 
-// Points a contract can actually spend right now: its currently-active use
-// year's remaining balance plus whatever's banked in from last year,
+// Points recorded for the selected stay cycle: remaining plus banked-in,
 // borrowed in from next year, or parked in Holding from a near-check-in
 // cancellation (see dvc-ledger.js).
+function stayYearLabel(contract, row) {
+  const month = window.DVCDates.USE_YEAR_START_MONTH[contract.use_year];
+  const start = new Date(Date.UTC(row.year, month - 1, 1));
+  const end = new Date(window.DVCDates.useYearExpiration(contract.use_year, row.year));
+  const format = d => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return format(start) + ' &ndash; ' + format(end) + (row.recorded ? ' recorded balance' : ' balance not confirmed');
+}
+function stayYearGroups(contract, dates) {
+  const groups = new Map();
+  for (const date of dates) {
+    const row = getStayYearRow(contract, date);
+    if (!groups.has(row.year)) groups.set(row.year, { row, dates: [] });
+    groups.get(row.year).dates.push(date);
+  }
+  return [...groups.values()];
+}
+function smartDrawContext(row) {
+  return JSON.stringify([selectedContractId, state.checkIn, state.checkOut, row]);
+}
+function buildCrossYearDrawHTML(contract, resort, dates) {
+  const groups = stayYearGroups(contract, dates);
+  return '<div class="smart-draw-card"><div class="smart-draw-title">This stay spans use years</div>' + groups.map(group => {
+    if (!group.row.recorded) return `<div class="smart-draw-guardrail warning">${stayYearLabel(contract, group.row)}. <a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${group.row.year}">Confirm this balance</a> before assessing these nights.</div>`;
+    const points = computeStayEntry(resort, state.roomTypeId, group.dates).points;
+    if (points == null) return '<div class="smart-draw-guardrail warning">Point chart unavailable for part of this stay. Review each date range separately.</div>';
+    const draw = computeSmartDraw(group.row, points);
+    const available = group.row.remaining + group.row.banked + group.row.borrowed + group.row.holding;
+    return `<div class="smart-draw-guardrail ${draw.shortfall ? 'warning' : 'ok'}"><strong>${stayYearLabel(contract, group.row)}</strong><br>${group.dates.length} night(s): ${points} pts needed / ${available} available. ${draw.shortfall ? 'Short by ' + draw.shortfall + ' pts in this use year.' : (available - points) + ' pts projected left in this use year.'}</div>`;
+  }).join('') + '<div class="smart-draw-footer">Each night uses its applicable cycle. Balances are not combined or moved between years. Review banking or borrowing in My Contracts if needed.</div><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Log This Trip &rarr;</button></div>';
+}
+
 function getAvailablePoints(c) {
-  const { remaining, banked, borrowed, holding } = getCurrentYearRow(c);
+  const { remaining, banked, borrowed, holding } = getStayYearRow(c);
   return remaining + banked + borrowed + holding;
 }
 
 // Which point buckets to draw from for a stay, in priority order: Holding
-// first (can't be banked/borrowed and must be rebooked within 60 days of
-// entering holding, per dvc-ledger.js -- the most "use it or lose it"
+// first (can't be banked/borrowed and can only book within 60 days of
+// check-in, per dvc-ledger.js -- the most "use it or lose it"
 // bucket of the four), then banked-in points (already irreversible, can't
 // be re-banked if unused), then already-borrowed-in points (same
 // irreversibility), then native current-year points last (still bankable
@@ -1705,6 +1737,47 @@ function monthsBeforeCheckIn(dateStr, months) {
   return formatDate(dt.getFullYear(), dt.getMonth(), dt.getDate());
 }
 
+// "11-Month Sniper" badge event (dvc-badges.js's evaluateEventBadges()):
+// fires when the owner picks a stay whose check-in is 10-11 months out at
+// one of their OWN home resorts -- the stretch in which that specific
+// stay's 11-month window opens.
+//
+// The home-resort gate is deliberate, not incidental: 11 months is purely
+// a home-resort privilege, so eyeing a NON-home resort that far out isn't
+// sniping, it's a stay literally nobody can book yet (it opens to everyone
+// at 7 months). An owner with no active contracts never fires it for the
+// same reason -- there's no 11-month priority to be early for. That gate
+// is what keeps the badge's name true to its mechanic, the same standard
+// that got Holiday Chaser renamed to Main Event.
+//
+// An owner can hold contracts at SEVERAL resorts and gets 11-month
+// priority at every one of them -- there is no "primary" home resort and
+// no "currently selected contract" involved here. So the gate asks
+// getUserResortAccess() for the UNION of home resorts across every active
+// contract (the same union compare.html/itinerarycompare.html use), not
+// getContractWindowMonths() against one contract at a time. Inactive
+// contracts are excluded: a sold contract confers no priority.
+//
+// Called from handleDateClick()'s two stay-completion points ONLY (the
+// normal path and the split-stay path) -- deliberately NOT from the
+// session-restore path at the bottom of this file, which rehydrates a
+// stay via Object.assign(state, restored) after a suggest.html or
+// compare.html handoff. This badge rewards the act of picking dates in
+// the 11-month window yourself; a stay handed over from another page
+// wasn't picked here, and restoring it on every page load would inflate
+// the count for one decision. Keep new callers to genuine user picks.
+//
+// Fire-and-forget through DVCTrack, which already no-ops when signed out.
+function trackElevenMonthSniper() {
+  if (!window.DVCTrack || !window.DVCDates || !window.DVCAuth) return;
+  if (!window.DVCDates.isInFinalWindowMonth(state.checkIn, 11)) return;
+  const activeContracts = userContracts.filter(c => c.is_active);
+  if (activeContracts.length === 0) return;
+  const allIds = [...new Set(RESORTS.map(r => r.id))];
+  const { homeResortIds } = window.DVCAuth.getUserResortAccess(activeContracts, allIds);
+  if (homeResortIds.has(state.resortId)) window.DVCTrack.track("eleven-month-sniper");
+}
+
 async function refreshUserContracts() {
   if (window.DVCAuth) {
     [userContracts, userContractYearPoints] = await Promise.all([
@@ -1716,6 +1789,9 @@ async function refreshUserContracts() {
     userContractYearPoints = [];
   }
   if (!getActiveContracts().some(c => c.id === selectedContractId)) selectedContractId = null;
+  if (state.bookingOwnerId === window.DVCAuth.getSession()?.user?.id) {
+    selectedContractId = getActiveContracts().some(c => c.id === state.bookingContractId) ? state.bookingContractId : null;
+  }
   renderBookingAsControl();
   renderSummary();
   renderCalendar();
@@ -1723,6 +1799,8 @@ async function refreshUserContracts() {
 
 function setSelectedContract(id) {
   selectedContractId = id || null;
+  state.bookingContractId = selectedContractId;
+  state.bookingOwnerId = window.DVCAuth.getSession()?.user?.id;
   // Recompute the preview when changing contracts.
   smartDrawManualOpen = false;
   smartDrawManualDraws = null;
@@ -1740,6 +1818,11 @@ function initAccountPersonalization(attempts) {
   if (window.DVCAuth) {
     window.DVCAuth.onAuthChange((session) => {
       isSignedIn = !!session;
+      if (!session || (state.itineraryEdit && state.itineraryEdit.ownerId !== session.user.id)) {
+        showingItinerarySaveForm = false;
+        itinerarySaveStatus = null;
+        itineraryNameDraft = null;
+      }
       if (session) {
         refreshUserContracts();
         refreshUserItineraries();
@@ -1766,6 +1849,11 @@ let showingItinerarySaveForm = false;
 let itineraryNameDraft = null;
 let itinerarySaveStatus = null; // "saving" | "saved" | "error" | null
 let userItineraries = []; // for the "load a saved itinerary" dropdown
+let itinerarySaveMode = 'new';
+let itinerarySaveError = '';
+function editingItinerary() {
+  return state.itineraryEdit?.ownerId === window.DVCAuth?.getSession()?.user?.id ? state.itineraryEdit : null;
+}
 
 async function refreshUserItineraries() {
   userItineraries = window.DVCAuth ? await window.DVCAuth.getItineraries() : [];
@@ -1779,6 +1867,7 @@ async function refreshUserItineraries() {
 // unpacking logic as that handoff: the last segment becomes the active
 // selection, everything before it becomes completed split-stay segments.
 function loadItineraryIntoCalendar(itinerary) {
+  if (itinerarySaveStatus === 'saving') return;
   forceExpandCalendar = false;
   const segs = itinerary.segments;
   if (!segs || !segs.length) return;
@@ -1792,6 +1881,11 @@ function loadItineraryIntoCalendar(itinerary) {
   state.checkOut = last.checkOut;
   state.month = Number(last.checkIn.split("-")[1]) - 1;
   state.segments = completed;
+  state.itineraryEdit = {id:itinerary.id,name:itinerary.name,ownerId:window.DVCAuth.getSession()?.user?.id};
+  state.itineraryPendingSave = null;
+  state.bookingContractId = itinerary.booking_contract_id || null;
+  state.bookingOwnerId = window.DVCAuth.getSession()?.user?.id;
+  selectedContractId = getActiveContracts().some(c=>c.id===state.bookingContractId) ? state.bookingContractId : null;
   showingItinerarySaveForm = false;
   itineraryNameDraft = null;
   itinerarySaveStatus = null;
@@ -1799,6 +1893,7 @@ function loadItineraryIntoCalendar(itinerary) {
   resortSearch.value = getResort().name;
   populateRoomTypes();
   roomSelect.value = state.roomTypeId;
+  renderBookingAsControl();
   updateHint();
   renderCalendar();
   renderSummary();
@@ -1845,14 +1940,18 @@ function suggestItineraryName() {
   return `${segs.length}-Resort Trip, ${formatShortDate(segs[0].checkIn)}`;
 }
 
-function openItinerarySaveForm() {
+function openItinerarySaveForm(mode) {
+  if (itinerarySaveStatus === 'saving') return;
+  const editing = editingItinerary();
+  itinerarySaveMode = mode || (editing ? 'update' : 'new');
   showingItinerarySaveForm = true;
-  itineraryNameDraft = suggestItineraryName();
+  itineraryNameDraft = editing ? editing.name + (itinerarySaveMode === 'copy' ? ' (copy)' : '') : suggestItineraryName();
   itinerarySaveStatus = null;
   renderSummary();
 }
 
 function closeItinerarySaveForm() {
+  if (itinerarySaveStatus === 'saving') return;
   showingItinerarySaveForm = false;
   itineraryNameDraft = null;
   itinerarySaveStatus = null;
@@ -1860,20 +1959,49 @@ function closeItinerarySaveForm() {
 }
 
 async function confirmSaveItinerary() {
+  if (itinerarySaveStatus === 'saving' || itinerarySaveStatus === 'saved') return;
   const input = document.getElementById("itinerary-name-input");
   const name = (input?.value || "").trim();
-  if (!name) return;
+  if (!name) {
+    itinerarySaveStatus = 'error';
+    itinerarySaveError = 'Enter a name for this itinerary.';
+    renderSummary();
+    return;
+  }
+  itineraryNameDraft = name;
+  const ownerId = window.DVCAuth.getSession()?.user?.id;
+  const editing = editingItinerary();
+  if (!ownerId || (itinerarySaveMode === 'update' && !editing)) {
+    itinerarySaveStatus = 'error';
+    itinerarySaveError = 'Sign in to the account that owns this itinerary, then load it again.';
+    renderSummary();
+    return;
+  }
   itinerarySaveStatus = "saving";
   renderSummary();
-
-  const result = await window.DVCAuth.addItinerary({
+  const payload = {
     name,
     year: state.year,
     segments: getFullItinerarySegments(),
-  });
-
-  if (result.error) {
+    booking_contract_id: getSelectedContract()?.id || null,
+  };
+  try {
+    let result;
+    if (itinerarySaveMode === 'update') {
+      result = await window.DVCAuth.updateItinerary(editing.id, payload);
+    } else {
+      if (state.itineraryPendingSave?.ownerId !== ownerId || state.itineraryPendingSave?.mode !== itinerarySaveMode) {
+        state.itineraryPendingSave = {ownerId,mode:itinerarySaveMode,id:crypto.randomUUID()};
+      }
+      result = await window.DVCAuth.addItinerary({...payload,id:state.itineraryPendingSave.id});
+    }
+    if (result.error || !result.data) throw new Error(result.error || 'No saved itinerary was returned.');
+    if (window.DVCAuth.getSession()?.user?.id !== ownerId) return;
+    state.itineraryEdit = {id:result.data.id,name,ownerId};
+    state.itineraryPendingSave = null;
+  } catch (error) {
     itinerarySaveStatus = "error";
+    itinerarySaveError = `Could not confirm the save. ${error.message || 'Please retry.'} Your itinerary and name are still here.`;
     renderSummary();
     return;
   }
@@ -2358,7 +2486,7 @@ function buildSegmentBlock(seg, totals, index, isCurrentSegment, totalVisible) {
       <div class="segment-detail">${formatShortDate(segCheckIn)} — ${formatShortDate(segCheckOut)} (${nightCount} night${nightCount !== 1 ? "s" : ""})</div>
       <div class="segment-detail"><strong>${totals.totalPoints} pts</strong>${hasCashData ? ` · $${Math.round(totals.totalCash).toLocaleString()} cash` : ""}</div>
       <div class="segment-actions">
-        ${hasCompleteDates ? `<a class="segment-compare" href="compare.html?checkin=${segCheckIn}&checkout=${segCheckOut}&category=${segCategory}">Compare Resorts</a>` : ""}
+        ${hasCompleteDates ? `<a class="segment-compare" href="compare.html?checkin=${segCheckIn}&checkout=${segCheckOut}&category=${segCategory}&segment=${isCurrentSegment ? "current" : index}">Compare Resorts</a>` : ""}
         <span class="segment-nightly-toggle" onclick="this.closest('.segment-block').querySelector('.summary-nightly').classList.toggle('open')">Nightly</span>
       </div>
       <div class="summary-nightly">
@@ -2536,12 +2664,12 @@ function renderBookingAsSheetList() {
           <div class="wallet-mini-top">
             <div class="wallet-mini-name">${name}</div>
             <div style="text-align:right;">
-              <div class="wallet-mini-points-num">${points.toLocaleString()}</div>
-              <div class="wallet-mini-points-label">AVAILABLE</div>
+              <div class="wallet-mini-points-num">${getStayYearRow(c).recorded ? points.toLocaleString() : "?"}</div>
+              <div class="wallet-mini-points-label">${getStayYearRow(c).recorded ? "AVAILABLE" : "UNCONFIRMED"}</div>
             </div>
           </div>
           <div class="wallet-mini-bottom">
-            <span class="wallet-mini-pill">${c.use_year} UY</span>
+            <span class="wallet-mini-pill">${c.use_year} ${getStayYearRow(c).year} UY${getStayYearRow(c).recorded ? "" : " (unconfirmed)"}</span>
             <span class="wallet-mini-pill">${c.points_per_year.toLocaleString()}/yr</span>
           </div>
         </div>
@@ -2583,7 +2711,7 @@ function rerenderStaySummary() {
 // mode is open AND its stashed amounts were computed for this exact
 // pointsNeeded (see smartDrawManualDraws's comment above).
 function smartDrawEffectiveDraws(currentRow, pointsNeeded) {
-  if (smartDrawManualOpen && smartDrawManualDraws && smartDrawManualDraws.pointsNeeded === pointsNeeded) {
+  if (smartDrawManualOpen && smartDrawManualDraws && smartDrawManualDraws.pointsNeeded === pointsNeeded && smartDrawManualDraws.context === smartDrawContext(currentRow)) {
     const m = smartDrawManualDraws;
     return {
       draws: { holding: m.holding, banked: m.banked, borrowed: m.borrowed, remaining: m.remaining },
@@ -2604,6 +2732,7 @@ function smartDrawEffectiveDraws(currentRow, pointsNeeded) {
 // line per nonzero bucket, guardrail call-outs, and the logging/manual
 // controls. The footer explains that this preview does not change balances.
 function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
+  if (!currentRow.recorded) return `<div class="smart-draw-card"><div class="smart-draw-title">Balance not confirmed</div><p>Confirm ${contract.use_year} ${currentRow.year} points before assessing this stay. Your annual allotment is not a confirmed available balance.</p><a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Review balance</a><div class="smart-draw-actions"><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Log This Trip &rarr;</button></div></div>`;
   const { draws, after, shortfall } = smartDrawEffectiveDraws(currentRow, pointsNeeded);
 
   const barHTML = `
@@ -2617,18 +2746,14 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
 
   const lines = [];
   if (draws.holding > 0) {
-    // Same real deadline as My Contracts' ledger (dvc-ledger.js's
-    // holdingRebookDeadline()) -- only computable when the owner has
-    // entered a holding date there; falls back to the generic rule text
-    // otherwise rather than guessing a date.
+    // Holding expires with its use year; entry date does not start a deadline.
     let holdingDetail = "must be used, can't be re-banked";
-    if (currentRow.holdingEnteredAt && window.DVCLedger && window.DVCDates) {
-      const enteredMs = Date.parse(currentRow.holdingEnteredAt + "T00:00:00Z");
+    if (window.DVCLedger && window.DVCDates) {
       const todayObj = window.DVCDates.todayInEastern();
       const todayMs = window.DVCDates.dateOnlyUTC(todayObj.year, todayObj.month, todayObj.day);
       const useYearExpiresMs = window.DVCDates.useYearExpiration(contract.use_year, currentRow.year);
-      const deadline = window.DVCLedger.holdingRebookDeadline(enteredMs, useYearExpiresMs, todayMs);
-      if (deadline) holdingDetail = `rebook by ${window.DVCDates.formatDeadlineDate(deadline.ms)} (${deadline.daysUntil}d)`;
+      const deadline = window.DVCLedger.holdingExpiration(useYearExpiresMs, todayMs);
+      if (deadline) holdingDetail = `use by ${window.DVCDates.formatDeadlineDate(deadline.ms)}; book within 60 days of check-in`;
     }
     lines.push(`<div><span class="smart-draw-line-swatch" style="background:var(--color-info)"></span>${draws.holding.toLocaleString()} pts Holding &mdash; ${holdingDetail}</div>`);
   }
@@ -2641,13 +2766,15 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
     guardrails.push(`<div class="smart-draw-guardrail danger">Short by ${shortfall.toLocaleString()} pts on this contract even using everything available &mdash; <a href="account.html">borrow more in My Contracts</a>, pick a different contract, or shorten the stay.</div>`);
   }
   if (after.remaining > 0 && window.DVCDates) {
-    const deadline = window.DVCDates.nextDeadlineForUseYear(contract.use_year, window.DVCDates.todayInEastern());
+    const today = window.DVCDates.todayInEastern();
+    const ms = window.DVCDates.deadlineForCycle(contract.use_year, currentRow.year);
+    const deadline = { ms, daysUntil: Math.round((ms - window.DVCDates.dateOnlyUTC(today.year, today.month, today.day)) / 86400000) };
     // Same shared urgency scale/copy as account.html and home.html
     // (2026-09-20) -- this used to be hardcoded "warning" no matter how
     // many days were actually left.
     const tier = window.DVCDates.urgencyTier(deadline.daysUntil);
     const deadlineCopy = window.DVCDates.formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil);
-    guardrails.push(`<div class="smart-draw-guardrail ${tier}">Projected: ${after.remaining.toLocaleString()} current pts left on this contract after this trip &mdash; bank them by ${deadlineCopy} or they can't roll into ${currentRow.year + 1}.</div>`);
+    guardrails.push(`<div class="smart-draw-guardrail ${tier}">Projected: ${after.remaining.toLocaleString()} current pts left on this contract after this trip &mdash; ${deadline.daysUntil < 0 ? `the banking deadline for this cycle has passed (${window.DVCDates.formatDeadlineDate(deadline.ms)}).` : `bank them by ${deadlineCopy} or they can't roll into ${currentRow.year + 1}.`}</div>`);
   }
   if (stayDates.length > 0) {
     const today = new Date(); today.setHours(12, 0, 0, 0);
@@ -2658,7 +2785,7 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
     // you later need to change a real booking this close to check-in,"
     // not a claim about what this Apply action itself does.
     if (daysUntilCheckIn <= 30) {
-      guardrails.push(`<div class="smart-draw-guardrail warning">Check-in is ${daysUntilCheckIn <= 0 ? "today or already past" : `${daysUntilCheckIn} day${daysUntilCheckIn === 1 ? "" : "s"} away`} &mdash; if you later modify or cancel this reservation with Disney this close to check-in, those points move to a Holding Account (must be rebooked within 60 days, can't be banked).</div>`);
+      guardrails.push(`<div class="smart-draw-guardrail warning">Check-in is ${daysUntilCheckIn <= 0 ? "today or already past" : `${daysUntilCheckIn} day${daysUntilCheckIn === 1 ? "" : "s"} away`} &mdash; if you later modify or cancel this reservation with Disney this close to check-in, those points move to a Holding Account (book within 60 days of check-in; use before the use year ends; cannot be banked).</div>`);
     }
   }
   let manualHTML = "";
@@ -2685,6 +2812,7 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
   return `
     <div class="smart-draw-card">
       <div class="smart-draw-title">Suggested draw for this trip</div>
+      <div class="smart-draw-footer">${stayYearLabel(contract, currentRow)}</div>
       ${barHTML}
       <div class="smart-draw-lines">${lines.join("")}</div>
       ${guardrails.join("")}
@@ -2739,20 +2867,23 @@ function logTripFromCalendar() {
 
 function toggleSmartDrawManual(pointsNeeded) {
   smartDrawManualOpen = !smartDrawManualOpen;
-  if (smartDrawManualOpen && (!smartDrawManualDraws || smartDrawManualDraws.pointsNeeded !== pointsNeeded)) {
+  if (smartDrawManualOpen) {
     const contract = getSelectedContract();
-    const currentRow = contract ? getCurrentYearRow(contract) : null;
+    const currentRow = contract ? getStayYearRow(contract) : null;
     const auto = currentRow ? computeSmartDraw(currentRow, pointsNeeded) : null;
-    smartDrawManualDraws = auto ? { pointsNeeded, ...auto.draws } : { pointsNeeded, holding: 0, banked: 0, borrowed: 0, remaining: 0 };
+    smartDrawManualDraws = auto ? { pointsNeeded, context: smartDrawContext(currentRow), ...auto.draws } : { pointsNeeded, holding: 0, banked: 0, borrowed: 0, remaining: 0 };
   }
   rerenderStaySummary();
 }
 
 function setSmartDrawManual(field, rawValue, max, pointsNeeded) {
   const value = Math.max(0, Math.min(max, parseInt(rawValue, 10) || 0));
-  if (!smartDrawManualDraws || smartDrawManualDraws.pointsNeeded !== pointsNeeded) {
-    smartDrawManualDraws = { pointsNeeded, holding: 0, banked: 0, borrowed: 0, remaining: 0 };
+  const row = getStayYearRow(getSelectedContract());
+  const context = smartDrawContext(row);
+  if (!smartDrawManualDraws || smartDrawManualDraws.pointsNeeded !== pointsNeeded || smartDrawManualDraws.context !== context) {
+    smartDrawManualDraws = { pointsNeeded, ...computeSmartDraw(row, pointsNeeded).draws };
   }
+  smartDrawManualDraws.context = context;
   smartDrawManualDraws[field] = value;
   rerenderStaySummary();
 }
@@ -2779,7 +2910,7 @@ function computeDefaultMultiSplit(contracts, pointsNeeded) {
   let need = pointsNeeded;
   const byContractId = {};
   for (const c of contracts) {
-    const row = getCurrentYearRow(c);
+    const row = getStayYearRow(c);
     const available = row.remaining + row.banked + row.borrowed + row.holding;
     const draw = Math.min(available, Math.max(0, need));
     byContractId[c.id] = draw;
@@ -2789,8 +2920,9 @@ function computeDefaultMultiSplit(contracts, pointsNeeded) {
 }
 
 function getMultiSplitAllocations(contracts, pointsNeeded) {
-  if (!multiContractAllocations || multiContractAllocations.pointsNeeded !== pointsNeeded) {
-    multiContractAllocations = { pointsNeeded, byContractId: computeDefaultMultiSplit(contracts, pointsNeeded) };
+  const context = JSON.stringify([state.checkIn, state.checkOut, contracts.map(c => [c.id, getStayYearRow(c)])]);
+  if (!multiContractAllocations || multiContractAllocations.pointsNeeded !== pointsNeeded || multiContractAllocations.context !== context) {
+    multiContractAllocations = { pointsNeeded, context, byContractId: computeDefaultMultiSplit(contracts, pointsNeeded) };
   }
   return multiContractAllocations.byContractId;
 }
@@ -2869,18 +3001,22 @@ function buildMultiContractSplitHTML(resort, stayDates) {
     `;
   }
 
+  if (contracts.some(c => stayYearGroups(c, stayDates).length > 1)) {
+    return '<div class="smart-draw-card"><div class="smart-draw-title">Review by use year</div><p>This stay crosses a use-year boundary for one or more contracts. A combined allocation could hide a shortage in one year. Select one contract to see the nightly costs assessed by use year, or preview each date range separately.</p><button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">Use one contract</button></div>';
+  }
   const allocations = getMultiSplitAllocations(contracts, pointsNeeded);
   const totalAllocated = Object.values(allocations).reduce((a, b) => a + b, 0);
 
   const rowsHTML = contracts.map(c => {
-    const currentRow = getCurrentYearRow(c);
+    const currentRow = getStayYearRow(c, stayDates[0]);
     const available = currentRow.remaining + currentRow.banked + currentRow.borrowed + currentRow.holding;
+    if (!currentRow.recorded) return `<div class="multi-split-row">${c.nickname || resortName(c.home_resort_id)}<br>${stayYearLabel(c, currentRow)}. <a href="account.html?contract=${encodeURIComponent(c.id)}&year=${currentRow.year}">Confirm balance</a></div>`;
     const allocated = Math.min(allocations[c.id] || 0, available);
     const warning = contractWindowNotYetOpenWarning(c, resort, stayDates);
     return `
       <div class="multi-split-row" data-contract-id="${c.id}">
         <div class="multi-split-row-header">
-          <span class="multi-split-row-name">${c.nickname || resortName(c.home_resort_id)}</span>
+          <span class="multi-split-row-name">${c.nickname || resortName(c.home_resort_id)}<br><small>${stayYearLabel(c, currentRow)}</small></span>
           <span class="multi-split-row-stat"><span class="multi-split-allocated-num">${allocated.toLocaleString()}</span> / ${available.toLocaleString()} pts</span>
         </div>
         <input type="range" class="multi-split-slider" min="0" max="${available}" step="1" value="${allocated}"
@@ -2897,7 +3033,7 @@ function buildMultiContractSplitHTML(resort, stayDates) {
   return `
     <div class="multi-split-card smart-draw-card">
       <div class="smart-draw-title">Split Across ${contracts.length} Contracts</div>
-      ${buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded)}
+      ${contracts.some(c => !getStayYearRow(c).recorded) && totalAllocated < pointsNeeded ? `<div class="smart-draw-guardrail warning">${totalAllocated} / ${pointsNeeded} pts allocated from confirmed balances. Confirm the remaining contract balances before judging this stay.</div>` : buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded)}
       <div class="multi-split-rows">${rowsHTML}</div>
       <div class="smart-draw-actions">
         <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Log This Trip &rarr;</button>
@@ -2986,7 +3122,7 @@ function buildSwapSimulatorHTML(contract, resort, stayDates) {
       // instead: how much of each stay's cost is left over after
       // non-borrowed buckets (Remaining/Banked/Holding), and whether that
       // leftover fits within the contract's real borrowing ceiling.
-      const currentRow = getCurrentYearRow(contract);
+      const currentRow = getStayYearRow(contract, stayDates[0]);
       const nonBorrowedAvailable = currentRow.remaining + currentRow.banked + currentRow.holding;
       const maxBorrowable = contract.points_per_year; // same proxy validateBorrowedPoints() uses -- no separate "next year's adjusted allotment" concept in this data model
       const homeBorrowNeeded = Math.max(0, homeEntry.points - nonBorrowedAvailable);
@@ -3077,19 +3213,25 @@ function buildContractEligibilityHTML(resort, stayDates) {
     html = `<div class="contract-eligibility contract-blocked">&times; Can't book ${resort.name} with this contract due to resale restrictions</div>`;
   }
 
-  const currentRow = getCurrentYearRow(contract);
+  const currentRow = getStayYearRow(contract, stayDates[0]);
   const available = currentRow.remaining + currentRow.banked + currentRow.borrowed + currentRow.holding;
+  if (!currentRow.recorded && stayDates.length === 0) return `<div class="summary-divider"></div>${html}<p>${stayYearLabel(contract, currentRow)}. <a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Confirm balance</a></p>${splitOfferHTML}`;
   const hasBankOrBorrow = currentRow.banked > 0 || currentRow.borrowed > 0 || currentRow.holding > 0;
 
   if (stayDates.length > 0 && !isSplitMode()) {
     const totals = computeStayEntry(resort, state.roomTypeId, stayDates);
     if (totals.points != null && (months === 11 || months === 7)) {
+      if (stayYearGroups(contract, stayDates).length > 1) {
+        return `<div class="summary-divider"></div>${html}${buildCrossYearDrawHTML(contract, resort, stayDates)}${splitOfferHTML}`;
+      }
       html += buildSmartDrawHTML(contract, currentRow, totals.points, stayDates);
       // Swap Simulator only makes sense when booking the actual HOME
       // resort at 11 months with intent to try swapping later -- a
       // 7-month (non-home) stay is already the "swapped-to" side of that
       // scenario, not the starting point.
-      if (months === 11) html += buildSwapSimulatorHTML(contract, resort, stayDates);
+      if (months === 11 && currentRow.recorded) html += buildSwapSimulatorHTML(contract, resort, stayDates);
+    } else if (totals.points != null && !currentRow.recorded) {
+      html += `<p>${stayYearLabel(contract, currentRow)}. <a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Add balance</a> before assessing available points.</p>`;
     } else if (totals.points != null) {
       const leftover = available - totals.points;
       const over = leftover < 0;
@@ -3100,10 +3242,12 @@ function buildContractEligibilityHTML(resort, stayDates) {
         </div>
       `;
     }
+  } else if (!currentRow.recorded) {
+    html += `<p>${stayYearLabel(contract, currentRow)}. <a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Add balance</a> before assessing available points.</p>`;
   } else {
     html += `
       <div class="contract-points">
-        ${available.toLocaleString()} pts available this year${hasBankOrBorrow ? ` (${currentRow.remaining.toLocaleString()} remaining + ${currentRow.banked.toLocaleString()} banked + ${currentRow.borrowed.toLocaleString()} borrowed${currentRow.holding > 0 ? ` + ${currentRow.holding.toLocaleString()} holding` : ""})` : ""}
+        ${available.toLocaleString()} pts available &mdash; ${stayYearLabel(contract, currentRow)}${hasBankOrBorrow ? ` (${currentRow.remaining.toLocaleString()} remaining + ${currentRow.banked.toLocaleString()} banked + ${currentRow.borrowed.toLocaleString()} borrowed${currentRow.holding > 0 ? ` + ${currentRow.holding.toLocaleString()} holding` : ""})` : ""}
       </div>
     `;
   }
@@ -3119,6 +3263,7 @@ function buildContractEligibilityHTML(resort, stayDates) {
 // right after inserting this HTML into the DOM.
 function buildStayActionButtonsHTML(inSplitMode, overallCheckIn, overallCheckOut) {
   let saveItineraryHTML = "";
+  const editing = editingItinerary();
   if (isSignedIn) {
     if (showingItinerarySaveForm) {
       const draftName = itineraryNameDraft != null ? itineraryNameDraft : suggestItineraryName();
@@ -3126,19 +3271,21 @@ function buildStayActionButtonsHTML(inSplitMode, overallCheckIn, overallCheckOut
       const savedOk = itinerarySaveStatus === "saved";
       saveItineraryHTML = `
         <div class="itinerary-save-form">
-          <input type="text" id="itinerary-name-input" value="${draftName.replace(/"/g, "&quot;")}" placeholder="Name this itinerary" ${savingNow || savedOk ? "disabled" : ""}>
-          <button class="itinerary-save-confirm" onclick="confirmSaveItinerary()" ${savingNow || savedOk ? "disabled" : ""}>${savingNow ? "Saving…" : savedOk ? "Saved!" : "Save"}</button>
+          <input type="text" id="itinerary-name-input" aria-label="Itinerary name" value="${escapeHTML(draftName)}" placeholder="Name this itinerary" ${savingNow || savedOk ? "disabled" : ""}>
+          <button class="itinerary-save-confirm" onclick="confirmSaveItinerary()" ${savingNow || savedOk ? "disabled" : ""}>${savingNow ? "Saving…" : savedOk ? "Saved!" : itinerarySaveMode === 'update' ? 'Save Changes' : itinerarySaveMode === 'copy' ? 'Save Copy' : 'Save'}</button>
           ${!savedOk ? `<button class="itinerary-save-cancel" onclick="closeItinerarySaveForm()" title="Cancel">&times;</button>` : ""}
         </div>
-        ${itinerarySaveStatus === "error" ? `<div class="itinerary-save-error">Couldn't save -- try again.</div>` : ""}
+        ${itinerarySaveStatus === "error" ? `<div class="itinerary-save-error" role="alert">${escapeHTML(itinerarySaveError)}</div>` : ""}
       `;
     } else {
-      saveItineraryHTML = `<button class="summary-save-itinerary" onclick="openItinerarySaveForm()">&#128190; Save Itinerary</button>`;
+      saveItineraryHTML = editing
+        ? `<p class="itinerary-edit-context">Editing ${escapeHTML(editing.name)}</p><button class="summary-save-itinerary" onclick="openItinerarySaveForm('update')">Save Changes</button><button class="summary-save-itinerary" onclick="openItinerarySaveForm('copy')">Save as Copy</button>`
+        : `<button class="summary-save-itinerary" onclick="openItinerarySaveForm()">&#128190; Save Itinerary</button>`;
     }
   }
   return `
     <button class="summary-add-segment" onclick="addSegment()">+ Add Another Resort</button>
-    ${!inSplitMode ? `<a class="summary-compare" href="compare.html?checkin=${overallCheckIn}&checkout=${overallCheckOut}&category=${getCategoryFromRoomType()}">Compare All Resorts</a>` : ""}
+    ${!inSplitMode ? `<a class="summary-compare" href="compare.html?checkin=${overallCheckIn}&checkout=${overallCheckOut}&category=${getCategoryFromRoomType()}&segment=current">Compare All Resorts</a>` : ""}
     ${saveItineraryHTML}
   `;
 }
@@ -3541,6 +3688,9 @@ function renderSummary() {
 }
 
 function clearSelection() {
+  if (itinerarySaveStatus === 'saving') return;
+  state.itineraryEdit = null;
+  state.itineraryPendingSave = null;
   state.checkIn = null;
   state.checkOut = null;
   state.segments = [];
@@ -3803,12 +3953,15 @@ document.addEventListener("click", (e) => {
 // ---- Init ----
 
 // Restore state from sessionStorage only if returning from compare page
-const returningFromCompare = sessionStorage.getItem("dvc_return_to_calendar");
-const savedState = returningFromCompare ? sessionStorage.getItem("dvc_calendar_state") : null;
-const switchResort = returningFromCompare ? sessionStorage.getItem("dvc_switch_resort") : null;
-sessionStorage.removeItem("dvc_calendar_state");
-sessionStorage.removeItem("dvc_switch_resort");
-sessionStorage.removeItem("dvc_return_to_calendar");
+function readCalendarSession(key) { try { return sessionStorage.getItem(key); } catch (_) { return null; } }
+function clearCalendarSession(key) { try { sessionStorage.removeItem(key); } catch (_) {} }
+const compareSelection = window.DVCCompareHandoff.read(new URLSearchParams(window.location.search));
+const returningFromCompare = compareSelection ? compareSelection.segment != null : readCalendarSession("dvc_return_to_calendar");
+const savedState = returningFromCompare ? readCalendarSession("dvc_calendar_state") : null;
+const switchResort = returningFromCompare && !compareSelection ? readCalendarSession("dvc_switch_resort") : null;
+clearCalendarSession("dvc_calendar_state");
+clearCalendarSession("dvc_switch_resort");
+clearCalendarSession("dvc_return_to_calendar");
 
 // ---- "Back to Suggest a Stay" banner ----
 // Deliberately a separate, NOT one-shot flag from dvc_return_to_calendar
@@ -3816,7 +3969,7 @@ sessionStorage.removeItem("dvc_return_to_calendar");
 // one needs to keep the banner offering a way back for the rest of the
 // session, not just the single page view right after suggest.html's
 // redirect, since there's otherwise no path back to those results at all.
-if (sessionStorage.getItem("dvc_suggest_return")) {
+if (readCalendarSession("dvc_suggest_return")) {
   document.getElementById("suggest-return-banner").style.display = "";
 }
 document.getElementById("suggest-return-dismiss").addEventListener("click", () => {
@@ -3843,6 +3996,22 @@ if (savedState) {
     }
   } catch (e) {
     // Ignore parse errors
+  }
+}
+
+if (compareSelection) {
+  const result = window.DVCCompareHandoff.apply(compareSelection, state, RESORTS);
+  if (result.error) {
+    const notice = document.createElement('p');
+    notice.setAttribute('role','alert');
+    notice.textContent = result.error;
+    document.body.prepend(notice);
+  } else {
+    Object.assign(state, result.state);
+    // Keep split context available if this explicit selection URL is reloaded.
+    if (compareSelection.segment != null) {
+      try { saveStateToSession(); } catch (_) {}
+    }
   }
 }
 

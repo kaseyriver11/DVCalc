@@ -1,7 +1,64 @@
 # DVC Companion: Owner UI/UX Review
 
 Review date: September 21, 2026  
-Status: Review complete. UX-01 resolved locally on September 21, 2026; remaining findings open. See the resolution log for the agreed change and verification.
+Status: Review complete. UX-01 through UX-12 implemented and verified locally. The owner confirmed applying migration 022 in Supabase; migration 023 is pending. UX-13 is next; remaining findings are open. The summary below supersedes historical recommendations where the owner clarified the intended behavior.
+
+## Changes completed: #1–#12
+
+Updated September 22, 2026. This is the handoff summary for a fresh session.
+
+| Issue | What changed | Result for an owner |
+| --- | --- | --- |
+| **#1 — Calendar deductions and trip logging** | Removed Apply to Trip/Apply Split and their ledger deductions. Log This Trip opens a new, prefilled Log a Trip form. Added complete point-source attribution across owned contracts and outside points; membership value uses the owned share. Refined the number cards, resort/room pickers, and point-source cards for mobile. | Saved itineraries describe possibilities; recorded bookings account for points actually used. Neither saving an itinerary nor logging a trip silently changes the point ledger. These remain separate workflows. |
+| **#2 — Correct use year for a stay** | Calendar selects each contract's use year from the stay dates, labels the applicable cycle, and separates nights crossing a use-year boundary. Changed dates or balances invalidate old allocation previews. | A future stay uses the appropriate year's balance, not today's. Missing balances now require owner input under #5. |
+| **#3 — Eligible funding only** | Itinerary comparison allocates points by contract, use year, resort eligibility, and stay segment without reusing the same balance. Shows funding sources, booking-window limits, missing balances, and holding-point review states. | A pooled portfolio total can no longer make a restricted or underfunded stay appear covered. Coverage is a planning assessment, not room availability or a booking. |
+| **#4 — Reliable point attention** | Home and My Contracts share deadline calculations and prioritize actual banking/expiry dates, including banked, borrowed, and holding points. Links select the relevant contract. Successful ledger saves refresh warnings. | Earlier expiry wins over a later banking deadline. Holding points expire at use-year end; their 60-day rule is an advance booking window, not a countdown from entering holding. |
+| **#5 — Owner-entered starting balances** | After adding a contract, a mobile sheet asks “What points do you have left?” with this/next use-year cards, actual dates, large point inputs, a full-allotment shortcut, optional point details, and persistent Save/Later buttons. Either year can be skipped. | Annual allotment is never assumed to be available. Zero is a real balance; blank is unknown. A 200-point contract can start with 0 this year and 100 next year without reconstructing already-spent borrowing. |
+| **#6 — Record point movements** | Added Record banking, Record borrowing, and Adjust balance actions to the contract ledger. Movement sheets preview both years and save them together with a durable retry reference. Adjustment previews a correction to one year only. | Owners can record moves completed with Disney without manually editing two years, or correct a balance without inventing a movement. |
+| **#7 — Consistent ownership value** | Home and Membership Value now use one shared model and the same saved assumptions. Both identify logged owner-funded stay value separately from projected value. Assumption saves are serialized and failed saves show a retryable preview state. | Both screens agree on the payback estimate, costs, recorded value, and percentage. Changing the projection baseline does not change logged stay value. |
+| **#8 — Truthful push status** | Replaced the push toggle with Unavailable because this build has no configured sender. Removed permission requests and pending-subscription enrollment. Saving preferences clears stale enabled/pending flags. | Owners cannot mistake browser permission or an old setting for working push reminders. Email and in-app choices remain independent. |
+| **#9 — Keep the comparison selection** | Compare passes explicit resort, room, check-in, and check-out values to Calendar. Calendar opens the selected month without requiring a previous visit. Split-stay comparisons identify the segment being replaced. | Starting from Home keeps the chosen stay. Round trips use the latest dates, and replacing one split segment preserves the others. |
+| **#10 — Recover failed balance saves** | Balance cards distinguish last confirmed amounts from proposals, mark unsaved/unconfirmed entries, and expose Retry save and Discard edits. Confirmed partial saves become the new baseline; unchanged years are not rewritten. | A failed 10 → 30 edit leaves guidance based on 10. Owners can retry or discard local edits without mistaking them for stored balances or undoing a completed save. |
+| **#11 — Edit versus copy** | Reopening a saved itinerary retains its identity and name. Save Changes updates it; Save as Copy creates a separate record. Booking As is saved and restored, and failed copy requests reuse their ID on retry. | Editing no longer silently creates another plan. A deliberate copy leaves the original intact. Saved itineraries remain independent of logged bookings and point balances. |
+
+| **#12 — Logged usage evidence** | Membership Value counts owned points assigned to logged stays, with outside points and incomplete attribution explained separately. Balance changes cannot inflate this total. The Points Steward badge discloses its separate coverage estimate. | Zero logged stays means zero logged usage. Upcoming recorded bookings count; saved plans do not. No expired or unreconciled totals are guessed. |
+
+### Decisions to preserve
+
+- This is a **contract manager first**, with planning as a supporting feature. Use mobile cards and progressive disclosure rather than dense forms.
+- Trust owner-entered balances. This is a practical management tool, not a reconciliation audit; no separate verification checkbox is required.
+- Optional banked, borrowed, and holding amounts are **included within** the entered total, not added on top. Enter only points still available. If details are omitted, the total is stored as remaining points; bucket-specific deadline advice is only as precise as the owner's entries.
+- Skipping a year does not overwrite an existing balance. A missing balance is neither zero nor the annual allotment. Home, Calendar, comparison, and point-efficiency calculations respect that distinction.
+- The platform cannot book, bank, or borrow points with Disney. Saved itineraries and logged bookings are independent; logging a trip does not deduct the ledger.
+
+### Verification and database handoff
+
+- **179 automated tests currently pass** across the workspace, including the owner-flow regression tests and tests added by concurrent work. UX-11 adds seven focused itinerary-editing/persistence tests; UX-12 adds six logged-usage tests.
+- Local mobile testing used isolated synthetic owner data at 390px and 360px. For #5, verified new-contract handoff, 0/100 balances, skipping, full-allotment entry, optional bucket math, invalid totals, unknown Home state, and partial-save failure/retry without repeating the successful year. The 360px sheet has no horizontal overflow and keeps Save/Later visible.
+- The user confirmed running **[migration 019](../db/migrations/019_validate_trip_funding.sql)** for trip funding.
+- **Run [migration 020](../db/migrations/020_confirm_point_balances.sql) before using the new balance flow with Supabase.** It adds `balance_confirmed_at`, trusts existing saved rows, and leaves newly created unknown rows unconfirmed. The backfill runs only when the column is first introduced. The timestamp means owner-entered, not verified against Disney. The migration is also included in `db/schema.sql`.
+- The owner confirmed applying **[migration 022](../db/migrations/022_record_point_movements.sql)** in Supabase on September 22. It requires migration 020. No migration was executed by this session; real authenticated movement saves and production deployment have not been verified. The attempted temporary local PostgreSQL test-engine download was interrupted, so the database function has not been runtime-tested here. No commit or deployment was performed for this handoff.
+- Earlier #2/#3 log entries describe estimated allotments for missing rows; **#5 supersedes that behavior with unknown balances**. The original findings below remain historical evidence.
+
+### Start the next session with #13
+
+**UX-13 is next: prioritize ownership management in navigation and Home.** Inspect the current screens first: concurrent work has changed navigation since the original review. Preserve completed fixes and address only remaining gaps.
+
+**Before using UX-11 against Supabase, run [migration 023](../db/migrations/023_itinerary_booking_context.sql).** It adds the optional `booking_contract_id` and validates ownership; deleting the contract clears that planning context. No migration was executed by this session. The same SQL is appended to `db/schema.sql`. Existing itineraries have no recoverable prior Booking As value; the owner can choose one and save it going forward.
+
+For #11, `state.itineraryEdit` carries owner-scoped identity through the saved-page and Calendar-picker load paths and comparison round trips. `auth.js` exposes an owner-filtered update operation. Explicit copy/new saves retain a generated ID across retries. Clearing the Calendar selection begins a new plan. Loading another itinerary or clearing selection is blocked while a save is in progress.
+
+For #10, the balance-sheet handlers in `account.html` keep per-year confirmed snapshots. A successful partial save updates its snapshot; subsequent edits are unsaved again. Retry skips unchanged confirmed years. Discard closes the sheet and reloads stored data; it does not reverse successful or potentially committed requests. Point movements retain #6's atomic/idempotent retry path.
+
+For #8, push enrollment remains unavailable until an operational sender and subscription lifecycle exist. The service worker is retained for installation and event handling. Enabling real push delivery is a separate feature, not completed by this fix. No backend readiness or real email delivery was verified in this session.
+
+The requested mobile push feature is tracked in **[Mobile push to-do](mobile_push_todo.md)**, including sender deployment, device enrollment, truthful readiness, preferences, and physical-device testing.
+
+For #9, `dvc-compare-handoff.js` validates and applies explicit selections. `compare.html` builds the URL; `app.js` restores it. Standalone selection does not depend on saved Calendar state. Split context remains session-based, with explicit errors for missing completed segments or date changes that would disrupt a split stay.
+
+For #7, `dvc-owner-value.js` contains the shared ownership model, used by `home.js` and `trips.html`. Home now fetches `getUserSettings()` alongside portfolio data. Buying-guide scenarios in `contractvalue.html` remain independent hypothetical purchase comparisons; they were not rewritten as the existing-owner portfolio model. UX-12 now uses explicit trip funding for logged usage, independently of ledger balances and the badge estimate.
+
+For #6, the implementation entry points are `account.html`, `account-point-moves.js`, `dvc-point-moves.js`, `auth.js`, and migration 022. Movement receipts are stored in `point_movements`; a visible history/undo interface is not included. A new deliberate submission after a successful save is a new movement; retry protection covers the same submission, not recognition of an external Disney transaction. Correct mistaken balances with Adjust balance.
 
 ## Product direction
 
@@ -47,17 +104,17 @@ No app files were edited during the review. This document records observations f
 The IDs below are stable references for addressing findings one at a time. Checking an item means its change has been implemented and verified against the recorded scenario.
 
 - [x] UX-01 — Prevent repeated deductions for the same stay.
-- [ ] UX-02 — Use the stay's applicable use-year balance.
-- [ ] UX-03 — Restrict funding calculations to eligible contracts and points.
-- [ ] UX-04 — Include holding points in deadline prioritization.
-- [ ] UX-05 — Confirm balances when adding existing contracts.
-- [ ] UX-06 — Provide explicit banking, borrowing, and adjustment flows.
-- [ ] UX-07 — Unify ownership-value calculations and assumptions.
-- [ ] UX-08 — Represent push-notification readiness truthfully.
-- [ ] UX-09 — Preserve the stay when leaving standalone resort comparison.
-- [ ] UX-10 — Make failed ledger saves recoverable and unambiguous.
-- [ ] UX-11 — Distinguish editing an itinerary from saving a copy.
-- [ ] UX-12 — Separate logged usage from inferred consumption.
+- [x] UX-02 — Use the stay's applicable use-year balance.
+- [x] UX-03 — Restrict funding calculations to eligible contracts and points.
+- [x] UX-04 — Include holding points in deadline prioritization.
+- [x] UX-05 — Ask for available balances when adding existing contracts (migration 020 pending).
+- [x] UX-06 — Provide explicit banking, borrowing, and adjustment flows (migration 022 applied by owner; live saves not verified).
+- [x] UX-07 — Unify ownership-value calculations and assumptions.
+- [x] UX-08 — Represent push-notification readiness truthfully.
+- [x] UX-09 — Preserve the stay when leaving standalone resort comparison.
+- [x] UX-10 — Make failed ledger saves recoverable and unambiguous.
+- [x] UX-11 — Distinguish editing an itinerary from saving a copy (migration 023 pending).
+- [x] UX-12 — Separate logged usage from inferred consumption.
 - [ ] UX-13 — Prioritize ownership management in navigation and Home.
 - [ ] UX-14 — Improve mobile contract-form navigation and validation.
 
@@ -271,6 +328,115 @@ The IDs below are stable references for addressing findings one at a time. Check
 Use the stable issue IDs when choosing the next fix. For each selected issue, reproduce it against the current code before making changes, implement the agreed scope, and verify the original scenario plus relevant failure/recovery behavior. Update its checklist entry and record the outcome below. Related IDs are context, not authorization to expand a selected fix automatically.
 
 ### Resolution log
+
+### September 22, 2026 - UX-12 resolved locally
+
+- Membership Value previously labeled the badge coverage proxy as points logged on trips, even though that proxy included saved remaining, banked, and holding balances. Replaced the percentage with owned-contract points explicitly assigned to logged stays via `DVCTripFunding.loggedUsage()`. No ownership-duration or annual-allotment denominator is inferred.
+- A compact expandable explanation separates outside points and records needing source review, links to the logged-stay list and My Contracts, and states that upcoming recorded bookings count while saved itineraries do not. Invalid or legacy attribution is excluded until corrected. Balances and movements cannot establish expired or unreconciled totals.
+- Points Steward keeps its existing achievement calculation and thresholds, but its label and detail now disclose estimated coverage, possible overlap, and that it is neither logged usage nor proof that no points expired.
+- Verified at a 390px mobile viewport using isolated synthetic data: no stays displays 0 points; a mixed 60-owned/40-outside stay plus a 100-outside stay and one legacy record displays 60 owned points, 140 outside points, and one record needing review. Changing ledger balances leaves the 60-point total unchanged. The explanation opens without horizontal overflow.
+- All 179 workspace tests pass, including six new tests for empty, mixed, outside-only, invalid, historical/upcoming, and ledger-independent usage. No new migration or production data changes for UX-12. Migration 023 from UX-11 remains pending.
+
+### September 22, 2026 - UX-11 resolved locally; migration 023 pending
+
+- Confirmed both load paths discarded itinerary identity and the save handler always inserted. Saved Itineraries and Calendar's Load Trip picker now preserve the ID, name, and owning account. The Calendar shows Editing [name], Save Changes, and a separate Save as Copy. The edit form starts with the saved name; the copy form suggests a copy name.
+- Save Changes targets the existing owner-filtered row. A missing/deleted record returns an error rather than silently creating a replacement. Save as Copy leaves the original untouched and switches the editor to the new copy after success. New/copy retries reuse a generated ID, preventing duplicate rows after an uncertain response. Duplicate taps are guarded, blank names are rejected, and errors retain the entered name and stay.
+- Added optional Booking As persistence in migration 023. A valid active owned contract is restored by both load paths; unavailable/deleted/inactive contracts fall back to browsing. Existing itineraries without that field remain loadable. This is advisory planning context only, not a booked stay, committed allocation, or ledger mutation.
+- Mobile verification at 390px: AKV Option → AKV Revised remained one record; Save as Copy created AKV Alternative while preserving AKV Revised; both load paths retained the chosen contract; a simulated update failure retained the typed name and record count. Seven new tests cover update/copy semantics, retry IDs, duplicate taps, owner isolation, blank names, and persistence filtering. All 173 workspace tests passed.
+- Migration 023 has not been applied here. Browser verification used synthetic persistence; real Supabase writes and the new SQL trigger have not been runtime-tested. No production deployment was performed.
+
+### September 22, 2026 - UX-10 resolved locally
+
+- The original inline inputs were already replaced in UX-06. Removed their unused live-total/autosave listeners and helpers so that obsolete behavior cannot be reused accidentally.
+- Balance sheets now show the last confirmed balance, proposed edits, and explicit Saved / Unsaved changes / Save not confirmed states. Unconfirmed entries use an attention color. Editing optional bucket details also updates the state. Guidance continues to use confirmed data; entering a proposal never updates the underlying balance cache.
+- Failed saves retain inputs and expose Retry save and Discard edits. Network errors are described as an unconfirmed save, since a lost response does not prove the server rejected the write. Discard reloads stored balances and does not undo completed saves.
+- Successful partial saves update the confirmed baseline immediately. Editing that year again correctly shows unsaved changes against the new amount. Retry skips unchanged confirmed years and skipped entries; an unconfirmed request remains eligible for retry even if the owner changes the proposal back to its prior amount.
+- Mobile verification at 360px: failed 10 → 30 edit kept both storage and the ledger headline at 10; discard restored the saved view; retry saved 30. In a partial two-year save, 2026 saved 40 while 2027 remained 10; editing 2026 again to 45 showed 40 as confirmed, and discarding preserved 40/10. Five new regression tests cover these cases, unchanged entries, and uncertain responses. All 166 workspace tests passed.
+- No new migration is needed. Testing used isolated synthetic owner data; real Supabase outages and persistence were not exercised.
+
+### September 22, 2026 - UX-09 resolved locally
+
+- Added `docs/mobile_push_todo.md` at the owner's request before starting this fix. This tracks actual mobile push delivery separately from UX-08's status correction.
+- Root cause: Compare stored only resort/room and a return flag. Calendar consumed that choice only inside restoration of a previous Calendar snapshot, so standalone comparisons lost the entire selection. Compare now passes the selected resort, room, check-in, and check-out in an explicit URL; Calendar validates them and opens the selected check-in month. No prior Calendar visit is required.
+- Latest comparison dates override older round-trip dates. Standalone selections ignore stale split-stay state. Split comparison links identify completed versus current segments; replacing a completed segment updates only that segment. Changes that would break split-date continuity are rejected with an inline explanation. Reload retains available split context.
+- Verified on mobile: fresh comparison with no saved Calendar state, Animal Kingdom Value Studio October 12–17 → correct 5-night/53-point Calendar stay; browser Back preserves comparison dates; revised November dates survive a round trip; changing an earlier split segment preserves the current segment and survives reload.
+- All 97 tests pass. New tests cover exact standalone handoff, stale state, revised dates, split isolation/continuity, cross-year chart requirements, invalid dates, and missing rooms. No migration or owner-data write is needed. Comparison-page custom cash overrides are not carried to Calendar by this change.
+
+### September 22, 2026 - UX-08 resolved locally
+
+- Confirmed the build had an empty push key and no push-sending function. The old enable path could store `{pending:true}` and `push_enabled:true` after requesting browser permission. Replaced that control with a compact Unavailable status and directions to in-app/email options; no permission request or subscription registration is made by Notification Settings.
+- Legacy enabled profiles also show Unavailable, with an explanation of the old setting. The settings bell no longer counts that flag as an active reminder channel. Explicitly saving preferences clears `push_enabled` and `push_subscription`; simply viewing or closing the sheet does not mutate the profile. Existing browser permission is left alone.
+- Denied browser permission adds inline site-settings guidance, without implying that granting it would make push operational today. Browsers without the Notification API can open and save the same settings safely.
+- Profile-save failures retain choices and restore controls for retry. Concurrent taps are guarded; controls cannot change mid-save. Invalid email lead times are rejected rather than silently replaced. In-app and email toggles have accessible names.
+- Verified at a 360px mobile viewport with synthetic legacy-enabled data and denied permission: unavailable state, inactive bell when other channels were off, failed save, successful retry, correct channel preservation, stale flag cleanup, and reopening. All 90 tests pass. No migration is required. Real delivery and Supabase writes were not exercised; this fixes status accuracy rather than deploying push delivery.
+
+### September 22, 2026 - UX-07 resolved locally
+
+- Root cause: Home used a copied model with a hard-coded $35 baseline and an older projection loop. Membership Value used saved assumptions (default $26) and a calendar-year cost/value series through deed expiry. Extracted Membership Value's model into `dvc-owner-value.js`; both screens now call it with the same saved settings and owned-contract trip attribution.
+- Both screens state the logged stay value, future value baseline, value growth, and dues growth. The baseline affects the projection, not the owner-funded value of logged stays. Home links directly to the expanded Model Assumptions panel. Missing purchase details remain estimates and are labeled as such; this change does not certify the model's other economic assumptions.
+- Corrected month interpolation to use the crossover calendar year and incremental value net of that year's costs. The estimate no longer shifts merely because the page is opened in a different month. Percentage display cannot round up to 100% while a cost gap remains.
+- Assumption writes are serialized to prevent a slow older save overwriting a newer choice. Pending and failed saves are labeled previews, including beside the headline estimate; failure offers Retry save. Home uses the last successfully saved assumptions.
+- Synthetic mobile verification: with no stays, both screens predicted January 2038 at $21/point for the test portfolio. A $4,000 stay funded 75% by owned points contributed exactly $3,000 on both screens. At $35/point both predicted November 2034; at $15/point both predicted November 2045. Logged value stayed $3,000. Failed-save and retry behavior verified. Inspected layouts at 390px and 360px; the populated Membership Value page still reports a 380px layout extent at the narrower viewport, outside this calculation fix.
+- All 85 automated tests pass, including shared-model wiring, saved assumptions, date interpolation, rounding, empty/inactive portfolios, owned attribution, serialized saves, and failed-save retry. No new migration is needed. Real Supabase persistence was not exercised; browser tests used isolated synthetic owner data.
+
+### September 22, 2026 - UX-06 resolved locally; migration 022 applied by owner
+
+- Replaced direct auto-saving bucket inputs with a compact balance breakdown and three explicit actions: Record banking, Record borrowing, and Adjust balance. Movement sheets show actual use-year dates, total points before/after, and the affected current/banked/borrowed bucket. Save and Cancel remain accessible on mobile.
+- Banking subtracts current points from the selected year and adds banked points to the next year. Borrowing subtracts next-year current points and adds borrowed points to the selected year. Existing banked, borrowed, and holding points cannot move again. Missing balances open the balance-entry sheet; there is no assumed annual allotment.
+- Copy explains that these record actions already completed with Disney. Owners should start from balances before the move; balances already reflecting it should be left alone or corrected with Adjust balance. No online banking/borrowing is executed and no current-date deadline gate prevents recording an earlier real action.
+- Adjust balance reuses the mobile total-and-optional-details sheet for the selected year only, with an explicit before/after total preview. It changes no other year. Cancel leaves balances unchanged.
+- Migration 022 adds an authenticated database operation that checks contract ownership, locks the two year rows, rejects stale previews, updates both balances in one transaction, and saves a durable receipt. The client keeps the same owner-scoped session retry reference after an uncertain response, including reopening the sheet in the same tab. It disables repeat taps during a save. Retrying a committed request returns its original receipt.
+- Verification: **76 automated tests passed**, including movement direction, conservation, bucket restrictions, unknown balances, invalid amounts, lost-response retry, double-tap prevention, storage failure, and stale-preview rejection. Synthetic mobile checks at 390px/360px exercised banking, borrowing, adjustment, cancellation, overdraw, missing-year setup, and a committed-save/lost-response retry. No horizontal overflow at 360px.
+- The owner confirmed running migration 022 in Supabase. Production RPC execution and real persistence remain unverified; the local browser used a synthetic atomic-save fixture. No new database changes were made after that confirmation. The table provides receipts, but a visible transaction history and dedicated undo action are outside this change.
+
+
+### September 22, 2026 - UX-05 resolved locally; migration pending
+
+- Added a two-year balance sheet immediately after contract creation and an Add points left action for unknown ledger years. Inputs use actual use-year date ranges, accept zero, support skipping, and offer an explicit full-allotment shortcut. No extra confirmation step is required.
+- Optional bucket details split the entered total; they cannot exceed it. A 200-point contract with 0 current and 100 next-year points stores exactly those amounts and does not recreate spent borrowed points. Existing recorded balances remain trusted.
+- Missing balances no longer inherit annual entitlement or create false all-clear/funding claims. Updated Home/account attention, Calendar, itinerary comparison, and point-efficiency calculations. Explicit ledger edits record the owner-entry timestamp.
+- Save errors retain entries. When one year saves and the next fails, the sheet identifies the saved year and retries only unchanged unsaved entries. Skipping a previously saved year leaves it intact.
+- Verified with 67 passing tests and synthetic mobile interactions, including zero/skip, new-contract handoff, full allotment, optional breakdowns, validation, and partial-save retry. Migration 020 is prepared but not applied to Supabase; see the handoff above.
+
+### September 22, 2026 - UX-04 resolved locally
+
+- Home and My Contracts now share point-attention calculations. Current points needing banking and banked/borrowed/holding points needing use are separate actions, ordered by actual date across contracts. An open banking window no longer automatically outranks an earlier expiry. Notification Center includes secondary actions on the lead contract as well.
+- Corrected the rule behind the original observation: holding points expire at the end of the use year, not 60 days after entering holding. The 60-day restriction concerns the advance booking window. Source: [Disney's holding-points explanation](https://plandisney.disney.go.com/question/holding-points-work-expire-bank-501019/). The earlier review's derived holding deadline and old migration/documentation descriptions of an entry-date clock should not be treated as a valid rule.
+- Home, account banners, and ledger warnings show the affected contract, amount, bucket, and date. Holding entry date is optional history; no date is needed to calculate expiry. Calendar holding copy and the shared ledger helper use the corrected rule. Banking reminders no longer imply borrowing has the same cutoff.
+- All-clear requires every current-cycle bucket to be empty. Review points on Home opens the affected contract. Successful balance saves refresh warnings without a reload; failed saves retain the saved balance's warning.
+- Verification: nine new attention tests plus corrected holding-rule tests. Mobile checks at 390px and 360px confirmed September 30 holding expiry outranks later banking, correct contract navigation, no false all-clear, failed-save recovery, immediate warning refresh, and banked-only warnings. All 59 tests passed. Testing used isolated synthetic owner data.
+- No database migration is needed; existing holding dates and balances remain stored. Schema comments were corrected for future installs.
+
+
+### September 21, 2026 - UX-03 resolved locally
+
+- Replaced the combined portfolio pool with an allocation across eligible contract/use-year balances and individual stay nights. Resort restrictions use the existing per-contract access rules. Shared balances are consumed only once across split-stay segments; flexible allocations can be reassigned so restricted segments are not stranded by ordering.
+- Replaced Fully Funded with Points covered, Window not open, Estimated funding, Needs points, Contract restricted, or a review state as applicable. A closed 7/11-month window cannot produce the same success indicator as funding available in an open window. Missing chart data and past stays fail closed rather than implying zero-cost funding.
+- View point sources identifies the supplying contracts, points, use years, segment numbers, and pending booking dates. Ineligible contracts are named. Each compared itinerary is assessed independently.
+- Counts recorded remaining, banked, and borrowed points. Does not assume new borrowing against an untouched annual ceiling. Holding balances require separate review and are excluded from the allocation; if they could affect a shortage, the result says Review holding points. Missing ledger rows are labeled estimates. These are funding previews, not reservation or availability confirmations.
+- Verification: ten new tests cover the original 55-point AKV restriction example, restricted-only ownership, shared-balance reuse, allocation ordering, closed windows, cross-use-year nights, estimated/missing data, holding, recorded banked/borrowed points, and month-end window dates. All 50 tests passed. Synthetic mobile checks at 390px and 360px verified side-by-side restricted/eligible results, source explanations, selection changes, correction after an eligible balance update, and no horizontal overflow.
+- No production owner data changed and no database migration is required.
+
+
+### September 21, 2026 - UX-02 resolved locally
+
+- Calendar funding now selects the ledger cycle from the stay date for each contract, including Booking As, Smart Draw, multi-contract allocations, and the swap preview. With no stay date, it uses today's cycle.
+- Displays the applicable cycle and distinguishes recorded balances from estimated annual allotments when no ledger row exists. Banking reminders reference that cycle's deadline.
+- Manual draws and multi-contract allocations reset when dates, contracts, or balances change, even if the stay's total point cost is unchanged.
+- A single-contract stay crossing a use-year boundary is assessed by its actual nights in each year; checkout is excluded. Each year's shortage or remainder is shown independently. Multi-contract boundary-crossing stays explicitly require individual contract/date-range review; a combined allocation is not offered for that case.
+- Verification: six new regression tests cover the original 81-point/150-point example, February and December use years, untouched years, boundary nights, stale overrides, and differing contract cycles. Mobile browser checks confirmed a real 78-point March 2027 stay leaves 72 of 150 points, contract-specific split balances, and a Jan 31-Feb 2 stay exposes the depleted earlier year. Planning left balances unchanged.
+- No database migration is required. This fixes the Calendar finding; itinerary-comparison eligibility remains tracked separately under UX-03.
+
+
+### September 21, 2026 - Logged-stay funding and native number fields
+
+- Replaced the purple number panels with neutral rounded cards, prominent editable values, currency/point units, and mobile-sized controls.
+- Replaced the optional contract selector with required point-source attribution. A stay can use one or several owned contracts plus Disney one-time, transferred/rented, or other outside points. The sources must exactly match total points used. Inactive contracts remain available for historical stays.
+- Membership value credits the owned share of the whole stay's cash value. Example: 60 owned points plus 40 outside points on a $2,000 stay credits $1,200. All-outside stays remain in history with zero ownership credit. Trip cards show the contribution from each contract.
+- Older/unconfirmed records are preserved but excluded from credited value until the owner reviews and saves their point sources. The value screen and Home explain this exclusion. Legacy contract selections are suggestions for review, not automatic confirmation.
+- Home, Membership Value, and financial badge calculations share the attribution helper. Calendar multi-contract previews now prefill structured allocations for review as well as notes. Itineraries remain separate; logging never changes point balances.
+- Confirmed funding and cash values are no longer silently dropped on a failed database compatibility retry. Migration `019_validate_trip_funding.sql` adds server-side ownership, whole-point, duplicate-source, and exact-total validation; it has not been applied to Supabase or executed against PostgreSQL in this session. The client uses the existing JSON column from migration 012.
+- Verification: 34 Node tests passed. Synthetic mobile browser checks at 390px and 360px covered mixed funding, multiple contracts, exact-total errors, failed-save retry, persisted editing, legacy review, automatic single-contract allocation, cancellation, outside-only stays with no contracts, Home value, badge rendering, and horizontal overflow. Contract balances remained unchanged. Production authentication and database persistence remain unverified.
 
 ### September 21, 2026 — UX-01 resolved locally
 

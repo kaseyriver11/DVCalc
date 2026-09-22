@@ -397,7 +397,7 @@ body {
   border-left: 3px solid var(--color-good);
 }
 
-/* Personalized Home Resort Advantage badge (ownerBadgeHTML()) -- only
+/* Personalized booking-window chips (bookingWindowChipsHTML()) -- only
    rendered once a signed-in user's contracts resolve via getUserResortAccess(). */
 .owner-access-badge {
   display: inline-block;
@@ -432,6 +432,9 @@ body {
    which is what makes tooltip-align-left reliably safe everywhere. */
 .owner-badge-line {
   flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .owner-access-badge.home {
@@ -449,9 +452,165 @@ body {
   color: var(--color-danger);
 }
 
-.owner-access-badge.info {
+/* Non-home resort: reachable, but only at 7 months. Deliberately the
+   neutral brand tint rather than a warning color -- "not your home resort"
+   is a fact about the window, not a problem in itself; the separate risk
+   chip is what turns it into a warning when history says so. */
+.owner-access-badge.switch {
+  background: var(--color-primary-tint-bg);
+  color: var(--color-primary);
+}
+
+.owner-access-badge.window-open {
+  background: var(--color-good-bg);
+  color: var(--color-good);
+}
+
+.owner-access-badge.window-pending {
   background: #f0f0f0;
-  color: #666;
+  color: #555;
+}
+
+/* ---- Owner Contract Picker (picker-trigger + wallet-mini-card sheet) ----
+   Ported verbatim from styles.css/app.js's "Booking As" contract picker
+   (index.html) -- this page doesn't load styles.css (fully self-contained,
+   see the file header), so the classes are duplicated here rather than
+   shared, same call as this page's own windowOpensOn()/daysUntilDate()
+   duplication. Only what populateOwnerSelector() actually needs: the
+   trigger button, the bottom sheet, and the wallet-mini-card -- NOT the
+   resort-sheet-hero/sheet-search/resort-pick-row pieces, since this page's
+   no-contract fallback keeps the original plain resort dropdown rather
+   than porting that second picker too (out of scope for the reported bug,
+   which was specifically about the contract case). */
+.picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 200px;
+  max-width: 360px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--color-bg-card);
+  background-size: cover;
+  background-position: center;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+.picker-trigger:hover { border-color: #b39ddb; }
+.picker-trigger.has-art { border-color: rgba(255, 255, 255, 0.6); }
+.picker-trigger.has-art .picker-trigger-value {
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75), 0 0 1px rgba(255, 255, 255, 0.75);
+}
+.picker-trigger-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.booking-as-trigger-pill {
+  display: inline-block;
+  background: var(--color-primary-tint-bg);
+  color: var(--color-primary);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-left: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sheet-overlay.open { align-items: flex-end; }
+.modal-box.sheet {
+  max-width: 100%;
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 16px 16px 0 0;
+  margin: 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  animation: sheet-slide-up 0.22s ease-out;
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  margin: 4px auto 12px;
+}
+.sheet-list {
+  overflow-y: auto;
+  max-height: 60vh;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wallet-mini-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.wallet-mini-card {
+  position: relative;
+  height: 110px;
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: inset 0 0 0 1.5px rgba(212,175,55,0.35), 0 6px 16px rgba(0,0,0,0.2);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+.wallet-mini-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 55%);
+  pointer-events: none;
+}
+.wallet-mini-card.selected { box-shadow: inset 0 0 0 2.5px #fff, 0 6px 16px rgba(0,0,0,0.2); }
+.wallet-mini-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+}
+.wallet-mini-name {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+.wallet-mini-points-num { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.wallet-mini-points-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 1px; opacity: 0.8; }
+.wallet-mini-bottom { display: flex; gap: 6px; position: relative; }
+.wallet-mini-pill {
+  background: rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.68rem;
+  font-weight: 600;
 }
 
 /* Vibe & Logistics view badges (poolTierHTML()/diningHTML()) */
@@ -972,6 +1131,11 @@ body {
 @media (max-width: 768px) {
   .table-responsive { display: none; }
   .compare-cards { display: flex; }
+  /* One booking-window chip per line on a narrow card, so every chip's
+     left edge is the card's left edge -- that's what makes their fixed
+     tooltip-align-left tooltips reliably land inside the card instead of
+     spilling off its right edge from a mid-row anchor. */
+  .owner-badge-line { flex-direction: column; align-items: flex-start; }
   .mobile-sort-control { display: block; }
   .view-toggle { margin: 12px 16px 10px; }
   .vibe-filter-row { margin: 0 16px 10px; }
@@ -1065,29 +1229,29 @@ body {
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Plan a Stay</span>
+        <span class="site-nav-group-label">Overview</span>
         <a href="home.html">Home</a>
-        <a href="index.html" id="back-link">Calendar</a>
-        <a href="compare.html" class="active">Compare Resorts</a>
-        <a href="suggest.html">Suggest a Stay</a>
+        <a href="badges.html">Achievements</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Trip Planning</span>
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html" class="active">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Buying Guide</span>
-        <a href="contractvalue.html">Contract Value</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Account</span>
+        <span class="site-nav-group-label">My Membership</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
-        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1151,8 +1315,18 @@ body {
       </label>
     </span>
     <label for="owner-resort">
-      <span class="settings-label-text">Home resort: <span id="owner-dues-label"></span></span>
-      <div class="custom-select custom-select-narrow">
+      <span class="settings-label-text"><span id="owner-selector-label">Home resort:</span> <span id="owner-dues-label"></span></span>
+      <!-- Two mutually-exclusive views onto the same underlying <select>
+           (populateOwnerSelector() toggles which is visible): the plain
+           custom-select dropdown when there's no contract to draw from
+           (unchanged, original hypothetical "if I owned at X" resort
+           picker), and the wallet-mini-card sheet below -- same
+           picker-trigger + bottom-sheet pattern as index.html's own
+           "Booking As" contract picker -- once the signed-in user has
+           active contracts, so picking your real contract looks like every
+           other contract-picking spot in the app instead of a bespoke
+           dropdown. -->
+      <div class="custom-select custom-select-narrow" id="owner-resort-select-wrap">
         <select id="owner-resort" class="native-select"></select>
         <button type="button" class="custom-select-trigger">
           <span class="custom-select-value"></span>
@@ -1160,8 +1334,23 @@ body {
         </button>
         <div class="custom-select-dropdown"></div>
       </div>
+      <button type="button" class="picker-trigger" id="owner-picker-trigger" onclick="openOwnerSheet()" style="display:none;">
+        <span class="picker-trigger-value" id="owner-picker-trigger-label"></span>
+        <span class="custom-select-arrow"></span>
+      </button>
     </label>
     <div class="mobile-sort-control" id="mobile-sort-slot"></div>
+  </div>
+
+  <div class="modal-overlay sheet-overlay" id="owner-sheet">
+    <div class="modal-box sheet">
+      <div class="sheet-handle"></div>
+      <div class="modal-header">
+        <h3>Your Contract</h3>
+        <button class="modal-close" onclick="closeOwnerSheet()" aria-label="Close">&times;</button>
+      </div>
+      <div class="sheet-list" id="owner-sheet-list"></div>
+    </div>
   </div>
 
   <div class="table-container" id="results">
@@ -1170,6 +1359,7 @@ body {
 
   <script src="dvc-track.js"></script>
   <script src="dvc-ui.js"></script>
+  <script src="dvc-compare-handoff.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
@@ -1183,11 +1373,51 @@ RESORTS.sort((a, b) => a.name.localeCompare(b.name));
 // Same resort-color hash as account.html's wallet cards (WALLET_CARD_GRADIENTS) --
 // duplicated locally rather than shared, same precedent as CATEGORY_KEYWORDS
 // being independently copied across app.js/compare.html/suggest.html.
-const RESORT_DOT_COLORS = ["#4a148c", "#1b5e3a", "#0d47a1", "#7a1734", "#8d5524", "#37474f"];
-function resortDotColor(resortId) {
+function resortAccentHash(resortId) {
   let hash = 0;
   for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
-  return RESORT_DOT_COLORS[hash % RESORT_DOT_COLORS.length];
+  return hash;
+}
+const RESORT_DOT_COLORS = ["#4a148c", "#1b5e3a", "#0d47a1", "#7a1734", "#8d5524", "#37474f"];
+function resortDotColor(resortId) {
+  return RESORT_DOT_COLORS[resortAccentHash(resortId) % RESORT_DOT_COLORS.length];
+}
+
+// Second color of each RESORT_DOT_COLORS pairing, used only by the Owner
+// Contract Picker's wallet-mini-cards below (resortAccentGradient()) --
+// same palette/hash app.js's RESORT_ACCENT_GRADIENTS uses for index.html's
+// own Booking As sheet, so a given resort's card reads the same color in
+// both places instead of two independently-hashed palettes drifting apart.
+const RESORT_ACCENT_GRADIENT_PAIRS = ["#1a237e", "#0d3b26", "#082a63", "#4a0e20", "#5c3612", "#1c262b"];
+function hexToRgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+// Tinted-gradient-over-photo blend, falling back to the flat two-tone
+// gradient for a resort with no art yet (data/resort_images.js) -- same
+// blend app.js's own resortAccentGradient() uses.
+function resortAccentGradient(resortId) {
+  const idx = resortAccentHash(resortId) % RESORT_DOT_COLORS.length;
+  const a = RESORT_DOT_COLORS[idx], b = RESORT_ACCENT_GRADIENT_PAIRS[idx];
+  const image = typeof getResortImage === "function" ? getResortImage(resortId) : null;
+  if (image) return `linear-gradient(135deg, ${hexToRgba(a, 0.82)}, ${hexToRgba(b, 0.82)}), url('${image}')`;
+  return `linear-gradient(135deg, ${a}, ${b})`;
+}
+
+// Same translucent lavender wash (--color-primary-tint-bg at 82%) app.js
+// uses for its own Booking As trigger button.
+function resortArtWashCSS(imagePath) {
+  return `linear-gradient(rgba(236, 225, 247, 0.82), rgba(236, 225, 247, 0.82)), url('${imagePath}')`;
+}
+function applyResortArtBackground(el, imagePath) {
+  if (!el) return;
+  if (imagePath) {
+    el.style.backgroundImage = resortArtWashCSS(imagePath);
+    el.classList.add("has-art");
+  } else {
+    el.style.backgroundImage = "";
+    el.classList.remove("has-art");
+  }
 }
 
 const state = {
@@ -1196,7 +1426,15 @@ const state = {
   category: "studio",
   wdwOnly: false,
   rentalRate: DEFAULT_RENTAL_RATE,
+  // Fallback hypothetical resort -- only used to compute Owner Cost when
+  // the signed-in user has no active contracts (or isn't signed in) and
+  // there's nothing real to draw dues from yet. See populateOwnerSelector().
   ownerResortId: "saratogaSprings",
+  // Selected contract id, when the user HAS active contracts -- the real
+  // fix for the actual pain point this control used to have: a returning
+  // owner shouldn't have to re-pick their own home resort from a 17-resort
+  // alphabetical list every visit just to see their real dues.
+  ownerContractId: null,
   customCashRates: {}, // key: "resortId_roomId", value: total cash price
   sortBy: "points", // key into activeSortColumns() -- financial or experience columns, per `view`
   sortDir: "asc", // "asc" | "desc" — toggles when clicking the already-active column
@@ -1208,13 +1446,19 @@ const state = {
   vibeFilters: { zeroBus: false, topPool: false, highDining: false },
 };
 
-// Populated once at page load (see loadUserResortAccess() near the bottom)
-// from the signed-in user's own contracts, via the exact same
+// Populated once a signed-in user's contracts resolve (see
+// waitForAuthPersonalization() near the bottom), via the exact same
 // getUserResortAccess() auth.js already uses for the calendar's booking-
-// window personalization -- null until that resolves (signed out, or
-// accounts not configured on this deployment), in which case the
-// Home Resort Advantage callout just doesn't render rather than guessing.
+// window personalization -- null until that happens (signed out, no active
+// contracts, or accounts not configured on this deployment), in which case
+// the booking-window chips just don't render rather than guessing.
 let userResortAccess = null;
+
+// The active contracts themselves, kept alongside the access sets above so
+// a home-resort chip can name WHICH contract confers the 11-month priority
+// -- the access sets are unioned Sets of resort ids and have deliberately
+// forgotten which contract each id came from.
+let userContracts = [];
 
 // ---- DOM ----
 const checkInInput = document.getElementById("check-in");
@@ -1319,32 +1563,45 @@ function estimateBadgeHTML() {
   return `<span class="tooltip-anchor estimate-badge tooltip-align-right">(!)<div class="tooltip-card estimate-tooltip">Cash prices for this resort are estimated, not observed rates, and may not be fully accurate.</div></span>`;
 }
 
-// Personalized Home Resort Advantage badge -- shown next to the resort name
-// in both views (it's relevant regardless of whether you're looking at
-// financials or vibe/logistics), only when userResortAccess actually
-// resolved (signed in with at least one active contract).
-function ownerBadgeHTML(row) {
-  if (!row.ownerAccessBadge) return "";
-  const b = row.ownerAccessBadge;
-  // tooltip-align-left, same reasoning as the outlook dots above: this
-  // badge sits inside a wrapping flex row (roomLineHTML()) at an
-  // unpredictable horizontal position -- often flush against the card's
-  // left edge when it wraps to its own line -- so the default centered
-  // .tooltip-card (210px wide) reliably overflowed the right edge of a
-  // narrow mobile card. Extending rightward from the badge's own left
-  // edge is the one direction that stays inside the card either way.
-  return `<span class="owner-access-badge ${b.type} tooltip-anchor tooltip-align-left">${b.text}${b.title ? `<div class="tooltip-card">${b.title}</div>` : ""}</span>`;
+// Personalized booking-window chips -- shown next to the room name in both
+// views (a booking window matters whether you're reading financials or
+// vibe/logistics), and only once userResortAccess has resolved (signed in,
+// with at least one active contract).
+//
+// Up to three short chips, never a stacked paragraph: what gates you
+// (11-Month Priority / 7-Month Switch / Not Bookable), when that window
+// opens or that it's already open, and a risk flag when history says this
+// room type and date are competitive at that window. Everything longer --
+// which contract confers the home priority, the non-owner head start, the
+// book-home-then-switch fallback -- lives in the chips' tooltips, which
+// this page makes tap-openable as well as hoverable (see the capture-phase
+// delegate at the bottom of this file).
+function bookingWindowChipsHTML(row) {
+  const bw = row.bookingWindow;
+  if (!bw) return "";
+  // tooltip-align-left on every chip, same reasoning as the outlook dots:
+  // a chip sits at an unpredictable horizontal position, so extending the
+  // 210px tooltip rightward from the chip's own left edge is the one
+  // direction that stays inside a narrow mobile card. The chips stack one
+  // per line below 768px (see .owner-badge-line) precisely so that every
+  // chip's left edge IS the container's left edge there.
+  const chip = (cls, text, tip) =>
+    `<span class="owner-access-badge ${cls} tooltip-anchor tooltip-align-left">${text}${tip ? `<div class="tooltip-card">${tip}</div>` : ""}</span>`;
+  let html = chip(bw.badgeType, bw.badgeText, bw.tooltip);
+  if (bw.statusText) html += chip(bw.isOpen ? "window-open" : "window-pending", bw.statusText, bw.statusTooltip);
+  if (bw.riskText) html += chip("warning", bw.riskText, bw.riskTooltip);
+  return html;
 }
 
-// Room name + owner-access badge share a line below the resort title
-// instead of crowding the title itself -- badge text (e.g. "7-Month Window
-// Not Open Yet") is long enough that packing it into the same flex row as
+// Room name + booking-window chips share a line below the resort title
+// instead of crowding the title itself -- chip text (e.g. "Opens Mar 14,
+// 2027 - 174d") is long enough that packing it into the same flex row as
 // the resort name squeezed the name down to a sliver and forced it to wrap
 // 3 lines on mobile cards. The room name is short, so it comfortably shares
-// a row with the badge instead.
+// a row with the chips instead.
 function roomLineHTML(row) {
-  const badge = ownerBadgeHTML(row);
-  return `<div class="room-line"><span class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</span>${badge ? `<span class="owner-badge-line">${badge}</span>` : ""}</div>`;
+  const chips = bookingWindowChipsHTML(row);
+  return `<div class="room-line"><span class="room-name">${row.room.name} (sleeps ${row.room.sleeps})</span>${chips ? `<span class="owner-badge-line">${chips}</span>` : ""}</div>`;
 }
 
 // ---- Vibe & Logistics view helpers (data/resort_experience.js) ----
@@ -1564,16 +1821,39 @@ function getStayAvailability(resortId, roomTypeId, dates) {
   return scores;
 }
 
-// Whole calendar months between today and a check-in date, matching DVC's
-// own "X months out" booking-window semantics (a window opens on the same
-// day-of-month, X months before check-in) -- so a result of 7 means the
-// 7-month window opens today; anything above 7 means it hasn't opened yet.
-function monthsUntilCheckIn(dateStr) {
+// The exact calendar date a booking window OPENS for a given check-in --
+// check-in minus N months, YYYY-MM-DD, matching DVC's own "X months out"
+// semantics (a window opens on the same day-of-month, X months before
+// check-in). Same math and same reasoning as app.js's monthsBeforeCheckIn(),
+// duplicated rather than shared because this page is self-contained and
+// never loads app.js.
+function windowOpensOn(checkInStr, months) {
+  const [y, m, d] = checkInStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setMonth(dt.getMonth() - months);
+  return formatDate(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+
+// Whole days from today to dateStr, negative once the date has passed --
+// which is exactly the "this window is already open" test. Everything the
+// analyzer asks about time is day-exact rather than counted in whole
+// months: a window opens on a specific calendar day, so "opens in 3 days"
+// and "open now" are different states a month counter can't tell apart.
+function daysUntilDate(dateStr) {
   const today = new Date();
-  const checkIn = new Date(dateStr + "T00:00:00");
-  let months = (checkIn.getFullYear() - today.getFullYear()) * 12 + (checkIn.getMonth() - today.getMonth());
-  if (checkIn.getDate() < today.getDate()) months -= 1;
-  return months;
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + "T00:00:00");
+  return Math.round((target - today) / 86400000);
+}
+
+function formatShortDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function resortNameForId(id) {
+  const r = RESORTS.find(res => res.id === id);
+  return r ? r.name : id;
 }
 
 function availabilityLabel(score, stayLength) {
@@ -1618,27 +1898,289 @@ function buildOutlookStripHTML(resortId, roomTypeId, stayDates) {
   return `<div class="outlook-strip">${dots}</div>`;
 }
 
-// ---- Populate Owner Resort Dropdown ----
-function populateOwnerResorts() {
-  const seen = new Set();
-  const unique = [];
-  for (const r of RESORTS) {
-    if (!seen.has(r.id)) { seen.add(r.id); unique.push(r); }
+// ---- Personalized Booking Window & Home Resort Risk ----
+// Which outlook ratings count as "you might not get this" rather than a
+// comfortable book. Shared by the analyzer below so its warning can never
+// drift from the colors the outlook strip is already showing in the same row.
+const RISKY_OUTLOOK_CLASSES = new Set(["outlook-fair", "outlook-low", "outlook-very-low"]);
+
+// Per-row booking-window read for a signed-in owner: which window gates
+// THIS user at THIS resort (11 months at a home resort, 7 anywhere else),
+// the exact date it opens, how competitive that window has historically
+// been for this room type in this season, and -- when it looks risky --
+// the standard DVC fallback of holding a home resort at 11 months and
+// trying to switch once the 7-month window opens.
+//
+// Home/non-home comes from userResortAccess, which auth.js's
+// getUserResortAccess() already unions permissively across EVERY active
+// contract -- so an owner at both Saratoga and Polynesian gets 11-month
+// priority recognized on both resorts' rows, not just whichever contract
+// happens to come first. There is no "primary contract" concept here.
+//
+// The window that gates the user isn't always the window whose historical
+// odds describe booking right now: once that window has opened and
+// check-in is nearer than it, the honest read is the closest window at or
+// below how far out the stay actually is (a stay 4 months out is a 3-month
+// booking problem, whatever the 7-month column says). Gate and read are
+// computed separately, and the tooltip names which window it quoted.
+function analyzeBookingWindow(resortId, roomTypeId, stayDates) {
+  if (!userResortAccess || stayDates.length === 0) return null;
+  const checkIn = stayDates[0];
+
+  if (userResortAccess.restrictedResortIds.has(resortId)) {
+    return {
+      kind: "restricted",
+      badgeType: "restricted",
+      badgeText: "\u{1F6AB} Not Bookable",
+      tooltip: "None of your contracts can book this resort -- it's outside your home resort(s), and your resale points here are home-resort-restricted.",
+    };
   }
-  unique.sort((a, b) => a.name.localeCompare(b.name));
+
+  const isHome = userResortAccess.homeResortIds.has(resortId);
+  if (!isHome && !userResortAccess.sevenMoResortIds.has(resortId)) return null;
+
+  const gateMonths = isHome ? 11 : 7;
+  const opensOn = windowOpensOn(checkIn, gateMonths);
+  const daysUntilOpen = daysUntilDate(opensOn);
+  const isOpen = daysUntilOpen <= 0;
+
+  // Which of the five availability buckets (11/7/5/3/1 months) actually
+  // describes booking this stay right now -- the NEAREST one to how far out
+  // check-in is, capped by this user's own gate. Nearest rather than
+  // "largest bucket at or below", which had a cliff: a stay 2 months and 29
+  // days out floors to 2 and drops straight to the 1-month bucket, quoting
+  // near-checkin scarcity for a stay that is, for booking purposes, sitting
+  // right at the 3-month mark. Measured in day-exact fractional months for
+  // the same reason. Ties break toward the SMALLER bucket (the `<=`), since
+  // inventory only shrinks as check-in approaches -- overstating odds is
+  // the worse error of the two here.
+  const monthsOutExact = Math.min(gateMonths, daysUntilDate(checkIn) / 30.44);
+  const readWindow = BOOKING_WINDOWS.reduce((best, w) =>
+    Math.abs(Number(w.shortLabel) - monthsOutExact) <= Math.abs(Number(best.shortLabel) - monthsOutExact) ? w : best);
+
+  // Room-type-specific, not resort-wide: getStayAvailability() keys on
+  // resort + room type + the season the stay falls in, so a 2-Bedroom at
+  // Kidani and a Value Studio at Jambo House get genuinely different reads
+  // for the same dates.
+  const avail = getStayAvailability(resortId, roomTypeId, stayDates);
+  const risk = avail ? availabilityLabel(avail[readWindow.key], stayDates.length) : null;
+  const isRisky = !!risk && RISKY_OUTLOOK_CLASSES.has(risk.cls);
+
+  let badgeTooltip;
+  if (isHome) {
+    const here = userContracts.filter(c => c.home_resort_id === resortId);
+    const via = here.length === 1
+      ? ` via your ${here[0].nickname || here[0].points_per_year + "-point"} contract`
+      : here.length > 1 ? ` via ${here.length} of your contracts` : "";
+    const sevenMoOpens = windowOpensOn(checkIn, 7);
+    const headStart = daysUntilDate(sevenMoOpens) > 0
+      ? ` Non-owners can't book this stay until ${formatShortDate(sevenMoOpens)}.`
+      : "";
+    badgeTooltip = `Home resort${via} -- you book 11 months out, ahead of everyone else.${headStart}`;
+  } else {
+    badgeTooltip = `Not a home resort -- you book at the 7-month mark, not 11. Owners here get a head start from ${formatShortDate(windowOpensOn(checkIn, 11))}.`;
+  }
+
+  const statusText = isOpen
+    ? "Window open now"
+    : `Opens ${formatShortDate(opensOn)} \u00b7 ${daysUntilOpen}d`;
+  const statusTooltip = isOpen
+    ? `Your ${gateMonths}-month window for this check-in opened ${formatShortDate(opensOn)} -- it's bookable today.`
+    : `Your ${gateMonths}-month window for your ${formatShortDate(checkIn)} check-in opens ${formatShortDate(opensOn)}, ${daysUntilOpen} day${daysUntilOpen === 1 ? "" : "s"} from now.`;
+
+  // The switch strategy is the actionable half of a risk flag, so it rides
+  // in the risk chip's own tooltip rather than as a fourth always-visible
+  // line -- this is a comparison matrix with a row per resort/room type,
+  // and three short chips per row is already the density ceiling.
+  let strategy = "";
+  if (!isHome && isRisky && userResortAccess.homeResortIds.size > 0) {
+    const homeIds = [...userResortAccess.homeResortIds];
+    const homeName = homeIds.length === 1 ? resortNameForId(homeIds[0]) : "your home resort";
+    if (!isOpen) {
+      // The classic hold-and-switch: the 7-month window here is still shut,
+      // so there's a real date to aim at.
+      const homeOpens = windowOpensOn(checkIn, 11);
+      const homeWhen = daysUntilDate(homeOpens) > 0 ? `when it opens ${formatShortDate(homeOpens)}` : "now";
+      strategy = ` Backup plan: book ${homeName} at 11 months ${homeWhen}, then try to switch here on ${formatShortDate(opensOn)}.`;
+    } else {
+      // Already inside the 7-month window -- there's no future switch date
+      // left to aim at, so the advice is just to hold a backup and keep
+      // checking. Saying "switch here now" (as this once did) was nonsense.
+      strategy = ` Backup plan: hold ${homeName} as a fallback and keep checking here for an opening.`;
+    }
+  }
+
+  return {
+    kind: isHome ? "home" : "switch",
+    badgeType: isHome ? "home" : "switch",
+    badgeText: isHome ? "11-Month Priority" : "7-Month Switch",
+    tooltip: badgeTooltip,
+    isOpen,
+    statusText,
+    statusTooltip,
+    riskText: isRisky ? `\u26a0\ufe0f ${risk.text} at ${readWindow.shortLabel} mo` : "",
+    riskTooltip: isRisky
+      ? `Historically ${risk.text.toLowerCase()} availability for this room type and date at the ${readWindow.label} window.${strategy}`
+      : "",
+  };
+}
+
+// ---- Populate Owner Selector (contract-aware) ----
+// When the signed-in user has active contracts, this is "which of YOUR
+// contracts" (contractSelect-style options, same label format index.html's
+// own Booking As picker uses) -- not a resort picker at all, since a
+// returning owner already has a real answer to "what are my dues" and
+// shouldn't have to fake it by re-selecting their own home resort out of
+// an alphabetical list of all 17. Falls back to the original hypothetical
+// "if I owned at X" resort picker only when there's no contract to draw
+// from (signed out, or no active contracts) -- still useful there for a
+// prospective buyer comparing resorts before owning anything.
+function populateOwnerSelector() {
+  const labelEl = document.getElementById("owner-selector-label");
+  const dropdownWrap = document.getElementById("owner-resort-select-wrap");
+  const pickerTrigger = document.getElementById("owner-picker-trigger");
   ownerResortSelect.innerHTML = "";
-  for (const r of unique) {
-    const opt = document.createElement("option");
-    opt.value = r.id;
-    opt.textContent = r.name;
-    ownerResortSelect.appendChild(opt);
+
+  if (userContracts.length > 0) {
+    if (labelEl) labelEl.textContent = "Your contract:";
+    if (!userContracts.some(c => c.id === state.ownerContractId)) {
+      state.ownerContractId = userContracts[0].id;
+    }
+    for (const c of userContracts) {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = `${c.nickname || resortNameForId(c.home_resort_id)} (${c.use_year} UY, ${c.points_per_year.toLocaleString()} pts)`;
+      ownerResortSelect.appendChild(opt);
+    }
+    ownerResortSelect.value = state.ownerContractId;
+    // Swap to the wallet-mini-card picker (matches index.html's Booking As
+    // picker) -- the plain resort dropdown stays hidden but populated, so
+    // switching back to it (e.g. signing out) needs no rebuild of its own.
+    if (dropdownWrap) dropdownWrap.style.display = "none";
+    if (pickerTrigger) pickerTrigger.style.display = "flex";
+    syncOwnerPickerTrigger();
+  } else {
+    if (labelEl) labelEl.textContent = "Home resort:";
+    const seen = new Set();
+    const unique = [];
+    for (const r of RESORTS) {
+      if (!seen.has(r.id)) { seen.add(r.id); unique.push(r); }
+    }
+    unique.sort((a, b) => a.name.localeCompare(b.name));
+    for (const r of unique) {
+      const opt = document.createElement("option");
+      opt.value = r.id;
+      opt.textContent = r.name;
+      ownerResortSelect.appendChild(opt);
+    }
+    ownerResortSelect.value = state.ownerResortId;
+    if (dropdownWrap) dropdownWrap.style.display = "";
+    if (pickerTrigger) pickerTrigger.style.display = "none";
   }
-  ownerResortSelect.value = state.ownerResortId;
+
+  // Repopulate the styled trigger/dropdown from the now-rebuilt <select>
+  // rather than re-running initCustomSelect() on it -- this is a persistent
+  // node (not rebuilt via innerHTML each render), and initCustomSelect()
+  // isn't idempotent: calling it twice on the same element would attach a
+  // second set of click listeners. Guarded since the very first call (init,
+  // before initCustomSelect() has run yet) has no _customSelectRender yet.
+  if (ownerResortSelect._customSelectRender) ownerResortSelect._customSelectRender();
   updateDuesLabel();
 }
 
+// ---- Owner Contract Picker sheet (wallet-mini-cards) ----
+// Same visual language and interaction pattern as index.html's own Booking
+// As sheet (app.js's renderBookingAsSheetList()/pickContract()) -- the
+// underlying <select id="owner-resort"> stays the real source of truth
+// either way (see populateOwnerSelector()), this just drives it from a
+// nicer picker instead of a native dropdown once there are real contracts
+// to show as cards.
+function syncOwnerPickerTrigger() {
+  const trigger = document.getElementById("owner-picker-trigger");
+  const label = document.getElementById("owner-picker-trigger-label");
+  if (!trigger || !label) return;
+  const contract = userContracts.find(c => c.id === state.ownerContractId);
+  // The UY pill is a SIBLING of the label span, not nested inside it -- see
+  // app.js's own syncBookingAsPickerTrigger() for why: .picker-trigger-value
+  // truncates with an ellipsis once the name outgrows the trigger, and a
+  // nested pill would be the first thing that ellipsis ate.
+  let pill = trigger.querySelector(".booking-as-trigger-pill");
+  if (contract) {
+    const name = contract.nickname || resortNameForId(contract.home_resort_id);
+    label.textContent = name;
+    if (!pill) {
+      pill = document.createElement("span");
+      pill.className = "booking-as-trigger-pill";
+      label.insertAdjacentElement("afterend", pill);
+    }
+    pill.textContent = `${contract.use_year} UY`;
+    applyResortArtBackground(trigger, typeof getResortImage === "function" ? getResortImage(contract.home_resort_id) : null);
+  } else {
+    label.textContent = "Select a contract";
+    if (pill) pill.remove();
+    applyResortArtBackground(trigger, null);
+  }
+}
+
+// This page doesn't load dvc-ledger.js (no per-contract-year ledger rows
+// fetched here), so unlike index.html's own wallet-mini-cards there's no
+// real "available points" number to show -- rather than fabricate one,
+// every card shows the same honest "?" / UNCONFIRMED state index.html
+// itself falls back to for a contract with no recorded ledger row yet.
+function renderOwnerSheetList() {
+  const listEl = document.getElementById("owner-sheet-list");
+  if (!listEl) return;
+  listEl.innerHTML = userContracts.map(c => {
+    const name = c.nickname || resortNameForId(c.home_resort_id);
+    return `
+      <button type="button" class="wallet-mini-btn" onclick="pickOwnerContract('${c.id}')">
+        <div class="wallet-mini-card${c.id === state.ownerContractId ? " selected" : ""}" style="background:${resortAccentGradient(c.home_resort_id)};">
+          <div class="wallet-mini-top">
+            <div class="wallet-mini-name">${name}</div>
+            <div style="text-align:right;">
+              <div class="wallet-mini-points-num">?</div>
+              <div class="wallet-mini-points-label">UNCONFIRMED</div>
+            </div>
+          </div>
+          <div class="wallet-mini-bottom">
+            <span class="wallet-mini-pill">${c.use_year} UY</span>
+            <span class="wallet-mini-pill">${c.points_per_year.toLocaleString()}/yr</span>
+          </div>
+        </div>
+      </button>
+    `;
+  }).join("");
+}
+
+function pickOwnerContract(id) {
+  ownerResortSelect.value = id;
+  ownerResortSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  closeOwnerSheet();
+}
+
+function openOwnerSheet() {
+  renderOwnerSheetList();
+  document.getElementById("owner-sheet").classList.add("open");
+}
+
+function closeOwnerSheet() {
+  document.getElementById("owner-sheet").classList.remove("open");
+}
+
+// Resolves the actual dues-per-point Owner Cost should use: the selected
+// contract's real home resort when one exists, else the hypothetical
+// fallback resort. Single source of truth so the label and the actual
+// per-row Owner Cost calc (below) can never read two different values.
+function getOwnerDuesPerPoint() {
+  if (userContracts.length > 0) {
+    const contract = userContracts.find(c => c.id === state.ownerContractId);
+    if (contract) return DUES_PER_POINT[contract.home_resort_id] || 0;
+  }
+  return DUES_PER_POINT[state.ownerResortId] || 0;
+}
+
 function updateDuesLabel() {
-  const dues = DUES_PER_POINT[state.ownerResortId];
+  const dues = getOwnerDuesPerPoint();
   ownerDuesLabel.textContent = dues ? `($${dues.toFixed(2)}/pt)` : "";
 }
 
@@ -1686,7 +2228,7 @@ function render() {
       const isCustom = customCash != null;
 
       const rentalCost = result.totalPoints * state.rentalRate;
-      const ownerDues = DUES_PER_POINT[state.ownerResortId] || 0;
+      const ownerDues = getOwnerDuesPerPoint();
       const ownerCost = result.totalPoints * ownerDues;
 
       // Space Efficiency: physical square footage per point spent PER
@@ -1702,64 +2244,11 @@ function render() {
       const pointsPerNight = result.totalPoints / nights;
       const sqftPerPoint = sqft != null && pointsPerNight > 0 ? sqft / pointsPerNight : null;
 
-      // Personalized Home Resort Advantage -- reuses the exact same
-      // getUserResortAccess() auth.js already computes for the calendar's
-      // own booking-window personalization (see waitForAuthPersonalization()
-      // below), rather than a second copy of that access logic here.
-      //
-      // The 7-month case used to be a single static "risk" warning any time
-      // the resort wasn't a home resort, regardless of what the real
-      // per-stay outlook data said -- so a resort whose 7-month window has
-      // historically been Excellent for this exact date/room still got
-      // flagged as risky, which contradicted the (correct) green outlook
-      // dot sitting right next to it. Two things actually matter instead:
-      // (1) how far out the user is looking -- if today is still more than
-      // 7 months before check-in, the 7-month window for THIS stay hasn't
-      // opened yet at all, which is a real, current lockout regardless of
-      // historical odds; (2) once that window has opened (or this search
-      // is within 7 months of check-in), defer to the same historical
-      // availability data the outlook strip already shows for the 7-month
-      // column specifically, rather than a blanket assumption.
-      let ownerAccessBadge = null;
-      if (userResortAccess) {
-        if (userResortAccess.homeResortIds.has(resort.id)) {
-          ownerAccessBadge = { type: "home", text: "Your Home Resort" };
-        } else if (userResortAccess.restrictedResortIds.has(resort.id)) {
-          ownerAccessBadge = { type: "restricted", text: "\u{1F6AB} Not bookable with your points", title: "None of your contracts can book this resort -- it's outside your home resort(s) and your resale points here are home-resort-restricted." };
-        } else if (userResortAccess.sevenMoResortIds.has(resort.id)) {
-          const monthsOut = stayDates.length > 0 ? monthsUntilCheckIn(stayDates[0]) : null;
-          if (monthsOut !== null && monthsOut >= 7) {
-            ownerAccessBadge = {
-              type: "warning",
-              text: "\u{1F512} 7-Month Window Not Open Yet",
-              title: `Not your home resort -- owners here can already book at 11 months out, but you can't book this stay until the 7-month mark (about ${monthsOut - 7} month${monthsOut - 7 === 1 ? "" : "s"} from now).`,
-            };
-          } else {
-            const avail = getStayAvailability(resort.id, rt.id, stayDates);
-            const label = avail ? availabilityLabel(avail["7Mo"], stayDates.length) : null;
-            const isRisky = label && (label.cls === "outlook-low" || label.cls === "outlook-very-low" || label.cls === "outlook-fair");
-            if (isRisky) {
-              ownerAccessBadge = {
-                type: "warning",
-                text: "⚠️ Non-Owner 7-Month Risk",
-                title: `Not your home resort -- bookable only at the 7-month mark, not 11. Historically ${label.text.toLowerCase()} availability for this date and room type at that window.`,
-              };
-            } else if (label) {
-              ownerAccessBadge = {
-                type: "info",
-                text: "7-Month Window",
-                title: `Not your home resort -- bookable only at the 7-month mark, not 11. Historically ${label.text.toLowerCase()} availability for this date and room type at that window, so this shouldn't be a hard get.`,
-              };
-            } else {
-              ownerAccessBadge = {
-                type: "info",
-                text: "7-Month Window",
-                title: "Not your home resort -- bookable only at the 7-month mark, not 11. No historical availability data for this date and room type to gauge how competitive it typically is.",
-              };
-            }
-          }
-        }
-      }
+      // Personalized Booking Window & Home Resort Risk -- see
+      // analyzeBookingWindow() for how the gating window, its exact
+      // opening date, and the historical-availability risk read are
+      // derived. Null until a signed-in user's contracts resolve.
+      const bookingWindow = analyzeBookingWindow(resort.id, rt.id, stayDates);
 
       rows.push({
         resort,
@@ -1796,7 +2285,7 @@ function render() {
         experience,
         sqft,
         sqftPerPoint,
-        ownerAccessBadge,
+        bookingWindow,
       });
     }
   }
@@ -2154,9 +2643,20 @@ function render() {
     el.addEventListener("click", () => {
       const resortId = el.dataset.resortId;
       const roomId = el.dataset.roomId;
-      sessionStorage.setItem("dvc_return_to_calendar", "1");
-      sessionStorage.setItem("dvc_switch_resort", JSON.stringify({ resortId, roomId }));
-      window.location.href = "index.html";
+      const selection = { resortId, roomTypeId: roomId, checkIn: state.checkIn, checkOut: state.checkOut, segment: urlParams.get('segment') };
+      let original = {};
+      if (selection.segment != null) {
+        try { original = JSON.parse(sessionStorage.getItem('dvc_calendar_state') || '{}'); } catch (_) {}
+      }
+      const result = window.DVCCompareHandoff.apply(selection, original, RESORTS);
+      if (result.error) {
+        let notice = document.getElementById('compare-selection-error');
+        if (!notice) { notice = document.createElement('p'); notice.id = 'compare-selection-error'; notice.setAttribute('role','alert'); resultsContainer.prepend(notice); }
+        notice.textContent = result.error;
+        notice.scrollIntoView({block:'center'});
+        return;
+      }
+      window.location.href = window.DVCCompareHandoff.url(selection);
     });
   });
 }
@@ -2231,7 +2731,12 @@ wdwOnlyToggle.addEventListener("change", (e) => {
 });
 
 ownerResortSelect.addEventListener("change", (e) => {
-  state.ownerResortId = e.target.value;
+  if (userContracts.length > 0) {
+    state.ownerContractId = e.target.value;
+    syncOwnerPickerTrigger();
+  } else {
+    state.ownerResortId = e.target.value;
+  }
   updateDuesLabel();
   render();
 });
@@ -2245,7 +2750,8 @@ let paramCategory = urlParams.get("category");
 
 // Fall back to saved calendar state if no URL params
 if (!paramCheckIn || !paramCheckOut || !paramCategory) {
-  const calState = sessionStorage.getItem("dvc_calendar_state");
+  let calState = null;
+  try { calState = sessionStorage.getItem("dvc_calendar_state"); } catch (_) {}
   if (calState) {
     try {
       const saved = JSON.parse(calState);
@@ -2285,7 +2791,7 @@ if (paramCategory && ["studio", "one", "two", "three"].includes(paramCategory)) 
   });
 }
 
-populateOwnerResorts();
+populateOwnerSelector();
 initCustomSelect(ownerResortSelect);
 render();
 
@@ -2318,7 +2824,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") document.querySelectorAll(".tooltip-anchor.tap-open").forEach((el) => el.classList.remove("tap-open"));
 });
 
-// ---- Personalized Home Resort Advantage ----
+// ---- Personalized Booking Window & Home Resort Risk ----
 // auth.js is loaded as a <script type="module">, which (unlike this plain
 // inline script) defers until after the document has parsed -- window.DVCAuth
 // isn't guaranteed to exist yet by the time this line runs, so this polls
@@ -2330,12 +2836,20 @@ document.addEventListener("keydown", (e) => {
 function waitForAuthPersonalization(attempts) {
   if (window.DVCAuth) {
     window.DVCAuth.onAuthChange(async (session) => {
-      if (!session) { userResortAccess = null; render(); return; }
+      if (!session) { userResortAccess = null; userContracts = []; state.ownerContractId = null; populateOwnerSelector(); render(); return; }
       const contracts = await window.DVCAuth.getContracts();
       const activeContracts = contracts.filter(c => c.is_active);
-      if (activeContracts.length === 0) { userResortAccess = null; render(); return; }
+      if (activeContracts.length === 0) { userResortAccess = null; userContracts = []; state.ownerContractId = null; populateOwnerSelector(); render(); return; }
       const allResortIds = [...new Set(RESORTS.map(r => r.id))];
+      userContracts = activeContracts;
       userResortAccess = window.DVCAuth.getUserResortAccess(activeContracts, allResortIds);
+      // Signing in (or contracts resolving) mid-visit swaps the selector
+      // from the hypothetical resort list over to the user's real
+      // contracts -- populateOwnerSelector() picks state.ownerContractId
+      // (defaulting to the first contract) the same way it does on initial
+      // load, so a returning owner sees their own dues without touching
+      // the control at all.
+      populateOwnerSelector();
       render();
     });
   } else if (attempts > 0) {

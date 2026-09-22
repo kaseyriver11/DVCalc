@@ -310,18 +310,41 @@ body {
 }
 .match-card-name { font-weight: 700; color: var(--color-secondary); font-size: 1rem; line-height: 1.3; }
 .match-card-sub { font-size: 0.74rem; color: #888; margin: 2px 0 12px; }
-.match-card-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 12px; }
-.match-card-stat-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.3px; color: #999; font-weight: 600; display: block; }
+/* Fixed 3 columns, not auto-fit: these are always exactly three stats, and
+   auto-fit re-flowed them into uneven widths that shifted per card. Each
+   cell is its own grid with a 1fr label row, so every label occupies the
+   same height and the three purple values sit on one shared baseline even
+   if a label ever does wrap. The labels are sized/tracked to fit on ONE
+   line at phone width (nowrap makes that a guarantee rather than a hope --
+   they'd otherwise wrap right where the "?" icon sits). */
+.match-card-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.match-card-stats > div { display: grid; grid-template-rows: 1fr auto; gap: 2px; min-width: 0; }
+.match-card-stat-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  color: #999;
+  font-weight: 600;
+  display: block;
+  white-space: nowrap;
+}
 .match-card-stat-value { font-size: 1.1rem; font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.match-card-stat-label .info-icon { width: 12px; height: 12px; line-height: 12px; font-size: 0.58rem; margin-left: 3px; }
+/* Label left, control right -- an app settings row, not a form field with
+   a caption in front of it. margin-left:auto on the pill (rather than
+   space-between) keeps the optional "reset" button tucked against the
+   pill instead of stranded in the middle of the row. */
 .match-card-price-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.8rem;
-  color: #555;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #777;
   padding-top: 10px;
   border-top: 1px solid #e0d5f0;
 }
+.match-card-price-row .price-input-wrap { margin-left: auto; }
 
 /* ---- Progressive disclosure: advanced assumptions + full comparison ---- */
 .advanced-toggle, .view-all-toggle {
@@ -341,26 +364,164 @@ body {
   cursor: pointer;
 }
 .advanced-toggle:hover, .view-all-toggle:hover { border-color: var(--color-primary); background: #f7f5fa; }
+/* A list of settings rows -- label left, value pill right -- not a stack
+   of <label>+bare-<input> pairs, which read as a form to fill out rather
+   than settings that already have sensible values. Each row's control is
+   the same rounded pill as the editable buy-in price (.price-input-wrap),
+   so every editable number on the page looks and behaves alike, and the
+   unit ($ or %/yr) lives INSIDE the pill instead of trailing the label. */
 .advanced-panel {
   display: none;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 12px 14px;
+  flex-direction: column;
+  padding: 4px 14px;
   background: #faf8fd;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 10px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #555;
 }
 .advanced-panel.open { display: flex; }
-.advanced-panel input {
-  width: 90px;
-  font: inherit;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+/* Boolean settings (the sell-at-end switch) keep the label-left/
+   control-right row. Numeric ones use the slider pattern below. */
+.assumption-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ede7f6;
+}
+.assumption-setting:last-child { border-bottom: none; }
+.assumption-setting-label { font-weight: 600; color: #555; min-width: 0; }
+
+/* ---- Slider assumptions -------------------------------------------------
+   Ported verbatim in behaviour from trips.html's "Model Assumptions &
+   Sensitivity" panel so both pages state a tunable assumption the same
+   way: label on the left, live purple readout on the right, optional
+   preset chips (three equal columns, value stacked over what it means),
+   then the slider itself. Duplicated into this file's own <style> rather
+   than shared, matching this page's existing self-contained convention --
+   the same call already made for .picker-trigger in compare.html. Any
+   change here needs the same change in trips.html. */
+.assumption-row { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid #ede7f6; }
+.assumption-row:last-child { border-bottom: none; }
+.assumption-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+.assumption-label-row .assumption-label-text { font-weight: 600; color: #444; min-width: 0; }
+.assumption-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+.assumption-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.assumption-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  font-weight: 600;
+  color: #555;
+  background: #fff;
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+  padding: 5px 4px;
+  cursor: pointer;
+}
+.assumption-chip-main { font-size: 0.78rem; font-weight: 700; line-height: 1.15; }
+.assumption-chip-sub { font-size: 0.62rem; color: #888; line-height: 1.15; white-space: nowrap; }
+.assumption-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.assumption-chip:hover .assumption-chip-sub { color: var(--color-primary); }
+.assumption-chip.active {
+  background: var(--color-primary-tint-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.assumption-chip.active .assumption-chip-sub { color: var(--color-primary); }
+.assumption-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border-light);
+  outline: none;
+}
+.assumption-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.assumption-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* Shown when the deed runs out before the buyer's stated horizon. Amber,
+   not red -- a shorter contract is a real tradeoff to see, not an error,
+   and it's already priced into Cost/Pt/Year (fewer years to spread the
+   buy-in over). This just names what the number can't show on its own. */
+/* Pill switch for the sell-at-end toggle -- matches the app's other
+   rounded controls rather than a bare checkbox. */
+.pill-switch {
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #d5cae8;
+  border-radius: 999px;
+  background: #ece6f5;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.pill-switch.on { background: var(--color-primary); border-color: var(--color-primary); }
+.pill-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  transition: transform 0.15s ease;
+}
+.pill-switch.on .pill-switch-knob { transform: translateX(18px); }
+.assumption-setting-note { font-size: 0.74rem; color: #999; flex-shrink: 0; }
+
+/* The resale credit Cost/Pt/Year subtracted, shown under the buy-in so the
+   two money figures that drive the metric sit together. */
+.resale-credit { font-size: 0.7rem; color: #2e7d32; font-weight: 600; margin-top: 3px; }
+.resale-credit-sub { color: #999; font-weight: 500; }
+
+.horizon-warn {
+  display: inline-block;
   margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fff4e0;
+  color: #8a5300;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .perks-callout {
@@ -370,13 +531,13 @@ body {
   background: #faf8fd;
   border: 1px solid #e0d5f0;
   border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 0.82rem;
+  padding: 9px 12px;
+  font-size: 0.78rem;
   color: #444;
-  line-height: 1.5;
+  line-height: 1.45;
   margin-bottom: 12px;
 }
-.perks-callout-icon { font-size: 1.1rem; line-height: 1.3; }
+.perks-callout-icon { font-size: 0.95rem; line-height: 1.4; flex-shrink: 0; }
 .perks-callout a { color: var(--color-primary); }
 
 .data-freshness {
@@ -447,20 +608,50 @@ body {
 .results-table .ratio-value { font-weight: 700; font-size: 0.92rem; }
 
 .price-cell { text-align: right; }
-.price-input-wrap { display: inline-flex; align-items: center; gap: 1px; font-size: 0.78rem; }
-.price-input {
-  width: 60px;
-  font: inherit;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 2px 3px;
+
+/* The editable buy-in reads as ONE pill you tap, not a bare bordered
+   <input> sitting between two loose text nodes -- the $ and /pt live
+   inside the same rounded control as the number, the border reacts to
+   focus-within on the whole pill rather than the input alone, and the
+   number spinners are stripped (stepper arrows are the single most
+   form-like thing about type="number"). The value itself is the purple
+   the rest of the card uses for numbers, so it reads as editable data
+   rather than a field to fill out. */
+.price-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #8a7fa0;
   background: #fff;
-  color: inherit;
+  border: 1px solid #e0d5f0;
+  border-radius: 999px;
+  padding: 7px 12px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-.price-input:hover { border-color: #9575cd; }
-.price-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(74,20,140,0.15); }
+.price-input-wrap:hover { border-color: #b39ddb; }
+.price-input-wrap:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.12);
+}
+.price-unit { margin-left: 1px; }
+.price-input {
+  width: 52px;
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-primary);
+}
+.price-input:focus { outline: none; }
+.price-input::-webkit-outer-spin-button,
+.price-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.price-input { -moz-appearance: textfield; appearance: textfield; }
 .price-reset-row { line-height: 1; margin-top: 2px; }
 .price-reset {
   border: none;
@@ -483,6 +674,16 @@ body {
   border-radius: 10px;
   margin-left: 6px;
   white-space: nowrap;
+}
+
+/* Direct-vs-resale premium/savings caption under the editable price input
+   (see directPremiumCaptionHTML()) -- muted so it doesn't compete with the
+   price itself, present at all three render sites the price appears. */
+.price-premium-note {
+  display: block;
+  font-size: 0.68rem;
+  color: #888;
+  margin-top: 2px;
 }
 
 /* ---- Hover tooltips: column-header info icons and the restricted badge
@@ -663,29 +864,29 @@ body {
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Plan a Stay</span>
+        <span class="site-nav-group-label">Overview</span>
         <a href="home.html">Home</a>
-        <a href="index.html">Calendar</a>
-        <a href="compare.html">Compare Resorts</a>
-        <a href="suggest.html">Suggest a Stay</a>
+        <a href="badges.html">Achievements</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Trip Planning</span>
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html" class="active">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Buying Guide</span>
-        <a href="contractvalue.html" class="active">Contract Value</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Account</span>
+        <span class="site-nav-group-label">My Membership</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
-        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -734,6 +935,32 @@ function restrictedBadgeHTML() {
   return `<span class="restricted-badge" data-tip="Resale points bought at this resort can only ever book stays here -- not any other DVC resort. Direct-purchased points at this same resort don't have this restriction.">resale-restricted</span>`;
 }
 
+// Only the EXCEPTION gets a badge. A green "7-mo eligible" counterpart
+// used to ride alongside this, so unrestricted resorts confirmed their
+// interchangeability rather than leaving it implied by silence -- dropped
+// 2026-09-22: it fired on 14 of 17 rows, which is wallpaper rather than
+// signal, and trained the eye to skip the very spot where the 3 rows that
+// matter show something different. The trimmed perks callout above already
+// states the default case once for the whole page.
+function accessBadgeHTML(r) {
+  if (wizardData.purchaseType !== "resale") return "";
+  return r.isRestricted ? restrictedBadgeHTML() : "";
+}
+
+// Caption under the editable price input showing what the OTHER purchase
+// channel costs for this same resort, so the tradeoff is visible without
+// leaving the current purchaseType. Uses the row's already-computed
+// directPremiumPerPoint (always off base listing prices -- see
+// computeRow()), not the current possibly-overridden pricePerPoint.
+function directPremiumCaptionHTML(r) {
+  const premium = r.directPremiumPerPoint;
+  const pct = r.directPremiumPct != null ? ` (+${Math.round(r.directPremiumPct * 100)}%)` : "";
+  if (wizardData.purchaseType === "resale") {
+    return `<span class="price-premium-note">Direct: +$${premium.toFixed(0)}/pt${pct}</span>`;
+  }
+  return `<span class="price-premium-note">Resale: &minus;$${premium.toFixed(0)}/pt${pct}</span>`;
+}
+
 // Fixed reference baseline for Breakeven Horizon -- what renting points
 // from another owner costs, independent of any other assumption on this
 // page. $20/pt matches the app's own rental-rate slider default elsewhere;
@@ -743,12 +970,49 @@ function restrictedBadgeHTML() {
 const RENT_POINT_VALUE = 20;
 const RENT_VALUE_GROWTH = 0.04;
 
+// Typical resale broker commission, netted out of what a seller actually
+// walks away with -- same 10% trips.html's Exit Equity card already uses,
+// so the two pages' "if I sold" figures rest on the same assumption.
+const RESALE_BROKER_FEE = 0.10;
+
+// Preset chips + readout formatters for the assumptions panel, mirroring
+// trips.html's own POINT_VALUE_PRESETS/ASSUMPTION_FORMATTERS. The three
+// Vacation Value presets are deliberately the SAME three that page offers
+// -- it's the same question ("what would this room have cost in cash?"),
+// so the answers a user can pick from shouldn't differ by page.
+const POINT_VALUE_PRESETS = [
+  { label: "$35", sub: "Deluxe Rack", value: 35 },
+  { label: "$26", sub: "AP / Promo", value: 26 },
+  { label: "$21", sub: "Point Rental", value: 21 },
+];
+const CLOSING_COST_PRESETS = [
+  { label: "$0", sub: "Direct", value: 0 },
+  { label: "$1,000", sub: "Low", value: 1000 },
+  { label: "$1,500", sub: "Typical", value: 1500 },
+];
+const ASSUMPTION_FORMATTERS = {
+  closingCost: v => "$" + v.toLocaleString(),
+  duesGrowth: v => v.toFixed(1) + "%/yr",
+  pointValue: v => "$" + v.toFixed(0) + "/pt",
+  valueGrowth: v => v.toFixed(1) + "%/yr",
+};
+
+// Used ONLY when DVCAuth is unavailable (see isHomeOnlyResale) -- the live
+// path below still derives this from the app's real shared rule, so this
+// is a safety net, not a second source of truth.
+const HOME_ONLY_RESALE_FALLBACK = new Set(["rivieraResort", "disneylandHotel", "fortWildernessCabins"]);
+
 // Whether a resale contract at this resort could ONLY ever book this same
 // resort -- reuses the app's real resale-restriction logic (the same rule
 // account.html/app.js already enforce) rather than a second hardcoded
 // copy of the three home-only resorts.
 function isHomeOnlyResale(resortId) {
-  if (!window.DVCAuth) return false;
+  // Fail CLOSED on the three known home-only resorts if DVCAuth hasn't
+  // loaded (blocked script, slow module): returning false there would
+  // label Riviera/DLH/Cabins as unrestricted, i.e. state the opposite of
+  // the truth about the one fact this badge exists to warn about. Silence
+  // is a survivable failure; a confident false "unrestricted" is not.
+  if (!window.DVCAuth) return HOME_ONLY_RESALE_FALLBACK.has(resortId);
   const allIds = [...new Set(RESORTS.map(r => r.id))];
   const access = window.DVCAuth.getUserResortAccess(
     [{ home_resort_id: resortId, purchase_type: "resale" }],
@@ -785,10 +1049,10 @@ const CATEGORY_LABELS = { studio: "Studios", one: "1-Bedrooms", two: "2-Bedrooms
 const METRIC_TIPS = {
   pricePerPoint: purchaseType => `Current ${purchaseType} price per point. Editable -- enter a real listing price to recalculate.`,
   currentDuesPerPoint: "Today's annual dues per point.",
-  costPerPointYear: "Amortized buy-in plus dues (with growth), spread over the contract's remaining years. Primary ranking metric -- lower is better.",
-  effectiveCostPerPointYear: "Same as Cost/Pt/Year, but spread over your own timeframe instead. Not for ranking resorts against each other -- use Cost/Pt/Year for that.",
+  costPerPointYear: "Amortized buy-in plus dues (with growth), spread over the years you said you'd keep the contract, minus what you'd get back selling it. Primary ranking metric -- lower is better.",
+  sellAtEnd: "Credits the contract's leftover resale value when your plan ends, net of ~10% broker fees. Estimated as today's resale price scaled by the years still left on the deed.",
   nightlyRoomCost: "Cost/Pt/Year × points needed for a typical night in this room type. Your ownership cost per night -- not Disney's cash rate.",
-  yearsToBreakeven: "Years of rental-value savings needed to recoup your buy-in. \"Never\" = doesn't break even in the time left on the contract.",
+  yearsToBreakeven: "Years of rental-value savings (at DVC's ~$20/pt market rental rate) needed to recoup your buy-in. \"Never\" = doesn't break even in the time left on the contract. If Cost/Pt/Year is already under $20, you're beating the rental market from year one -- \"Never\" here just means dues growth outpaces that margin before the contract expires, not that renting always wins.",
   lifetimeOutlay: "Total cost over your vacationing years: buy-in plus all dues.",
   vacationValueScope: "A point's rack-rate cash value and its growth rate. Only affects Cash Ratio.",
   cashRatio: "Vacation Value ÷ Lifetime Outlay. Higher is better -- a 2.5x means $2.50 of rack-rate value per $1 spent owning.",
@@ -849,30 +1113,63 @@ function computeRow(resortId, inputs) {
     return total / years;
   }
 
-  // Cost/Pt/Year: amortized capital (purchase price + closing cost, spread
-  // over the contract's remaining life) plus dues, averaged with growth
-  // over that SAME remaining-life window -- the standard DVC-community
-  // "true cost of ownership" metric, lower = better. Uses years-left-on-
-  // the-contract (not the user's own timeframe below) specifically so
-  // it's comparable across resorts regardless of how long any one buyer
-  // personally plans to keep it -- see Effective Cost/Pt/Year for that.
-  const capitalPerPointYear = yearsRemaining > 0 ? (pricePerPoint + inputs.closingCost / inputs.points) / yearsRemaining : null;
-  const costPerPointYear = capitalPerPointYear != null ? capitalPerPointYear + averageDuesPerPoint(yearsRemaining) : null;
+  // Cost/Pt/Year: amortized capital (purchase price + closing cost) plus
+  // dues averaged with growth, both over `vacationYears` -- i.e. the
+  // buyer's OWN stated horizon, capped at whatever the deed actually has
+  // left. Lower is better; this is the primary ranking metric.
+  //
+  // 2026-09-22, on user decision: this used to amortize over
+  // `yearsRemaining` (the deed's full life) with the horizon-based version
+  // living alongside it as a separate "Effective Cost/Pt/Year" column and
+  // a third hero card. That split was the source of a real complaint --
+  // for a 20-year plan the headline badge crowned Boulder Ridge, a 2042
+  // (16-year) deed, because averaging dues over a SHORTER life yields a
+  // lower average (less 4%/yr compounding in the window), so a deed
+  // expiring 4 years INTO the buyer's plan was flattered rather than
+  // penalized by the metric meant to rank it. Amortizing over the horizon
+  // inverts that correctly: a deed shorter than the plan gets the shorter
+  // (worse) divisor, and everything at or beyond the plan competes on
+  // equal footing.
+  //
+  // The known tradeoff, accepted deliberately: years past the horizon stop
+  // counting, so a 2054 and a 2070 deed look identical on capital to
+  // someone who only plans 20 years. That's the honest answer for a buyer
+  // who means it -- what it does NOT price is the resale value still left
+  // in the longer deed at the end of those 20 years, which this page
+  // doesn't model anywhere.
+  // Residual resale value at the end of the horizon. Straight-line decay to
+  // $0 at expiration: a deed's worth is essentially its remaining years, so
+  // what's left when you sell is today's price scaled by the fraction of
+  // those years still unspent, minus the broker's cut.
+  //
+  // Basis is the RESALE price, never the direct price: you sell into the
+  // resale market regardless of how you bought, so a direct buyer does not
+  // get their $215/pt back. An explicitly overridden resale price IS used
+  // (the buyer typed a real listing they found), but a direct-mode override
+  // is ignored here for the same reason.
+  //
+  // Without this, a contract with 6 years left at exit and one with 21 were
+  // treated identically -- both implicitly worth $0 -- which actively
+  // MIS-ranked them whenever the buyer intended to sell, not merely
+  // understated one. Off (residual 0) when the buyer plans to hold to
+  // expiration; also naturally 0 at "Full Length", where there are no years
+  // left to sell.
+  const resaleBasisPerPoint = (wizardData.purchaseType === "resale" && hasOverride)
+    ? pricePerPoint
+    : inv.resalePricePerPoint;
+  const yearsLeftAtExit = Math.max(0, yearsRemaining - vacationYears);
+  const residualPerPoint = yearsRemaining > 0
+    ? resaleBasisPerPoint * (yearsLeftAtExit / yearsRemaining)
+    : 0;
+  const netResaleProceeds = wizardData.sellAtEnd
+    ? residualPerPoint * inputs.points * (1 - RESALE_BROKER_FEE)
+    : 0;
 
-  // Effective Cost/Pt/Year: same idea, but BOTH capital and dues are
-  // averaged over the user's own "How Long Do You Plan to Keep This
-  // Contract" answer instead of the years left on the contract -- a
-  // SEPARATE, personalized what-if number, not a replacement for
-  // costPerPointYear above. It intentionally isn't a fair way to rank
-  // resorts against each other (a short timeframe clamps every resort
-  // toward the same divisor regardless of how long its real contract
-  // life is), so it's surfaced as its own column rather than driving the
-  // primary sort.
-  const effectiveCapitalPerPointYear = vacationYears > 0
-    ? (pricePerPoint * inputs.points + inputs.closingCost) / (inputs.points * vacationYears)
+  const capitalPerPointYear = vacationYears > 0
+    ? (pricePerPoint * inputs.points + inputs.closingCost - netResaleProceeds) / (inputs.points * vacationYears)
     : null;
-  const effectiveCostPerPointYear = effectiveCapitalPerPointYear != null
-    ? effectiveCapitalPerPointYear + averageDuesPerPoint(vacationYears)
+  const costPerPointYear = capitalPerPointYear != null
+    ? capitalPerPointYear + averageDuesPerPoint(vacationYears)
     : null;
 
   const medianPoints = medianRoomPoints(resort, inputs.category);
@@ -884,7 +1181,11 @@ function computeRow(resortId, inputs) {
     totalDues += currentDuesPerPoint * inputs.points * Math.pow(1 + inputs.duesGrowth, t);
     totalValue += inputs.pointValue * inputs.points * Math.pow(1 + inputs.valueGrowth, t);
   }
-  const lifetimeOutlay = initialCost + totalDues;
+  // Net of resale proceeds too, so Lifetime Outlay and Cash Ratio agree
+  // with Cost/Pt/Year about what ownership actually cost. Cash Ratio's own
+  // wording ("per dollar you actually spend owning") is only true if money
+  // you get back at the end is subtracted from what you spent.
+  const lifetimeOutlay = initialCost + totalDues - netResaleProceeds;
   // Cash Ratio: rack-rate vacation value delivered (Vacation Value $/pt/yr,
   // compounding at its own growth rate, over your vacationing years) per
   // dollar of Lifetime Outlay -- "you get $X of vacation for every $1 you
@@ -913,6 +1214,17 @@ function computeRow(resortId, inputs) {
     }
   }
 
+  // Direct Premium: always computed off the two BASE listing prices
+  // (never a price override -- an override is a hypothetical edit to
+  // whichever single price this row is currently showing, and mixing an
+  // edited price on one side with a stock default on the other would make
+  // the gap meaningless), regardless of which purchaseType the wizard is
+  // currently on. Surfaced as a caption under the editable price input
+  // (see directPremiumCaptionHTML()) so a buyer sees the real dollar
+  // tradeoff whichever side of resale/direct they're currently browsing.
+  const directPremiumPerPoint = inv.directPricePerPoint - inv.resalePricePerPoint;
+  const directPremiumPct = inv.resalePricePerPoint > 0 ? directPremiumPerPoint / inv.resalePricePerPoint : null;
+
   return {
     resortId,
     resortName: resortDisplayName(resortId),
@@ -923,12 +1235,28 @@ function computeRow(resortId, inputs) {
     yearsRemaining,
     currentDuesPerPoint,
     costPerPointYear,
-    effectiveCostPerPointYear,
     vacationYears,
+    netResaleProceeds,
+    residualPerPoint,
+    yearsLeftAtExit,
+    // Years the deed falls SHORT of the buyer's stated horizon, or 0 when
+    // it covers it -- the card/row surfaces this, since "20-year plan" vs.
+    // "16 years left" is the one mismatch a cost-per-year figure alone
+    // can't show. Number.isFinite is the real guard here: "Full Length"
+    // makes desiredVacationYears Infinity (see computeAllRows), so a plain
+    // `vacationYears < desired` comparison is true for EVERY resort, which
+    // is how this first shipped -- every row claimed to fall short of a
+    // plan the user never stated, printing "your nully plan" from the
+    // null wizardData.vacationYears behind it.
+    horizonShortfallYears: Number.isFinite(inputs.desiredVacationYears)
+      ? Math.max(0, inputs.desiredVacationYears - vacationYears)
+      : 0,
     nightlyRoomCost,
     yearsToBreakeven,
     lifetimeOutlay,
     cashRatio,
+    directPremiumPerPoint,
+    directPremiumPct,
     isRestricted: wizardData.purchaseType === "resale" && isHomeOnlyResale(resortId),
   };
 }
@@ -956,6 +1284,12 @@ function sortRows(rows) {
   });
 }
 
+// Both callouts are deliberately ONE line plus a "?" for the rest. They
+// ran 60-90 words each, which on a phone is a wall of text sitting between
+// the user and the actual rankings they came for -- and every fact in them
+// is already stated per-row, more specifically, by accessBadgeHTML()'s
+// badges and directPremiumCaptionHTML()'s captions. The line states the
+// mechanic; the tooltip carries the caveats for whoever wants them.
 function renderPerksCallout(points) {
   const el = document.getElementById("perks-callout");
   if (!el) return;
@@ -964,7 +1298,26 @@ function renderPerksCallout(points) {
       <div class="perks-callout">
         <span class="perks-callout-icon">&#128274;</span>
         <div>
-          <strong>Direct Perks Unlocked.</strong> Buying direct (rather than resale) means every one of these resorts' points can always book any DVC resort at the 7-month window -- no home-resort restriction, unlike some resale contracts (see "resale-restricted" below). 150+ direct points also qualifies you for Disney's "Membership Extras" -- discounts on merchandise/dining and eligibility for the DVC-exclusive Sorcerer Pass annual pass. Disney describes these as incidental benefits that can change or end without notice, so no dollar value is assumed here -- see <a href="https://disneyvacationclub.disney.go.com/faq/member-benefits/discount-on-annual-pass/" target="_blank" rel="noopener">Disney's Membership Extras FAQ</a> for what's currently included.
+          <strong>Direct points book anywhere at 7 months</strong>, and 150+ adds Membership Extras.<span class="info-icon tip-align-right" data-tip="Membership Extras are merchandise/dining discounts and Sorcerer Pass eligibility. Disney can change or end them at any time, so no dollar value is counted here.">?</span>
+        </div>
+      </div>`;
+  } else if (wizardData.purchaseType === "resale") {
+    // The resale-mode counterpart to the callout above -- previously this
+    // page only ever explained interchangeability while browsing DIRECT
+    // prices, so a buyer actually shopping resale (this page's more common
+    // use case) never saw the positive "14 legacy resorts book each other"
+    // fact, only silence where a restricted resort's badge would warn them.
+    // This line now carries the "14 legacy resorts book each other" fact on
+    // its own: the per-row green confirmation badge that used to restate it
+    // was dropped (see accessBadgeHTML()), leaving only the
+    // "resale-restricted" warning on the 3 exceptions. Each price's
+    // "Direct: +$X/pt" caption (directPremiumCaptionHTML()) is still the
+    // resort-specific version of the direct-vs-resale half.
+    el.innerHTML = `
+      <div class="perks-callout">
+        <span class="perks-callout-icon">&#128274;</span>
+        <div>
+          <strong>14 resorts' resale points book each other at 7 months.</strong> Riviera, Disneyland Hotel and Fort Wilderness Cabins don't.<span class="info-icon tip-align-right" data-tip="Resale points bought at those three can only ever book that same resort. Buying direct removes the restriction everywhere -- each row's &quot;Direct: +$X/pt&quot; note shows what that costs.">?</span>
         </div>
       </div>`;
   } else {
@@ -994,11 +1347,23 @@ function computeAllRows() {
 // independently true, not three restatements of the same Cost/Pt/Year
 // ranking -- and each slot skips any resort already claimed by an earlier
 // slot so the same resort isn't showcased three times over.
+// Rendered identically in all three places a resort's "Expires ..." line
+// appears (match card, resort card, table row) -- one function so the
+// wording and the guard can't drift apart between them.
+// The resale credit baked into Cost/Pt/Year, stated plainly -- a metric
+// that silently subtracts five figures should show the number it used.
+function resaleCreditHTML(r) {
+  if (!wizardData.sellAtEnd || !(r.netResaleProceeds > 0)) return "";
+  return `<div class="resale-credit">&minus;${fmt(r.netResaleProceeds)} est. resale in ${currentRealYear + r.vacationYears} <span class="resale-credit-sub">(${r.yearsLeftAtExit}y left on deed)</span></div>`;
+}
+
+function horizonWarnHTML(r) {
+  if (!r.horizonShortfallYears) return "";
+  return `<span class="horizon-warn">ends ${r.horizonShortfallYears}y into your ${wizardData.vacationYears}y plan</span>`;
+}
+
 function pickHeroCards(sorted) {
   const byNightly = [...sorted].sort((a, b) => (a.nightlyRoomCost ?? Infinity) - (b.nightlyRoomCost ?? Infinity));
-  const byEffective = [...sorted].sort((a, b) => (a.effectiveCostPerPointYear ?? Infinity) - (b.effectiveCostPerPointYear ?? Infinity));
-
-  const timeframeLabel = wizardData.vacationYears != null ? `Your ${wizardData.vacationYears}-Year Plan` : "a Full-Length Contract";
 
   const picks = [];
   const used = new Set();
@@ -1006,9 +1371,14 @@ function pickHeroCards(sorted) {
     const pick = candidates.find(r => !used.has(r.resortId));
     if (pick) { used.add(pick.resortId); picks.push({ row: pick, badge }); }
   };
-  tryAdd(sorted, "Best Overall Value");
+  // Two picks, not three. The third was "Best Fit for Your N-Year Plan"
+  // (lowest effectiveCostPerPointYear) -- now redundant, since
+  // costPerPointYear itself amortizes over that same horizon, so the two
+  // slots were ranking on the identical number. The badge also says what
+  // it measures ("Lowest Cost per Point-Year") rather than "Best Overall
+  // Value", which read as a composite judgment it never was.
+  tryAdd(sorted, "Lowest Cost per Point-Year");
   tryAdd(byNightly, `Best Nightly Cost for ${CATEGORY_LABELS[wizardData.category]}`);
-  tryAdd(byEffective, `Best Fit for ${timeframeLabel}`);
   return picks;
 }
 
@@ -1026,15 +1396,15 @@ function matchCardHTML({ row: r, badge }) {
   return `
     <div class="match-card"${artStyle}>
       <div class="match-card-badge">${badge}</div>
-      <div class="match-card-name">${r.resortName}${r.isRestricted ? restrictedBadgeHTML() : ""}</div>
-      <div class="match-card-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)</div>
+      <div class="match-card-name">${r.resortName}${accessBadgeHTML(r)}</div>
+      <div class="match-card-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)${horizonWarnHTML(r)}</div>
       <div class="match-card-stats">
         <div>
           <span class="match-card-stat-label">Cost/Pt/Year<span class="info-icon tip-align-left" data-tip="${METRIC_TIPS.costPerPointYear}">?</span></span>
           <span class="match-card-stat-value">${r.costPerPointYear != null ? "$" + r.costPerPointYear.toFixed(2) : "&mdash;"}</span>
         </div>
         <div>
-          <span class="match-card-stat-label">Est. Nightly Cost<span class="info-icon" data-tip="${METRIC_TIPS.nightlyRoomCost}">?</span></span>
+          <span class="match-card-stat-label">Nightly Cost<span class="info-icon" data-tip="${METRIC_TIPS.nightlyRoomCost}">?</span></span>
           <span class="match-card-stat-value">${r.nightlyRoomCost != null ? fmt(r.nightlyRoomCost) : "&mdash;"}</span>
         </div>
         <div>
@@ -1044,9 +1414,11 @@ function matchCardHTML({ row: r, badge }) {
       </div>
       <div class="match-card-price-row">
         <span>Buy-in</span>
-        <span class="price-input-wrap">$<input type="number" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}">/pt</span>
+        <span class="price-input-wrap">$<input type="number" inputmode="decimal" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" aria-label="Buy-in price per point"><span class="price-unit">/pt</span></span>
         ${r.hasOverride ? `<button type="button" class="price-reset" data-resort="${r.resortId}" title="Reset to default $${r.defaultPrice.toFixed(2)}/pt">reset</button>` : ""}
       </div>
+      ${directPremiumCaptionHTML(r)}
+      ${resaleCreditHTML(r)}
     </div>
   `;
 }
@@ -1056,7 +1428,6 @@ function renderMatches() {
   const rows = computeAllRows();
   const sorted = sortRows(rows);
   const costPerPointYearBest = bestIndices(sorted.map(r => r.costPerPointYear), "low");
-  const effectiveCostBest = bestIndices(sorted.map(r => r.effectiveCostPerPointYear), "low");
   const cashRatioBest = bestIndices(sorted.map(r => r.cashRatio), "high");
 
   renderPerksCallout(wizardData.points);
@@ -1074,7 +1445,6 @@ function renderMatches() {
     ["pricePerPoint", "Buy-In $/Pt"],
     ["currentDuesPerPoint", "Current Dues"],
     ["cashRatio", "Cash Ratio"],
-    ["effectiveCostPerPointYear", "Effective Cost/Pt/Yr"],
     ["nightlyRoomCost", "Est. Nightly Cost"],
     ["yearsToBreakeven", "Breakeven Horizon"],
     ["lifetimeOutlay", "Lifetime Outlay"],
@@ -1093,8 +1463,8 @@ function renderMatches() {
     return `
       <div class="resort-card">
         <div class="resort-card-header">
-          <div class="resort-card-name">${r.resortName}${r.isRestricted ? restrictedBadgeHTML() : ""}</div>
-          <div class="resort-card-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)</div>
+          <div class="resort-card-name">${r.resortName}${accessBadgeHTML(r)}</div>
+          <div class="resort-card-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)${horizonWarnHTML(r)}</div>
         </div>
         <div class="resort-card-hero${isBest ? " best" : ""}">
           <span class="resort-card-hero-label">Cost/Pt/Year</span>
@@ -1104,8 +1474,9 @@ function renderMatches() {
           <div class="resort-card-metric">
             <span class="resort-card-metric-label">Buy-In $/Pt</span>
             <span class="resort-card-metric-value">
-              <span class="price-input-wrap">$<input type="number" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" /></span>
+              <span class="price-input-wrap">$<input type="number" inputmode="decimal" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" aria-label="Buy-in price per point"><span class="price-unit">/pt</span></span>
               ${r.hasOverride ? `<button type="button" class="price-reset" data-resort="${r.resortId}" title="Reset to default $${r.defaultPrice.toFixed(2)}/pt">reset</button>` : ""}
+              ${directPremiumCaptionHTML(r)}
             </span>
           </div>
           <div class="resort-card-metric">
@@ -1115,10 +1486,6 @@ function renderMatches() {
           <div class="resort-card-metric">
             <span class="resort-card-metric-label">Cash Ratio</span>
             <span class="resort-card-metric-value">${r.cashRatio.toFixed(2)}x</span>
-          </div>
-          <div class="resort-card-metric">
-            <span class="resort-card-metric-label">Effective Cost/Pt/Yr</span>
-            <span class="resort-card-metric-value">${r.effectiveCostPerPointYear != null ? "$" + r.effectiveCostPerPointYear.toFixed(2) : "&mdash;"} <span class="resort-card-metric-sub">(${r.vacationYears}y)</span></span>
           </div>
           <div class="resort-card-metric">
             <span class="resort-card-metric-label">Est. Nightly Cost</span>
@@ -1140,32 +1507,61 @@ function renderMatches() {
   const rowsHTML = sorted.map((r, i) => `
     <tr>
       <td class="resort-name">
-        ${r.resortName}${r.isRestricted ? restrictedBadgeHTML() : ""}
-        <div class="resort-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)</div>
+        ${r.resortName}${accessBadgeHTML(r)}
+        <div class="resort-sub">Expires ${r.contractExpirationYear} (${r.yearsRemaining}y left)${horizonWarnHTML(r)}</div>
       </td>
       <td class="num price-cell">
-        <span class="price-input-wrap">$<input type="number" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" /></span>
+        <span class="price-input-wrap">$<input type="number" inputmode="decimal" class="price-input" step="0.01" min="0.01" data-resort="${r.resortId}" value="${r.pricePerPoint.toFixed(2)}" aria-label="Buy-in price per point"><span class="price-unit">/pt</span></span>
         ${r.hasOverride ? `<div class="price-reset-row"><button type="button" class="price-reset" data-resort="${r.resortId}" title="Reset to default $${r.defaultPrice.toFixed(2)}/pt">reset</button></div>` : ""}
+        ${directPremiumCaptionHTML(r)}
       </td>
       <td class="num">$${r.currentDuesPerPoint.toFixed(2)}</td>
       <td class="num ratio-value" style="${costPerPointYearBest.has(i) ? "color:var(--color-good)" : ""}">${r.costPerPointYear != null ? "$" + r.costPerPointYear.toFixed(2) : "&mdash;"}${costPerPointYearBest.has(i) ? " &#10003;" : ""}</td>
       <td class="num ratio-value" style="${cashRatioBest.has(i) ? "color:var(--color-good)" : ""}">${r.cashRatio.toFixed(2)}x${cashRatioBest.has(i) ? " &#10003;" : ""}</td>
-      <td class="num" style="${effectiveCostBest.has(i) ? "color:var(--color-secondary); font-weight:700;" : ""}">
-        ${r.effectiveCostPerPointYear != null ? "$" + r.effectiveCostPerPointYear.toFixed(2) : "&mdash;"}
-        <div class="resort-sub">${r.vacationYears}y timeframe</div>
-      </td>
       <td class="num">${r.nightlyRoomCost != null ? fmt(r.nightlyRoomCost) : "&mdash;"}</td>
       <td class="num">${r.yearsToBreakeven != null ? r.yearsToBreakeven.toFixed(1) + " yrs" : "Never"}</td>
       <td class="num">${fmt(r.lifetimeOutlay)}</td>
     </tr>
   `).join("");
 
+  // Same shape as trips.html's assumptionSliderRow(): label + live purple
+  // readout, optional preset chips, then the slider. `format` keeps the
+  // readout and the drag handler formatting one field identically.
+  const settingRow = (field, label, value, { min, max, step, format, presets = null, tip = "" }) => {
+    const chips = presets ? `
+      <div class="assumption-chips">
+        ${presets.map(p => `<button type="button" class="assumption-chip${Math.abs(p.value - value) < 1e-9 ? " active" : ""}" data-field="${field}" data-value="${p.value}"><span class="assumption-chip-main">${p.label}</span><span class="assumption-chip-sub">${p.sub}</span></button>`).join("")}
+      </div>` : "";
+    return `
+      <div class="assumption-row">
+        <div class="assumption-label-row">
+          <span class="assumption-label-text">${label}${tip ? `<span class="info-icon" data-tip="${tip}">?</span>` : ""}</span>
+          <span class="assumption-value" id="a-${field}-out">${format(value)}</span>
+        </div>
+        ${chips}
+        <input type="range" id="a-${field}" class="assumption-slider" data-field="${field}" min="${min}" max="${max}" step="${step}" value="${value}" aria-label="${label}">
+      </div>`;
+  };
+  // Inert at "Full Length" (nothing left to sell), so it says so rather
+  // than offering a switch that silently changes nothing.
+  const sellRowHTML = `
+    <div class="assumption-setting">
+      <span class="assumption-setting-label">Sell at end of my ${wizardData.vacationYears != null ? wizardData.vacationYears + "-year" : ""} plan<span class="info-icon" data-tip="${METRIC_TIPS.sellAtEnd}">?</span></span>
+      ${wizardData.vacationYears == null
+        ? `<span class="assumption-setting-note">Holding to expiry</span>`
+        : `<button type="button" class="pill-switch${wizardData.sellAtEnd ? " on" : ""}" id="w-sell-at-end" role="switch" aria-checked="${wizardData.sellAtEnd}"><span class="pill-switch-knob"></span></button>`}
+    </div>`;
   const advancedPanelHTML = `
     <div class="advanced-panel${showAdvanced ? " open" : ""}">
-      <label>Closing Cost <input type="number" id="w-closing" min="0" step="1" value="${wizardData.closingCost}"></label>
-      <label>Dues Growth (%/yr)<span class="info-icon" data-tip="${METRIC_TIPS.duesGrowthScope}">?</span> <input type="number" id="w-dues-growth" min="0" step="0.1" value="${wizardData.duesGrowth}"></label>
-      <label>Vacation Value ($/pt/yr)<span class="info-icon" data-tip="${METRIC_TIPS.vacationValueScope}">?</span> <input type="number" id="w-point-value" min="1" step="1" value="${wizardData.pointValue}"></label>
-      <label>Vacation Value Growth (%/yr) <input type="number" id="w-value-growth" min="0" step="0.1" value="${wizardData.valueGrowth}"></label>
+      ${sellRowHTML}
+      ${settingRow("closingCost", "Closing Cost", wizardData.closingCost, {
+        min: 0, max: 3000, step: 50, format: ASSUMPTION_FORMATTERS.closingCost, presets: CLOSING_COST_PRESETS })}
+      ${settingRow("duesGrowth", "Annual Dues Inflation", wizardData.duesGrowth, {
+        min: 2, max: 8, step: 0.1, format: ASSUMPTION_FORMATTERS.duesGrowth, tip: METRIC_TIPS.duesGrowthScope })}
+      ${settingRow("pointValue", "Vacation Value Baseline ($/point)", wizardData.pointValue, {
+        min: 15, max: 50, step: 1, format: ASSUMPTION_FORMATTERS.pointValue, presets: POINT_VALUE_PRESETS, tip: METRIC_TIPS.vacationValueScope })}
+      ${settingRow("valueGrowth", "Deluxe Hotel Inflation", wizardData.valueGrowth, {
+        min: 2, max: 8, step: 0.1, format: ASSUMPTION_FORMATTERS.valueGrowth })}
     </div>
   `;
 
@@ -1204,7 +1600,6 @@ function renderMatches() {
               ${colHeader("currentDuesPerPoint", "Current Dues", METRIC_TIPS.currentDuesPerPoint)}
               ${colHeader("costPerPointYear", "Cost/Pt/Year", METRIC_TIPS.costPerPointYear)}
               ${colHeader("cashRatio", "Cash Ratio", METRIC_TIPS.cashRatio)}
-              ${colHeader("effectiveCostPerPointYear", "Effective Cost/Pt/Yr", METRIC_TIPS.effectiveCostPerPointYear)}
               ${colHeader("nightlyRoomCost", "Est. Nightly Cost", METRIC_TIPS.nightlyRoomCost)}
               ${colHeader("yearsToBreakeven", "Breakeven Horizon", METRIC_TIPS.yearsToBreakeven)}
               ${colHeader("lifetimeOutlay", "Lifetime Outlay", METRIC_TIPS.lifetimeOutlay)}
@@ -1247,7 +1642,11 @@ function renderMatches() {
   // re-rendering -- which the new value needs, to reflow every downstream
   // metric and possibly re-sort -- doesn't yank focus out from under the
   // user mid-keystroke.
-  document.querySelectorAll(".price-input").forEach(input => {
+  // [data-resort] is load-bearing, not decoration: the assumptions panel's
+  // own fields reuse .price-input for the shared pill styling, and without
+  // this filter they'd land here too and write priceOverrides under an
+  // "undefined:" key.
+  document.querySelectorAll(".price-input[data-resort]").forEach(input => {
     input.addEventListener("change", () => {
       const resortId = input.dataset.resort;
       const key = `${resortId}:${wizardData.purchaseType}`;
@@ -1268,32 +1667,39 @@ function renderMatches() {
     });
   });
 
+  const sellSwitch = document.getElementById("w-sell-at-end");
+  if (sellSwitch) sellSwitch.addEventListener("click", () => { wizardData.sellAtEnd = !wizardData.sellAtEnd; renderMatches(); });
+
   const viewAllToggle = document.getElementById("view-all-toggle");
   if (viewAllToggle) viewAllToggle.addEventListener("click", () => { showAllResorts = !showAllResorts; renderMatches(); });
 
   const advancedToggle = document.getElementById("advanced-toggle");
   if (advancedToggle) advancedToggle.addEventListener("click", () => { showAdvanced = !showAdvanced; renderMatches(); });
 
-  const closingInput = document.getElementById("w-closing");
-  if (closingInput) closingInput.addEventListener("change", () => {
-    wizardData.closingCost = Math.max(0, parseFloat(closingInput.value) || 0);
-    renderMatches();
-  });
-  const duesGrowthInput = document.getElementById("w-dues-growth");
-  if (duesGrowthInput) duesGrowthInput.addEventListener("change", () => {
-    wizardData.duesGrowth = parseFloat(duesGrowthInput.value) || 0;
-    renderMatches();
+  // Two-phase, same split trips.html uses and for the same reason: "input"
+  // (every tick of the drag) only writes the readout text and repaints the
+  // chip states via direct DOM writes, because a full renderMatches() would
+  // rebuild the range element mid-drag and drop the thumb. The expensive
+  // recompute waits for "change" (pointer released).
+  document.querySelectorAll(".assumption-slider").forEach(slider => {
+    const field = slider.dataset.field;
+    slider.addEventListener("input", () => {
+      const val = parseFloat(slider.value);
+      wizardData[field] = val;
+      const out = document.getElementById(`a-${field}-out`);
+      if (out) out.textContent = ASSUMPTION_FORMATTERS[field](val);
+      document.querySelectorAll(`.assumption-chip[data-field="${field}"]`).forEach(chip => {
+        chip.classList.toggle("active", Math.abs(parseFloat(chip.dataset.value) - val) < 1e-9);
+      });
+    });
+    slider.addEventListener("change", renderMatches);
   });
 
-  const pointValueInput = document.getElementById("w-point-value");
-  if (pointValueInput) pointValueInput.addEventListener("change", () => {
-    wizardData.pointValue = Math.max(1, parseFloat(pointValueInput.value) || 35);
-    renderMatches();
-  });
-  const valueGrowthInput = document.getElementById("w-value-growth");
-  if (valueGrowthInput) valueGrowthInput.addEventListener("change", () => {
-    wizardData.valueGrowth = parseFloat(valueGrowthInput.value) || 0;
-    renderMatches();
+  document.querySelectorAll(".assumption-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      wizardData[btn.dataset.field] = parseFloat(btn.dataset.value);
+      renderMatches();
+    });
   });
 }
 
@@ -1304,6 +1710,12 @@ const wizardData = {
   points: null,
   category: "studio",
   vacationYears: null, // null = full contract length
+  // Whether to credit the contract's remaining resale value at the end of
+  // the horizon. On by default: someone who names a horizon shorter than
+  // the deed still owns a sellable asset at the end of it, and pretending
+  // otherwise doesn't just understate value, it mis-ranks a nearly-expired
+  // deed above a long one. Inert at "Full Length" (nothing left to sell).
+  sellAtEnd: true,
   hideRestricted: false,
   closingCost: 1500,
   duesGrowth: 4.0,

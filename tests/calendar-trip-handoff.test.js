@@ -95,6 +95,10 @@ test("multi-contract preview passes notes without attributing everything to one 
   assert.match(opened[0][1].notes, /Proposed contract split/);
   assert.match(opened[0][1].notes, /Family: 30 pts\nAdd-on: 25 pts/);
   assert.equal(opened[0][1].points_used, 55);
+  assert.deepEqual(JSON.parse(JSON.stringify(opened[0][1].contract_allocations)), [
+    { contract_id: "one", points: 30 },
+    { contract_id: "two", points: 25 },
+  ]);
 });
 
 test("custom nightly cash value is handed off as the total stay value", () => {

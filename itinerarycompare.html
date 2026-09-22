@@ -380,7 +380,12 @@ body {
   .window-sub, .risk-sub, .feasibility-detail { font-size: 0.56rem; margin-top: 2px; }
   .compare-metric { font-size: 0.8rem; }
 }
-  </style>
+  .funding-explanation { margin-top: 8px; text-align: left; font-size: .75rem; overflow-wrap: anywhere; }
+.funding-explanation summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--color-primary); text-decoration: underline; }
+.funding-source-line { padding: 8px 0; border-bottom: 1px solid var(--color-border-light); line-height: 1.5; }
+.funding-explanation p { line-height: 1.5; }
+.funding-method-note { font-size: .8rem; line-height: 1.5; color: var(--color-text-muted); margin: 16px 4px; }
+</style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
     // analytics load can never hold up the page's own load/spinner state -- a
@@ -405,29 +410,29 @@ body {
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Plan a Stay</span>
+        <span class="site-nav-group-label">Overview</span>
         <a href="home.html">Home</a>
-        <a href="index.html">Calendar</a>
-        <a href="compare.html">Compare Resorts</a>
-        <a href="suggest.html">Suggest a Stay</a>
+        <a href="badges.html">Achievements</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Trip Planning</span>
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html" class="active">Compare Itineraries</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Buying Guide</span>
-        <a href="contractvalue.html">Contract Value</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Account</span>
+        <span class="site-nav-group-label">My Membership</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
-        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -451,6 +456,7 @@ body {
   <script src="data/resort_shorthand.js"></script>
   <script src="dvc-dates.js"></script>
   <script src="dvc-ledger.js"></script>
+  <script src="dvc-plan-funding.js"></script>
   <script src="dvc-track.js"></script>
   <script>
 const pageContent = document.getElementById("page-content");
@@ -569,19 +575,19 @@ function fmt(n) {
 // Also pools every date across every segment for a single blended
 // average crowd/busy score.
 function calcItineraryMetrics(itinerary) {
-  let totalPoints = 0, totalCash = 0, totalNights = 0, hasCash = false;
+  let totalPoints = 0, totalCash = 0, totalNights = 0, hasCash = false, hasPoints = true;
   const allDates = [];
   for (const seg of itinerary.segments) {
-    const resort = RESORTS.find(r => r.id === seg.resortId && r.year === itinerary.year);
-    if (!resort) continue;
+
     const nights = nightsBetween(seg.checkIn, seg.checkOut);
     totalNights += nights;
     const dates = stayDateRange(seg.checkIn, nights);
     for (const dateStr of dates) {
       allDates.push(dateStr);
-      const pts = getPointsForDate(resort, dateStr, seg.roomTypeId);
-      const cashResult = getCashRateWithFallback(resort, dateStr, seg.roomTypeId);
-      if (pts) totalPoints += pts;
+      const resort = RESORTS.find(r => r.id === seg.resortId && r.year === Number(dateStr.slice(0, 4)));
+      const pts = resort && getPointsForDate(resort, dateStr, seg.roomTypeId);
+      const cashResult = resort && getCashRateWithFallback(resort, dateStr, seg.roomTypeId);
+      if (Number.isSafeInteger(pts) && pts > 0) totalPoints += pts; else hasPoints = false;
       if (cashResult && cashResult.rate) { totalCash += cashResult.rate; hasCash = true; }
     }
   }
@@ -594,13 +600,13 @@ function calcItineraryMetrics(itinerary) {
   }
 
   return {
-    totalPoints,
+    totalPoints: hasPoints ? totalPoints : null,
     totalCash: hasCash ? totalCash : null,
     totalNights,
     avgCrowd,
     avgCrowdLabel,
-    cashPerPoint: hasCash && totalPoints > 0 ? totalCash / totalPoints : null,
-    pointsPerNight: totalNights > 0 ? totalPoints / totalNights : null,
+    cashPerPoint: hasPoints && hasCash && totalPoints > 0 ? totalCash / totalPoints : null,
+    pointsPerNight: hasPoints && totalNights > 0 ? totalPoints / totalNights : null,
   };
 }
 
@@ -670,8 +676,8 @@ function riskTierForScore(score, stayLength) {
 
 function monthsBeforeCheckIn(dateStr, months) {
   const [y, m, d] = dateStr.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  dt.setMonth(dt.getMonth() - months);
+  const dt = new Date(y, m - 1 - months, 1);
+  dt.setDate(Math.min(d, new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate()));
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
 }
 
@@ -725,56 +731,103 @@ function windowBadgeHTML(info) {
   return `<div class="segment-line"><span class="window-badge window-blocked">🚫 Not Bookable</span></div>`;
 }
 
-// Same date math as app.js's getCurrentYearRow(), generalized to an
+// Same stay-date cycle selection as app.js, with an
 // arbitrary reference date via DVCDates.currentUYYear()'s own
 // {year,month,day} parameter instead of always "today" -- this finds the
 // use-year cycle that actually covers a future check-in date, so a
 // contract's "+ Plan a year" row (My Contracts) is used when the owner has
 // filled one in for that year, per "match the itinerary's travel year to
 // the Use Year." Falls back to the contract's full annual allotment, same
-// as getCurrentYearRow's own fallback, when no row exists yet for that cycle.
+// as My Contracts, when no row exists yet for that cycle.
 function getYearRowForDate(contract, dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const uyLabel = window.DVCDates.currentUYYear(contract.use_year, { year: y, month: m, day: d });
   const row = contractYearPoints.find(r => r.contract_id === contract.id && r.use_year_label === uyLabel);
   return row
-    ? { remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0, holding: row.points_holding || 0 }
-    : { remaining: contract.points_per_year, banked: 0, borrowed: 0, holding: 0 };
+    ? { year: uyLabel, recorded: !!row.balance_confirmed_at, remaining: row.points_remaining, banked: row.points_banked || 0, borrowed: row.points_borrowed || 0, holding: row.points_holding || 0 }
+    : { year: uyLabel, recorded: false, remaining: contract.points_per_year, banked: 0, borrowed: 0, holding: 0 };
 }
 
-// Pools every active contract's balance for the cycle covering the trip --
-// an owner with multiple contracts often funds one trip from more than one
-// of them, so this checks total feasibility rather than any single contract
-// alone. Uses itinerary.segments[0]'s check-in as the reference date for a
-// split-stay itinerary (same simplification calcItineraryMetrics makes
-// elsewhere on this page: one blended read per itinerary, not per segment).
-// Borrow headroom is modeled the same "elastic capacity" way app.js's
-// 11-to-7 Swap Simulator does (see CLAUDE.md) -- ceiling (DVCLedger's real
-// 100%-of-next-year rule) minus whatever's ALREADY borrowed for that cycle,
-// not a flat re-use of the ceiling, so an already-borrowed contract isn't
-// double-counted.
-function calcFeasibility(itinerary, totalPoints) {
-  if (activeContracts.length === 0) return null;
-  const refDate = itinerary.segments[0]?.checkIn;
-  if (!refDate) return null;
-
-  let available = 0, headroom = 0;
-  for (const c of activeContracts) {
-    const row = getYearRowForDate(c, refDate);
-    available += row.remaining + row.banked + row.borrowed + row.holding;
-    const ceiling = window.DVCLedger.validateBorrowedPoints(row.borrowed, c.points_per_year).maxAllowed;
-    headroom += Math.max(0, ceiling - row.borrowed);
-  }
-
-  if (totalPoints <= available) {
-    return { level: "funded", rank: 2, badge: "✅ Fully Funded", detail: `${Math.round(available - totalPoints).toLocaleString()} pts left over` };
-  }
-  if (totalPoints <= available + headroom) {
-    return { level: "borrow", rank: 1, badge: "⚠️ Requires Borrowing", detail: `${Math.round(totalPoints - available).toLocaleString()} pts needed from next year` };
-  }
-  const deficit = totalPoints - available - headroom;
-  return { level: "deficit", rank: 0, badge: "❌ Point Deficit", detail: `${Math.round(deficit).toLocaleString()} pts beyond max borrow` };
+function fundingText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
+function calcFeasibility(itinerary) {
+  if (!activeContracts.length) return null;
+  const unknown = detail => ({ level: 'borrow', rank: 0, badge: 'Needs review', detail });
+  const demands = [];
+  for (const [segment, seg] of itinerary.segments.entries()) {
+    const nights = nightsBetween(seg.checkIn, seg.checkOut);
+    if (!Number.isInteger(nights) || nights <= 0 || nights > 366) return unknown('Check the saved stay dates.');
+    for (const date of stayDateRange(seg.checkIn, nights)) {
+      const resort = RESORTS.find(r => r.id === seg.resortId && r.year === Number(date.slice(0, 4)));
+      const points = resort && getPointsForDate(resort, date, seg.roomTypeId);
+      if (!Number.isSafeInteger(points) || points <= 0) return unknown('Point chart data is missing for part of this stay. Funding cannot be confirmed.');
+      demands.push({ segment, date, points, resortId: seg.resortId, checkIn: seg.checkIn });
+    }
+  }
+  if (!demands.length) return unknown('No stay dates to assess.');
+  const today = window.DVCDates.todayInEastern();
+  const todayStr = `${today.year}-${String(today.month).padStart(2,'0')}-${String(today.day).padStart(2,'0')}`;
+  if (demands.some(d => d.date < todayStr)) return unknown('Past stay: current balances cannot verify historical funding.');
+  const ids = [...new Set(RESORTS.map(r => r.id))];
+  const supplies = [], exclusions = [];
+  let holdingExcluded = false;
+  for (const contract of activeContracts) {
+    const access = window.DVCAuth.getUserResortAccess([contract], ids);
+    itinerary.segments.forEach((seg, index) => {
+      if (!access.homeResortIds.has(seg.resortId) && !access.sevenMoResortIds.has(seg.resortId)) {
+        const name = contract.nickname || shorthandResortName(contract.home_resort_id, resortName(contract.home_resort_id, itinerary.year));
+        exclusions.push('<div class="funding-source-line">' + fundingText(name) + ': not eligible for Stay ' + (index + 1) + '.</div>');
+      }
+    });
+    const years = new Map();
+    for (const d of demands) {
+      if (!access.homeResortIds.has(d.resortId) && !access.sevenMoResortIds.has(d.resortId)) continue;
+      const row = getYearRowForDate(contract, d.date);
+      if (years.has(row.year)) continue;
+      years.set(row.year, true);
+      if ([row.remaining,row.banked,row.borrowed,row.holding].some(n => !Number.isSafeInteger(n) || n < 0)) return unknown('Check the point balances in My Contracts.');
+      holdingExcluded ||= row.holding > 0;
+      supplies.push({ contract, access, year: row.year, estimated: !row.recorded, points: row.recorded ? row.remaining + row.banked + row.borrowed : 0 });
+    }
+  }
+  supplies.sort((a,b) => Number(a.estimated)-Number(b.estimated));
+  function canUse(s, d, openOnly) {
+    const months = s.access.homeResortIds.has(d.resortId) ? 11 : s.access.sevenMoResortIds.has(d.resortId) ? 7 : null;
+    return months && getYearRowForDate(s.contract, d.date).year === s.year && (!openOnly || monthsBeforeCheckIn(d.checkIn, months) <= todayStr);
+  }
+  const blocked = demands.some(d => !supplies.some(s => canUse(s,d,false)));
+  const open = window.DVCPlanFunding.allocate(demands, supplies, (s,d) => canUse(s,d,true));
+  const plan = open.shortfall === 0 ? open : window.DVCPlanFunding.allocate(demands, supplies, (s,d) => canUse(s,d,false));
+  const estimated = plan.allocations.some(a => supplies[a.supply].estimated);
+  const unconfirmed = supplies.some(s => s.estimated);
+  const pending = plan.allocations.some(a => !canUse(supplies[a.supply], demands[a.demand], true));
+  const groups = new Map();
+  for (const a of plan.allocations) {
+    const s = supplies[a.supply], d = demands[a.demand];
+    const key = `${a.supply}:${d.segment}`;
+    if (!groups.has(key)) groups.set(key, { supply:s, demand:d, points:0 });
+    groups.get(key).points += a.points;
+  }
+  const lines = [...groups.values()].map(({supply:s,demand:d,points}) => {
+    const name = s.contract.nickname || shorthandResortName(s.contract.home_resort_id, resortName(s.contract.home_resort_id, itinerary.year));
+    const months = s.access.homeResortIds.has(d.resortId) ? 11 : 7;
+    const opens = monthsBeforeCheckIn(d.checkIn, months);
+    return `<div class="funding-source-line"><strong>${fundingText(name)}</strong>: ${points} pts<br>${s.contract.use_year} ${s.year} use year${s.estimated ? ' (estimated)' : ''} &middot; Stay ${d.segment + 1}${opens > todayStr ? '<br>Window opens ' + formatShortDate(opens) : ''}</div>`;
+  });
+  const shortages = new Map();
+  plan.unmet.forEach(u => { const n=demands[u.demand].segment; shortages.set(n,(shortages.get(n)||0)+u.points); });
+  shortages.forEach((points, segment) => lines.push(`<div class="funding-source-line">Stay ${segment+1}: ${points} pts still needed from eligible contracts.</div>`));
+  const notes = (estimated ? 'Confirm estimated balances in My Contracts. ' : '') + (holdingExcluded ? 'Holding points excluded; review their booking restrictions separately. ' : '');
+  const detail = `${plan.funded} / ${demands.reduce((sum,d)=>sum+d.points,0)} pts allocated${plan.shortfall ? '; '+plan.shortfall+' pts not allocated' : ''}<details class="funding-explanation"><summary>View point sources</summary>${lines.join('')}${exclusions.join('')}${notes ? '<p>' + notes + '</p>' : ''}</details>`;
+  if (blocked) return { level:'deficit', rank:0, badge:'Contract restricted', detail: 'No eligible owned contract for part of this stay.<br>' + detail };
+  if (plan.shortfall && unconfirmed) return { level:'borrow', rank:0, badge:'Balance not confirmed', detail: 'Confirm eligible contract balances in <a href="account.html">My Contracts</a> before assessing this stay.<br>' + detail };
+  if (plan.shortfall) return { level:'deficit', rank:0, badge:holdingExcluded ? 'Review holding points' : 'Needs points', detail };
+  if (estimated) return { level:'borrow', rank:1, badge:'Estimated funding', detail };
+  if (pending) return { level:'borrow', rank:2, badge:'Window not open', detail };
+  return { level:'funded', rank:3, badge:'Points covered', detail };
+}
+
 
 function renderGate() {
   pageContent.innerHTML = `
@@ -898,8 +951,8 @@ function buildCompareTableHTML(selected) {
   // segment), against the itinerary's already-computed totalPoints.
   let feasibilityRow = "";
   if (hasContracts) {
-    const feasibilityList = selected.map((itin, i) => calcFeasibility(itin, metrics[i].totalPoints));
-    const bestSet = bestIndices(feasibilityList.map(f => f ? f.rank : null), "high");
+    const feasibilityList = selected.map(itin => calcFeasibility(itin));
+    const bestSet = bestIndices(feasibilityList.map(f => f && f.rank > 0 ? f.rank : null), "high");
     feasibilityRow = feasibilityList.map((f, i) => f
       ? `<td${bestSet.has(i) ? ' class="row-best"' : ""}><span class="feasibility-badge feasibility-${f.level}">${f.badge}</span><div class="feasibility-detail">${f.detail}</div></td>`
       : `<td>&mdash;</td>`
@@ -907,7 +960,7 @@ function buildCompareTableHTML(selected) {
   }
 
   const nightsRow = metrics.map(m => `<td class="compare-metric">${m.totalNights}</td>`).join("");
-  const pointsRow = metrics.map((m, i) => `<td class="compare-metric${pointsBest.has(i) ? " best" : ""}">${m.totalPoints.toLocaleString()}</td>`).join("");
+  const pointsRow = metrics.map((m, i) => `<td class="compare-metric${pointsBest.has(i) ? " best" : ""}">${m.totalPoints == null ? "&mdash;" : m.totalPoints.toLocaleString()}</td>`).join("");
   const cashRow = metrics.map((m, i) => `<td class="compare-metric${cashBest.has(i) ? " best" : ""}">${m.totalCash != null ? fmt(m.totalCash) : "&mdash;"}</td>`).join("");
   const cashPerPointRow = metrics.map((m, i) => `<td class="compare-metric${cashPerPointBest.has(i) ? " best" : ""}">${m.cashPerPoint != null ? "$" + m.cashPerPoint.toFixed(2) : "&mdash;"}</td>`).join("");
   const pointsPerNightRow = metrics.map(m => `<td class="compare-metric">${m.pointsPerNight != null ? m.pointsPerNight.toFixed(1) : "&mdash;"}</td>`).join("");
@@ -960,6 +1013,7 @@ function buildCompareTableHTML(selected) {
         </tbody>
       </table>
     </div>
+    ${hasContracts ? `<p class="funding-method-note">Each option is assessed separately using eligible contracts. Recorded banked and borrowed points are included; review new banking or borrowing in <a href="account.html">My Contracts</a>. Points covered does not confirm room availability or a reservation.</p>` : ""}
   `;
 }
 

@@ -729,6 +729,12 @@ async function upsertContractYearPoints(row) {
   return { data, error: error?.message };
 }
 
+async function recordPointMovement(payload) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { data, error } = await supabase.rpc("record_point_movement", payload);
+  return { data, error: error?.message };
+}
+
 async function deleteContractYearPoints(id) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   const { error } = await supabase.from("contract_year_points").delete().eq("id", id);
@@ -835,7 +841,7 @@ async function updateProfile(patch) {
 // four field names and defaults itself -- DEFAULT_USER_SETTINGS here is the
 // one place that has to agree with the migration's column defaults.
 const DEFAULT_USER_SETTINGS = {
-  point_value_baseline: 35,
+  point_value_baseline: 26,
   dues_growth_rate: 0.04,
   value_growth_rate: 0.05,
   opportunity_cost_rate: 0.00,
@@ -949,6 +955,8 @@ async function addTrip(trip) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   const payload = { ...trip, user_id: currentSession.user.id };
   let { data, error } = await supabase.from("trips").insert(payload).select().single();
+  // Confirmed funding must never be silently discarded by a compatibility retry.
+  if (error && payload.points_source_breakdown?.version === 2) return { error: error.message };
   if (error && isMissingColumnError(error, "custom_cash_value")) {
     const { custom_cash_value, ...rest } = payload;
     ({ data, error } = await supabase.from("trips").insert(rest).select().single());
@@ -965,6 +973,7 @@ async function addTrip(trip) {
 async function updateTrip(id, patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   let { data, error } = await supabase.from("trips").update(patch).eq("id", id).select().single();
+  if (error && patch.points_source_breakdown?.version === 2) return { error: error.message };
   if (error && isMissingColumnError(error, "custom_cash_value")) {
     const { custom_cash_value, ...rest } = patch;
     ({ data, error } = await supabase.from("trips").update(rest).eq("id", id).select().single());
@@ -1001,11 +1010,22 @@ async function getItineraries() {
 // checkIn, checkOut }], user_id filled in here, same reasoning as addTrip().
 async function addItinerary(itinerary) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  const { data, error } = await supabase
-    .from("itineraries")
-    .insert({ ...itinerary, user_id: currentSession.user.id })
+  const table = supabase.from("itineraries");
+  const row = { ...itinerary, user_id: currentSession.user.id };
+  // The calendar keeps one random ID across retries of a new/copy save.
+  const query = itinerary.id ? table.upsert(row, { onConflict: "id" }) : table.insert(row);
+  const { data, error } = await query
     .select()
     .single();
+  return { data, error: error?.message };
+}
+
+async function updateItinerary(id, itinerary) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const { name, year, segments, booking_contract_id } = itinerary;
+  const { data, error } = await supabase.from("itineraries")
+    .update({ name, year, segments, booking_contract_id })
+    .eq("id", id).eq("user_id", currentSession.user.id).select().single();
   return { data, error: error?.message };
 }
 
@@ -1198,6 +1218,7 @@ window.DVCAuth = {
   deleteContract,
   getContractYearPoints,
   upsertContractYearPoints,
+  recordPointMovement,
   deleteContractYearPoints,
   getUserBadges,
   upsertUserBadge,
@@ -1217,6 +1238,7 @@ window.DVCAuth = {
   deleteTrip,
   getItineraries,
   addItinerary,
+  updateItinerary,
   deleteItinerary,
   getUserResortAccess,
   evaluateContractPerks,

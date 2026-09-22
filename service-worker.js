@@ -1,6 +1,6 @@
-// Push Notifications foundation (account.html's Notification Settings ->
-// "Push Notifications" toggle registers this). There's no send-side backend
-// deployed yet -- this just handles a push event WHEN one eventually
+// Retained push-event handler; Notification Settings does not enroll users
+// while no sender is configured. This worker also supports app installation.
+// This handles a push event WHEN one eventually
 // arrives, mirroring the shape send-banking-reminders/ would need to POST
 // (a JSON body with title/body/url), and click-through to the app.
 //

@@ -53,38 +53,28 @@
     return daysBeforeCheckIn >= 1 && daysBeforeCheckIn <= 30;
   }
 
-  const HOLDING_REBOOK_DAYS = 60;
+  const HOLDING_BOOKING_WINDOW_DAYS = 60;
   const MS_PER_DAY = 86400000;
 
-  // The real deadline by which a use-year row's Holding balance must be
-  // rebooked: enteredDateMs (when the points entered holding) + 60 days,
-  // capped at the use year's own expiration -- holding doesn't grant an
-  // extension past the normal use-year boundary, it only ever shortens the
-  // effective deadline. All three args are UTC-midnight ms (dvc-dates.js's
-  // dateOnlyUTC() convention) -- kept as plain numbers rather than importing
-  // dvc-dates.js so this file has no dependency and stays trivially
-  // Node-testable. Returns null if enteredDateMs is unknown (a pre-existing
-  // row, or points_holding is 0) -- there's nothing to compute a deadline
-  // from.
-  function holdingRebookDeadline(enteredDateMs, useYearExpiresMs, todayMs) {
-    if (enteredDateMs == null) return null;
-    const sixtyDayMs = enteredDateMs + HOLDING_REBOOK_DAYS * MS_PER_DAY;
-    const deadlineMs = Math.min(sixtyDayMs, useYearExpiresMs);
-    return { ms: deadlineMs, daysUntil: Math.round((deadlineMs - todayMs) / MS_PER_DAY) };
+  // Holding expires at the end of the use year, regardless of entry date.
+  // The 60-day limit is the advance booking window, not a rebooking clock.
+  // Source: https://plandisney.disney.go.com/question/holding-points-work-expire-bank-501019/
+  function holdingExpiration(useYearExpiresMs, todayMs) {
+    return { ms: useYearExpiresMs, daysUntil: Math.round((useYearExpiresMs - todayMs) / MS_PER_DAY) };
   }
 
   // Plain-language rule text for a tooltip/help string next to the Holding
   // stepper -- kept here (not duplicated in account.html/app.js) so both
   // callers show identical copy.
   const HOLDING_RULES_TEXT =
-    "From a reservation canceled or modified 1-30 days before check-in. Can't be banked or borrowed, and must be rebooked within 60 days of entering holding.";
+    "From a reservation canceled or modified 1-30 days before check-in. Cannot be banked or borrowed. Book DVC Resort stays no more than 60 days before check-in, and use these points before the use year ends.";
 
   const api = {
     MAX_BORROW_RATIO,
-    HOLDING_REBOOK_DAYS,
+    HOLDING_BOOKING_WINDOW_DAYS,
     validateBorrowedPoints,
     pointsEnterHolding,
-    holdingRebookDeadline,
+    holdingExpiration,
     HOLDING_RULES_TEXT,
   };
 

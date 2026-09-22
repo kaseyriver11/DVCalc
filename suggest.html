@@ -349,6 +349,30 @@ body {
 .resort-name { font-weight: 700; color: #1a237e; font-size: 1rem; line-height: 1.3; }
 .room-name { font-size: 0.8rem; color: #888; margin-top: 2px; }
 
+/* Booking-window access badge (analyzeBookingAccess()) -- only rendered
+   once a signed-in owner's contracts resolve via getUserResortAccess(),
+   same home/switch/restricted vocabulary compare.html's own personalized
+   chips use, so the two pages read consistently. */
+.access-badge {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+.access-badge.home { background: var(--color-good-bg); color: var(--color-good); }
+.access-badge.switch { background: var(--color-warning-bg); color: var(--color-warning); }
+.access-badge.restricted { background: var(--color-danger-bg); color: var(--color-danger); }
+.access-badge-status { display: block; font-size: 0.7rem; color: #888; margin-top: 4px; font-weight: 600; }
+
+/* "Uses X of Y pts" leftover caption (see findFeasibleStays()/cardHTML()) --
+   sits under the metric grid rather than duplicating Points Used/Points
+   Left as a fourth tile. */
+.result-card-leftover { font-size: 0.76rem; color: #666; margin: -6px 0 12px; }
+.result-card-leftover b { color: #333; }
+
 .result-card-dates {
   display: flex;
   justify-content: space-between;
@@ -431,29 +455,29 @@ body {
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Plan a Stay</span>
+        <span class="site-nav-group-label">Overview</span>
         <a href="home.html">Home</a>
-        <a href="index.html">Calendar</a>
-        <a href="compare.html">Compare Resorts</a>
-        <a href="suggest.html" class="active">Suggest a Stay</a>
+        <a href="badges.html">Achievements</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Trip Planning</span>
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html" class="active">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Buying Guide</span>
-        <a href="contractvalue.html">Contract Value</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Account</span>
+        <span class="site-nav-group-label">My Membership</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html">Membership Value</a>
-        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -535,6 +559,15 @@ function roomMatchesCategory(rt, category) {
   return rt.name.toLowerCase().includes(CATEGORY_KEYWORDS[category]);
 }
 
+// Every room type in data.js carries a real `sleeps` capacity (e.g. a
+// sleeps-4 standard studio at Copper Creek/AKV vs. a sleeps-5 studio with
+// a 5th-sleeper pull-down at Riviera/BWV/BC/Poly) -- partySize null/0
+// means "didn't ask," so every room passes.
+function roomMatchesPartySize(rt, partySize) {
+  if (!partySize) return true;
+  return rt.sleeps >= partySize;
+}
+
 function uniqueResorts(year) {
   const seen = new Set();
   const list = [];
@@ -554,6 +587,62 @@ function addDays(dateStr, n) {
   const d = new Date(dateStr + "T12:00:00");
   d.setDate(d.getDate() + n);
   return formatDate(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function formatShortDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// Same math as compare.html's own windowOpensOn()/daysUntilDate() --
+// duplicated rather than shared because this page is self-contained and
+// never loads compare.html's script. Check-in minus N months, YYYY-MM-DD.
+function windowOpensOn(checkInStr, months) {
+  const [y, m, d] = checkInStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setMonth(dt.getMonth() - months);
+  return formatDate(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+
+function daysUntilDate(dateStr) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + "T00:00:00");
+  return Math.round((target - today) / 86400000);
+}
+
+// Per-result booking-window read for a signed-in owner, same home/7-month
+// vocabulary as compare.html's analyzeBookingWindow() (that page's version
+// also quotes historical availability odds, which needs
+// data/availability_data.js -- this page doesn't load it, so this is just
+// the gating half: which window applies, its exact open date, and whether
+// it's open yet for the suggested check-in). This is the fix for the real
+// risk Gemini's review flagged: a stay suggested 10 months out at a
+// resort that's only 7-month-bookable for this user would otherwise render
+// identically to a home-resort suggestion, and the user would find out it's
+// not actually bookable yet only once they tried.
+function analyzeBookingAccess(resortId, checkIn) {
+  if (!userResortAccess) return null;
+
+  if (userResortAccess.restrictedResortIds.has(resortId)) {
+    return { badgeType: "restricted", badgeText: "\u{1F6AB} Not bookable with your contracts", statusText: "" };
+  }
+
+  const isHome = userResortAccess.homeResortIds.has(resortId);
+  if (!isHome && !userResortAccess.sevenMoResortIds.has(resortId)) return null;
+
+  const gateMonths = isHome ? 11 : 7;
+  const opensOn = windowOpensOn(checkIn, gateMonths);
+  const daysUntilOpen = daysUntilDate(opensOn);
+  const isOpen = daysUntilOpen <= 0;
+
+  return {
+    badgeType: isHome ? "home" : "switch",
+    badgeText: isHome ? "\u{1F3E0} Home Resort · 11-mo" : "7-Month Switch",
+    statusText: isOpen
+      ? "Window open now"
+      : `Opens ${formatShortDate(opensOn)} · ${daysUntilOpen}d away`,
+  };
 }
 
 // Greedily extends a stay night by night from startDateStr while the
@@ -592,13 +681,23 @@ function datesForMonths(year, months) {
   return dates;
 }
 
-function findFeasibleStays({ points, year, months, category, minNights, maxNights, resortIds }) {
+function cashValueForStay(resort, roomTypeId, checkIn, nights) {
+  let total = 0, dateStr = checkIn, sawRate = false;
+  for (let i = 0; i < nights; i++) {
+    const cash = getCashRateWithFallback(resort, dateStr, roomTypeId);
+    if (cash) { total += cash.rate; sawRate = true; }
+    dateStr = addDays(dateStr, 1);
+  }
+  return sawRate ? total : null;
+}
+
+function findFeasibleStays({ points, year, months, category, partySize, minNights, maxNights, resortIds }) {
   const resorts = uniqueResorts(year).filter(r => resortIds == null || resortIds.has(r.id));
   const results = [];
   const CAP_NIGHTS = maxNights || 14;
 
   for (const resort of resorts) {
-    const roomTypes = resort.roomTypes.filter(rt => roomMatchesCategory(rt, category));
+    const roomTypes = resort.roomTypes.filter(rt => roomMatchesCategory(rt, category) && roomMatchesPartySize(rt, partySize));
     for (const rt of roomTypes) {
       let bestStart = null, bestNights = 0, bestTotal = 0;
 
@@ -610,7 +709,13 @@ function findFeasibleStays({ points, year, months, category, minNights, maxNight
 
       for (const startDate of startDates) {
         const { nights, total } = maxNightsWithinBudget(resort, rt.id, startDate, points, CAP_NIGHTS);
-        if (nights >= minNights && nights > bestNights) {
+        if (nights < minNights) continue;
+        // Longest stay wins first; a tie on nights is broken toward whichever
+        // start date actually spends more of the budget, not just whichever
+        // was found first -- otherwise a resort/room could report the same
+        // night count while quietly stranding more leftover points than a
+        // same-length alternative a few days over would have used.
+        if (nights > bestNights || (nights === bestNights && total > bestTotal)) {
           bestNights = nights;
           bestStart = startDate;
           bestTotal = total;
@@ -618,11 +723,13 @@ function findFeasibleStays({ points, year, months, category, minNights, maxNight
       }
 
       if (bestStart) {
+        const cashValue = cashValueForStay(resort, rt.id, bestStart, bestNights);
         results.push({
           resortId: resort.id,
           resortName: resort.name,
           roomTypeId: rt.id,
           roomName: rt.name,
+          sleeps: rt.sleeps,
           year,
           checkIn: bestStart,
           checkOut: addDays(bestStart, bestNights),
@@ -630,6 +737,8 @@ function findFeasibleStays({ points, year, months, category, minNights, maxNight
           pointsUsed: bestTotal,
           pointsLeft: points - bestTotal,
           pointsPerNight: bestTotal / bestNights,
+          cashValue,
+          cashValuePerPoint: cashValue != null ? cashValue / bestTotal : null,
         });
       }
     }
@@ -646,6 +755,7 @@ const wizardData = {
   year: null,
   months: [], // empty = "any month" -- see datesForMonths()
   category: "any",
+  partySize: null, // null/0 = "didn't ask" -- see roomMatchesPartySize()
   minNights: 5,
   maxNights: 7,
   scope: "all",
@@ -654,6 +764,10 @@ const wizardData = {
 let userContracts = [];
 let isSignedIn = false;
 let hasActiveContracts = false;
+// Set from every active contract on auth change (not just when scope is
+// "access") so every result card can carry a home/7-month/restricted badge
+// regardless of which scope the user searched -- see analyzeBookingAccess().
+let userResortAccess = null;
 
 // ---- Results state --------------------------------------------------------
 const DEFAULT_RESULT_LIMIT = 20;
@@ -667,6 +781,15 @@ function sortResults(results) {
   const dir = sortDir === "asc" ? 1 : -1;
   return [...results].sort((a, b) => {
     if (sortKey === "resortName") return a[sortKey].localeCompare(b[sortKey]) * dir;
+    // cashValuePerPoint is null for a resort with no cash rate data at all
+    // (see getCashRateWithFallback()) -- push those to the bottom of this
+    // sort regardless of direction rather than letting `null - number`
+    // coerce to 0 and jumble them in among real values.
+    if (sortKey === "cashValuePerPoint") {
+      if (a.cashValuePerPoint == null && b.cashValuePerPoint == null) return 0;
+      if (a.cashValuePerPoint == null) return 1;
+      if (b.cashValuePerPoint == null) return -1;
+    }
     return (a[sortKey] - b[sortKey]) * dir;
   });
 }
@@ -674,15 +797,17 @@ function sortResults(results) {
 const SORT_OPTIONS = [
   ["pointsPerNight", "Best Value"],
   ["nights", "Nights"],
+  ["pointsLeft", "Least Leftover"],
+  ["cashValuePerPoint", "Best Cash Value"],
   ["pointsUsed", "Points Used"],
   ["resortName", "Resort Name"],
 ];
-// Efficiency metrics (value, total points) default to ascending -- lower
-// is better. Nights defaults descending (more vacation = "better" when
-// browsing by length). Name is alphabetical.
+// Efficiency metrics (value, total points, leftover points) default to
+// ascending -- lower is better. Nights and cash value default descending
+// (more vacation / more dollars per point = "better"). Name is alphabetical.
 function defaultDirFor(key) {
   if (key === "resortName") return "asc";
-  if (key === "nights") return "desc";
+  if (key === "nights" || key === "cashValuePerPoint") return "desc";
   return "asc";
 }
 
@@ -703,10 +828,17 @@ function buildSortToolbarHTML() {
 function buildEmptyStateHTML() {
   const suggestions = [];
   if (lastParams) {
+    // Checked before the points bump so a slim target month gets its own
+    // targeted recovery ("try nearby dates") rather than only ever being
+    // told to raise the budget -- a search pinned to one or two months is
+    // exactly the case where loosening the calendar, not the wallet, is
+    // the fix that actually surfaces something.
+    if (lastParams.months.length > 0) suggestions.push(`<button type="button" id="empty-action-months">Search any month instead</button>`);
     suggestions.push(`<button type="button" id="empty-action-points">Try ${fmtNum(lastParams.points + 20)} points instead</button>`);
     if (lastParams.minNights > 1) suggestions.push(`<button type="button" id="empty-action-nights">Lower minimum nights to 1</button>`);
     if (lastParams.scope !== "all") suggestions.push(`<button type="button" id="empty-action-scope">Search all resorts</button>`);
     if (lastParams.category !== "any") suggestions.push(`<button type="button" id="empty-action-category">Search any room type</button>`);
+    if (lastParams.partySize) suggestions.push(`<button type="button" id="empty-action-party">Drop the party size filter</button>`);
   }
   return `
     <div class="empty-state">
@@ -733,6 +865,10 @@ function renderResults() {
     if (scopeBtn) scopeBtn.addEventListener("click", () => { wizardData.scope = "all"; runSearch(); });
     const categoryBtn = document.getElementById("empty-action-category");
     if (categoryBtn) categoryBtn.addEventListener("click", () => { wizardData.category = "any"; runSearch(); });
+    const monthsBtn = document.getElementById("empty-action-months");
+    if (monthsBtn) monthsBtn.addEventListener("click", () => { wizardData.months = []; runSearch(); });
+    const partyBtn = document.getElementById("empty-action-party");
+    if (partyBtn) partyBtn.addEventListener("click", () => { wizardData.partySize = null; runSearch(); });
     return;
   }
 
@@ -742,11 +878,25 @@ function renderResults() {
   // the rest are one tap away via "Show all", not hidden for good.
   const visible = showAllResults ? sorted : sorted.slice(0, DEFAULT_RESULT_LIMIT);
 
+  const accessBadgeHTML = (r) => {
+    // Computed fresh at render time (not baked in at search time) so
+    // signing in after a search already rendered -- or a "View This Stay"
+    // round trip -- always reflects the current userResortAccess rather
+    // than a stale null from before sign-in resolved.
+    const a = analyzeBookingAccess(r.resortId, r.checkIn);
+    if (!a) return "";
+    return `
+      <span class="access-badge ${a.badgeType}">${a.badgeText}</span>
+      ${a.statusText ? `<span class="access-badge-status">${a.statusText}</span>` : ""}
+    `;
+  };
+
   const cardHTML = (r, i) => `
     <div class="result-card">
       <div class="result-card-header">
         <div class="resort-name">${r.resortName}</div>
-        <div class="room-name">${r.roomName}</div>
+        <div class="room-name">${r.roomName} &middot; sleeps ${r.sleeps}</div>
+        ${accessBadgeHTML(r)}
       </div>
       <div class="result-card-dates">
         <span class="result-card-dates-label">Best Dates</span>
@@ -766,6 +916,7 @@ function renderResults() {
           <span class="result-card-metric-value">${fmtNum(r.pointsLeft)}</span>
         </div>
       </div>
+      <div class="result-card-leftover">Uses <b>${fmtNum(r.pointsUsed)}</b> of <b>${fmtNum(r.pointsUsed + r.pointsLeft)}</b> pts &bull; ${r.pointsLeft > 0 ? `${fmtNum(r.pointsLeft)} leftover` : "no leftover"}</div>
       <button type="button" class="result-card-view" data-view="${i}">View This Stay</button>
     </div>
   `;
@@ -820,17 +971,20 @@ function renderResults() {
 }
 
 function runSearch() {
-  const { points, year, months, category, minNights, maxNights, scope } = wizardData;
+  const { points, year, months, category, partySize, minNights, maxNights, scope } = wizardData;
 
+  // "Resorts I can book" narrows the search itself; every card also gets
+  // its own home/7-month/restricted badge from the same userResortAccess
+  // regardless of scope (see accessBadgeHTML() in renderResults()), so
+  // switching scope to "all" never hides which suggestions are actually
+  // reachable with the user's contracts.
   let resortIds = null;
-  if (scope === "access" && window.DVCAuth) {
-    const allIds = [...new Set(RESORTS.map(r => r.id))];
-    const access = window.DVCAuth.getUserResortAccess(userContracts.filter(c => c.is_active), allIds);
-    resortIds = new Set([...access.homeResortIds, ...access.sevenMoResortIds]);
+  if (scope === "access" && userResortAccess) {
+    resortIds = new Set([...userResortAccess.homeResortIds, ...userResortAccess.sevenMoResortIds]);
   }
 
-  lastParams = { points, minNights, scope, category };
-  lastResults = findFeasibleStays({ points, year, months, category, minNights, maxNights, resortIds });
+  lastParams = { points, minNights, scope, category, months, partySize };
+  lastResults = findFeasibleStays({ points, year, months, category, partySize, minNights, maxNights, resortIds });
   showAllResults = false;
   wizardStep = WIZARD_STEP_COUNT + 1;
   renderWizard();
@@ -856,7 +1010,10 @@ function stepSummary(s) {
     if (!wizardData.year) return "";
     return `${wizardData.year} &middot; ${monthsSummaryLabel()}`;
   }
-  if (s === 3) return CATEGORY_OPTIONS.find(c => c[0] === wizardData.category)[1];
+  if (s === 3) {
+    const categoryLabel = CATEGORY_OPTIONS.find(c => c[0] === wizardData.category)[1];
+    return wizardData.partySize ? `${categoryLabel} &middot; sleeps ${wizardData.partySize}+` : categoryLabel;
+  }
   if (s === 4) {
     const nightsLabel = wizardData.maxNights ? `${wizardData.minNights}-${wizardData.maxNights} nights` : `${wizardData.minNights}+ nights`;
     const scopeLabel = wizardData.scope === "access" ? "Resorts I can book" : "All resorts";
@@ -932,6 +1089,11 @@ function stepBody2() {
   `;
 }
 
+// Chip values line up with the real sleeps thresholds in data.js: 4 filters
+// out standard studios but keeps 5th-sleeper studios, 5 requires a
+// 1-bedroom or better, 7/9 land on 2-bedrooms, 12 on a Grand Villa.
+const PARTY_SIZE_PRESETS = [4, 5, 7, 9, 12];
+
 function stepBody3() {
   return `
     <div class="wizard-step-body">
@@ -941,6 +1103,11 @@ function stepBody3() {
             <span class="category-emoji">${emoji}</span>${label}
           </button>
         `).join("")}
+      </div>
+      <label class="wizard-field-label" style="margin-top:16px;display:block;">Party Size <span style="text-transform:none;font-weight:400;letter-spacing:normal;color:#bbb;">(rooms that sleep at least this many)</span></label>
+      <div class="chip-row" id="party-size-chip-row">
+        <button type="button" class="chip${!wizardData.partySize ? " active" : ""}" data-party="0">Any</button>
+        ${PARTY_SIZE_PRESETS.map(n => `<button type="button" class="chip${wizardData.partySize === n ? " active" : ""}" data-party="${n}">${n}+</button>`).join("")}
       </div>
       <div class="wizard-nav">
         <button type="button" class="btn-back" id="wizard-back-3">Back</button>
@@ -1099,6 +1266,12 @@ function attachWizardListeners() {
       renderWizard();
     });
   });
+  document.querySelectorAll("#party-size-chip-row .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      wizardData.partySize = Number(chip.dataset.party) || null;
+      renderWizard();
+    });
+  });
   const back3 = document.getElementById("wizard-back-3");
   if (back3) back3.addEventListener("click", () => { wizardStep = 2; renderWizard(); });
   const next3 = document.getElementById("wizard-next-3");
@@ -1138,10 +1311,18 @@ async function initAccountScope(attempts) {
     isSignedIn = !!session;
     userContracts = session ? await window.DVCAuth.getContracts() : [];
     hasActiveContracts = userContracts.some(c => c.is_active);
+    const allIds = [...new Set(RESORTS.map(r => r.id))];
+    userResortAccess = hasActiveContracts
+      ? window.DVCAuth.getUserResortAccess(userContracts.filter(c => c.is_active), allIds)
+      : null;
     // Only step 4 (or the post-search "done" state, which still renders
     // step 4 collapsed) shows anything scope-related, so there's nothing
     // to refresh otherwise.
     if (wizardStep === 4 || wizardStep === WIZARD_STEP_COUNT + 1) renderWizard();
+    // Result cards read userResortAccess live (see accessBadgeHTML()), so
+    // a sign-in after a search already rendered needs a fresh renderResults()
+    // to actually show the badges -- renderWizard() alone won't touch them.
+    if (wizardStep === WIZARD_STEP_COUNT + 1 && lastResults.length > 0) renderResults();
   });
 }
 

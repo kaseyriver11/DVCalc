@@ -42,7 +42,20 @@
       })),
     };
   }
-  const api = { validate, summary, credit };
+  // Evidence from logged stays only. Ledger balances and movements are not
+  // reservations and cannot establish usage or unexplained/expired points.
+  function loggedUsage(trips, contracts) {
+    const result = { ownedPoints: 0, outsidePoints: 0, attributedStays: 0, needsReview: 0 };
+    for (const trip of trips) {
+      const funding = summary(trip, contracts);
+      if (!funding.valid) { result.needsReview++; continue; }
+      result.ownedPoints += funding.owned;
+      result.outsidePoints += funding.outside;
+      result.attributedStays++;
+    }
+    return result;
+  }
+  const api = { validate, summary, credit, loggedUsage };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else window.DVCTripFunding = api;
 })();

@@ -1,0 +1,6 @@
+const test=require('node:test'),assert=require('node:assert/strict');const {fromTotal}=require('../dvc-balances.js');
+test('blank is skipped while zero is a real balance',()=>{assert.deepEqual(fromTotal('',{}),{skipped:true});assert.equal(fromTotal('0',{}).row.points_remaining,0);});
+test('200-point owner can record zero this year and 100 next year without recreating spent borrowed points',()=>{const current=fromTotal('0',{}).row,next=fromTotal('100',{}).row;assert.equal(current.points_borrowed,0);assert.equal(current.points_remaining,0);assert.equal(next.points_remaining,100);});
+test('optional sources are included in, not added to, the total',()=>{const r=fromTotal('80',{points_banked:'20',points_borrowed:'10',points_holding:'5'}).row;assert.deepEqual(r,{points_remaining:45,points_banked:20,points_borrowed:10,points_holding:5});});
+test('reject contradictory, fractional, negative and nonnumeric entries',()=>{assert.ok(fromTotal('20',{points_banked:30}).error);for(const v of ['-1','1.5','oops','Infinity'])assert.ok(fromTotal(v,{}).error);assert.ok(fromTotal('20',{points_holding:-1}).error);assert.ok(fromTotal('',{points_banked:10}).error);});
+test('owner-provided balance can exceed annual allotment without a verification hurdle',()=>{assert.equal(fromTotal('600',{}).row.points_remaining,600);});

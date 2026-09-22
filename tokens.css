@@ -895,6 +895,18 @@
   margin-top: 3px;
 }
 
+/* A locked special badge's unlock condition, on the tile face -- these
+   badges have no progress bar to carry their criteria the way a tiered
+   badge does, so without this the tile reads only "<name> / Locked".
+   Wraps rather than truncating: the whole point is that it's readable. */
+.badge-requirement {
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: #999;
+  margin-top: 6px;
+  text-wrap: balance;
+}
+
 /* ---- Badge inspection modal ---- */
 .badge-modal-icon-wrap { width: 90px; height: 90px; margin: 4px auto 14px; }
 .badge-modal-icon-wrap .badge-icon-wrap { width: 90px; height: 90px; font-size: 2.4rem; }

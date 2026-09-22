@@ -147,6 +147,40 @@
     return `${dateStr} (${daysUntil}d)`;
   }
 
+  // ---- Booking-window math ----
+
+  // The calendar date exactly `months` months out from `from` (a
+  // {year, month, day} with a 1-indexed month; defaults to today in
+  // Eastern), as "YYYY-MM-DD". Deliberately uses Date.setMonth's ROLLOVER
+  // semantics rather than clamping a short target month (Mar 31 + 11
+  // months lands on Mar 3, not Feb 28) -- app.js's monthsFromTodayCutoff()
+  // and monthsBeforeCheckIn() already behave that way, and one lone
+  // clamping helper would put two different "11 months from now" dates in
+  // the same app.
+  function monthsFromDate(months, from) {
+    const base = from || todayInEastern();
+    const dt = new Date(base.year, base.month - 1, base.day);
+    dt.setMonth(dt.getMonth() + months);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, "0");
+    const d = String(dt.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  // True when `checkIn` (YYYY-MM-DD) sits in the FINAL month of a booking
+  // window's lead time -- more than months-1 but no more than `months`
+  // away. At months = 11 that reads "this stay's 11-month home resort
+  // window either just opened or is opening about now," which is what the
+  // 11-Month Sniper badge rewards.
+  //
+  // Inclusive at the far edge (exactly `months` out is the day the window
+  // opens, the sniper moment itself) and exclusive at the near edge, so
+  // adjacent windows can never both claim the same date.
+  function isInFinalWindowMonth(checkIn, months, from) {
+    if (!checkIn || !months) return false;
+    return checkIn > monthsFromDate(months - 1, from) && checkIn <= monthsFromDate(months, from);
+  }
+
   window.DVCDates = {
     USE_YEAR_START_MONTH,
     DEADLINE_BY_USE_YEAR,
@@ -160,5 +194,7 @@
     useYearExpiration,
     urgencyTier,
     formatDeadlineWithCountdown,
+    monthsFromDate,
+    isInFinalWindowMonth,
   };
 })();

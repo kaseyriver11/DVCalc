@@ -1122,6 +1122,9 @@ body {
   margin-top: 10px;
 }
 .notif-settings-status.error { color: var(--color-danger); }
+.notif-push-unavailable { align-items: flex-start; }
+.notif-unavailable-badge { flex-shrink: 0; border-radius: 999px; background: #f0eef4; color: #62586f; padding: 5px 8px; font-size: .68rem; font-weight: 600; }
+.notif-push-heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 
 .danger-zone {
   border: 1px solid #f5c6c6;
@@ -1231,7 +1234,46 @@ body {
     width: 100%;
   }
 }
-  </style>
+
+.balance-setup-box { max-width: 440px; border-radius: 22px; }
+.balance-setup-box .modal-header { align-items: flex-start; gap: 12px; }
+.balance-setup-box h3 { font-size: 1.35rem; line-height: 1.2; }
+.balance-setup-intro { font-size: .84rem; line-height: 1.5; color: var(--color-text-muted); margin: 0 0 16px; }
+.balance-year-card { border: 1px solid var(--color-border-light); border-radius: 18px; padding: 14px; margin: 12px 0; background: var(--color-bg-card); box-shadow: 0 2px 8px rgba(0,0,0,.03); }
+.balance-year-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.balance-year-heading strong { display: block; font-size: .92rem; }
+.balance-year-heading span { display: block; font-size: .72rem; color: var(--color-text-muted); margin-top: 5px; }
+.balance-skip { border: 0; background: none; color: var(--color-text-muted); font: inherit; font-size: .75rem; min-height: 44px; cursor: pointer; }
+.balance-total { display: flex; align-items: baseline; gap: 10px; margin: 10px 0 2px; padding: 6px 10px; border-radius: 12px; background: var(--color-primary-tint-bg); }
+.balance-total:focus-within { outline: 2px solid var(--color-primary); }
+.balance-total input { width: 100%; min-width: 0; min-height: 52px; font: inherit; font-size: 2.25rem; font-weight: 700; color: var(--color-text); border: 0; outline: none; background: transparent; appearance: textfield; }
+.balance-total input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.balance-total span { flex-shrink: 0; font-size: .8rem; color: var(--color-text-muted); }
+.balance-card-shortcuts { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.balance-card-shortcuts button { min-height: 44px; padding: 4px 0; background: none; border: 0; font: inherit; color: var(--color-primary); font-size: .8rem; cursor: pointer; }
+.balance-card-status { color: var(--color-good); font-size: .72rem; }
+.balance-year-card[data-unsaved="true"] .balance-card-status,
+.balance-year-card[data-save-unknown="true"] .balance-card-status { color: #8a5700; }
+.balance-card-hint, .balance-source-details p { margin: 2px 0 10px; color: var(--color-text-muted); font-size: .74rem; line-height: 1.4; }
+.balance-source-details { border-top: 1px solid var(--color-border-light); }
+.balance-source-details summary { cursor: pointer; font-size: .76rem; padding: 14px 0; min-height: 44px; color: var(--color-text); }
+.balance-source-details label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0; font-size: .8rem; }
+.balance-source-details input { width: 76px; border: 1px solid var(--color-border); border-radius: 10px; min-height: 44px; padding: 8px; font: inherit; font-size: 16px; text-align: right; }
+.balance-setup-actions { position: sticky; bottom: 0; padding: 12px 0 4px; background: var(--color-bg-card); display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.balance-setup-actions button { min-height: 46px; border-radius: 12px; }
+.balance-setup-footnote { font-size: .73rem; color: var(--color-text-muted); text-align: center; line-height: 1.4; }
+.balance-setup-error { font-size: .82rem; padding: 12px; border-radius: 12px; background: var(--color-warning-bg); line-height: 1.4; }
+.point-bucket-summary { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0; }
+.point-bucket-summary span {display:block;font-size:.7rem;color:var(--color-text-muted);}
+.point-bucket-summary strong {font-size:1.2rem;}
+.point-ledger-actions {display:grid;gap:8px;margin:16px 0;}
+.point-ledger-actions button {text-align:left;padding:14px 16px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);color:var(--color-text);font:inherit;font-weight:600;}
+.point-ledger-actions span {display:block;font-size:.76rem;font-weight:400;margin-top:4px;color:var(--color-text-muted);}
+.point-move-card {margin-top:12px;padding:14px;}
+.point-move-numbers {font-size:1.8rem;font-weight:700;}
+.point-move-numbers small {font-size:.75rem;font-weight:400;}
+#point-move-error {color:var(--color-danger,#b42318);}
+</style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
     // analytics load can never hold up the page's own load/spinner state -- a
@@ -1256,29 +1298,29 @@ body {
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Plan a Stay</span>
+        <span class="site-nav-group-label">Overview</span>
         <a href="home.html">Home</a>
-        <a href="index.html">Calendar</a>
-        <a href="compare.html">Compare Resorts</a>
-        <a href="suggest.html">Suggest a Stay</a>
+        <a href="badges.html">Achievements</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Trip Planning</span>
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Buying Guide</span>
-        <a href="contractvalue.html">Contract Value</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Account</span>
+        <span class="site-nav-group-label">My Membership</span>
         <a href="account.html" class="active">My Contracts</a>
         <a href="trips.html">Membership Value</a>
-        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1301,7 +1343,11 @@ body {
   <script src="data/cash_prices_live_summary.js"></script>
   <script src="data/resort_images.js"></script>
   <script src="dvc-dates.js"></script>
+  <script src="dvc-point-attention.js"></script>
   <script src="dvc-ledger.js"></script>
+  <script src="dvc-balances.js"></script>
+  <script src="dvc-point-moves.js"></script>
+  <script src="account-point-moves.js"></script>
   <script src="dvc-ui.js"></script>
   <script>
 const { currentUYYear, todayInEastern, nextDeadlineForUseYear, isBankingWindowOpen, formatDeadlineDate, useYearExpiration, dateOnlyUTC, USE_YEAR_START_MONTH, urgencyTier, formatDeadlineWithCountdown } = window.DVCDates;
@@ -1379,8 +1425,8 @@ function resortName(id) {
 function getYearPointsRow(yearPointsByContract, contractId, year, pointsPerYear) {
   const found = (yearPointsByContract[contractId] || []).find(r => r.use_year_label === year);
   return found
-    ? { points_remaining: found.points_remaining, points_banked: found.points_banked, points_borrowed: found.points_borrowed, points_holding: found.points_holding || 0, points_holding_entered_at: found.points_holding_entered_at || null }
-    : { points_remaining: pointsPerYear, points_banked: 0, points_borrowed: 0, points_holding: 0, points_holding_entered_at: null };
+    ? { balance_confirmed_at: found.balance_confirmed_at || null, points_remaining: found.points_remaining, points_banked: found.points_banked, points_borrowed: found.points_borrowed, points_holding: found.points_holding || 0, points_holding_entered_at: found.points_holding_entered_at || null }
+    : { balance_confirmed_at: null, points_remaining: 0, points_banked: 0, points_borrowed: 0, points_holding: 0, points_holding_entered_at: null };
 }
 
 // Which year-rows to show for a contract's ledger: always the current and
@@ -1408,8 +1454,8 @@ function buildLedgerRows(contract, yearPointsByContract, today) {
 
 let editingId = null; // contract id currently being edited, or null for "adding new"
 let isEditingMode = false; // drives the stepper's jump-to-any-step vs. linear-onboarding behavior
-let activeWalletCardId = null; // which card is expanded to the front of the deck (2+ contracts only)
-let activeLedgerYearTab = null; // which use-year row #active-contract-details currently shows
+let activeWalletCardId = new URLSearchParams(window.location.search).get("contract"); // which card is expanded to the front of the deck (2+ contracts only)
+let activeLedgerYearTab = Number(new URLSearchParams(window.location.search).get("year")) || null; // which use-year row #active-contract-details currently shows
 let justIssuedContractId = null; // brand-new contract's id, so its first render gets the shimmer
 let currentProfile = null; // last-fetched profile row, kept for the Notification Settings modal to read/patch without a re-fetch
 let currentSubscription = null; // last-fetched subscriptions row, kept for the membership card's click handler to read without a re-fetch
@@ -1448,44 +1494,12 @@ function renderUnconfigured() {
 // accounted for. Using row.points_remaining alone (not remaining+borrowed)
 // keeps both of those out of the "bankable" total automatically.
 function evaluateContractDeadlineStatus(contract, yearPointsByContract, today) {
-  const uyYear = currentUYYear(contract.use_year, today);
-  const row = getYearPointsRow(yearPointsByContract, contract.id, uyYear, contract.points_per_year);
-  const bankablePoints = row.points_remaining;
-  if (bankablePoints <= 0) {
-    return { kind: "accounted", contract };
-  }
-  if (isBankingWindowOpen(contract.use_year, uyYear, today)) {
-    return { kind: "bankable", contract, deadline: nextDeadlineForUseYear(contract.use_year, today) };
-  }
-  const expiresMs = useYearExpiration(contract.use_year, uyYear);
-  const todayMs = dateOnlyUTC(today.year, today.month, today.day);
-  return { kind: "use-by", contract, expiresMs, daysUntil: Math.round((expiresMs - todayMs) / 86400000) };
+  return window.DVCPointAttention.evaluate(contract, yearPointsByContract, today);
 }
 
-// The single most useful thing to surface across every active contract
-// (Multi-Contract Aggregation) -- deadlines have only ever been shown
-// per-card until now, so an owner with several contracts had no one place
-// to see which one needs attention soonest. An open bankable deadline wins
-// first since there's a real action available right now; failing that, the
-// earliest "use by" milestone for a contract whose window already closed;
-// failing that (every active contract fully accounted for), a neutral
-// all-clear. No active contracts at all suppresses the banner entirely.
+// Earliest actual action date across all active contracts and point buckets.
 function computeEarliestDeadline(contracts, yearPointsByContract, today) {
-  const active = contracts.filter(c => c.is_active);
-  if (active.length === 0) return null;
-  const statuses = active.map(c => evaluateContractDeadlineStatus(c, yearPointsByContract, today));
-
-  const bankable = statuses.filter(s => s.kind === "bankable");
-  if (bankable.length > 0) {
-    return bankable.reduce((a, b) => (b.deadline.ms < a.deadline.ms ? b : a));
-  }
-
-  const useBy = statuses.filter(s => s.kind === "use-by");
-  if (useBy.length > 0) {
-    return useBy.reduce((a, b) => (b.expiresMs < a.expiresMs ? b : a));
-  }
-
-  return { kind: "accounted" };
+  return window.DVCPointAttention.earliest(contracts, yearPointsByContract, today);
 }
 
 // Membership card states, mapped from the raw Stripe status strings
@@ -1610,6 +1624,7 @@ function buildCheckoutReturnBannerHTML() {
 
 function buildDeadlineCountdownHTML(earliest) {
   if (!earliest) return "";
+  if (earliest.kind === 'unconfirmed') return `<div class="deadline-countdown calm"><div class="deadline-countdown-text"><div class="deadline-countdown-label">Add your points balance</div><div class="deadline-countdown-detail">${window.DVCPointAttention.label(earliest.contract, resortName(earliest.contract.home_resort_id))}: annual points describe what you own. Add what is left to see available points and reminders.</div></div></div>`;
 
   if (earliest.kind === "accounted") {
     return `
@@ -1634,7 +1649,7 @@ function buildDeadlineCountdownHTML(earliest) {
       <div class="deadline-countdown-text">
         <div class="deadline-countdown-label">Use-Year Expiration</div>
         <div class="deadline-countdown-detail">
-          <strong>${resortName(contract.home_resort_id)}</strong> &mdash; this cycle's banking window has closed; remaining points must be used by
+          <strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${earliest.points} pts (${earliest.buckets}) must be used by
           <strong>${formatDeadlineWithCountdown(expiresMs, daysUntil)}</strong>
         </div>
       </div>
@@ -1650,7 +1665,7 @@ function buildDeadlineCountdownHTML(earliest) {
       <div class="deadline-countdown-text">
         <div class="deadline-countdown-label">Your Earliest Deadline</div>
         <div class="deadline-countdown-detail">
-          <strong>${resortName(contract.home_resort_id)}</strong> &mdash; bank/borrow by
+          <strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${earliest.points} current pts; bank by
           <strong>${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}</strong>
         </div>
       </div>
@@ -1694,10 +1709,10 @@ function googleCalendarLink(contract, dateMs, isBankable) {
   const ymd = new Date(dateMs).toISOString().slice(0, 10).replace(/-/g, "");
   const nextDay = new Date(dateMs + 86400000).toISOString().slice(0, 10).replace(/-/g, "");
   const title = isBankable
-    ? `Bank/borrow deadline -- ${resortName(contract.home_resort_id)} DVC points`
+    ? `Banking deadline -- ${resortName(contract.home_resort_id)} DVC points`
     : `Use-year expiration -- ${resortName(contract.home_resort_id)} DVC points`;
   const details = isBankable
-    ? "Points not banked or borrowed by this date follow DVC's standard use-year rules. Added via DVC Companion."
+    ? "Current points must be banked by this date to move to the following use year. Added via DVC Companion."
     : "Remaining points for this use year must be used by this date. Added via DVC Companion.";
   const params = new URLSearchParams({ action: "TEMPLATE", text: title, dates: `${ymd}/${nextDay}`, details });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -1706,10 +1721,12 @@ function googleCalendarLink(contract, dateMs, isBankable) {
 function buildNotificationCenterHTML(contracts, yearPointsByContract, today, leadContractId) {
   const dismissed = getDismissedNotificationIds();
   const items = contracts
-    .filter(c => c.is_active && c.id !== leadContractId)
-    .map(c => ({ contract: c, status: evaluateContractDeadlineStatus(c, yearPointsByContract, today) }))
+    .filter(c => c.is_active)
+    .flatMap(c => window.DVCPointAttention.eventsForContract(c, yearPointsByContract, today).map(status => ({ contract: c, status })))
+    .filter(({contract, status}) => contract.id !== leadContractId || status.kind !== evaluateContractDeadlineStatus(contract, yearPointsByContract, today).kind)
+    .sort((a,b) => (a.status.deadline?.ms ?? a.status.expiresMs ?? Infinity) - (b.status.deadline?.ms ?? b.status.expiresMs ?? Infinity))
     .filter(({ status }) => status.kind !== "accounted")
-    .map(({ contract, status }) => ({ contract, status, id: `${contract.id}:${status.kind}:${currentUYYear(contract.use_year, today)}` }))
+    .map(({ contract, status }) => ({ contract, status, id: `${contract.id}:${status.kind}:${currentUYYear(contract.use_year, today)}:${status.buckets}` }))
     .filter(({ id }) => !dismissed.has(id));
 
   if (items.length === 0) return "";
@@ -1717,16 +1734,17 @@ function buildNotificationCenterHTML(contracts, yearPointsByContract, today, lea
   return `
     <div class="notification-center" id="notification-center-list">
       ${items.map(({ contract, status, id }) => {
+        if (status.kind === "unconfirmed") return `<div class="notification-item calm"><div class="notification-item-text"><strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; balance not added. <a href="account.html?contract=${encodeURIComponent(contract.id)}">Add points left</a></div></div>`;
         const isBankable = status.kind === "bankable";
         const dateMs = isBankable ? status.deadline.ms : status.expiresMs;
         const daysUntil = isBankable ? status.deadline.daysUntil : status.daysUntil;
         const text = isBankable
-          ? `Bank/borrow by ${formatDeadlineWithCountdown(dateMs, daysUntil)}`
-          : `Banking window closed &mdash; use by ${formatDeadlineWithCountdown(dateMs, daysUntil)}`;
+          ? `${status.points} current pts; bank by ${formatDeadlineWithCountdown(dateMs, daysUntil)}`
+          : `${status.points} pts (${status.buckets}) expire ${formatDeadlineWithCountdown(dateMs, daysUntil)}`;
         return `
         <div class="notification-item ${urgencyTier(daysUntil)}" data-notif-id="${id}">
           <span class="notification-item-icon">${isBankable ? "⏳" : "🔒"}</span>
-          <div class="notification-item-text"><strong>${resortName(contract.home_resort_id)}</strong> &mdash; ${text}</div>
+          <div class="notification-item-text"><strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${text}</div>
           <div class="notification-item-actions">
             <a class="notification-item-cal" href="${googleCalendarLink(contract, dateMs, isBankable)}" target="_blank" rel="noopener">+ Calendar</a>
             <button type="button" class="notification-item-dismiss" data-dismiss="${id}" aria-label="Dismiss">&times;</button>
@@ -1750,6 +1768,8 @@ async function renderSignedIn() {
     (yearPointsByContract[row.contract_id] ||= []).push(row);
   }
 
+  balanceSetupContracts = contracts;
+  balanceSetupRows = yearPointsByContract;
   const resorts = uniqueResorts();
   const today = todayInEastern();
   currentProfile = profile;
@@ -1761,10 +1781,14 @@ async function renderSignedIn() {
   const inAppEnabled = profile?.in_app_notifications_enabled !== false;
 
   pageContent.innerHTML = `
+    ${balanceSetupHTML()}
+    ${pointMoveHTML()}
     ${buildCheckoutReturnBannerHTML()}
     ${buildMembershipCardHTML(subscription, contracts)}
+<div id="point-attention">
     ${inAppEnabled ? buildDeadlineCountdownHTML(earliestDeadline) : ""}
     ${inAppEnabled ? buildNotificationCenterHTML(contracts, yearPointsByContract, today, earliestDeadline?.contract?.id) : ""}
+    </div>
 
     <div class="modal-overlay" id="notif-settings-modal">
       <div class="modal-box">
@@ -1777,27 +1801,28 @@ async function renderSignedIn() {
             <div class="notif-settings-label">In-App Banners</div>
             <div class="notif-settings-desc">Show the earliest-deadline banner and Notification Center when you open the app.</div>
           </div>
-          <label class="notif-toggle"><input type="checkbox" id="n-inapp-enabled" ${profile?.in_app_notifications_enabled !== false ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
+          <label class="notif-toggle"><input type="checkbox" id="n-inapp-enabled" aria-label="In-app banners" ${profile?.in_app_notifications_enabled !== false ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
         </div>
-        <div class="notif-settings-row">
+        <div class="notif-settings-row notif-push-unavailable">
           <div>
-            <div class="notif-settings-label">Push Notifications</div>
-            <div class="notif-settings-desc">Critical deadline alerts from your browser, even with the app closed.</div>
+            <div class="notif-push-heading"><div class="notif-settings-label">Push Notifications</div><span class="notif-unavailable-badge">Unavailable</span></div>
+            <div class="notif-settings-desc">Push alerts aren't available yet. Use in-app banners or email reminders.</div>
+            ${profile?.push_enabled ? `<p class="notif-settings-desc">A previous setting showed push as on, but no push reminders are being sent. Saving clears that old setting.</p>` : ""}
+            <p class="notif-settings-desc" id="push-browser-status" hidden></p>
           </div>
-          <label class="notif-toggle"><input type="checkbox" id="n-push-enabled" ${profile?.push_enabled ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
         </div>
         <div class="notif-settings-row">
           <div>
             <div class="notif-settings-label">Email Reminders</div>
             <div class="notif-settings-desc">A longer-lead-time backstop, sent to your account email.</div>
           </div>
-          <label class="notif-toggle"><input type="checkbox" id="n-email-enabled" ${profile?.reminder_opt_in ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
+          <label class="notif-toggle"><input type="checkbox" id="n-email-enabled" aria-label="Email reminders" ${profile?.reminder_opt_in ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
         </div>
         <div class="notif-settings-row notif-lead-row">
           <label for="n-lead-days">Email lead time</label>
           <div class="notif-lead-input"><input type="number" id="n-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days before a deadline</div>
         </div>
-        <div class="notif-settings-status" id="notif-settings-status"></div>
+        <div class="notif-settings-status" id="notif-settings-status" role="status" aria-live="polite"></div>
         <div class="studio-nav">
           <button type="button" class="cancel-btn" id="notif-settings-cancel">Close</button>
           <button type="button" class="save-btn" id="notif-settings-save">Save</button>
@@ -1809,7 +1834,7 @@ async function renderSignedIn() {
       <div class="section-title-row">
         <h2>Your Contracts</h2>
         <button type="button" class="notif-settings-btn" id="notif-settings-btn" aria-label="Notification settings" title="Notification settings">
-          ${profile?.reminder_opt_in || profile?.push_enabled || inAppEnabled ? "🔔" : "🔕"}
+          ${profile?.reminder_opt_in || inAppEnabled ? "🔔" : "🔕"}
         </button>
       </div>
       <div class="section-sub">Own more than one? Add each separately -- DVC Companion will combine what they unlock together.</div>
@@ -2028,7 +2053,7 @@ async function renderSignedIn() {
 
   // Notification Center dismiss buttons -- delegated since the list
   // re-renders on every page load and each item's own lifetime is short.
-  document.getElementById("notification-center-list")?.addEventListener("click", (e) => {
+  document.getElementById("point-attention")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-dismiss]");
     if (!btn) return;
     dismissNotification(btn.dataset.dismiss);
@@ -2104,32 +2129,12 @@ async function renderSignedIn() {
     }
   });
 
-  // Ledger row inputs: live per-row total/bar on every keystroke, real save
-  // once the user leaves a field. Separate listeners (not the click
-  // delegate above) since number inputs fire "input"/"change", not "click".
-  document.getElementById("active-contract-details").addEventListener("input", (e) => {
-    const row = e.target.closest(".ledger-row");
-    if (!row) return;
-    if (e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed, .ledger-holding")) {
-      updateLedgerRowTotal(row);
-    }
-    // Auto-fill today's date the first time an owner enters a positive
-    // Holding balance from empty -- covers the common case (recording a
-    // cancellation as it happens) without an extra click; a backdated entry
-    // just means editing the date field afterward.
-    if (e.target.matches(".ledger-holding")) {
-      const holdingValue = parseInt(e.target.value, 10) || 0;
-      const dateInput = row.querySelector(".ledger-holding-date");
-      if (holdingValue > 0 && dateInput && !dateInput.value) {
-        dateInput.value = todayDateInputValue();
-      }
-    }
-  });
-
-  document.getElementById("active-contract-details").addEventListener("change", (e) => {
-    const row = e.target.closest(".ledger-row");
-    if (!row || !e.target.matches(".ledger-remaining, .ledger-banked, .ledger-borrowed, .ledger-holding, .ledger-holding-date")) return;
-    saveLedgerRow(row, row.dataset.contractId, Number(row.dataset.year), yearPointsByContract);
+  document.getElementById('active-contract-details').addEventListener('click', e => {
+    const button = e.target.closest('[data-setup-balance]');
+    if (button) openBalanceSetup(activeWalletCardId, Number(button.dataset.setupBalance));
+    const action = e.target.closest('[data-point-action]');
+    if (action?.dataset.pointAction === 'adjust') openBalanceSetup(activeWalletCardId, activeLedgerYearTab, true);
+    else if (action) openPointMove(action.dataset.pointAction, activeLedgerYearTab);
   });
 }
 
@@ -2211,7 +2216,7 @@ function buildWalletCardFaceHTML({ resortId, nickname, pointsPerYear, useYear, p
       ${deadline ? `
       <div class="wallet-card-deadline-pill tooltip-anchor tooltip-align-right">
         ⏳ Bank by ${formatShortDate(deadline.ms)}
-        <div class="tooltip-card">Bank/borrow deadline: ${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}. Points not banked into next year or borrowed from it by then follow DVC's standard rules for the ${useYear} use year.</div>
+        <div class="tooltip-card">Banking deadline: ${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}. Current points must be banked by then to move to the next use year.</div>
       </div>` : ""}
     </div>
   `;
@@ -2338,6 +2343,24 @@ function applyDeckPeekSpacing() {
 // The ledger (use-year rows, bars, steppers, +Plan a year) and Edit/
 // Deactivate/Delete actions for whichever card is active -- lives below
 // the deck, not inside the card face. Empty when there are no contracts.
+function buildLedgerAttentionHTML(c, row, status, todayMs) {
+  if (!row.balance_confirmed_at) return `<div class="ledger-deadline-warning muted">Balance not added. Your ${c.points_per_year} annual points are not an available balance.</div>`;
+  const holdingStatus = row.points_holding > 0 ? window.DVCLedger.holdingExpiration(row.expiresMs, todayMs) : null;
+  return `        ${status?.kind === "bankable"
+          ? `<div class="ledger-deadline-warning ${urgencyTier(status.deadline.daysUntil)}">⏳ Bank current points by ${formatDeadlineWithCountdown(status.deadline.ms, status.deadline.daysUntil)}</div>`
+          : status?.kind === "use-by"
+          ? `<div class="ledger-deadline-warning ${urgencyTier(status.daysUntil)}">🔒 ${status.points} pts (${status.buckets}) expire ${formatDeadlineWithCountdown(status.expiresMs, status.daysUntil)}${status.holding ? ". Holding points: book within 60 days of check-in." : ""}</div>`
+          : status?.kind === "accounted"
+          ? `<div class="ledger-deadline-warning muted">✅ All points accounted for this year</div>`
+          : `<div class="ledger-deadline-warning muted">For use between ${formatDeadlineDate(dateOnlyUTC(row.year, USE_YEAR_START_MONTH[c.use_year], 1))} and ${formatDeadlineDate(row.expiresMs)}</div>`}
+        ${row.points_holding > 0 && status?.kind !== "use-by"
+          ? holdingStatus
+            ? `<div class="ledger-deadline-warning${holdingStatus.daysUntil <= 14 ? "" : " muted"}">🅿️ ${row.points_holding} holding pts expire ${formatDeadlineDate(holdingStatus.ms)} (${holdingStatus.daysUntil}d). Book within 60 days of check-in.</div>`
+            : `<div class="ledger-deadline-warning">🅿️ ${row.points_holding.toLocaleString()} pts in Holding &mdash; use before this use year ends; book within 60 days of check-in</div>`
+          : ""}
+`;
+}
+
 function renderActiveContractDetails(contracts, yearPointsByContract) {
   const el = document.getElementById("active-contract-details");
   const c = contracts.find(c => c.id === activeWalletCardId);
@@ -2379,9 +2402,8 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
   // instead of a fabricated deadline.
   const status = isCurrentTab && c.is_active ? evaluateContractDeadlineStatus(c, yearPointsByContract, today) : null;
   const todayMs = dateOnlyUTC(today.year, today.month, today.day);
-  const enteredMs = row.points_holding_entered_at ? Date.parse(row.points_holding_entered_at + "T00:00:00Z") : null;
   const holdingStatus = row.points_holding > 0 && window.DVCLedger
-    ? window.DVCLedger.holdingRebookDeadline(enteredMs, row.expiresMs, todayMs)
+    ? window.DVCLedger.holdingExpiration(row.expiresMs, todayMs)
     : null;
 
   el.innerHTML = `
@@ -2407,83 +2429,32 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
       <div class="ledger-row ledger-current" data-year="${row.year}" data-contract-id="${c.id}">
         <div class="ledger-primary-stat">
           <div>
-            <div class="ledger-primary-num">${total.toLocaleString()}</div>
-            <div class="ledger-primary-label">${row.year} Use Year &middot; Points Available</div>
+            <div class="ledger-primary-num">${row.balance_confirmed_at ? total.toLocaleString() : "&mdash;"}</div>
+            <div class="ledger-primary-label">${row.year} Use Year &middot; ${row.balance_confirmed_at ? "Points Available" : "Balance not added"}</div>
           </div>
           ${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}
         </div>
-        ${status?.kind === "bankable"
-          ? `<div class="ledger-deadline-warning ${urgencyTier(status.deadline.daysUntil)}">⏳ Bank/borrow by ${formatDeadlineWithCountdown(status.deadline.ms, status.deadline.daysUntil)}</div>`
-          : status?.kind === "use-by"
-          ? `<div class="ledger-deadline-warning ${urgencyTier(status.daysUntil)}">🔒 Banking window closed -- use by ${formatDeadlineWithCountdown(status.expiresMs, status.daysUntil)}</div>`
-          : status?.kind === "accounted"
-          ? `<div class="ledger-deadline-warning muted">✅ All points accounted for this year</div>`
-          : `<div class="ledger-deadline-warning muted">For use between ${formatDeadlineDate(dateOnlyUTC(row.year, USE_YEAR_START_MONTH[c.use_year], 1))} and ${formatDeadlineDate(row.expiresMs)}</div>`}
-        ${row.points_holding > 0
-          ? holdingStatus
-            ? `<div class="ledger-deadline-warning${holdingStatus.daysUntil <= 14 ? "" : " muted"}">🅿️ Rebook holding pts by ${formatDeadlineDate(holdingStatus.ms)} (${holdingStatus.daysUntil}d)</div>`
-            : `<div class="ledger-deadline-warning">🅿️ ${row.points_holding.toLocaleString()} pts in Holding &mdash; set the date they entered holding below to see the real rebook deadline</div>`
-          : ""}
+        <div class="ledger-attention">${buildLedgerAttentionHTML(c, row, status, todayMs)}</div>
+        ${!row.balance_confirmed_at ? `<button type="button" class="save-btn" data-setup-balance="${row.year}">Add points left</button>` : ""}
+        <div ${row.balance_confirmed_at ? "" : "hidden"}>
         <div class="ledger-bar">
           <div class="ledger-bar-seg ledger-seg-banked" style="flex-grow:${row.points_banked}"></div>
           <div class="ledger-bar-seg ledger-seg-current" style="flex-grow:${row.points_remaining}"></div>
           <div class="ledger-bar-seg ledger-seg-borrowed" style="flex-grow:${row.points_borrowed}"></div>
           <div class="ledger-bar-seg ledger-seg-holding" style="flex-grow:${row.points_holding}"></div>
         </div>
-        <div class="ledger-steppers">
-          <div class="ledger-stepper banked">
-            <span class="ledger-stepper-label">Banked</span>
-            <div class="ledger-stepper-row">
-              <input type="number" class="ledger-banked" min="0" step="1" value="${row.points_banked}">
-            </div>
-          </div>
-          <div class="ledger-stepper current">
-            <span class="ledger-stepper-label">Current</span>
-            <div class="ledger-stepper-row">
-              <input type="number" class="ledger-remaining" min="0" step="1" value="${row.points_remaining}">
-            </div>
-          </div>
-          <div class="ledger-stepper borrowed">
-            <span class="ledger-stepper-label">Borrowed</span>
-            <div class="ledger-stepper-row">
-              <input type="number" class="ledger-borrowed" min="0" step="1" value="${row.points_borrowed}">
-            </div>
-          </div>
-          <div class="ledger-stepper holding">
-            <span class="ledger-stepper-label tooltip-anchor">Holding<div class="tooltip-card">${window.DVCLedger?.HOLDING_RULES_TEXT || ""}</div></span>
-            <div class="ledger-stepper-row">
-              <input type="number" class="ledger-holding" min="0" step="1" value="${row.points_holding}">
-            </div>
-          </div>
-        </div>
-        <div class="ledger-holding-date-row${row.points_holding > 0 ? "" : " muted"}">
-          <label for="ledger-holding-date-${c.id}">Entered holding on</label>
-          <input type="date" id="ledger-holding-date-${c.id}" class="ledger-holding-date" value="${row.points_holding_entered_at || ""}">
-        </div>
+        <div class="point-bucket-summary">${[['Current',row.points_remaining],['Banked',row.points_banked],['Borrowed',row.points_borrowed],['Holding',row.points_holding]].map(([label,n])=>`<div><span>${label}</span><strong>${n}</strong></div>`).join('')}</div>
+        <div class="point-ledger-actions"><button type="button" data-point-action="bank">Record banking <span>Move current points to ${row.year+1} &rarr;</span></button><button type="button" data-point-action="borrow">Record borrowing <span>Bring current points from ${row.year+1} &rarr;</span></button><button type="button" data-point-action="adjust">Adjust balance <span>Correct what is left in ${row.year} &rarr;</span></button></div>
         ${borrowCheck && !borrowCheck.valid
           ? `<div class="ledger-validation-note">⚠ ${row.points_borrowed.toLocaleString()} pts borrowed exceeds next year's full ${borrowCheck.maxAllowed.toLocaleString()}-pt allotment on this contract -- double-check this against your real Member Services balance.</div>`
           : ""}
       </div>
     </div>
+    </div>
     <div class="ledger-footer">
       <span class="qe-status" data-status-for="${c.id}"></span>
     </div>
   `;
-}
-
-// Recomputes one ledger row's total and bar segments from its four
-// inputs' current (possibly unsaved) values -- fires on every keystroke,
-// purely client-side, no network call.
-function updateLedgerRowTotal(row) {
-  const remaining = parseInt(row.querySelector(".ledger-remaining").value, 10) || 0;
-  const banked = parseInt(row.querySelector(".ledger-banked").value, 10) || 0;
-  const borrowed = parseInt(row.querySelector(".ledger-borrowed").value, 10) || 0;
-  const holding = parseInt(row.querySelector(".ledger-holding").value, 10) || 0;
-  row.querySelector(".ledger-primary-num").textContent = (remaining + banked + borrowed + holding).toLocaleString();
-  row.querySelector(".ledger-seg-banked").style.flexGrow = banked;
-  row.querySelector(".ledger-seg-current").style.flexGrow = remaining;
-  row.querySelector(".ledger-seg-borrowed").style.flexGrow = borrowed;
-  row.querySelector(".ledger-seg-holding").style.flexGrow = holding;
 }
 
 // "YYYY-MM-DD" for today in Eastern time (matches a <input type="date">'s
@@ -2494,56 +2465,12 @@ function todayDateInputValue() {
   return `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}`;
 }
 
-function ledgerStatusEl(contractId) {
-  return document.querySelector(`[data-status-for="${contractId}"]`);
-}
-
-// Saves one ledger row as soon as the user leaves a field (blur, Enter, or
-// the number input's up/down arrows -- all fire "change"). Updates the
-// in-memory yearPointsByContract map on success so a later re-render (e.g.
-// "+ Plan a year") reflects it without a refetch, but doesn't itself
-// re-render the list -- that would steal focus out from under a
-// still-mid-edit user.
-async function saveLedgerRow(row, contractId, year, yearPointsByContract) {
-  const patch = {
-    contract_id: contractId,
-    use_year_label: year,
-    points_remaining: Math.max(0, parseInt(row.querySelector(".ledger-remaining").value, 10) || 0),
-    points_banked: Math.max(0, parseInt(row.querySelector(".ledger-banked").value, 10) || 0),
-    points_borrowed: Math.max(0, parseInt(row.querySelector(".ledger-borrowed").value, 10) || 0),
-    points_holding: Math.max(0, parseInt(row.querySelector(".ledger-holding").value, 10) || 0),
-    points_holding_entered_at: row.querySelector(".ledger-holding-date").value || null,
-  };
-
-  const statusEl = ledgerStatusEl(contractId);
-  statusEl.textContent = "Saving…";
-  statusEl.classList.remove("error");
-
-  const result = await window.DVCAuth.upsertContractYearPoints(patch);
-  if (result.error) {
-    statusEl.textContent = "Not saved";
-    statusEl.classList.add("error");
-    return;
-  }
-
-  const rows = (yearPointsByContract[contractId] ||= []);
-  const existing = rows.find(r => r.use_year_label === year);
-  if (existing) Object.assign(existing, result.data);
-  else rows.push(result.data);
-
-  updateLedgerRowTotal(row);
-  statusEl.textContent = "Saved";
-  setTimeout(() => { if (statusEl.textContent !== "Saving…") statusEl.textContent = ""; }, 1500);
-}
-
-// "+ Plan a year": creates a zeroed row for the next year up front (rather
-// than waiting for the user to type something) so it immediately appears
-// as an editable ledger row, same as any other year.
 async function addLedgerYear(contract, year, yearPointsByContract) {
   const result = await window.DVCAuth.upsertContractYearPoints({
     contract_id: contract.id,
     use_year_label: year,
-    points_remaining: contract.points_per_year,
+    points_remaining: 0,
+    balance_confirmed_at: null,
     points_banked: 0,
     points_borrowed: 0,
     points_holding: 0,
@@ -2605,7 +2532,7 @@ function getSelectedBlueCardOverride() {
 function setUseYear(year) {
   document.querySelectorAll(".use-year-chip").forEach(btn => btn.classList.toggle("selected", btn.dataset.year === year));
   const d = nextDeadlineForUseYear(year, todayInEastern());
-  document.getElementById("f-useyear-deadline").textContent = `Banking/borrowing deadline: ${formatDeadlineWithCountdown(d.ms, d.daysUntil)}`;
+  document.getElementById("f-useyear-deadline").textContent = `Banking deadline: ${formatDeadlineWithCountdown(d.ms, d.daysUntil)}`;
 }
 
 function getSelectedUseYear() {
@@ -2732,6 +2659,159 @@ function openForm(contract) {
   document.getElementById("contract-modal").classList.add("open");
 }
 
+let balanceSetupContracts = [];
+let balanceSetupRows = {};
+let balanceSetupContract = null;
+let balanceSetupBusy = false;
+let balanceSetupSaved = new Map();
+let balanceSetupFailed = false;
+function balanceSetupHTML() {
+  return `<div class="modal-overlay" id="balance-setup-modal"><div class="modal-box balance-setup-box" role="dialog" aria-modal="true" aria-labelledby="balance-setup-title">
+    <div class="modal-header"><h3 id="balance-setup-title">What points do you have left?</h3><button type="button" class="modal-close" id="balance-setup-close" aria-label="Close balance setup" onclick="closeBalanceSetup()">&times;</button></div>
+    <p class="balance-setup-intro" id="balance-setup-intro"></p>
+    <div id="balance-year-cards"></div>
+    <p class="balance-setup-error" id="balance-setup-error" role="alert" hidden></p>
+    <div class="balance-setup-actions"><button type="button" class="save-btn" id="save-balances" onclick="saveBalanceSetup()">Save balances</button><button type="button" class="cancel-btn" id="skip-balances" onclick="closeBalanceSetup()">Do this later</button></div>
+    <p class="balance-setup-footnote">Your best current numbers are fine. Only saved balances affect guidance. Discarding edits does not undo completed saves.</p>
+  </div></div>`;
+}
+function openBalanceSetup(contractId, selectedYear, adjusting = false, explicitYears = null) {
+  balanceSetupContract = balanceSetupContracts.find(c => c.id === contractId);
+  if (!balanceSetupContract) return;
+  balanceSetupSaved = new Map();
+  balanceSetupFailed = false;
+  const c = balanceSetupContract;
+  const current = currentUYYear(c.use_year, todayInEastern());
+  const first = selectedYear && selectedYear !== current ? selectedYear : current;
+  const years = explicitYears || (adjusting || selectedYear && selectedYear !== current ? [first] : [current,current+1]);
+  document.getElementById('balance-setup-title').textContent = adjusting ? 'Adjust balance' : 'What points do you have left?';
+  document.getElementById('balance-setup-intro').textContent = `${c.nickname || resortName(c.home_resort_id)} - ${c.points_per_year} points a year. ${adjusting ? 'Correct this year only. To move points between years, use Record banking or Record borrowing.' : 'Add what is left after stays, banking or borrowing.'}`;
+  document.getElementById('balance-year-cards').innerHTML = years.map(year => {
+    const row = (balanceSetupRows[c.id] || []).find(r => r.use_year_label === year);
+    const total = row?.balance_confirmed_at ? ['points_remaining','points_banked','points_borrowed','points_holding'].reduce((sum,k) => sum+(row[k]||0),0) : '';
+    const confirmed = !!row?.balance_confirmed_at;
+    const extra = confirmed && (row.points_banked || row.points_borrowed || row.points_holding);
+    const start = formatDeadlineDate(dateOnlyUTC(year, USE_YEAR_START_MONTH[c.use_year], 1));
+    const end = formatDeadlineDate(useYearExpiration(c.use_year,year));
+    return `<section class="balance-year-card" data-balance-year="${year}" data-before-total="${total}" data-saved-buckets='${confirmed ? JSON.stringify({points_remaining:row.points_remaining,points_banked:row.points_banked||0,points_borrowed:row.points_borrowed||0,points_holding:row.points_holding||0}) : ''}'>
+      <div class="balance-year-heading"><div><strong>${year === current ? 'This use year' : year === current+1 ? 'Next use year' : year+' use year'}</strong><span>${start} &ndash; ${end}</span></div><button type="button" class="balance-skip" onclick="skipBalanceYear(${year})">${confirmed ? 'Leave as is' : 'Skip'}</button></div>
+      <label class="balance-total" for="balance-total-${year}"><input id="balance-total-${year}" type="number" min="0" step="1" inputmode="numeric" data-balance-total oninput="updateBalanceCorrectionPreview(this)" value="${total}" placeholder="&mdash;" aria-describedby="balance-hint-${year}"><span>points left</span></label>
+      ${adjusting ? `<p class="balance-correction-preview" aria-live="polite">${total} &rarr; ${total} points left</p>` : ""}<div class="balance-card-shortcuts"><button type="button" onclick="fillBalanceAllotment(${year})">Use full ${c.points_per_year}</button><span class="balance-card-status" role="status">${confirmed ? "Saved" : "Not added"}</span></div>
+      <p class="balance-saved-value balance-card-hint">Last confirmed balance: ${confirmed ? total+" points" : "not added"}</p>
+      <p class="balance-card-hint" id="balance-hint-${year}">${year === current+1 ? 'Already borrowed from this year? Enter what remains.' : 'Include all points you still have available. Zero is fine.'}</p>
+      <details class="balance-source-details" ${extra ? 'open' : ''}><summary>Point details (optional)</summary><p>These are part of the total above. Include only points you still have, not ones already spent.</p>
+        ${[['points_banked','Banked into this year'],['points_borrowed','Borrowed into this year'],['points_holding','In holding']].map(([key,label]) => `<label>${label}<input type="number" min="0" step="1" inputmode="numeric" data-balance-bucket="${key}" oninput="updateBalanceCorrectionPreview(this)" value="${confirmed ? row[key]||0 : 0}"></label>`).join('')}
+      </details>
+    </section>`;
+  }).join('');
+  document.getElementById('balance-setup-error').hidden = true;
+  refreshBalanceSaveActions();
+  document.getElementById('balance-setup-modal').classList.add('open');
+  document.getElementById('balance-setup-close').focus();
+}
+function updateBalanceCorrectionPreview(input) {
+  const card = input.closest('[data-balance-year]');
+  const totalInput = card.querySelector('[data-balance-total]');
+  const preview = card.querySelector('.balance-correction-preview');
+  if (preview) preview.textContent = totalInput.value === '' ? 'Leave this year unchanged' : `Last confirmed: ${card.dataset.beforeTotal || 'not added'} · Proposed: ${totalInput.value} points left`;
+  const parsed = parseBalanceCard(card);
+  const unchanged = parsed.skipped || (!parsed.error && JSON.stringify(parsed.row) === card.dataset.savedBuckets);
+  card.dataset.unsaved = unchanged ? '' : 'true';
+  card.querySelector('.balance-card-status').textContent = card.dataset.saveUnknown === 'true' ? 'Save not confirmed' : unchanged ? (parsed.skipped ? 'Leave unchanged' : 'Saved') : 'Unsaved changes';
+  refreshBalanceSaveActions();
+}
+function parseBalanceCard(card) {
+  const parts = Object.fromEntries([...card.querySelectorAll('[data-balance-bucket]')].map(input => [input.dataset.balanceBucket,input.value]));
+  return window.DVCBalances.fromTotal(card.querySelector('[data-balance-total]').value, parts);
+}
+function refreshBalanceSaveActions() {
+  const dirty = [...document.querySelectorAll('[data-balance-year]')].some(card => card.dataset.unsaved === 'true');
+  document.getElementById('save-balances').textContent = balanceSetupFailed ? 'Retry save' : 'Save balances';
+  document.getElementById('skip-balances').textContent = dirty || balanceSetupFailed ? 'Discard edits' : 'Close';
+}
+function skipBalanceYear(year) {
+  const card = document.querySelector(`[data-balance-year="${year}"]`);
+  card.querySelector('[data-balance-total]').value = '';
+  card.querySelectorAll('[data-balance-bucket]').forEach(input => input.value=0);
+  card.querySelector('details').open = false;
+  card.querySelector('.balance-card-status').textContent = 'Left unchanged';
+  updateBalanceCorrectionPreview(card.querySelector('[data-balance-total]'));
+}
+function fillBalanceAllotment(year) {
+  const card = document.querySelector(`[data-balance-year="${year}"]`);
+  card.querySelector('[data-balance-total]').value = balanceSetupContract.points_per_year;
+  card.querySelectorAll('[data-balance-bucket]').forEach(input => input.value=0);
+  card.querySelector('.balance-card-status').textContent = 'Full allotment';
+  updateBalanceCorrectionPreview(card.querySelector('[data-balance-total]'));
+}
+async function closeBalanceSetup() {
+  if (balanceSetupBusy) return;
+  document.getElementById('balance-setup-modal').classList.remove('open');
+  await renderSignedIn();
+}
+async function saveBalanceSetup() {
+  if (balanceSetupBusy) return;
+  const error = document.getElementById('balance-setup-error');
+  error.hidden = true;
+  const entries = [];
+  for (const card of document.querySelectorAll('[data-balance-year]')) {
+    const parsed = parseBalanceCard(card);
+    if (parsed.error) { error.textContent = `${card.dataset.balanceYear}: ${parsed.error}`; error.hidden=false; card.scrollIntoView({block:'center',behavior:'smooth'}); return; }
+    if (!parsed.skipped && (JSON.stringify(parsed.row) !== card.dataset.savedBuckets || card.dataset.saveUnknown === 'true')) entries.push({card,year:Number(card.dataset.balanceYear),row:parsed.row});
+  }
+  balanceSetupBusy = true;
+  document.querySelectorAll('#balance-setup-modal button, #balance-setup-modal input').forEach(el=>el.disabled=true);
+  document.getElementById('save-balances').textContent = 'Saving...';
+  let success = false;
+  let savingEntry = null;
+  try {
+    for (const entry of entries) {
+      savingEntry = entry;
+      const signature = JSON.stringify(entry.row);
+      const existing = (balanceSetupRows[balanceSetupContract.id] || []).find(r=>r.use_year_label===entry.year);
+      const result = await window.DVCAuth.upsertContractYearPoints({contract_id:balanceSetupContract.id,use_year_label:entry.year,...entry.row,points_holding_entered_at:existing?.points_holding_entered_at || null,balance_confirmed_at:new Date().toISOString()});
+      if (result.error || !result.data) throw new Error(result.error || 'No saved balance was returned.');
+      balanceSetupSaved.set(entry.year,signature);
+      const rows = (balanceSetupRows[balanceSetupContract.id] ||= []);
+      if (existing) Object.assign(existing, result.data); else rows.push(result.data);
+      entry.card.dataset.savedBuckets = signature;
+      entry.card.dataset.beforeTotal = String(Object.values(entry.row).reduce((sum,n)=>sum+n,0));
+      entry.card.dataset.unsaved = '';
+      entry.card.dataset.saveUnknown = '';
+      entry.card.querySelector('.balance-saved-value').textContent = `Last confirmed balance: ${entry.card.dataset.beforeTotal} points`;
+      entry.card.querySelector('.balance-card-status').textContent = 'Saved';
+      const preview = entry.card.querySelector('.balance-correction-preview');
+      if (preview) preview.textContent = `Saved: ${entry.card.dataset.beforeTotal} points left`;
+    }
+    success = true;
+  } catch (e) {
+    balanceSetupFailed = true;
+    if (savingEntry) {
+      savingEntry.card.dataset.saveUnknown = 'true';
+      savingEntry.card.querySelector('.balance-card-status').textContent = 'Save not confirmed';
+    }
+    error.textContent = `${savingEntry?.year || 'Balance'}: couldn't confirm the save. ${e.message || 'Connection interrupted.'} Your entries are kept. Retry save, or discard local edits and reload saved balances.${balanceSetupSaved.size ? ' Years marked Saved are already stored.' : ''}`;
+    error.hidden=false;
+    error.scrollIntoView({block:'nearest'});
+  } finally {
+    balanceSetupBusy = false;
+    document.querySelectorAll('#balance-setup-modal button, #balance-setup-modal input').forEach(el=>el.disabled=false);
+    refreshBalanceSaveActions();
+  }
+  if (success) await closeBalanceSetup();
+}
+document.addEventListener('keydown', e => {
+  const modal=document.getElementById('balance-setup-modal');
+  if (!modal?.classList.contains('open')) return;
+  if(e.key==='Escape'){e.preventDefault();closeBalanceSetup();}
+  if(e.key==='Tab'){
+    const items=[...modal.querySelectorAll('button,input,summary')].filter(el=>!el.disabled && el.getClientRects().length);
+    if(!items.length)return;
+    if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1).focus();}
+    else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0].focus();}
+  }
+});
+
 function closeForm() {
   editingId = null;
   document.getElementById("contract-modal").classList.remove("open");
@@ -2772,10 +2852,11 @@ async function saveForm() {
   // A brand-new contract's card gets a one-time shimmer on its first
   // render in the deck (see renderContractList()) -- editing an existing
   // one never should, since it isn't newly issued.
-  if (!editingId) justIssuedContractId = result.data.id;
-
+  const added = !editingId;
+  if (added) { justIssuedContractId = result.data.id; activeWalletCardId = result.data.id; activeLedgerYearTab = null; }
   closeForm();
-  renderSignedIn();
+  await renderSignedIn();
+  if (added) openBalanceSetup(result.data.id);
 }
 
 // Upgrade -> create-checkout-session, Manage -> create-portal-session --
@@ -2822,86 +2903,63 @@ function startCheckoutSuccessPoll(attempt = 0) {
 
 function openNotifSettings() {
   document.getElementById("notif-settings-status").textContent = "";
+  const browserStatus = document.getElementById('push-browser-status');
+  browserStatus.hidden = !(window.Notification?.permission === 'denied');
+  browserStatus.textContent = 'Your browser also blocks notifications for this site. When push becomes available, you can change that in your browser\'s site settings.';
   document.getElementById("notif-settings-modal").classList.add("open");
 }
 
 function closeNotifSettings() {
+  if (notificationSettingsSaving) return;
   document.getElementById("notif-settings-modal").classList.remove("open");
 }
 
-// Push Notifications foundation -- registers a service worker and requests
-// a browser push subscription. There's no send-side backend deployed yet
-// (that needs a VAPID keypair + a Supabase Edge Function using web-push,
-// mirroring supabase/functions/send-banking-reminders/) -- this just wires
-// up the client-side half and records what it gets, so that pipeline has a
-// real subscription to send to once it exists.
-const PUSH_VAPID_PUBLIC_KEY = ""; // fill in once a push-sending backend is deployed
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
-
-async function enablePushNotifications() {
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    alert("Push notifications aren't supported in this browser.");
-    return null;
-  }
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") return null;
-
-  const registration = await navigator.serviceWorker.register("service-worker.js");
-  if (!PUSH_VAPID_PUBLIC_KEY) {
-    // The client-side half is real (permission granted, service worker
-    // registered) -- there's just nothing to actually push to yet without a
-    // deployed sending backend. Recorded as a placeholder so the intent is
-    // visible once that backend exists.
-    alert("Push permission granted. The notification-sending backend isn't deployed yet, so you won't receive pushes until that's set up.");
-    return { pending: true };
-  }
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
-  });
-  return subscription.toJSON();
-}
+// Push delivery is unavailable in this build. A browser permission or old
+// profile flag is not delivery readiness. Re-enable enrollment only with
+// an operational sender and verified browser subscription lifecycle.
+let notificationSettingsSaving = false;
 
 async function saveNotificationSettings() {
+  if (notificationSettingsSaving) return;
   const statusEl = document.getElementById("notif-settings-status");
   const saveBtn = document.getElementById("notif-settings-save");
+  const leadDays = Number(document.getElementById('n-lead-days').value);
+  if (!Number.isInteger(leadDays) || leadDays < 1 || leadDays > 240) {
+    statusEl.textContent = 'Choose an email lead time from 1 to 240 days.';
+    statusEl.classList.add('error');
+    return;
+  }
+  notificationSettingsSaving = true;
   statusEl.textContent = "Saving…";
   statusEl.classList.remove("error");
   saveBtn.disabled = true;
 
   const patch = {
     reminder_opt_in: document.getElementById("n-email-enabled").checked,
-    reminder_lead_days: parseInt(document.getElementById("n-lead-days").value, 10) || 14,
+    reminder_lead_days: leadDays,
     in_app_notifications_enabled: document.getElementById("n-inapp-enabled").checked,
   };
+  const controls = [...document.querySelectorAll('#notif-settings-modal input, #notif-settings-modal button')];
+  controls.forEach(control => control.disabled = true);
 
-  const wantsPush = document.getElementById("n-push-enabled").checked;
-  if (wantsPush && !currentProfile?.push_enabled) {
-    const subscription = await enablePushNotifications();
-    patch.push_enabled = !!subscription;
-    patch.push_subscription = subscription || null;
-    if (!subscription) document.getElementById("n-push-enabled").checked = false;
-  } else if (!wantsPush) {
-    patch.push_enabled = false;
-    patch.push_subscription = null;
-  }
-
-  const { error } = await window.DVCAuth.updateProfile(patch);
-  saveBtn.disabled = false;
-  if (error) {
-    statusEl.textContent = "Couldn't save";
+  // Clear the legacy pending/enabled state only on an explicit settings save.
+  patch.push_enabled = false;
+  patch.push_subscription = null;
+  try {
+    const { error } = await window.DVCAuth.updateProfile(patch);
+    if (error) throw new Error(error);
+    currentProfile = { ...currentProfile, ...patch };
+    notificationSettingsSaving = false;
+    closeNotifSettings();
+    await renderSignedIn();
+  } catch (_) {
+    statusEl.textContent = "Couldn't save. Your choices are still here; tap Save to retry.";
     statusEl.classList.add("error");
-    return;
+  } finally {
+    notificationSettingsSaving = false;
+    saveBtn.disabled = false;
+    controls.forEach(control => control.disabled = false);
   }
-  currentProfile = { ...currentProfile, ...patch };
-  statusEl.textContent = "Saved";
-  setTimeout(() => { closeNotifSettings(); renderSignedIn(); }, 700);
 }
 
 async function handleDeleteAccount() {

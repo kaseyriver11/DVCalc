@@ -407,29 +407,88 @@ body {
   font-size: 0.82rem;
 }
 .assumption-label-row label { color: #444; font-weight: 600; }
+/* The label and its optional (?) hint share one shrinkable flex item, so
+   the value readout on the right keeps its own line no matter how long
+   the label is. min-width:0 is what actually lets the label wrap instead
+   of forcing the row wider than the card (flex items default to
+   min-width:auto). */
+.assumption-label-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.assumption-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-page);
+  color: #888;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.assumption-hint:hover { border-color: var(--color-primary); color: var(--color-primary); }
+/* The shared tooltip-card would otherwise inherit the (?) glyph's own
+   0.62rem/700 type, rendering a sentence as tiny bold text -- same class
+   of leak tokens.css's white-space note warns about. */
+.assumption-hint .tooltip-card {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #444;
+}
 .assumption-value {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: var(--color-primary);
+  flex-shrink: 0;
 }
 
-.assumption-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+/* Grid, not flex-wrap: three preset chips always stay on ONE row at every
+   width, each an even share of it (guardrail #9) -- flex-wrap sized each
+   chip to its own label, which dropped the third chip onto a second line
+   on a phone. Each chip stacks its value over its descriptor so the row
+   stays one line without shortening the descriptors into jargon. */
+.assumption-chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
 .assumption-chip {
-  font-size: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
   font-weight: 600;
   color: #555;
   background: var(--color-bg-page);
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
-  padding: 4px 10px;
+  border-radius: 10px;
+  padding: 5px 4px;
   cursor: pointer;
 }
+.assumption-chip-main { font-size: 0.78rem; font-weight: 700; line-height: 1.15; }
+.assumption-chip-sub {
+  font-size: 0.62rem;
+  color: #888;
+  line-height: 1.15;
+  white-space: nowrap;
+}
 .assumption-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.assumption-chip:hover .assumption-chip-sub { color: var(--color-primary); }
 .assumption-chip.active {
   background: var(--color-primary-tint-bg);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
+.assumption-chip.active .assumption-chip-sub { color: var(--color-primary); }
 
 .assumption-slider {
   -webkit-appearance: none;
@@ -522,6 +581,18 @@ body {
 }
 .alt-fund-note strong { color: #ef6c00; }
 
+/* Neutral caption, deliberately NOT .alt-fund-note's warning tint -- it
+   explains why the x-axis stops where it does, which is a fact about the
+   chart, not a risk to flag. */
+.chart-horizon-note {
+  margin-top: 10px;
+  font-size: 0.74rem;
+  color: #777;
+  line-height: 1.4;
+  text-align: center;
+}
+.chart-horizon-note strong { color: #555; }
+
 /* ---- Cost vs. Value Over Time chart ----
    Same hand-rolled SVG + HTML-tooltip approach as changes.html's own
    year-over-year chart (this app uses no chart library anywhere) --
@@ -533,8 +604,13 @@ body {
    fails CVD separation outright; blue+green passes every check in both
    light and dark). */
 .chart-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 12px; position: relative; }
-.house-money-chart { width: 100%; height: auto; display: block; margin: 0 auto; }
+/* touch-action: pan-y -- a vertical swipe still scrolls the page, while a
+   horizontal drag belongs to the chart's own year scrubbing. Without it the
+   browser claims the horizontal gesture and the scrub never fires. */
+.house-money-chart { width: 100%; height: auto; display: block; margin: 0 auto; touch-action: pan-y; }
 .house-money-chart .year-hover { cursor: crosshair; }
+.house-money-chart .chart-scrub { display: none; }
+.house-money-chart .chart-scrub.on { display: block; }
 
 /* gap: 12px (not the original 16px) plus a shorter swatch -- real-world
    testing at phone width showed 3 legend items (once Alt. Vacation Fund
@@ -564,6 +640,29 @@ body {
 .tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .tt-name { color: #ddd; }
 .tt-value { margin-left: auto; font-weight: 700; padding-left: 12px; }
+.tt-row.net { margin-top: 4px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.2); }
+.tt-row.net .tt-name { color: #fff; font-weight: 600; }
+
+/* The gap between the two lines is the actual answer this chart exists to
+   give, so it gets stated as a number instead of left to be eyeballed off
+   the y-axis. Grid (not flex) so both figures stay even halves at any
+   width -- guardrail #9. */
+.chart-gap-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.chart-gap-figure {
+  background: var(--color-bg-page);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  min-width: 0;
+}
+.chart-gap-value { font-size: 1.05rem; font-weight: 700; color: var(--color-good); line-height: 1.2; }
+.chart-gap-figure.behind .chart-gap-value { color: #1565c0; }
+.chart-gap-label { font-size: 0.7rem; color: #777; line-height: 1.3; margin-top: 3px; }
 
 /* ---- Trophy case & badge modal ----
    Moved to tokens.css: needed by both trips.html (compact dashboard
@@ -833,6 +932,80 @@ body {
   animation: pulseRing 0.6s ease-out;
 }
 
+/* ---- Badge unlock celebration ----
+   Shown once, at the top of the page, when a just-logged trip pushed one
+   or more badges over their unlock condition. Trophy Case browsing lives
+   on badges.html (the preview here was removed 2026-09-17), so without
+   this a member could unlock something and never find out -- the banner
+   is the notification, and it links through rather than re-embedding the
+   case. */
+@keyframes unlockRise {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.unlock-banner {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+  color: white;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(74, 20, 140, 0.25);
+  animation: unlockRise 0.35s ease-out;
+}
+.unlock-banner-body { flex: 1; min-width: 0; }
+.unlock-banner-eyebrow {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+.unlock-banner-names { font-size: 0.98rem; font-weight: 600; line-height: 1.35; }
+.unlock-banner-link {
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  display: inline-block;
+  margin-top: 6px;
+}
+.unlock-banner-icons { display: flex; gap: 6px; flex-shrink: 0; }
+.unlock-banner-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  animation: pulseRing 0.9s ease-out;
+}
+.unlock-banner-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+.unlock-banner-close:hover { opacity: 1; }
+
+@media (max-width: 700px) {
+  .unlock-banner { flex-wrap: wrap; gap: 12px; }
+  .unlock-banner-body { flex: 1 1 100%; order: 2; }
+  .unlock-banner-icons { order: 1; }
+  .unlock-banner-close { order: 1; margin-left: auto; }
+}
+
 .small-btn {
   font-size: 0.78rem;
   font-weight: 600;
@@ -990,47 +1163,40 @@ body {
 .trip-funding { margin: 16px 0; padding: 0; min-width: 0; border: 0; }
 .trip-funding legend { font-size: 0.9rem; font-weight: 700; color: var(--color-text); }
 .funding-help { font-size: 0.78rem; line-height: 1.5; color: var(--color-text-muted); margin: 8px 0; }
-.funding-contract-row { border: 1px solid var(--color-border-light); border-radius: 12px; padding: 12px; margin: 8px 0; }
-.funding-contract-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.85rem; cursor: pointer; }
-.funding-contract-choice input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--color-primary); }
-.funding-amount { display: flex; align-items: center; gap: 8px; padding-left: 30px; color: var(--color-text-muted); }
-.funding-amount input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--color-border); border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 1rem; }
-.funding-amount input:disabled { opacity: 0.45; }
-.funding-amount input:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-#outside-funding summary { padding: 12px 0; min-height: 44px; cursor: pointer; color: var(--color-primary); font-size: 0.85rem; }
-.funding-summary { padding: 12px; border-radius: 10px; background: #f4f7f4; color: var(--color-text); font-size: 0.8rem; line-height: 1.5; }
-.funding-summary.funding-incomplete { background: #fff7e8; }
 
-.points-breakdown-toggle {
-  display: block;
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 2px 0 10px;
-  text-align: left;
-}
-.points-breakdown-toggle:hover { text-decoration: underline; }
-.points-breakdown-toggle-sub { font-weight: 400; color: #888; }
+.funding-contract-row { margin: 10px 0; border: 1px solid var(--color-border-light); border-radius: 16px; background: var(--color-bg-card); overflow: hidden; transition: border-color .15s, background .15s; }
+.funding-contract-row:has(input:checked) { border-color: var(--color-primary); background: var(--color-primary-tint-bg); }
+.funding-contract-choice { position: relative; display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 12px; cursor: pointer; }
+.funding-contract-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.funding-contract-choice:has(input:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: -4px; border-radius: 14px; }
+.funding-contract-art { width: 44px; height: 48px; border-radius: 10px; background: var(--color-primary-tint-bg); background-size: cover; background-position: center; flex-shrink: 0; }
+.funding-contract-copy { flex: 1; min-width: 0; }
+.funding-contract-copy strong { display: block; font-size: .85rem; line-height: 1.35; color: var(--color-text); }
+.funding-contract-copy small { display: block; margin-top: 4px; font-size: .72rem; line-height: 1.3; color: var(--color-text-muted); }
+.funding-check { width: 24px; height: 24px; flex-shrink: 0; border: 1.5px solid var(--color-border); border-radius: 50%; display: grid; place-items: center; color: transparent; font-size: .85rem; }
+.funding-contract-choice:has(input:checked) .funding-check { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.funding-amount { display: none; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--color-border-light); margin: 0 12px; padding: 10px 0; }
+.funding-contract-row:has(input:checked) .funding-amount { display: flex; }
+.funding-amount-label { font-size: .76rem; color: var(--color-text-muted); }
+.funding-number { display: flex; align-items: center; gap: 6px; padding: 0 10px; background: var(--color-bg-card); border-radius: 12px; color: var(--color-text-muted); font-size: .75rem; }
+.funding-number:focus-within { outline: 2px solid var(--color-primary); }
+.funding-amount input { width: 80px; min-height: 44px; border: 0; background: transparent; padding: 4px 0; font: inherit; font-size: 1.25rem; font-weight: 700; text-align: right; color: var(--color-text); outline: none; appearance: textfield; }
+.funding-amount input::-webkit-inner-spin-button, .funding-amount input::-webkit-outer-spin-button { -webkit-appearance: none; }
+#outside-funding { margin: 14px 0; border: 1px solid var(--color-border-light); border-radius: 14px; padding: 0 12px; }
+#outside-funding summary { padding: 14px 0; min-height: 48px; cursor: pointer; color: var(--color-text); font-size: .82rem; font-weight: 600; }
+#outside-funding .form-field { display: flex; flex-direction: row; align-items: center; gap: 12px; justify-content: space-between; margin: 0; padding: 8px 0; border-top: 1px solid var(--color-border-light); }
+#outside-funding .form-field label { text-transform: none; letter-spacing: 0; font-size: .78rem; line-height: 1.4; margin: 0; }
+#outside-funding .form-field input { width: 80px; flex-shrink: 0; min-height: 44px; font-size: 16px; text-align: right; border-radius: 10px; }
+.funding-summary { padding: 12px 0 8px; color: var(--color-text); font-size: .8rem; line-height: 1.4; }
+.funding-summary-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.funding-summary-line strong { font-size: .9rem; }
+.funding-summary-line span { font-size: .74rem; color: var(--color-text-muted); }
+.funding-progress { height: 5px; border-radius: 99px; background: var(--color-border-light); overflow: hidden; margin: 9px 0; }
+.funding-progress span { display: block; height: 100%; background: var(--color-primary); border-radius: inherit; transition: width .2s; }
+.funding-summary small { display: block; color: var(--color-text-muted); font-size: .74rem; }
+.funding-summary.funding-incomplete .funding-summary-line strong { color: var(--color-warning); }
 
-.points-breakdown-panel {
-  background: #faf8fd;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 10px;
-}
-.points-breakdown-panel[hidden] { display: none; }
 
-.points-breakdown-total {
-  font-size: 0.74rem;
-  color: #888;
-  margin-top: 8px;
-  text-align: right;
-}
-.points-breakdown-total.match { color: var(--color-good); font-weight: 600; }
-.points-breakdown-total.mismatch { color: var(--color-warning); font-weight: 600; }
 
 .save-warning {
   font-size: 0.8rem;
@@ -1096,7 +1262,194 @@ body {
   .chart-legend-item { font-size: 0.7rem; gap: 4px; }
   .chart-legend-swatch { width: 12px; }
 }
-  </style>
+  .picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--color-bg-card);
+  background-size: cover;
+  background-position: center;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+.picker-trigger:hover { border-color: #b39ddb; }
+
+/* Resort trigger with a selected filter -- same lavender-wash-over-photo
+   look (resortArtWashCSS()/applyResortArtBackground() below) as
+   index.html's own Resort trigger, set once a resort is filtered on. */
+.picker-trigger.has-art { border-color: rgba(255, 255, 255, 0.6); }
+.picker-trigger.has-art .picker-trigger-value {
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75), 0 0 1px rgba(255, 255, 255, 0.75);
+}
+
+.picker-trigger-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Bottom Sheet (ported from styles.css) ----
+   Same overlay/backdrop mechanics as tokens.css's .modal-overlay/.modal-box
+   (open/close via the .open class already defined there), just re-anchored
+   to the bottom edge and slid up instead of fading a centered box in --
+   same as index.html's #resort-sheet. */
+.sheet-overlay.open { align-items: flex-end; }
+
+.modal-box.sheet {
+  max-width: 100%;
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 16px 16px 0 0;
+  margin: 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  animation: sheet-slide-up 0.22s ease-out;
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  margin: 4px auto 12px;
+}
+
+/* Shows the currently-filtered resort's art (data/resort_images.js), hidden
+   when no resort is selected -- same scene-setting banner as index.html's
+   #resort-sheet-hero. */
+.resort-sheet-hero {
+  height: 120px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 10px;
+}
+
+.sheet-search {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+.sheet-list {
+  overflow-y: auto;
+  max-height: 60vh;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheet-empty {
+  padding: 20px 4px;
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 0.85rem;
+}
+
+.resort-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  text-align: left;
+  white-space: normal;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.resort-pick-row:hover,
+.resort-pick-row:active { background-color: var(--color-primary-tint-bg); }
+.resort-pick-row.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-tint-bg);
+  font-weight: 600;
+}
+
+/* Every DVC resort is listed (same full 17 as the calendar's own sheet),
+   not just ones this account has a saved itinerary for -- resorts/room
+   types with nothing saved are still shown, just greyed out and disabled,
+   so the list always looks/feels exactly like the calendar's and never
+   silently hides an option. */
+.resort-pick-row.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.resort-pick-row.unavailable .resort-pick-swatch { background: #bbb !important; }
+
+.resort-pick-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ---- Room Type chip grid (ported from styles.css) ----
+   Same inline accordion as index.html's Room Type picker -- .open is a
+   class (not inline style) so it's easy to toggle from JS without
+   clobbering any other inline style, same reasoning as the source. */
+.room-type-grid {
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.room-type-grid.open { display: grid; }
+
+.room-type-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  cursor: pointer;
+}
+.room-type-chip:hover { border-color: #b39ddb; }
+.room-type-chip.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-tint-bg);
+}
+.room-type-chip.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.room-type-icon { font-size: 1.3rem; line-height: 1; }
+.room-type-name { font-size: 0.76rem; font-weight: 600; color: var(--color-text); text-align: center; }
+.room-type-sleeps { font-size: 0.66rem; color: var(--color-text-muted); }
+/* The resort sheet sits above the open trip form. */
+#trip-resort-sheet { z-index: 210; }
+#trip-modal .picker-trigger { min-height: 44px; }
+#trip-modal select[hidden] { display: none; }
+#trip-resort-sheet .sheet-search { min-height: 44px; font-size: 16px; }
+#trip-resort-sheet .sheet-list { max-height: 45vh; }
+.usage-evidence { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 12px; font-size: .78rem; color: var(--color-text-muted); }
+.usage-evidence summary { cursor: pointer; color: var(--color-primary); font-weight: 600; }
+.usage-evidence p { margin: 10px 0 0; line-height: 1.5; }
+</style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
     // analytics load can never hold up the page's own load/spinner state -- a
@@ -1121,29 +1474,29 @@ body {
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Plan a Stay</span>
+        <span class="site-nav-group-label">Overview</span>
         <a href="home.html">Home</a>
-        <a href="index.html">Calendar</a>
-        <a href="compare.html">Compare Resorts</a>
-        <a href="suggest.html">Suggest a Stay</a>
+        <a href="badges.html">Achievements</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Trip Planning</span>
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
-        <span class="site-nav-group-label">Buying Guide</span>
-        <a href="contractvalue.html">Contract Value</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Account</span>
+        <span class="site-nav-group-label">My Membership</span>
         <a href="account.html">My Contracts</a>
         <a href="trips.html" class="active">Membership Value</a>
-        <a href="badges.html">Achievements</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1166,7 +1519,9 @@ body {
   <script src="data/resort_investment.js"></script>
   <script src="data/disney_events.js"></script>
   <script src="data/resort_images.js"></script>
+  <script src="data/resort_shorthand.js"></script>
   <script src="dvc-trip-funding.js"></script>
+  <script src="dvc-owner-value.js"></script>
   <script src="dvc-badges.js"></script>
   <script src="dvc-track.js"></script>
   <script>
@@ -1188,18 +1543,27 @@ let pendingWarning = null;
 // The just-saved (new, not edited) trip's id, so its postcard gets the
 // pulseRing celebration animation on this one render only.
 let justLoggedTripId = null;
+// Unlocked-badge-id snapshot from the PREVIOUS render, so the next render
+// can diff against it and celebrate anything a just-logged trip unlocked.
+// Null until the first render completes -- a first-ever page load must not
+// celebrate the member's entire existing collection.
+let lastUnlockedBadgeIds = null;
+// Badge objects unlocked by the most recent save, shown once at the top of
+// the page then cleared (same show-once contract as pendingWarning).
+let justUnlockedBadges = [];
 // "Model Assumptions & Sensitivity" panel state -- userSettings starts as
 // the same defaults window.DVCAuth.getUserSettings() would fall back to
 // (kept in sync with auth.js's own DEFAULT_USER_SETTINGS), then gets
 // overwritten with the signed-in owner's real saved settings once
 // renderSignedIn()'s initial fetch resolves. contractYearPoints is
-// likewise promoted to module scope here (was a renderSignedIn()-local
-// `let`) so refreshHouseMoneyOutputs() can recompute pointEfficiency
-// without re-fetching it on every slider tick.
-let userSettings = { point_value_baseline: 35, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
+// cached at module scope for the separate badge coverage estimate.
+let userSettings = { point_value_baseline: 26, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
 let contractYearPoints = [];
-let assumptionsOpen = false;
+let assumptionsOpen = window.location.hash === '#model-assumptions';
 let settingsSaveTimer = null;
+let settingsSaveQueue = Promise.resolve();
+let settingsRevision = 0;
+let settingsSaveNote = '';
 
 function resortName(id) {
   const r = RESORTS.find(r => r.id === id);
@@ -1518,354 +1882,7 @@ function resortArtCardStyle(resortId) {
 // resale pricing (data/resort_investment.js, already loaded elsewhere in
 // the app) is far more accurate than one flat guess across all 17 resorts,
 // so that's tried first and a flat $140/pt is the last resort.
-const FALLBACK_PRICE_PER_POINT = 140;
-
-// Split out from the old single-total contractInitialCost() so the House
-// Money breakdown popover (buildGaugeHTML()) can show purchase price and
-// closing costs as their own line items, not just the combined figure --
-// contractInitialCost() below is now just this function's .total, kept as
-// its own name since most callers only ever wanted the one number.
-function contractInitialCostBreakdown(c) {
-  const closing = c.purchase_type === "resale" ? 1500 : 0;
-  const price = c.purchase_price != null
-    ? c.purchase_price
-    : (RESORT_INVESTMENT_DATA[c.home_resort_id]?.resalePricePerPoint || FALLBACK_PRICE_PER_POINT) * c.points_per_year;
-  return { price, closing, total: price + closing };
-}
-
-function contractInitialCost(c) {
-  return contractInitialCostBreakdown(c).total;
-}
-
-// First year dues actually started counting for this contract -- real
-// purchase_date if known, else a 3-year-owned fallback (matches the
-// points/dues estimate fallback the rest of the app already uses for
-// missing purchase info).
-function contractOwnershipStartYear(c) {
-  const currentYear = new Date().getFullYear();
-  return c.purchase_date ? parseInt(c.purchase_date.slice(0, 4), 10) : currentYear - 2;
-}
-
-function contractDuesPaidToDate(c) {
-  const currentYear = new Date().getFullYear();
-  const startYear = contractOwnershipStartYear(c);
-  let total = 0;
-  for (let y = startYear; y <= currentYear; y++) {
-    total += getDuesForYear(c.home_resort_id, y) * c.points_per_year;
-  }
-  return total;
-}
-
-// Baseline Potential Value: what a contract's points are roughly "worth"
-// per year at a cash-equivalent rate, net of that year's actual dues --
-// independent of whether the owner has logged any trips at all. $35/pt is
-// what a member would actually pay Disney in cash for the same room
-// (renting the points out only gets ~$20/pt, since a renter takes a cut) --
-// SAME default contractvalue.html's own Cash Ratio feature already uses
-// for "Vacation Value ($/pt/yr)", after a DVC-literate reviewer flagged
-// this file's old $19/pt as far too low and pointed out it was being
-// silently netted against dues into an even smaller number, which read as
-// "this app thinks a point is worth <$10" even though $19 was the real
-// gross assumption (2026-09-20). Used two ways in computeHouseMoneyStats():
-// alone, when no trips are logged yet, so a brand-new owner still gets a
-// real projected date instead of a blank "log a trip" prompt; blended with
-// actual trip pace otherwise, so one outlier travel year (a big trip,
-// possibly on borrowed points) can't alone swing the projection to look
-// unrealistically fast.
-// Was a flat $35/pt module constant (STANDARD_DELUXE_VALUE_PER_POINT) --
-// now the "Vacation Value Baseline" slider in the Model Assumptions panel
-// below, persisted per-user via userSettings.point_value_baseline. $35 is
-// still the DEFAULT (matches contractvalue.html's own Cash Ratio default),
-// every function below just takes it as a parameter now instead of closing
-// over the constant, so a slider change can recompute the whole model
-// without a page reload.
-//
-// Same for STANDARD_VALUE_GROWTH/STANDARD_DUES_GROWTH -> userSettings.
-// value_growth_rate/dues_growth_rate (5%/yr and 4%/yr defaults, unchanged).
-
-// getDuesForYear() (data/dues_historical.js) clamps to the latest YEAR
-// this app has real published dues for (2026 as of this fix) -- asking it
-// for 2030, 2040, etc. silently returns the SAME 2026 rate forever, which
-// is exactly why a multi-year House Money projection used to understate
-// how much dues eat into future value the further out it projected (a
-// DVC-literate reviewer's second finding alongside the $19/pt issue,
-// 2026-09-20). This compounds duesGrowthRate forward from the last real
-// known year instead, and is a pure passthrough (identical to
-// getDuesForYear()) for any year still inside the real data.
-function projectedDuesForYear(resortId, year, duesGrowthRate) {
-  const history = DUES_HISTORY[resortId];
-  const raw = getDuesForYear(resortId, year);
-  if (!history) return raw;
-  const lastKnownYear = Math.max(...Object.keys(history).map(Number));
-  if (year <= lastKnownYear) return raw;
-  return raw * Math.pow(1 + duesGrowthRate, year - lastKnownYear);
-}
-
-// GROSS value only (no dues subtracted) -- used by buildHouseMoneySeries()
-// below for its "value" line, since that chart already puts dues on its
-// OWN "cost" line explicitly. Using the NET version (below) there too
-// would subtract dues twice: once off the value line, again as an
-// explicit cost -- a real bug caught while building the chart (2026-09-20)
-// that quietly pushed the projected House Money date years later than it
-// should be. The two models are mathematically equivalent (gross value
-// vs. rising cost that includes future dues = net value vs. a fixed
-// today's-gap target) as long as each stays internally consistent -- mixing
-// them is what breaks it.
-function contractBaselineGrossValue(c, yearsFromNow, settings) {
-  return c.points_per_year * settings.point_value_baseline * Math.pow(1 + settings.value_growth_rate, yearsFromNow);
-}
-
-// NET of that year's dues -- used for the headline "Current Annual Pace"
-// figure and the gauge's own annualVelocity, where the model is "today's
-// fixed gap, closed by a pace that already has dues subtracted out."
-function contractBaselinePotentialValue(c, year, yearsFromNow, settings) {
-  const grossValue = contractBaselineGrossValue(c, yearsFromNow, settings);
-  const dues = c.points_per_year * projectedDuesForYear(c.home_resort_id, year, settings.dues_growth_rate);
-  return Math.max(0, grossValue - dues);
-}
-
-// The hero gauge's totals always resolve to a number (via the fallbacks
-// above) even for contracts with no purchase price/date entered, unlike
-// the detailed Cost of Ownership table below, which intentionally prompts
-// the user to fill those in instead of guessing.
-//
-// No resale-equity tricks: the initial purchase price is treated as a sunk
-// vacation investment (contractInitialCost() never nets out what the
-// contract could resell for), and this only ever measures whether trip
-// value delivered has paid that -- and dues -- back through pure travel
-// utility.
-//
-// Year-by-year cumulative series behind BOTH the estimated House Money
-// date AND the "Cost vs. Value Over Time" chart (buildHouseMoneyChartHTML()
-// below) -- built once here, consumed by both, so the chart and the
-// gauge/date can never silently disagree the way two independent
-// calculations eventually would. Historical years (<= currentYear) use
-// REAL numbers only: actual published dues rates (getDuesForYear) and
-// actual logged trip value grouped by check-out year -- a past year with
-// no logged trip contributes $0 to the value line rather than a
-// fabricated estimate. Future years use the same projected-growth
-// assumptions as contractBaselinePotentialValue()/projectedDuesForYear()
-// above, blended with actualPace exactly like the headline pace figure
-// when real trip history exists. Stops a few years past the crossover
-// (or after MAX_YEARS if it never crosses) rather than running the full
-// 60-year guardrail every time, so the chart's x-axis stays a sane width.
-// altFund/altFundDepletionYear model the "Opportunity Cost Simulation"
-// (Model Assumptions panel): if this member had instead invested each
-// contract's buy-in at settings.opportunity_cost_rate and paid cash every
-// year for that SAME point allotment (at settings.point_value_baseline,
-// growing at settings.value_growth_rate), altFund tracks that alternative
-// fund's year-by-year balance -- compound growth, then that year's net
-// vacation cost deducted (gross room value minus the dues this member
-// would NOT have paid without owning). Deliberately decoupled from
-// tripValueByYear/actualPace (the Value Extracted line's own inputs,
-// below) -- a real member's logged trip history is sparse or back-filled
-// unevenly, and using it here would make the withdrawal understate a real
-// vacation's cost in any year with no (or a partial) logged trip, which
-// artificially inflates how long the fund appears to last. This is a pure
-// "what would the full point allotment have cost in cash" capacity model,
-// not a reflection of what the member actually booked. Computed
-// unconditionally (cheap, and a rate of 0% is still a coherent "same
-// cash, just spent as needed" baseline) -- callers decide whether
-// opportunity_cost_rate > 0 makes it worth showing. Clamped at 0 rather
-// than going negative once depleted -- the fund is gone, not in debt --
-// and altFundDepletionYear records the first year that happened.
-function buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, currentYear, settings) {
-  if (contracts.length === 0) return null;
-  const activeContracts = contracts.filter(c => c.is_active);
-  const startYear = contracts.reduce((min, c) => Math.min(min, contractOwnershipStartYear(c)), currentYear);
-
-  const tripValueByYear = {};
-  for (const t of trips) {
-    const v = tripCashValue(t, contracts);
-    if (!v || !Number.isFinite(v.cash)) continue;
-    const y = parseInt(t.check_out.slice(0, 4), 10);
-    tripValueByYear[y] = (tripValueByYear[y] || 0) + v.cash;
-  }
-
-  const years = [], outlay = [], value = [], altFund = [];
-  let cumOutlay = 0, cumValue = 0, crossoverYear = null;
-  let fund = 0, altFundDepletionYear = null;
-  const MAX_YEARS = 60;
-
-  for (let y = startYear; y < startYear + MAX_YEARS; y++) {
-    let duesThisYear = 0;
-    let pointsThisYear = 0;
-    for (const c of contracts) {
-      if (contractOwnershipStartYear(c) === y) {
-        const initialCost = contractInitialCostBreakdown(c).total;
-        cumOutlay += initialCost;
-        fund += initialCost;
-      }
-    }
-    for (const c of contracts) {
-      const ownedThisYear = contractOwnershipStartYear(c) <= y && (c.is_active || y <= currentYear);
-      if (!ownedThisYear) continue;
-      const rate = y <= currentYear ? getDuesForYear(c.home_resort_id, y) : projectedDuesForYear(c.home_resort_id, y, settings.dues_growth_rate);
-      const dues = c.points_per_year * rate;
-      cumOutlay += dues;
-      duesThisYear += dues;
-      // Same ownedThisYear set as the dues loop right above -- the "point
-      // allotment" a year's alternative-fund withdrawal is sized to should
-      // be exactly the points that were (or, for a future year, still are
-      // actively) generating the dues just added, not a separately-scoped
-      // count.
-      pointsThisYear += c.points_per_year;
-    }
-
-    let valueThisYear;
-    if (y <= currentYear) {
-      valueThisYear = tripValueByYear[y] || 0;
-    } else {
-      // GROSS value here (contractBaselineGrossValue, not
-      // contractBaselinePotentialValue) -- dues are already on the cumOutlay
-      // side above; using the NET (dues-subtracted) version here too would
-      // double-subtract them. See contractBaselineGrossValue()'s own comment.
-      const yearsFromNow = y - currentYear;
-      const yearBaseline = activeContracts.reduce((sum, c) => sum + contractBaselineGrossValue(c, yearsFromNow, settings), 0);
-      valueThisYear = tripsWithValue === 0 ? yearBaseline : (actualPace + yearBaseline) / 2;
-    }
-    cumValue += valueThisYear;
-
-    // Alternative fund withdrawal: a pure point-capacity "what-if," NOT
-    // valueThisYear above (see the function comment for why real/blended
-    // trip value would understate this). Every year withdraws what the
-    // FULL point allotment would have cost in cash at this year's grown
-    // rate, net of the dues avoided by not owning -- compound first, then
-    // withdraw.
-    const yearsFromStart = y - startYear;
-    const grossRoomCost = pointsThisYear * settings.point_value_baseline * Math.pow(1 + settings.value_growth_rate, yearsFromStart);
-    const netVacationWithdrawal = Math.max(0, grossRoomCost - duesThisYear);
-    if (fund > 0) fund *= 1 + settings.opportunity_cost_rate;
-    fund -= netVacationWithdrawal;
-    if (fund <= 0) {
-      if (altFundDepletionYear == null && netVacationWithdrawal > 0) altFundDepletionYear = y;
-      fund = 0;
-    }
-
-    years.push(y);
-    outlay.push(cumOutlay);
-    value.push(cumValue);
-    altFund.push(fund);
-
-    if (crossoverYear == null && cumValue >= cumOutlay) crossoverYear = y;
-    if (crossoverYear != null && y >= crossoverYear + 3) break;
-    if (crossoverYear == null && y >= currentYear + 30) break;
-  }
-
-  return { years, outlay, value, altFund, crossoverYear, altFundDepletionYear, currentYear };
-}
-
-function computeHouseMoneyStats(contracts, trips, settings) {
-  const currentYear = new Date().getFullYear();
-  let totalPurchasePrice = 0;
-  let totalClosingCosts = 0;
-  let totalDuesPaid = 0;
-  let earliestStartYear = currentYear;
-  for (const c of contracts) {
-    const breakdown = contractInitialCostBreakdown(c);
-    totalPurchasePrice += breakdown.price;
-    totalClosingCosts += breakdown.closing;
-    totalDuesPaid += contractDuesPaidToDate(c);
-    earliestStartYear = Math.min(earliestStartYear, contractOwnershipStartYear(c));
-  }
-  const totalInitialCost = totalPurchasePrice + totalClosingCosts;
-  const totalOutlay = totalInitialCost + totalDuesPaid;
-
-  // Number.isFinite guard: tripCashValue()'s estimate path can only ever
-  // fail closed (returns null on missing data), but this keeps one bad
-  // trip from silently poisoning the whole lifetime sum into NaN, which
-  // would otherwise propagate into every stat below it without ever
-  // throwing an error to notice by.
-  let lifetimeValue = 0;
-  let tripsWithValue = 0;
-  for (const t of trips) {
-    const v = tripCashValue(t, contracts);
-    if (v && Number.isFinite(v.cash) && v.ownedPoints > 0) {
-      lifetimeValue += v.cash;
-      tripsWithValue++;
-    }
-  }
-
-  const yearsOwned = contracts.length ? Math.max(1, currentYear - earliestStartYear + 1) : 1;
-  const paybackPct = totalOutlay > 0 ? Math.min(100, Math.round((lifetimeValue / totalOutlay) * 100)) : 0;
-  const remaining = Math.max(0, totalOutlay - lifetimeValue);
-
-  // Actual pace from logged trips: the long-run average (lifetime value /
-  // years owned) badly understates pace for anyone who has logged only one
-  // or two trips against several years of ownership -- it silently assumes
-  // every one of those years delivered ~$0, when in reality it usually
-  // just means the owner hasn't gotten around to logging older trips yet.
-  // Flooring it at the average value PER LOGGED TRIP (i.e. "if you keep
-  // taking trips like the ones you've told us about, about once a year")
-  // fixes that without ever making a newer/sparser history look
-  // artificially fast either -- it's a floor, not a replacement, so a
-  // genuinely long, consistent trip history still uses its own real
-  // average.
-  const actualPace = tripsWithValue > 0
-    ? Math.max(lifetimeValue / yearsOwned, lifetimeValue / tripsWithValue)
-    : 0;
-
-  // Blended velocity: actual pace alone has two failure modes -- zero
-  // trips logged (no pace to compute at all) and a single heavy outlier
-  // year (e.g. a big stay on borrowed points) skewing the projection
-  // unrealistically fast. Baseline Potential Value (contractBaselinePotentialValue()
-  // above) fixes both: with no trip history it stands in entirely, and
-  // once real history exists it's blended 50/50 with actual pace so no
-  // single year can swing the timeline on its own. Only ACTIVE contracts
-  // contribute -- a deactivated contract isn't generating future travel
-  // value regardless of what it cost historically (unlike totalOutlay
-  // above, which counts every contract ever owned).
-  const baselinePotential = contracts
-    .filter(c => c.is_active)
-    .reduce((sum, c) => sum + contractBaselinePotentialValue(c, currentYear, 0, settings), 0);
-
-  let annualVelocity, velocitySource;
-  if (tripsWithValue === 0) {
-    annualVelocity = baselinePotential;
-    velocitySource = baselinePotential > 0 ? "baseline" : "none";
-  } else {
-    annualVelocity = (actualPace + baselinePotential) / 2;
-    velocitySource = baselinePotential > 0 ? "blended" : "trips";
-  }
-
-  // Guardrail: truly nothing to project a pace from (no active contracts'
-  // potential AND no trip history) leaves this null rather than let a
-  // near-zero denominator produce a multi-decade "estimate" that reads as
-  // broken instead of motivating. The UI shows an onboarding prompt in
-  // this case (see buildGaugeHTML()) -- otherwise, even a brand-new owner
-  // with zero logged trips now gets a real projected date from
-  // baselinePotential alone.
-  //
-  // Derived from buildHouseMoneySeries() (above) rather than its own flat
-  // remaining/annualVelocity division (the old approach, which implicitly
-  // assumed THIS year's net pace holds constant forever) -- see that
-  // function's own comment for why the year-by-year simulation matters.
-  const series = buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, currentYear, settings);
-  let estimatedHouseMoneyDate = null;
-  if (paybackPct < 100 && annualVelocity > 0 && series && series.crossoverYear != null) {
-    const idx = series.years.indexOf(series.crossoverYear);
-    const prevOutlay = idx > 0 ? series.outlay[idx - 1] : 0;
-    const prevValue = idx > 0 ? series.value[idx - 1] : 0;
-    const remainingAtStart = Math.max(0, prevOutlay - prevValue);
-    const yearGain = series.value[idx] - prevValue;
-    // Interpolate within the crossover year (assumes that year's gain
-    // lands evenly across its 12 months) rather than rounding up to a
-    // whole extra year.
-    const monthsIntoYear = yearGain > 0 ? Math.min(12, Math.ceil((remainingAtStart / yearGain) * 12)) : 12;
-    const totalMonths = (series.crossoverYear - currentYear - 1) * 12 + monthsIntoYear;
-    estimatedHouseMoneyDate = new Date();
-    estimatedHouseMoneyDate.setDate(1); // avoid month-length rollover surprises (e.g. Jan 31 + 1mo)
-    estimatedHouseMoneyDate.setMonth(estimatedHouseMoneyDate.getMonth() + totalMonths);
-  }
-
-  return {
-    totalPurchasePrice, totalClosingCosts, totalInitialCost, totalDuesPaid, totalOutlay, lifetimeValue,
-    paybackPct, remaining, yearsOwned, actualPace, baselinePotential, annualVelocity, velocitySource,
-    estimatedHouseMoneyDate, series, settings,
-    tripsLogged: trips.length,
-    netFreeVacations: lifetimeValue - totalOutlay,
-  };
-}
+const { contractInitialCostBreakdown, contractInitialCost, contractOwnershipStartYear, contractDeedExpirationYear, contractExpiredBy, contractDuesPaidToDate, projectedDuesForYear, contractBaselineGrossValue, contractBaselinePotentialValue, buildHouseMoneySeries, computeHouseMoneyStats } = window.DVCOwnerValue.create(tripCashValue);
 
 function computeLast12MonthSavings(trips) {
   const now = Date.now();
@@ -1881,17 +1898,9 @@ function computeLast12MonthSavings(trips) {
   return sum;
 }
 
-// DVC Point Efficiency: this app's schema only tracks a contract's
-// CURRENT and upcoming use-year balances (contract_year_points), not a
-// closed-out history of what happened to points in years already past --
-// so "% expired/forfeited" genuinely can't be computed here. This measures
-// the closest honestly-available proxy instead: how much of a member's
-// total allotted points (across every year owned) have been logged as
-// actually used on a trip.
-// computePointEfficiency moved to dvc-badges.js (window.DVCBadges) --
-// it's now banking-aware (credits contract_year_points' banked/remaining
-// balances, not just logged trips), and badges.html needs the exact same
-// formula, so it's shared instead of duplicated a 3rd time.
+// Logged usage comes exclusively from DVCTripFunding.loggedUsage().
+// The separate Points Steward badge still uses its disclosed coverage proxy;
+// that estimate must not be displayed as points logged on stays.
 
 // isGrandVillaTrip/evaluateTieredBadge/evaluateSpecialBadge/CATEGORY_KEYWORDS/
 // getRoomTypesForCategory/medianCashPerPoint/computeDuesEfficientResorts/
@@ -1972,6 +1981,18 @@ function buildHouseMoneyChartHTML(stats) {
   // needed, no growth," which isn't a comparison worth a 3rd line on every
   // owner's chart by default.
   const showAltFund = stats.settings.opportunity_cost_rate > 0;
+  const lastYear = stats.series.years[stats.series.years.length - 1];
+  // Both readings of the same gap, because they answer different
+  // questions: the dollar figure is "how much did ownership actually put
+  // in my pocket," the ratio is "per dollar I put in" -- which is the only
+  // one of the two that's comparable between a 100-point owner and a
+  // 500-point one. Taken at the final year, so they describe the whole
+  // ownership arc the chart just drew, not today's partial snapshot (the
+  // gauge above already covers today).
+  const finalOutlay = stats.series.outlay[stats.series.outlay.length - 1];
+  const finalValue = stats.series.value[stats.series.value.length - 1];
+  const finalGap = finalValue - finalOutlay;
+  const finalRatio = finalOutlay > 0 ? finalValue / finalOutlay : null;
   return `
     <div class="chart-card">
       <div class="chart-legend">
@@ -1981,11 +2002,24 @@ function buildHouseMoneyChartHTML(stats) {
       </div>
       <div id="house-money-chart"></div>
       <div class="chart-tooltip" id="house-money-chart-tooltip"></div>
+      <div class="chart-gap-summary">
+        <div class="chart-gap-figure${finalGap < 0 ? " behind" : ""}">
+          <div class="chart-gap-value">${finalGap >= 0 ? "+" : "&minus;"}${fmt(Math.abs(finalGap))}</div>
+          <div class="chart-gap-label">${finalGap >= 0 ? "Vacation value beyond what you spent" : "Still short of what you spent"}, by ${lastYear}</div>
+        </div>
+        <div class="chart-gap-figure${finalGap < 0 ? " behind" : ""}">
+          <div class="chart-gap-value">${finalRatio != null ? finalRatio.toFixed(2) + "&times;" : "&mdash;"}</div>
+          <div class="chart-gap-label">Vacation value returned per $1 spent, by ${lastYear}</div>
+        </div>
+      </div>
+      ${stats.series.horizonIsDeed
+        ? `<div class="chart-horizon-note">Projected through <strong>${lastYear}</strong>, when your last contract's deed expires.</div>`
+        : ""}
       ${showAltFund && stats.series.altFundDepletionYear != null
         ? `<div class="alt-fund-note">If invested instead at ${(stats.settings.opportunity_cost_rate * 100).toFixed(1)}%/yr and spent on equivalent vacations, your alternative cash fund would run out around <strong>${stats.series.altFundDepletionYear}</strong>.</div>`
         : ""}
       ${showAltFund && stats.series.altFundDepletionYear == null
-        ? `<div class="alt-fund-note">At a ${(stats.settings.opportunity_cost_rate * 100).toFixed(1)}% annual return, your initial capital growth outpaces annual room savings, leaving an estimated <strong>${fmt(stats.series.altFund[stats.series.altFund.length - 1])}</strong> balance at the end of the projection.</div>`
+        ? `<div class="alt-fund-note">At a ${(stats.settings.opportunity_cost_rate * 100).toFixed(1)}% annual return, your initial capital growth outpaces annual room savings, leaving an estimated <strong>${fmt(stats.series.altFund[stats.series.altFund.length - 1])}</strong> balance in ${lastYear}.</div>`
         : ""}
     </div>
   `;
@@ -2035,16 +2069,59 @@ function renderHouseMoneyChart(stats) {
 
   svg += `<line x1="${L}" y1="${B}" x2="${R}" y2="${B}" stroke="#ccc" stroke-width="1"/>`;
 
-  // Only every OTHER year labeled once the axis gets crowded (matches
-  // changes.html's own tick-crowding fallback), since this chart's horizon
-  // can run 15-20+ years, unlike that page's fixed handful.
-  const labelEvery = years.length > 12 ? 2 : 1;
+  // The horizon now runs to the last contract's deed expiration, so a
+  // 2042 contract is ~17 columns and a 2075 one is ~50 -- decoration has
+  // to thin out with the span instead of assuming a fixed handful (the old
+  // rule labeled every other year, which at 50 columns overlaps into an
+  // unreadable smear). Label ~10 years at most; in dense mode also drop
+  // the unlabeled ticks and the per-year dots (below), which at ~10px
+  // spacing read as a hatched axis and a beaded line rather than data.
+  const labelEvery = Math.max(1, Math.ceil(years.length / 10));
+  const colSpacing = years.length > 1 ? cW / (years.length - 1) : cW;
+  const dense = colSpacing < 14;
   years.forEach((yr, i) => {
     const x = xPos(yr);
-    svg += `<line x1="${x}" y1="${B}" x2="${x}" y2="${B + 4}" stroke="#ccc" stroke-width="1"/>`;
-    if (i % labelEvery === 0) {
+    const labeled = i % labelEvery === 0;
+    if (labeled || !dense) {
+      svg += `<line x1="${x}" y1="${B}" x2="${x}" y2="${B + 4}" stroke="#ccc" stroke-width="1"/>`;
+    }
+    if (labeled) {
       svg += `<text x="${x}" y="${B + 16}" text-anchor="middle" font-size="10" font-weight="600" fill="#666">${yr}</text>`;
     }
+  });
+
+  // Shaded band between the two lines. The gap IS the story here -- two
+  // bare polylines make you measure it off the y-axis by eye -- so it gets
+  // filled in. Split at the exact crossing (interpolated within the year,
+  // not snapped to a year boundary) so the years still in the hole and the
+  // years ahead read as two different states rather than one ribbon. Tints
+  // are the lines' own colors, so whichever line is on top names the band
+  // underneath it without needing a second legend.
+  const bands = [];
+  let band = null;
+  for (let i = 0; i < years.length; i++) {
+    const x = xPos(years[i]);
+    const diff = value[i] - outlay[i];
+    const sign = diff >= 0 ? 1 : -1;
+    if (band && sign !== band.sign) {
+      const prevDiff = value[i - 1] - outlay[i - 1];
+      const t = prevDiff / (prevDiff - diff); // 0..1 within this year
+      const cx = xPos(years[i - 1]) + (x - xPos(years[i - 1])) * t;
+      const cv = value[i - 1] + (value[i] - value[i - 1]) * t;
+      band.pts.push([cx, cv, cv]);
+      bands.push(band);
+      band = { sign, pts: [[cx, cv, cv]] };
+    } else if (!band) {
+      band = { sign, pts: [] };
+    }
+    band.pts.push([x, value[i], outlay[i]]);
+  }
+  if (band) bands.push(band);
+  bands.forEach(b => {
+    if (b.pts.length < 2) return;
+    const top = b.pts.map(([x, v]) => `${x},${yPos(v)}`);
+    const bottom = [...b.pts].reverse().map(([x, , o]) => `${x},${yPos(o)}`);
+    svg += `<polygon points="${[...top, ...bottom].join(" ")}" fill="${b.sign > 0 ? "#2e7d32" : "#1565c0"}" opacity="0.1"/>`;
   });
 
   // Crossover marker -- the same "House Money" date the gauge/breakdown
@@ -2059,6 +2136,7 @@ function renderHouseMoneyChart(stats) {
   const drawLine = (series, color, dashed) => {
     const pts = years.map((yr, i) => `${xPos(yr)},${yPos(series[i])}`);
     svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${dashed ? ' stroke-dasharray="5,4"' : ""}/>`;
+    if (dense) return;
     years.forEach((yr, i) => {
       svg += `<circle cx="${xPos(yr)}" cy="${yPos(series[i])}" r="3.5" fill="${color}" stroke="white" stroke-width="1.5"/>`;
     });
@@ -2070,45 +2148,134 @@ function renderHouseMoneyChart(stats) {
   // projected trip value) -- the dash reads as "hypothetical" at a glance.
   if (showAltFund) drawLine(altFund, "#ef6c00", true);
 
-  // Invisible year-column hover zones, on top of everything else.
-  const colW = years.length === 1 ? cW : cW / (years.length - 1);
-  years.forEach((yr) => {
-    const x = xPos(yr);
-    const x1 = Math.max(L - 10, x - colW / 2);
-    const x2 = Math.min(R + 10, x + colW / 2);
-    svg += `<rect x="${x1}" y="${T}" width="${x2 - x1}" height="${cH}" fill="transparent" class="year-hover" data-year="${yr}"/>`;
+  // Scrub marker for whichever year is currently being read -- a guide
+  // line plus a ring on each series. Needed once touch became a real input
+  // here: a mouse pointer sits exactly on the column it's reading, but a
+  // fingertip covers roughly a dozen of them, so without this there's no
+  // way to tell WHICH year the tooltip is describing.
+  svg += `<g class="chart-scrub" aria-hidden="true">`;
+  svg += `<line class="chart-scrub-line" x1="0" y1="${T}" x2="0" y2="${B}" stroke="#999" stroke-width="1" stroke-dasharray="3,3"/>`;
+  const scrubSeries = showAltFund ? ["#1565c0", "#2e7d32", "#ef6c00"] : ["#1565c0", "#2e7d32"];
+  scrubSeries.forEach((color, si) => {
+    svg += `<circle class="chart-scrub-dot" data-series="${si}" cx="0" cy="0" r="5" fill="${color}" stroke="white" stroke-width="2"/>`;
   });
+  svg += `</g>`;
+
+  // ONE hit target over the whole plot area, not one rect per year. With
+  // the horizon now running to a deed expiration (~50 columns), a per-year
+  // zone is ~10 viewBox units wide, which on a phone-width card is about
+  // 5 CSS pixels -- untappable, and the reason this chart was effectively
+  // mouse-only. The handler below maps pointer x to the NEAREST year
+  // instead, so a finger anywhere on the chart always reads something.
+  svg += `<rect class="year-hover" x="${L - 10}" y="${T}" width="${cW + 20}" height="${cH}" fill="transparent"/>`;
 
   svg += `</svg>`;
   chartEl.innerHTML = svg;
 
   const chartCard = chartEl.closest(".chart-card");
+  const svgEl = chartEl.querySelector("svg");
+  const scrubGroup = chartEl.querySelector(".chart-scrub");
+  const scrubLine = chartEl.querySelector(".chart-scrub-line");
+  const scrubDots = [...chartEl.querySelectorAll(".chart-scrub-dot")];
 
-  function showTooltip(yearStr, mouseX, mouseY) {
-    const yr = parseInt(yearStr);
-    const i = years.indexOf(yr);
+  function showTooltip(i, pointerX, pointerY, isTouch) {
+    const yr = years[i];
     const isCrossoverYear = yr === crossoverYear;
+    // The gap, per year -- the same figure the summary below the chart
+    // states for the final year, readable at any point along the way.
+    const gap = value[i] - outlay[i];
+    const ratio = outlay[i] > 0 ? value[i] / outlay[i] : null;
     tooltipEl.innerHTML = `
       <div class="tt-year">${yr}${isCrossoverYear ? " &middot; House Money!" : ""}</div>
       <div class="tt-row"><span class="tt-dot" style="background:#1565c0"></span><span class="tt-name">Total Spent</span><span class="tt-value">${fmt(outlay[i])}</span></div>
       <div class="tt-row"><span class="tt-dot" style="background:#2e7d32"></span><span class="tt-name">Value Extracted</span><span class="tt-value">${fmt(value[i])}</span></div>
       ${showAltFund ? `<div class="tt-row"><span class="tt-dot" style="background:#ef6c00"></span><span class="tt-name">Alt. Vacation Fund</span><span class="tt-value">${fmt(altFund[i])}</span></div>` : ""}
+      <div class="tt-row net"><span class="tt-name">${gap >= 0 ? "Ahead by" : "Behind by"}</span><span class="tt-value">${fmt(Math.abs(gap))}${ratio != null ? ` &middot; ${ratio.toFixed(2)}&times;` : ""}</span></div>
     `;
     tooltipEl.classList.add("visible");
+
+    // Move the scrub marker onto the year being read.
+    scrubGroup.classList.add("on");
+    scrubLine.setAttribute("x1", xPos(yr));
+    scrubLine.setAttribute("x2", xPos(yr));
+    const seriesData = showAltFund ? [outlay, value, altFund] : [outlay, value];
+    scrubDots.forEach((dot, si) => {
+      dot.setAttribute("cx", xPos(yr));
+      dot.setAttribute("cy", yPos(seriesData[si][i]));
+    });
+
     const cardRect = chartCard.getBoundingClientRect();
-    let left = mouseX - cardRect.left + 12;
-    let top = mouseY - cardRect.top - 10;
     const ttW = tooltipEl.offsetWidth;
-    if (left + ttW > cardRect.width - 8) left = left - ttW - 24;
-    if (top < 4) top = 4;
+    const ttH = tooltipEl.offsetHeight;
+    let left = pointerX - cardRect.left + 12;
+    // A fingertip covers the point it's touching, so on touch the card goes
+    // ABOVE the finger rather than beside it (where the hand itself would
+    // hide it), and centered on the touch instead of offset right.
+    let top = isTouch ? pointerY - cardRect.top - ttH - 24 : pointerY - cardRect.top - 10;
+    if (isTouch) left = pointerX - cardRect.left - ttW / 2;
+    if (left + ttW > cardRect.width - 8) left = cardRect.width - ttW - 8;
+    if (left < 8) left = 8;
+    if (top < 4) top = isTouch ? pointerY - cardRect.top + 24 : 4;
     tooltipEl.style.left = left + "px";
     tooltipEl.style.top = top + "px";
   }
 
-  chartEl.querySelectorAll(".year-hover").forEach(el => {
-    el.addEventListener("mouseenter", (e) => showTooltip(el.dataset.year, e.clientX, e.clientY));
-    el.addEventListener("mousemove", (e) => showTooltip(el.dataset.year, e.clientX, e.clientY));
-    el.addEventListener("mouseleave", () => tooltipEl.classList.remove("visible"));
+  function hideTooltip() {
+    tooltipEl.classList.remove("visible");
+    scrubGroup.classList.remove("on");
+  }
+  // Exposed so the script-load-time dismiss handlers (tap outside, Escape)
+  // can close this without re-registering a listener on every render.
+  chartEl._hideHouseMoneyTooltip = hideTooltip;
+
+  // Nearest year to a pointer x, in viewBox units -- the whole reason a
+  // finger works here at all. getBoundingClientRect() each time rather than
+  // caching: the SVG is width:100% of a card that reflows (rotation, the
+  // assumptions panel opening above it), so a cached rect goes stale.
+  function yearIndexAt(clientX) {
+    const rect = svgEl.getBoundingClientRect();
+    if (!rect.width || years.length < 2) return 0;
+    const vx = ((clientX - rect.left) / rect.width) * W;
+    const i = Math.round(((vx - L) / cW) * (years.length - 1));
+    return Math.max(0, Math.min(years.length - 1, i));
+  }
+
+  const hitArea = chartEl.querySelector(".year-hover");
+  // Pointer events, not mouse events: one code path covers mouse, touch and
+  // stylus. Touch is deliberately press-and-hold-to-scrub rather than
+  // tap-to-toggle -- dragging along the chart reads year after year, which
+  // is what makes a 50-year horizon explorable on a phone. The reading
+  // stays up after the finger lifts (so it can actually be read); a tap
+  // elsewhere or Escape dismisses it, wired once at script load below.
+  // Our own pressed-pointer id rather than hasPointerCapture() as the
+  // guard: capture is a best-effort request that can be refused or lost,
+  // and if it were the gate, a refusal would silently disable scrubbing
+  // altogether. setPointerCapture is still requested (it keeps events
+  // coming when a finger slides past the element's edge) but nothing
+  // depends on it succeeding.
+  let pressedPointerId = null;
+  hitArea.addEventListener("pointerdown", (e) => {
+    const isTouch = e.pointerType !== "mouse";
+    showTooltip(yearIndexAt(e.clientX), e.clientX, e.clientY, isTouch);
+    if (isTouch) {
+      pressedPointerId = e.pointerId;
+      try { hitArea.setPointerCapture(e.pointerId); } catch { /* capture is optional */ }
+    }
+  });
+  hitArea.addEventListener("pointermove", (e) => {
+    // Mouse hovers freely; touch only scrubs while actually pressed, or a
+    // finger merely scrolling past would drag the tooltip along with it.
+    if (e.pointerType === "mouse") {
+      showTooltip(yearIndexAt(e.clientX), e.clientX, e.clientY, false);
+    } else if (pressedPointerId === e.pointerId) {
+      showTooltip(yearIndexAt(e.clientX), e.clientX, e.clientY, true);
+    }
+  });
+  const endPress = (e) => { if (pressedPointerId === e.pointerId) pressedPointerId = null; };
+  hitArea.addEventListener("pointerup", endPress);
+  hitArea.addEventListener("pointercancel", endPress);
+  hitArea.addEventListener("pointerleave", (e) => {
+    if (e.pointerType === "mouse") hideTooltip();
   });
 }
 
@@ -2159,14 +2326,17 @@ function buildGaugeHTML(stats) {
                 : `${fmt(stats.remaining)} remaining to reach House Money`)}
         ${breakdownTrigger}
         ${showBreakdown ? buildPaybackBreakdownHTML(stats, dateLabel) : ""}
+        <p class="chart-horizon-note">${fmt(stats.lifetimeValue)} logged stay value from owned-contract points. The projection uses $${stats.settings.point_value_baseline}/point, ${(stats.settings.value_growth_rate * 100).toFixed(1)}% value growth and ${(stats.settings.dues_growth_rate * 100).toFixed(1)}% dues growth. Missing purchase details use estimates.</p>
+        <p class="chart-horizon-note" id="value-settings-status" role="status">${settingsSaveNote}</p>
       </div>
     </div>
   `;
 }
 
-function buildStatTilesHTML(stats, pointEfficiency) {
+function buildStatTilesHTML(stats) {
   const duesMultiplier = stats.lifetimeValue / Math.max(1, stats.totalDuesPaid);
   const last12mo = computeLast12MonthSavings(trips);
+  const usage = window.DVCTripFunding.loggedUsage(trips, contracts);
   return `
     <div class="dopamine-tiles">
       <div class="dopamine-tile">
@@ -2178,10 +2348,17 @@ function buildStatTilesHTML(stats, pointEfficiency) {
         <div class="dopamine-tile-label">Extracted in the past 12 months</div>
       </div>
       <div class="dopamine-tile">
-        <div class="dopamine-tile-value">${pointEfficiency != null ? pointEfficiency + "%" : "&mdash;"}</div>
-        <div class="dopamine-tile-label">${pointEfficiency != null ? "of allotted points logged as used on a trip" : "Add a contract to track this"}</div>
+        <div class="dopamine-tile-value">${usage.ownedPoints.toLocaleString()} <span class="dopamine-tile-unit">pts</span></div>
+        <div class="dopamine-tile-label">Owned points in logged stays</div>
       </div>
     </div>
+    <details class="usage-evidence">
+      <summary>What counts as logged usage?</summary>
+      <p>${usage.attributedStays} logged stay${usage.attributedStays === 1 ? '' : 's'} with complete point sources. ${usage.outsidePoints.toLocaleString()} outside points are excluded from the owned-point total.</p>
+      ${usage.needsReview ? `<p>${usage.needsReview} stay${usage.needsReview === 1 ? '' : 's'} excluded until you <a href="#trip-list">review the point sources</a>.</p>` : ''}
+      <p>This counts points assigned to recorded bookings, including upcoming stays. Saved itineraries do not count.</p>
+      <p>Available balances and banking, borrowing, or balance corrections are separate in <a href="account.html">My Contracts</a>. They do not add logged usage. These records cannot establish how many points expired or remain unreconciled.</p>
+    </details>
   `;
 }
 
@@ -2238,16 +2415,27 @@ function buildExitEquityHTML(equity) {
 // on (Vacation Value Baseline, Opportunity Cost Rate) -- the other two
 // (Dues/Hotel Inflation) are slider-only, same as contractvalue.html's own
 // Dues Growth/Vacation Value Growth advanced inputs.
+// Two fields per preset (the rate itself, then what it represents) rather
+// than one "4% (Conservative/HYSA)" string -- the chip stacks them on two
+// lines, which is what lets all three sit on a single row on a phone
+// without shortening "Conservative/HYSA" into something unreadable.
 const POINT_VALUE_PRESETS = [
-  { label: "Deluxe Rack ($35)", value: 35 },
-  { label: "AP / Promo ($26)", value: 26 },
-  { label: "Point Rental ($21)", value: 21 },
+  { label: "$35", sub: "Deluxe Rack", value: 35 },
+  { label: "$26", sub: "AP / Promo", value: 26 },
+  { label: "$21", sub: "Point Rental", value: 21 },
 ];
 const OPPORTUNITY_COST_PRESETS = [
-  { label: "0% (None)", value: 0 },
-  { label: "4% (Conservative/HYSA)", value: 0.04 },
-  { label: "7% (S&P 500)", value: 0.07 },
+  { label: "0%", sub: "None", value: 0 },
+  { label: "4%", sub: "HYSA", value: 0.04 },
+  { label: "7%", sub: "S&P 500", value: 0.07 },
 ];
+
+// Longer-form explanations that don't fit a one-line label -- surfaced as
+// a (?) hover/tap tooltip next to the label instead of parenthetical text
+// that pushes the row onto two lines.
+const ASSUMPTION_HINTS = {
+  opportunity_cost_rate: "The return you'd assume if you invested your buy-in instead of buying the contract. The chart's Alt. Vacation Fund line grows at this rate and pays cash for the same trips out of that balance.",
+};
 
 // Keyed by field name so both the initial render (assumptionSliderRow) and
 // live updates (handleAssumptionChange, which has no server-shaped object
@@ -2263,13 +2451,20 @@ function assumptionSliderRow(field, label, value, min, max, step, presets) {
   const format = ASSUMPTION_FORMATTERS[field];
   const chipsHTML = presets ? `
     <div class="assumption-chips">
-      ${presets.map(p => `<button type="button" class="assumption-chip${Math.abs(p.value - value) < 1e-9 ? " active" : ""}" data-field="${field}" data-value="${p.value}">${p.label}</button>`).join("")}
+      ${presets.map(p => `<button type="button" class="assumption-chip${Math.abs(p.value - value) < 1e-9 ? " active" : ""}" data-field="${field}" data-value="${p.value}"><span class="assumption-chip-main">${p.label}</span><span class="assumption-chip-sub">${p.sub}</span></button>`).join("")}
     </div>
   ` : "";
+  // tooltip-align-left: the (?) sits at the left edge of a ~300px card on
+  // mobile, so extending the 210px card rightward from it is the only
+  // direction that stays on screen.
+  const hint = ASSUMPTION_HINTS[field];
+  const hintHTML = hint
+    ? `<span class="tooltip-anchor assumption-hint tooltip-align-left">?<span class="tooltip-card">${hint}</span></span>`
+    : "";
   return `
     <div class="assumption-row">
       <div class="assumption-label-row">
-        <label for="a-${field}">${label}</label>
+        <span class="assumption-label-text"><label for="a-${field}">${label}</label>${hintHTML}</span>
         <span class="assumption-value" id="a-${field}-out">${format(value)}</span>
       </div>
       ${chipsHTML}
@@ -2280,7 +2475,7 @@ function assumptionSliderRow(field, label, value, min, max, step, presets) {
 
 function buildAssumptionsPanelHTML(settings) {
   return `
-    <div class="section assumptions-section">
+    <div class="section assumptions-section" id="model-assumptions">
       <button type="button" class="assumptions-toggle" id="assumptions-toggle" aria-expanded="${assumptionsOpen}">
         &#9881; ${assumptionsOpen ? "Hide" : "Adjust"} Model Assumptions &amp; Sensitivity ${assumptionsOpen ? "&#9652;" : "&#9662;"}
       </button>
@@ -2288,7 +2483,7 @@ function buildAssumptionsPanelHTML(settings) {
         ${assumptionSliderRow("point_value_baseline", "Vacation Value Baseline ($/point)", settings.point_value_baseline, 15, 50, 1, POINT_VALUE_PRESETS)}
         ${assumptionSliderRow("dues_growth_rate", "Annual Dues Inflation", settings.dues_growth_rate, 0.02, 0.08, 0.001)}
         ${assumptionSliderRow("value_growth_rate", "Deluxe Hotel Inflation", settings.value_growth_rate, 0.02, 0.08, 0.001)}
-        ${assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate (Alt. Vacation Fund)", settings.opportunity_cost_rate, 0, 0.10, 0.005, OPPORTUNITY_COST_PRESETS)}
+        ${assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate", settings.opportunity_cost_rate, 0, 0.10, 0.005, OPPORTUNITY_COST_PRESETS)}
         <div class="assumptions-save-status" id="assumptions-save-status"></div>
       </div>
     </div>
@@ -2315,10 +2510,9 @@ function handleAssumptionChange(field, value) {
 
 function refreshHouseMoneyOutputs() {
   const stats = computeHouseMoneyStats(contracts, trips, userSettings);
-  const pointEfficiency = window.DVCBadges.computePointEfficiency(contracts, trips, contractYearPoints);
   const body = document.getElementById("house-money-body");
   if (body) {
-    body.innerHTML = `${buildGaugeHTML(stats)}${buildStatTilesHTML(stats, pointEfficiency)}${buildHouseMoneyChartHTML(stats)}`;
+    body.innerHTML = `${buildGaugeHTML(stats)}${buildStatTilesHTML(stats)}${buildHouseMoneyChartHTML(stats)}`;
     renderHouseMoneyChart(stats);
   }
   const exitBody = document.getElementById("exit-equity-body");
@@ -2333,19 +2527,39 @@ function refreshHouseMoneyOutputs() {
 // dozens of writes.
 function scheduleSettingsSave() {
   clearTimeout(settingsSaveTimer);
-  const statusEl = document.getElementById("assumptions-save-status");
-  if (statusEl) statusEl.textContent = "";
-  settingsSaveTimer = setTimeout(async () => {
-    if (!window.DVCAuth.isConfigured()) return;
-    const savingSettings = userSettings;
-    const status = document.getElementById("assumptions-save-status");
-    if (status) status.textContent = "Saving…";
-    const { error } = await window.DVCAuth.saveUserSettings(savingSettings);
-    const status2 = document.getElementById("assumptions-save-status");
-    if (!status2) return;
-    status2.textContent = error ? "Couldn't save" : "Saved";
-    if (!error) setTimeout(() => { if (status2.textContent === "Saved") status2.textContent = ""; }, 1500);
+  const revision = ++settingsRevision;
+  const savingSettings = { ...userSettings };
+  showSettingsSaveStatus('Preview: saving assumptions. Home uses the last saved settings.');
+  settingsSaveTimer = setTimeout(() => {
+    // Serialize writes so a slow earlier request cannot replace newer settings.
+    settingsSaveQueue = settingsSaveQueue.catch(() => {}).then(async () => {
+      if (revision !== settingsRevision) return;
+      try {
+        const { error } = await window.DVCAuth.saveUserSettings(savingSettings);
+        if (error) throw new Error(error);
+        if (revision === settingsRevision) showSettingsSaveStatus('Saved. Home uses these same assumptions.');
+      } catch (_) {
+        if (revision === settingsRevision) showSettingsSaveStatus('Preview only: assumptions were not saved. Home still uses the previous settings.', true);
+      }
+    });
   }, 500);
+}
+
+function showSettingsSaveStatus(message, retry = false) {
+  settingsSaveNote = message;
+  for (const id of ['assumptions-save-status', 'value-settings-status']) {
+    const status = document.getElementById(id);
+    if (!status) continue;
+    status.textContent = message;
+    if (retry) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'assumption-chip';
+      button.textContent = 'Retry save';
+      button.onclick = scheduleSettingsSave;
+      status.append(' ', button);
+    }
+  }
 }
 
 function attachAssumptionsListeners() {
@@ -2386,6 +2600,61 @@ function formatTripDateRange(checkIn, checkOut) {
   return `${ciMonth} ${ci.getDate()} – ${coMonth} ${co.getDate()}, ${co.getFullYear()}`;
 }
 
+// Diffs this render's unlocked badges against the previous render's and
+// records anything newly unlocked for the celebration banner.
+//
+// Three deliberate choices:
+//  - Itineraries are passed as [] because this page never fetches them.
+//    Both snapshots use [] identically, so itinerary-driven badges
+//    (Split-Stay Savant, Waitlist Whisperer) simply never show up in the
+//    diff rather than producing a false "just unlocked" -- correct for a
+//    banner whose whole trigger is logging a TRIP.
+//  - evaluateUserBadges() is called directly, NOT through
+//    applyBadgePersistence(), which fires Supabase upserts. This is a
+//    read-only probe that runs on every render; badges.html remains the
+//    one place that persists tiers.
+//  - Only fires when justLoggedTripId is set, so editing a trip, deleting
+//    one, or simply revisiting the page never triggers a celebration --
+//    and lastUnlockedBadgeIds starting null means the first render after
+//    sign-in establishes a baseline instead of celebrating the member's
+//    whole existing collection at once.
+function detectNewlyUnlockedBadges(stats, pointEfficiency) {
+  let badges;
+  try {
+    badges = window.DVCBadges.evaluateUserBadges(contracts, trips, [], stats, pointEfficiency, contractYearPoints);
+  } catch (e) {
+    // A badge evaluation failure must never take down the page's real
+    // content (payback, trip list) -- the celebration is a garnish.
+    lastUnlockedBadgeIds = null;
+    justUnlockedBadges = [];
+    return;
+  }
+  const unlockedNow = window.DVCBadges.unlockedBadgeIds(badges);
+  justUnlockedBadges = (lastUnlockedBadgeIds && justLoggedTripId)
+    ? badges.filter(b => b.unlocked && !lastUnlockedBadgeIds.has(b.id))
+    : [];
+  lastUnlockedBadgeIds = unlockedNow;
+}
+
+function buildUnlockBannerHTML() {
+  if (justUnlockedBadges.length === 0) return "";
+  const names = justUnlockedBadges.map(b => b.name).join(", ");
+  const icons = justUnlockedBadges.slice(0, 3)
+    .map(b => `<div class="unlock-banner-icon">${b.icon}</div>`).join("");
+  const count = justUnlockedBadges.length;
+  return `
+    <div class="unlock-banner" id="unlock-banner">
+      <div class="unlock-banner-icons">${icons}</div>
+      <div class="unlock-banner-body">
+        <div class="unlock-banner-eyebrow">${count === 1 ? "Achievement unlocked" : `${count} achievements unlocked`}</div>
+        <div class="unlock-banner-names">${names}</div>
+        <a class="unlock-banner-link" href="badges.html">See it in the Trophy Room &rarr;</a>
+      </div>
+      <button type="button" class="unlock-banner-close" id="unlock-banner-close" aria-label="Dismiss">&times;</button>
+    </div>
+  `;
+}
+
 async function renderSignedIn() {
   [contracts, trips, contractYearPoints, userSettings] = await Promise.all([
     window.DVCAuth.getContracts(),
@@ -2407,15 +2676,18 @@ async function renderSignedIn() {
   // dopamine stat tiles below use it directly.
   const stats = computeHouseMoneyStats(contracts, trips, userSettings);
   const pointEfficiency = window.DVCBadges.computePointEfficiency(contracts, trips, contractYearPoints);
+  detectNewlyUnlockedBadges(stats, pointEfficiency);
   const exitEquity = computeExitEquity(contracts, stats);
 
   pageContent.innerHTML = `
+    ${buildUnlockBannerHTML()}
     <div class="section">
       <h2>Your House Money Payback</h2>
       <div class="section-sub">What your membership has cost so far vs. the Deluxe hotel value it's delivered</div>
+      ${trips.some(t => !window.DVCTripFunding.summary(t, contracts).valid) ? `<div class="save-warning">Some trips need their point sources confirmed. They are excluded from membership value until reviewed. <a href="#trip-list">Review point sources</a></div>` : ""}
       <div id="house-money-body">
         ${buildGaugeHTML(stats)}
-        ${buildStatTilesHTML(stats, pointEfficiency)}
+        ${buildStatTilesHTML(stats)}
         ${buildHouseMoneyChartHTML(stats)}
       </div>
     </div>
@@ -2448,6 +2720,15 @@ async function renderSignedIn() {
       <div class="trip-list" id="trip-list"></div>
     </div>
 
+    <div class="modal-overlay sheet-overlay" id="trip-resort-sheet">
+      <div class="modal-box sheet" role="dialog" aria-modal="true" aria-labelledby="trip-resort-title">
+        <div class="sheet-handle"></div>
+        <div class="modal-header"><h3 id="trip-resort-title">Choose a Resort</h3><button type="button" class="modal-close" id="trip-resort-close" aria-label="Close resort picker">&times;</button></div>
+        <div class="resort-sheet-hero" id="trip-resort-hero" hidden></div>
+        <input type="search" class="sheet-search" id="trip-resort-search" placeholder="Search resorts" aria-label="Search resorts">
+        <div class="sheet-list" id="trip-resort-list"></div>
+      </div>
+    </div>
     <div class="modal-overlay" id="trip-modal">
       <div class="modal-box trip-modal-box">
         <div class="modal-header">
@@ -2459,12 +2740,15 @@ async function renderSignedIn() {
         <div class="form-group">
           <div class="form-group-label">Where You Stayed</div>
           <div class="form-field">
-            <label for="f-resort">Resort</label>
-            <select id="f-resort"></select>
+            <label for="trip-resort-trigger">Resort</label>
+            <select id="f-resort" hidden aria-hidden="true" tabindex="-1"></select>
+            <button type="button" class="picker-trigger" id="trip-resort-trigger" aria-haspopup="dialog" aria-controls="trip-resort-sheet" aria-expanded="false"><span class="picker-trigger-value" id="trip-resort-label"></span><span class="custom-select-arrow" aria-hidden="true"></span></button>
           </div>
           <div class="form-field">
-            <label for="f-room">Room Type</label>
-            <select id="f-room"></select>
+            <label for="trip-room-trigger">Room Type</label>
+            <select id="f-room" hidden aria-hidden="true" tabindex="-1"></select>
+            <button type="button" class="picker-trigger" id="trip-room-trigger" aria-controls="trip-room-grid" aria-expanded="false"><span class="picker-trigger-value" id="trip-room-label"></span><span class="custom-select-arrow" aria-hidden="true"></span></button>
+            <div class="room-type-grid" id="trip-room-grid"></div>
           </div>
         </div>
 
@@ -2487,25 +2771,13 @@ async function renderSignedIn() {
           <div class="insight-field">
             <label for="f-points">Points Used</label>
             <div class="insight-value-row">
-              <input type="number" id="f-points" min="0" step="1" inputmode="numeric" class="insight-input" aria-describedby="points-hint">
+              <input type="number" id="f-points" min="1" step="1" inputmode="numeric" class="insight-input" aria-describedby="points-hint">
               <span class="insight-unit" aria-hidden="true">pts</span>
             </div>
             <div class="field-hint" id="points-hint"></div>
           </div>
 
-          <fieldset class="trip-funding" id="trip-funding">
-            <legend>Where did the points come from?</legend>
-            <p class="funding-help">Assign all points to your contracts or outside sources. Banked or borrowed points from your own contracts belong with those contracts.</p>
-            <div id="funding-review-note" class="funding-help"></div>
-            <div id="funding-contracts"></div>
-            <details id="outside-funding">
-              <summary>Outside points</summary>
-              <div class="form-field"><label for="funding-one-time">Disney one-time points</label><input id="funding-one-time" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
-              <div class="form-field"><label for="funding-transferred">Transferred or rented points from others</label><input id="funding-transferred" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
-              <div class="form-field"><label for="funding-other">Other outside points</label><input id="funding-other" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
-            </details>
-            <div id="funding-summary" class="funding-summary" role="status" aria-live="polite"></div>
-          </fieldset>
+
 
           <div class="insight-field">
             <label for="f-cash-value">Cash Value</label>
@@ -2515,6 +2787,20 @@ async function renderSignedIn() {
             </div>
             <div class="field-hint" id="cash-hint"></div>
           </div>
+          <fieldset class="trip-funding" id="trip-funding">
+            <legend>Which contracts did you use?</legend>
+            <p class="funding-help">Tap a contract to assign points. Include its banked or borrowed points.</p>
+            <div id="funding-review-note" class="funding-help"></div>
+            <div id="funding-summary" class="funding-summary" role="status" aria-live="polite"></div>
+            <div id="funding-contracts"></div>
+            <details id="outside-funding">
+              <summary>Points from other sources</summary>
+              <div class="form-field"><label for="funding-one-time">Disney one-time points</label><input id="funding-one-time" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+              <div class="form-field"><label for="funding-transferred">Transferred or rented points from others</label><input id="funding-transferred" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+              <div class="form-field"><label for="funding-other">Other outside points</label><input id="funding-other" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+            </details>
+
+          </fieldset>
         </div>
 
         <div class="form-group">
@@ -2538,6 +2824,13 @@ async function renderSignedIn() {
   wireTripForm(activeContracts);
   attachAssumptionsListeners();
   pendingWarning = null;
+  // Show-once, same contract as pendingWarning above: the banner is in the
+  // DOM now, so a later re-render (editing a trip, changing an assumption)
+  // doesn't replay the celebration.
+  justUnlockedBadges = [];
+  document.getElementById("unlock-banner-close")?.addEventListener("click", () => {
+    document.getElementById("unlock-banner")?.remove();
+  });
   openCalendarTripDraft();
 }
 
@@ -2568,6 +2861,7 @@ function renderTripList() {
           <div class="trip-postcard-pill${v ? "" : " no-data"}">${v ? "+" + fmt(v.cash) + " toward House Money" : (!attribution.valid ? "Review point sources" : "No rate data")}</div>
           <div class="trip-postcard-points">${t.points_used.toLocaleString()} pts${attribution.valid ? ` &middot; ${attribution.owned} from your contracts` : " &middot; excluded from membership value"}</div>
           ${v && v.outsidePoints ? `<div class="trip-postcard-points">Whole stay: ${fmt(v.totalCash)}; outside share excluded</div>` : ""}
+          ${v ? v.byContract.map(a => `<div class="trip-postcard-points">${fundingEscape(contractLabel(contracts.find(c => c.id === a.contract_id)))}: ${a.points} pts &middot; ${fmt(a.cash)}</div>`).join('') : ''}
         </div>
         <div class="trip-postcard-actions">
           <button type="button" class="icon-btn" data-edit="${t.id}" title="Edit" aria-label="${attribution.valid ? 'Edit trip' : 'Review point sources'}">&#9998;</button>
@@ -2677,6 +2971,7 @@ function updatePointsSuggestion() {
 }
 
 function updateSuggestions() {
+  syncTripPickers();
   updateCashSuggestion();
   updatePointsSuggestion();
   updateFundingSummary(true);
@@ -2698,7 +2993,7 @@ function renderTripFunding(values) {
   const old = values?.points_source_breakdown;
   const total = Number(document.getElementById('f-points').value);
   const proposed = old?.version === 2 ? old.allocations : values?.contract_allocations;
-  let allocations = Array.isArray(proposed) ? proposed : [];
+  let allocations = Array.isArray(proposed) ? proposed.filter(a => a && typeof a.contract_id === 'string') : [];
   if (!allocations.length && values?.contract_id) {
     allocations = [{ contract_id: values.contract_id, points: old?.contracts ?? total }];
   } else if (!values && contracts.filter(c => c.is_active).length === 1) {
@@ -2706,9 +3001,13 @@ function renderTripFunding(values) {
   }
   document.getElementById('funding-contracts').innerHTML = contracts.length ? contracts.map((c, index) => {
     const row = allocations.find(a => a.contract_id === c.id);
-    const label = contractLabel(c) + (c.is_active ? '' : ' (inactive � past stays)');
+    const label = contractLabel(c) + (c.is_active ? '' : ' (inactive; past stays)');
     const inputId = 'funding-points-' + index;
-    return `<div class="funding-contract-row"><label class="funding-contract-choice"><input type="checkbox" data-funding-contract="${fundingEscape(c.id)}" data-points-input="${inputId}" ${row ? 'checked' : ''}><span>${fundingEscape(label)}</span></label><div class="funding-amount"><input type="number" id="${inputId}" min="1" step="1" inputmode="numeric" aria-label="Points from ${fundingEscape(label)}" value="${row && Number.isFinite(row.points) ? row.points : ''}" ${row ? '' : 'disabled'}><span>pts</span></div></div>`;
+    const resort = resortName(c.home_resort_id);
+    const title = c.nickname || shorthandResortName(c.home_resort_id, resort);
+    const detail = [c.nickname ? shorthandResortName(c.home_resort_id, resort) : '', c.use_year ? c.use_year + ' use year' : '', c.is_active ? '' : 'Inactive'].filter(Boolean).join(' · ');
+    const art = getResortImage(c.home_resort_id);
+    return `<div class="funding-contract-row"><label class="funding-contract-choice"><input type="checkbox" data-funding-contract="${fundingEscape(c.id)}" data-points-input="${inputId}" ${row ? 'checked' : ''}><span class="funding-contract-art" aria-hidden="true" ${art ? 'style="background-image:url(&quot;' + fundingEscape(art) + '&quot;)"' : ''}></span><span class="funding-contract-copy"><strong>${fundingEscape(title)}</strong><small>${fundingEscape(detail)}</small></span><span class="funding-check" aria-hidden="true">&#10003;</span></label><div class="funding-amount"><span class="funding-amount-label">Points used</span><div class="funding-number"><input type="number" id="${inputId}" min="1" step="1" inputmode="numeric" aria-label="Points from ${fundingEscape(label)}" value="${row && Number.isFinite(row.points) ? row.points : ''}" ${row ? '' : 'disabled'}><span>pts</span></div></div></div>`;
   }).join('') : '<p class="funding-help">No contracts yet. <a href="account.html">Add a contract</a> to credit its vacation value, or enter outside points below.</p>';
   document.getElementById('funding-one-time').value = old?.one_time ?? 0;
   document.getElementById('funding-transferred').value = old?.transferred ?? 0;
@@ -2726,10 +3025,11 @@ function renderTripFunding(values) {
       input.disabled = !box.checked;
       if (!box.checked) input.value = '';
       lastAutoAllocation = null;
-      if (box.checked && document.querySelectorAll('[data-funding-contract]:checked').length === 1) {
+      if (box.checked) {
         const f = readTripFunding();
-        input.value = Math.max(0, Number(document.getElementById('f-points').value) - f.one_time - f.transferred - f.other) || '';
-        if (!f.one_time && !f.transferred && !f.other) lastAutoAllocation = Number(input.value);
+        const otherOwned = f.allocations.filter(a => a.contract_id !== box.dataset.fundingContract).reduce((sum, a) => sum + (Number.isFinite(a.points) ? a.points : 0), 0);
+        input.value = Math.max(0, Number(document.getElementById('f-points').value) - otherOwned - f.one_time - f.transferred - f.other) || '';
+        if (f.allocations.length === 1 && !f.one_time && !f.transferred && !f.other) lastAutoAllocation = Number(input.value);
       }
       updateFundingSummary();
     });
@@ -2754,11 +3054,20 @@ function updateFundingSummary(updateSingle = false) {
   }
   const funding = readTripFunding();
   const result = window.DVCTripFunding.validate(total, funding, contracts);
-  el.classList.toggle('funding-incomplete', !result.valid);
-  if (!result.valid) { el.textContent = result.error; return; }
-  const cash = Number(document.getElementById('f-cash-value').value);
-  const credit = Number.isFinite(cash) && cash >= 0 ? fmt(cash * result.share) : '�';
-  el.textContent = `${total} of ${total} pts assigned � ${result.owned} from your contracts. ${credit} of this stay's cash value counts toward ownership payback (${Math.round(result.share * 100)}%). Outside points do not count.`;
+  const assigned = funding.allocations.reduce((sum, a) => sum + (Number.isFinite(a.points) ? a.points : 0), 0) + [funding.one_time, funding.transferred, funding.other].reduce((sum, n) => sum + (Number.isFinite(n) ? n : 0), 0);
+  const validTotal = Number.isSafeInteger(total) && total > 0;
+  const remaining = total - assigned;
+  const over = validTotal && remaining < 0;
+  el.classList.toggle('funding-incomplete', over);
+  const heading = !validTotal ? 'Add your stay points above' : result.valid ? 'All points assigned' : over ? Math.abs(remaining) + ' pts over total' : remaining > 0 ? remaining + ' pts left to assign' : 'Check point amounts';
+  const progress = validTotal ? Math.max(0, Math.min(100, assigned / total * 100)) : 0;
+  const rawCash = document.getElementById('f-cash-value').value;
+  const cash = rawCash === '' ? NaN : Number(rawCash);
+  const detail = result.valid
+    ? (Number.isFinite(cash) && cash >= 0 ? fmt(cash * result.share) + ' counts toward membership value' : result.owned + ' points from your contracts') + (result.outside ? ' · Outside share excluded' : '')
+    : over ? 'Reduce an amount to match your stay.' : assigned === 0 ? 'Choose the contracts that funded this stay.' : remaining > 0 ? 'Choose another source or adjust an amount.' : result.error;
+  el.innerHTML = `<div class="funding-summary-line"><strong>${fundingEscape(heading)}</strong><span>${validTotal ? assigned + ' / ' + total + ' pts' : ''}</span></div><div class="funding-progress" aria-hidden="true"><span style="width:${progress}%"></span></div><small>${fundingEscape(detail)}</small>`;
+
 }
 
 function uniqueResorts() {
@@ -2772,7 +3081,137 @@ function uniqueResorts() {
   return list.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+const TRIP_ACCENT_COLORS = ["#4a148c", "#1b5e3a", "#0d47a1", "#7a1734", "#8d5524", "#37474f"];
+function tripAccentColor(resortId) {
+  let hash = 0;
+  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
+  return TRIP_ACCENT_COLORS[hash % TRIP_ACCENT_COLORS.length];
+}
+
+// Same lavender wash + has-art toggle as app.js's resortArtWashCSS()/
+// applyResortArtBackground(), applied to the trigger button once a resort
+// is filtered on.
+function tripResortArtWashCSS(imagePath) {
+  return `linear-gradient(rgba(236, 225, 247, 0.82), rgba(236, 225, 247, 0.82)), url('${imagePath}')`;
+}
+function applyTripResortArtBackground(el, imagePath) {
+  if (!el) return;
+  if (imagePath) {
+    el.style.backgroundImage = tripResortArtWashCSS(imagePath);
+    el.classList.add("has-art");
+  } else {
+    el.style.backgroundImage = "";
+    el.classList.remove("has-art");
+  }
+}
+
+
+function roomTypeChipIcon(name) {
+  const n = name.toLowerCase();
+  if (n.includes("grand villa")) return "\u{1F3E1}";
+  if (n.includes("two-bedroom")) return "\u{1F3E0}";
+  if (n.includes("one-bedroom")) return "\u{1F6CB}\u{FE0F}";
+  if (n.includes("cabin")) return "\u{1F3D5}\u{FE0F}";
+  return "\u{1F6CF}\u{FE0F}";
+}
+
+
+function syncTripPickers() {
+  const resort = document.getElementById('f-resort');
+  const room = document.getElementById('f-room');
+  const name = resort.selectedOptions[0]?.textContent || 'Choose a resort';
+  document.getElementById('trip-resort-label').textContent = typeof shorthandResortName === 'function' ? shorthandResortName(resort.value, name) : name;
+  applyTripResortArtBackground(document.getElementById('trip-resort-trigger'), getResortImage(resort.value));
+  document.getElementById('trip-room-label').textContent = room.selectedOptions[0]?.textContent || 'Choose a room type';
+  document.getElementById('trip-room-trigger').setAttribute('aria-expanded', document.getElementById('trip-room-grid').classList.contains('open'));
+}
+function renderTripResortList() {
+  const query = document.getElementById('trip-resort-search').value.trim().toLowerCase();
+  const selected = document.getElementById('f-resort').value;
+  const matches = uniqueResorts().filter(r => r.name.toLowerCase().includes(query));
+  document.getElementById('trip-resort-list').innerHTML = matches.length ? matches.map(r => `<button type="button" class="resort-pick-row${r.id === selected ? ' selected' : ''}" data-trip-resort="${fundingEscape(r.id)}" aria-pressed="${r.id === selected}"><span class="resort-pick-swatch" style="background:${tripAccentColor(r.id)}"></span><span>${fundingEscape(r.name)}</span></button>`).join('') : '<div class="sheet-empty" role="status">No resorts match your search.</div>';
+}
+function openTripResortPicker() {
+  const search = document.getElementById('trip-resort-search');
+  search.value = '';
+  renderTripResortList();
+  const hero = document.getElementById('trip-resort-hero');
+  const art = getResortImage(document.getElementById('f-resort').value);
+  hero.hidden = !art;
+  hero.style.backgroundImage = art ? `url('${art}')` : '';
+  document.getElementById('trip-resort-sheet').classList.add('open');
+  document.getElementById('trip-resort-trigger').setAttribute('aria-expanded', 'true');
+  document.getElementById('trip-modal').inert = true;
+  document.getElementById('trip-resort-close').focus();
+}
+function closeTripResortPicker(restoreFocus = true) {
+  const sheet = document.getElementById('trip-resort-sheet');
+  if (!sheet) return;
+  const wasOpen = sheet.classList.contains('open');
+  sheet.classList.remove('open');
+  document.getElementById('trip-modal').inert = false;
+  const trigger = document.getElementById('trip-resort-trigger');
+  trigger.setAttribute('aria-expanded', 'false');
+  if (wasOpen && restoreFocus) trigger.focus();
+}
+function renderTripRoomGrid() {
+  const resortId = document.getElementById('f-resort').value;
+  const year = Math.max(...RESORTS.filter(r => r.id === resortId).map(r => r.year));
+  const rooms = RESORTS.find(r => r.id === resortId && r.year === year)?.roomTypes || [];
+  const selected = document.getElementById('f-room').value;
+  document.getElementById('trip-room-grid').innerHTML = rooms.map(rt => `<button type="button" class="room-type-chip${rt.id === selected ? ' selected' : ''}" data-trip-room="${fundingEscape(rt.id)}" aria-pressed="${rt.id === selected}"><span class="room-type-icon" aria-hidden="true">${roomTypeChipIcon(rt.name)}</span><span class="room-type-name">${fundingEscape(rt.name)}</span>${rt.sleeps ? `<span class="room-type-sleeps">Sleeps ${rt.sleeps}</span>` : ''}</button>`).join('');
+}
+function wireTripPickers() {
+  document.getElementById('trip-resort-trigger').addEventListener('click', openTripResortPicker);
+  document.getElementById('trip-resort-close').addEventListener('click', () => closeTripResortPicker());
+  document.getElementById('trip-resort-search').addEventListener('input', renderTripResortList);
+  const sheet = document.getElementById('trip-resort-sheet');
+  sheet.addEventListener('click', e => {
+    if (e.target === sheet) closeTripResortPicker();
+    const choice = e.target.closest('[data-trip-resort]');
+    if (!choice) return;
+    const select = document.getElementById('f-resort');
+    if (select.value !== choice.dataset.tripResort) {
+      select.value = choice.dataset.tripResort;
+      document.getElementById('trip-room-grid').classList.remove('open');
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    closeTripResortPicker();
+  });
+  sheet.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeTripResortPicker(); }
+    if (e.key === 'Tab') {
+      const items = Array.from(sheet.querySelectorAll('button, input')).filter(el => !el.disabled);
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  const grid = document.getElementById('trip-room-grid');
+  const trigger = document.getElementById('trip-room-trigger');
+  trigger.addEventListener('click', () => {
+    renderTripRoomGrid();
+    grid.classList.toggle('open');
+    syncTripPickers();
+  });
+  grid.addEventListener('click', e => {
+    const choice = e.target.closest('[data-trip-room]');
+    if (!choice) return;
+    const select = document.getElementById('f-room');
+    select.value = choice.dataset.tripRoom;
+    grid.classList.remove('open');
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    trigger.focus();
+  });
+  document.getElementById('trip-modal').addEventListener('keydown', e => {
+    if (e.key === 'Escape' && grid.classList.contains('open')) {
+      e.preventDefault(); e.stopPropagation(); grid.classList.remove('open'); syncTripPickers(); trigger.focus();
+    }
+  });
+}
+
 function wireTripForm(activeContracts) {
+  wireTripPickers();
   const resortSelect = document.getElementById("f-resort");
   resortSelect.innerHTML = uniqueResorts().map(r => `<option value="${r.id}">${r.name}</option>`).join("");
   populateRoomTypesForResort(resortSelect.value, null);
@@ -2837,6 +3276,8 @@ function openCalendarTripDraft() {
 }
 
 function openTripForm(trip, draft = null) {
+  closeTripResortPicker(false);
+  document.getElementById("trip-room-grid").classList.remove("open");
   editingTripId = trip ? trip.id : null;
   const values = trip || draft;
   lastAutoFilledPoints = null;
@@ -2863,6 +3304,7 @@ function openTripForm(trip, draft = null) {
 }
 
 function closeTripForm() {
+  closeTripResortPicker(false);
   editingTripId = null;
   document.getElementById("trip-modal").classList.remove("open");
 }
@@ -2969,8 +3411,43 @@ waitForAuth(40);
 // every render would stack duplicates (same reasoning as account.html's
 // own Escape handler).
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") document.querySelectorAll(".payback-info-anchor.open").forEach((el) => el.classList.remove("open"));
+  if (e.key !== "Escape") return;
+  document.querySelectorAll(".payback-info-anchor.open").forEach((el) => el.classList.remove("open"));
+  document.querySelectorAll(".tooltip-anchor.tap-open").forEach((el) => el.classList.remove("tap-open"));
+  document.getElementById("house-money-chart")?._hideHouseMoneyTooltip?.();
 });
+
+// Touch has no mouseleave, so a chart reading opened by a finger needs an
+// explicit way out: any pointer landing outside the chart closes it. Also
+// registered once at script load (the chart itself re-renders on every
+// assumptions-slider change, which would otherwise stack a duplicate of
+// this listener each time).
+document.addEventListener("pointerdown", (e) => {
+  const chart = document.getElementById("house-money-chart");
+  if (!chart || chart.contains(e.target)) return;
+  chart._hideHouseMoneyTooltip?.();
+}, true);
+
+// Mobile tap-to-toggle for every .tooltip-anchor on this page (currently
+// the (?) hints in the Model Assumptions panel) -- hover has no
+// touchscreen equivalent, so this is the tap fallback; tokens.css's
+// :hover rule keeps working unchanged for a real mouse. Same pattern as
+// compare.html/app.js: always ADDS tap-open on the tapped anchor (never
+// toggles the same one back off, since a tap can also synthesize a
+// lingering hover), closing every other one so only one is ever open.
+// Capture phase + stopPropagation per mobile guardrail #10, so a hint
+// nested inside any future clickable ancestor can't be beaten to the
+// punch by that ancestor's own handler re-rendering the node away.
+document.addEventListener("click", (e) => {
+  const anchor = e.target.closest(".tooltip-anchor");
+  document.querySelectorAll(".tooltip-anchor.tap-open").forEach((el) => {
+    if (el !== anchor) el.classList.remove("tap-open");
+  });
+  if (anchor) {
+    anchor.classList.add("tap-open");
+    e.stopPropagation();
+  }
+}, true);
 
 // House Money payback breakdown popover: tap/hover-friendly, not
 // hover-only -- hover has no touchscreen equivalent, and this app has

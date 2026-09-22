@@ -69,7 +69,7 @@ function computePointEfficiency(contracts, trips, contractYearPoints) {
   // near-check-in cancellation), so crediting them isn't a double count,
   // and they're not forfeited/wasted either.
   const totalBankedOrHeld = (contractYearPoints || []).reduce(
-    (sum, r) => sum + (r.points_banked || 0) + (r.points_remaining || 0) + (r.points_holding || 0), 0
+    (sum, r) => sum + (r.balance_confirmed_at ? (r.points_banked || 0) + (r.points_remaining || 0) + (r.points_holding || 0) : 0), 0
   );
   // Capped at totalAllotted -- the trip log and the points ledger are two
   // independently hand-maintained records, so they can double-count the
@@ -96,10 +96,17 @@ function isSpaciousVillaTrip(t) {
   const name = roomType.name.toLowerCase();
   return name.includes("two-bedroom") || name.includes("three-bedroom") || name.includes("grand villa");
 }
+// Treehouse Villas count here too (2026-09-22). data.js names the room
+// "Three-Bedroom Treehouse Villa", so a plain "grand villa" substring
+// missed it -- but it's Saratoga Springs' largest, rarest, sleeps-9 unit,
+// which is exactly what this badge is for. There is no Grand Villa at
+// Saratoga Springs for a Treehouse stay to be losing out to.
 function isTrueGrandVillaTrip(t) {
   const resort = RESORTS.find(r => r.id === t.resort_id);
   const roomType = resort?.roomTypes.find(rt => rt.id === t.room_type_id);
-  return !!roomType && roomType.name.toLowerCase().includes("grand villa");
+  if (!roomType) return false;
+  const name = roomType.name.toLowerCase();
+  return name.includes("grand villa") || name.includes("treehouse");
 }
 
 // Median cash-$-per-point across a resort's studio nights -- same
@@ -178,12 +185,20 @@ function evaluateTieredBadge({ id, icon, name, category, value, tiers, valueLabe
 // filter these out of the grid/reference list while locked and reveal them
 // normally the moment they unlock; this function just carries the flag
 // through untouched.
-function evaluateSpecialBadge({ id, icon, name, category, unlocked, detail, hidden = false }) {
+// `requirement` is a terse one-line restatement of the unlock condition,
+// shown directly on a LOCKED tile (2026-09-22). Tiered badges already
+// stated their criteria on the tile face via badgeProgressHTML()'s "N
+// trips logged -> Tier 1: First Trip" line, but a locked special badge
+// rendered as nothing but its name and the word "Locked" -- you had to
+// open the modal to learn what it even wanted. `detail` is the long
+// version and stays modal-only; this is the version that fits on a tile.
+// Falls back to detail if a badge hasn't been given one.
+function evaluateSpecialBadge({ id, icon, name, category, unlocked, detail, requirement, hidden = false }) {
   return {
     id, icon, name, category, kind: "special", hidden,
     unlocked, tierClass: unlocked ? "tier-gold" : "locked",
     tierLabel: unlocked ? "Unlocked" : "Locked", tierNumber: unlocked ? 1 : 0,
-    detail,
+    detail, requirement: requirement || detail,
   };
 }
 
@@ -243,6 +258,7 @@ function evaluateResortLoyaltyBadges(trips) {
       const badge = evaluateSpecialBadge({
         id: `resort-loyalty-${resortId}`, icon: "🔑", name, category: "resorts",
         unlocked: trips.some(t => t.resort_id === resortId),
+        requirement: `Log a stay at ${name}`,
         detail: `Log a stay at ${name} -- its one room type (Cabin) doesn't fit the Studio-to-Grand-Villa ladder every other resort's Resort Loyalty badge tracks, so this one's a simple "have you stayed here" instead.`,
       });
       badge.image = image;
@@ -271,47 +287,98 @@ function evaluateResortLoyaltyBadges(trips) {
   return badges;
 }
 
-// The Odyssey's resort groupings, in Bronze->Gold order. Animal Kingdom
-// Villas is grouped with Wilderness Lodge per the original spec (not a
-// geographic claim, just this badge's own tier grouping).
+// The Odyssey's resort groupings ("regions"). Animal Kingdom Villas and
+// Fort Wilderness Cabins are grouped with the two Wilderness Lodge villas
+// per this badge's own tier grouping -- not a strict geographic claim.
+// Old Key West and Saratoga Springs belong to no region deliberately:
+// they'd make a two-resort Disney Springs group that's far easier to
+// finish than the three- and four-resort regions below, and TIER_CLASSES
+// only has 4 rungs to spend. They still count toward Global Citizen.
 const ODYSSEY_GROUPS = [
   { label: "The Monorail Loop", resorts: ["bayLakeTower", "grandFloridian", "polynesianVillas"] },
   { label: "The Epcot Crescent", resorts: ["beachClubVillas", "boardwalkVillas", "rivieraResort"] },
-  { label: "The Wilderness", resorts: ["boulderRidge", "copperCreek", "animalKingdomVillas"] },
+  { label: "The Wilderness", resorts: ["boulderRidge", "copperCreek", "animalKingdomVillas", "fortWildernessCabins"] },
 ];
 
-function describeOdysseyNextStep(tierNumber) {
-  if (tierNumber < ODYSSEY_GROUPS.length) {
-    const group = ODYSSEY_GROUPS[tierNumber];
-    return `log or save a trip at ${group.label} (${group.resorts.map(id => shorthand(id, resortName(id))).join(", ")})`;
-  }
-  return "log or save trips at every remaining DVC Companion resort";
+function odysseyGroupProgress(visitedResortIds) {
+  return ODYSSEY_GROUPS.map(g => {
+    const missing = g.resorts.filter(id => !visitedResortIds.has(id));
+    return {
+      label: g.label,
+      total: g.resorts.length,
+      visitedCount: g.resorts.length - missing.length,
+      missing,
+      complete: missing.length === 0,
+    };
+  });
 }
 
-// Tiers are resort-GROUP membership, not a single ascending number -- a
-// bespoke evaluator (not evaluateTieredBadge) that still returns the same
-// shape the shared rendering functions expect, using customProgressPct/
-// nextStepText/tier.requirementLabel where a plain numeric threshold
+function joinResortNames(ids) {
+  return ids.map(id => shorthand(id, resortName(id))).join(", ");
+}
+
+// Tiers are a COUNT of fully-finished regions, not a fixed ladder of
+// specific ones -- a bespoke evaluator (not evaluateTieredBadge) that
+// still returns the same shape the shared rendering functions expect,
+// using customProgressPct/nextStepText where a plain numeric threshold
 // wouldn't make sense.
+//
+// Two things this deliberately does NOT do, both fixing real bugs found
+// 2026-09-22 against Gemini's Trophy Room checklist:
+//  1. A region no longer counts as covered by visiting ONE resort in it
+//     (the old `.some()`). It required `.every()` all along -- the old
+//     tier requirementLabels already read "Stay at BLT, GF, Poly", i.e.
+//     all three -- so the check and the copy disagreed.
+//  2. Tier labels are no longer the region names themselves. Awarding
+//     tier N by count while labelling it with ODYSSEY_GROUPS[N-1] meant a
+//     member whose only stay was Riviera got "Tier 1: The Monorail Loop"
+//     and a checkmark on a region they'd never set foot in. Counting
+//     tiers need counting labels; WHICH regions are done is carried by
+//     valueLabel/nextStepText instead, where it's always true. This also
+//     keeps applyBadgePersistence()'s sticky-floor path honest, since it
+//     rebuilds tierLabel from tiers[storedTier - 1].label.
 function evaluateOdysseyBadge(visitedResortIds) {
   const allResortIds = [...new Set(RESORTS.map(r => r.id))];
-  const groupsCoveredCount = ODYSSEY_GROUPS.filter(g => g.resorts.some(id => visitedResortIds.has(id))).length;
+  const groups = odysseyGroupProgress(visitedResortIds);
+  const completeCount = groups.filter(g => g.complete).length;
   const allVisited = allResortIds.length > 0 && allResortIds.every(id => visitedResortIds.has(id));
 
-  // requirementLabel is built from the same ODYSSEY_GROUPS this badge's
-  // tier/progress math already uses, via each resort's real app name
-  // (shorthand, not a marketing grouping like "Contemporary, Grand
-  // Floridian, or Polynesian") -- a DVC-literate reviewer flagged the old
-  // hardcoded marketing names as inconsistent with what the app itself
-  // calls these resorts everywhere else (2026-09-19).
-  const tiers = ODYSSEY_GROUPS.map((g, i) => ({
-    label: g.label,
-    requirementLabel: `${i === 0 ? "Stay at " : "+ "}${g.resorts.map(id => shorthand(id, resortName(id))).join(", ")}`,
-  }));
-  tiers.push({ label: "Global Citizen", requirementLabel: `All ${allResortIds.length} DVC Companion resorts visited` });
+  const tiers = [
+    { label: "One Region", requirementLabel: "Finish any 1 region" },
+    { label: "Two Regions", requirementLabel: "Finish any 2 regions" },
+    { label: "Three Regions", requirementLabel: `Finish all ${ODYSSEY_GROUPS.length} regions` },
+    { label: "Global Citizen", requirementLabel: `All ${allResortIds.length} DVC Companion resorts visited` },
+  ];
 
-  const tierNumber = allVisited ? 4 : Math.min(groupsCoveredCount, 3);
+  const tierNumber = allVisited ? 4 : Math.min(completeCount, 3);
   const unlocked = tierNumber > 0;
+
+  // The region you're closest to finishing -- fewest resorts still
+  // missing, ties broken by declaration order. That's the one worth
+  // naming in the progress line and the next-step nudge, rather than
+  // whichever region happens to sit at the next ladder position.
+  const nextGroup = groups
+    .filter(g => !g.complete)
+    .sort((a, b) => a.missing.length - b.missing.length)[0] || null;
+  const unvisited = allResortIds.filter(id => !visitedResortIds.has(id));
+
+  let valueLabel, customProgressPct, nextStepText;
+  if (tierNumber >= 4) {
+    valueLabel = `All ${allResortIds.length} resorts visited`;
+    customProgressPct = 100;
+    nextStepText = null;
+  } else if (nextGroup && tierNumber < 3) {
+    valueLabel = `${nextGroup.visitedCount} of ${nextGroup.total} ${nextGroup.label} resorts visited`;
+    customProgressPct = Math.round((nextGroup.visitedCount / nextGroup.total) * 100);
+    nextStepText = `stay at ${joinResortNames(nextGroup.missing)} to finish ${nextGroup.label}`;
+  } else {
+    // Every region done -- the only thing left is Global Citizen.
+    valueLabel = `${visitedResortIds.size} of ${allResortIds.length} resorts visited`;
+    customProgressPct = Math.round((visitedResortIds.size / allResortIds.length) * 100);
+    nextStepText = unvisited.length <= 4
+      ? `stay at ${joinResortNames(unvisited)}`
+      : `visit the ${unvisited.length} resorts you haven't stayed at yet`;
+  }
 
   return {
     id: "odyssey", icon: "🗺️", name: "The Odyssey", category: "exploration", kind: "tiered", tiers,
@@ -319,12 +386,12 @@ function evaluateOdysseyBadge(visitedResortIds) {
     tierClass: unlocked ? TIER_CLASSES[tierNumber - 1] : "locked",
     tierLabel: unlocked ? tiers[tierNumber - 1].label : "Locked",
     tierNumber,
-    value: visitedResortIds.size,
-    valueLabel: `${visitedResortIds.size} of ${allResortIds.length} resorts visited`,
+    value: completeCount,
+    valueLabel,
     next: tierNumber < 4 ? tiers[tierNumber] : null,
-    customProgressPct: tierNumber < 4 ? Math.round((visitedResortIds.size / allResortIds.length) * 100) : 100,
-    nextStepText: tierNumber < 4 ? describeOdysseyNextStep(tierNumber) : null,
-    detail: "Tracks the breadth of DVC resorts you've logged a trip at or saved in an itinerary, grouped by area of the property -- rewards exploring beyond your home resort.",
+    customProgressPct,
+    nextStepText,
+    detail: `Finish whole regions of the property, then the whole system. ${ODYSSEY_GROUPS.map(g => `${g.label} (${joinResortNames(g.resorts)})`).join("; ")}. A region counts only once you've logged a trip at -- or saved an itinerary for -- every resort in it. Old Key West and Saratoga Springs sit outside the regions and count toward the final Global Citizen tier.`,
   };
 }
 
@@ -445,10 +512,16 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   const pointsWhale = evaluateTieredBadge({
     id: "points-whale", icon: "🐋", name: "Points Whale", category: "ownership",
     value: totalPointsOwned,
+    // 100/200/500/1000, not the 250/400/600/1000 this shipped with --
+    // a 250-point floor meant the single most common real contract size
+    // (a 150-point direct minimum, or a small resale) unlocked nothing at
+    // all, so the badge never fired for a large share of actual owners
+    // (2026-09-22). Lowering thresholds is safe for a sticky badge: it can
+    // only ever grant a tier, never take one back.
     tiers: [
-      { threshold: 250, label: "Rising Tide" },
-      { threshold: 400, label: "Deep Pockets" },
-      { threshold: 600, label: "Big Fish" },
+      { threshold: 100, label: "Century Club" },
+      { threshold: 200, label: "Deep Pockets" },
+      { threshold: 500, label: "Big Fish" },
       { threshold: 1000, label: "Apex Predator" },
     ],
     valueLabel: v => `${v.toLocaleString()} pts/yr owned`,
@@ -499,14 +572,13 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
       { threshold: 75, label: "Guardian" },
       { threshold: 95, label: "Flawless Run" },
     ],
-    valueLabel: v => `${v}% of points accounted for`,
-    detail: "The % of your allotted points -- across every year owned -- that you've used on trips or deliberately banked forward. A steward wastes nothing.",
+    valueLabel: v => `${v}% estimated point coverage`,
+    detail: "A badge estimate combining logged owned points and saved remaining, banked, and holding balances against estimated allotments. These records can overlap. This is not logged trip usage or proof that no points expired.",
   });
 
   const crossResortStay = trips.some(t => {
-    if (!t.contract_id) return false;
-    const c = contractById.get(t.contract_id);
-    return c && t.resort_id !== c.home_resort_id;
+    if (!window.DVCTripFunding.summary(t, contracts).valid) return false;
+    return t.points_source_breakdown.allocations.some(a => t.resort_id !== contractById.get(a.contract_id)?.home_resort_id);
   });
   const splitStaySavant = (itineraries || []).some(itin =>
     new Set((itin.segments || []).map(s => s.resortId)).size >= 2
@@ -515,11 +587,13 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   const sniper = evaluateSpecialBadge({
     id: "sniper", icon: "🎯", name: "7-Month Sniper", category: "planning",
     unlocked: crossResortStay,
+    requirement: "Log a stay away from that contract's home resort",
     detail: "Log a stay (linked to a contract) at a resort other than that contract's home resort -- only bookable once the 7-month window opens availability to every member, past your own 11-month home resort priority.",
   });
   const savant = evaluateSpecialBadge({
     id: "savant", icon: "🔀", name: "Split-Stay Savant", category: "planning",
     unlocked: splitStaySavant,
+    requirement: "Save an itinerary with 2+ resorts",
     detail: "Save an itinerary with 2 or more different resorts in one trip.",
   });
   // Split into two accurate badges instead of one that called any 2BR a
@@ -527,12 +601,14 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   const villaRoyalty = evaluateSpecialBadge({
     id: "villa-royalty", icon: "👑", name: "Villa Royalty", category: "exploration",
     unlocked: trips.some(isSpaciousVillaTrip),
+    requirement: "Log a 2-Bedroom or larger stay",
     detail: "Log a stay in a 2-Bedroom or larger villa.",
   });
   const grandVilla = evaluateSpecialBadge({
     id: "grand-villa", icon: "🏛️", name: "Grand Villa", category: "exploration",
     unlocked: trips.some(isTrueGrandVillaTrip),
-    detail: "Log a stay in an actual Grand Villa -- the largest, rarest unit at a resort, not just any 2BR+.",
+    requirement: "Log a Grand Villa or Treehouse Villa stay",
+    detail: "Log a stay in an actual Grand Villa (or a Saratoga Springs Treehouse Villa) -- the largest, rarest unit at a resort, not just any 2BR+.",
   });
 
   const visitedResortIds = new Set([
@@ -617,6 +693,7 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   const welcomeHome = evaluateSpecialBadge({
     id: "welcome-home", icon: "🏠", name: "Welcome Home", category: "ownership",
     unlocked: contracts.length >= 1,
+    requirement: "Add your first contract",
     detail: "Add your first DVC contract in My Contracts.",
   });
 
@@ -642,12 +719,14 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   const blueCard = evaluateSpecialBadge({
     id: "blue-card", icon: "💳", name: "Blue Card", category: "ownership",
     unlocked: activeContracts.some(c => c.purchase_type === "direct"),
+    requirement: "Own a direct-purchase contract",
     detail: "Bought direct from Disney -- the one that comes with the blue membership card and the full perks.",
   });
 
   const resaleRanger = evaluateSpecialBadge({
     id: "resale-ranger", icon: "🏷️", name: "Resale Ranger", category: "ownership",
     unlocked: activeContracts.some(c => c.purchase_type === "resale"),
+    requirement: "Own a resale contract",
     detail: "Bought resale -- same magic, smarter price.",
   });
 
@@ -673,12 +752,14 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   const useYearAlchemist = evaluateSpecialBadge({
     id: "use-year-alchemist", icon: "⚗️", name: "Use Year Alchemist", category: "financial",
     unlocked: hasBankedEver && hasBorrowedEver,
+    requirement: "Record both a bank and a borrow in your ledger",
     detail: "Bank points forward AND borrow from a future Use Year -- full command of DVC's point-shifting in both directions.",
   });
 
   const timeTraveler = evaluateSpecialBadge({
     id: "time-traveler", icon: "🎆", name: "Time Traveler", category: "exploration",
     unlocked: trips.some(t => t.check_in.slice(0, 4) !== t.check_out.slice(0, 4)),
+    requirement: "Log a trip that crosses New Year's",
     detail: "Log a trip whose stay crosses a calendar year.",
   });
 
@@ -724,6 +805,7 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
     id: "holiday-chaser", icon: "🎪", name: "Main Event", category: "exploration",
     unlocked: typeof DISNEY_EVENTS !== "undefined" &&
       trips.some(t => DISNEY_EVENTS.some(e => t.check_in <= e.endDate && e.startDate < t.check_out)),
+    requirement: "Log a trip overlapping a festival, party, or race",
     detail: "Log a trip that overlaps an EPCOT festival, hard-ticket party, or runDisney weekend (the same events shown as a 🎉 on the calendar).",
   });
 
@@ -757,6 +839,7 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
     id: "bicoastal", icon: "✈️", name: "Bicoastal", category: "exploration",
     unlocked: [...visitedResortIds].some(id => !NON_WDW_RESORT_IDS_LOCAL.has(id)) &&
       [...visitedResortIds].some(id => WEST_COAST_RESORT_IDS.has(id)),
+    requirement: "Log stays at both a Florida and a California resort",
     detail: "Log or save a trip at both a Walt Disney World resort and a California resort (Disneyland Hotel or Villas at Disney's Grand Californian).",
   });
 
@@ -788,6 +871,7 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
     id: "coast-to-coast", icon: "🌉", name: "Two-Coast Deeds", category: "ownership",
     unlocked: activeContracts.some(c => WEST_COAST_RESORT_IDS.has(c.home_resort_id)) &&
       activeContracts.some(c => c.home_resort_id !== "aulani" && !WEST_COAST_RESORT_IDS.has(c.home_resort_id)),
+    requirement: "Own contracts on both coasts",
     detail: "Own an active contract at a California resort (Disneyland Hotel or Villas at Disney's Grand Californian) AND an active contract at an East Coast resort (any Walt Disney World resort, Hilton Head Island, or Vero Beach).",
   });
 
@@ -808,24 +892,19 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
       }
       return false;
     }),
+    requirement: "Log a trip that includes February 29",
     detail: "Log a trip that includes February 29th.",
   });
 
-  // Same honest-proxy pattern as Waitlist Whisperer: a linked contract_id
-  // gives an exact answer; an unlinked trip falls back to matching ANY
-  // active contract's allotment, since there's no way to know which
-  // contract a trip's points actually came from without that link.
+  // Only confirmed points from an owned contract count toward this badge.
   const pointPurist = evaluateSpecialBadge({
     id: "point-purist", icon: "💯", name: "Point Purist", category: "financial",
     unlocked: trips.some(t => {
-      if (!t.points_used) return false;
-      if (t.contract_id) {
-        const c = contractById.get(t.contract_id);
-        return !!c && t.points_used === c.points_per_year;
-      }
-      return activeContracts.some(c => t.points_used === c.points_per_year);
+      if (!window.DVCTripFunding.summary(t, contracts).valid) return false;
+      return t.points_source_breakdown.allocations.some(a => a.points === contractById.get(a.contract_id)?.points_per_year);
     }),
-    detail: "Log a trip that uses the exact number of points as one full year's allotment on a contract. (If the trip isn't linked to a specific contract, this matches against any of your active contracts' allotments.)",
+    requirement: "Log a trip using a contract's full annual points",
+    detail: "Log a trip with confirmed points from an owned contract equal to that contract's full annual allotment.",
   });
 
   return [
@@ -835,7 +914,7 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   ];
 }
 
-// The 5 badges tracked purely server-side via incrementBadgeEvent()
+// The 6 badges tracked purely server-side via incrementBadgeEvent()
 // (dvc-track.js) rather than derived from contracts/trips/itineraries --
 // their source of truth IS user_badges.event_count, so unlike every other
 // badge above, these are built directly from storedBadges rather than
@@ -852,6 +931,7 @@ function evaluateEventBadges(storedBadges) {
   const resourcefulExplorer = evaluateSpecialBadge({
     id: "resourceful-explorer", icon: "🔍", name: "Resourceful Explorer", category: "exploration",
     unlocked: eventCountFor(storedBadges, "resourceful-explorer") >= 1,
+    requirement: "Click any external source link in the app",
     detail: "Click through to an external source link anywhere in DVC Companion (points charts, crowd calendar, Disney Food Blog, resale marketplaces).",
   });
   const justOneMoreNight = evaluateTieredBadge({
@@ -879,7 +959,34 @@ function evaluateEventBadges(storedBadges) {
   const splitStayScientist = evaluateSpecialBadge({
     id: "split-stay-scientist", icon: "🧪", name: "Split-Stay Scientist", category: "planning",
     unlocked: eventCountFor(storedBadges, "split-stay-scientist") >= 1,
+    requirement: "Compare 2+ saved itineraries side by side",
     detail: "Compare 2 or more saved itineraries side by side on Compare Itineraries.",
+  });
+  // The 11-month counterpart to 7-Month Sniper -- deliberately a PAIR,
+  // not a name collision: 7 and 11 months are DVC's two real booking
+  // windows, so an owner reading both badges together reads the actual
+  // rule. (Contrast Bicoastal vs. the old "Coast to Coast", renamed
+  // 2026-09-19 because those two shared a name shape with no
+  // distinguishing principle behind it.)
+  //
+  // Gemini's original spec for this badge was "booked high-demand
+  // inventory right as the home window opened," which isn't derivable --
+  // `trips` records check-in/check-out but no BOOKING date, so there's no
+  // way to know when a reservation was actually made. Tracking the
+  // planning behavior instead is the honest version of the same idea: it
+  // rewards being in the app looking at a stay during the one month its
+  // 11-month window opens, which is the thing a sniper actually does.
+  // See app.js's trackElevenMonthSniper() for the home-resort gate.
+  const elevenMonthSniper = evaluateTieredBadge({
+    id: "eleven-month-sniper", icon: "🔭", name: "11-Month Sniper", category: "planning",
+    value: eventCountFor(storedBadges, "eleven-month-sniper"),
+    tiers: [
+      { threshold: 1, label: "Window Watcher" },
+      { threshold: 5, label: "Sharpshooter" },
+      { threshold: 15, label: "Dead Eye" },
+    ],
+    valueLabel: v => `${v} stay${v === 1 ? "" : "s"} planned at the 11-month mark`,
+    detail: "Pick a stay on the calendar at one of your own home resorts with check-in 10 to 11 months out -- the stretch where your 11-month home resort priority opens, months before anyone else can book it at 7.",
   });
   const nightOwl = evaluateTieredBadge({
     id: "night-owl", icon: "🦉", name: "Night Owl", category: "exploration",
@@ -892,7 +999,7 @@ function evaluateEventBadges(storedBadges) {
     valueLabel: v => `${v} late-night action${v === 1 ? "" : "s"}`,
     detail: "Planning actions logged between midnight and 4am -- clicking a source link, extending a trip, reloading an itinerary, or comparing itineraries.",
   });
-  return [resourcefulExplorer, justOneMoreNight, reChecker, splitStayScientist, nightOwl];
+  return [resourcefulExplorer, justOneMoreNight, reChecker, splitStayScientist, elevenMonthSniper, nightOwl];
 }
 
 function badgeTierText(b) {
@@ -985,6 +1092,15 @@ function groupBadgesByCategory(badges) {
 // only define 3 tiers, so a fully maxed-out member could never reach 100%
 // (a DVC-literate reviewer caught this -- 2026-09-19). Summing each
 // badge's own real max fixes that.
+// The set of unlocked badge ids in an already-evaluated badge list.
+// Snapshotting this before and after a save is how trips.html detects
+// what a newly-logged trip just unlocked (see its celebration banner) --
+// diffing ids rather than re-deriving each badge's own condition, so a
+// new badge is picked up by that celebration for free.
+function unlockedBadgeIds(badges) {
+  return new Set(badges.filter(b => b.unlocked).map(b => b.id));
+}
+
 function computeMasteryScore(badges) {
   const earned = badges.reduce((sum, b) => sum + (b.tierNumber || 0), 0);
   const max = badges.reduce((sum, b) => sum + (b.kind === "special" ? 1 : b.tiers.length), 0);
@@ -1028,6 +1144,15 @@ const RESORT_KEY_SVG = `<svg class="badge-icon-key" viewBox="0 0 24 24" width="2
 // .badge-tile.locked's filter:grayscale/opacity already desaturates the
 // whole tile, icon included, the same way it already does for every other
 // badge's icon.
+// A locked SPECIAL badge's unlock condition, for the tile face. Tiered
+// badges don't need this -- badgeProgressHTML() already prints their
+// criteria as a progress line -- and an unlocked badge doesn't need to be
+// told how to unlock, so this is empty in both of those cases.
+function badgeRequirementHTML(b) {
+  if (b.kind !== "special" || b.unlocked || !b.requirement) return "";
+  return `<div class="badge-requirement">${b.requirement}</div>`;
+}
+
 function buildTrophyTileHTML(b) {
   const iconInner = b.image ? RESORT_KEY_SVG : b.icon;
   const iconStyle = b.image ? ` style="background-image: url('${b.image}')"` : "";
@@ -1037,6 +1162,7 @@ function buildTrophyTileHTML(b) {
       <div class="badge-title">${b.name}</div>
       <div class="badge-tier">${badgeTierText(b)}</div>
       ${badgeProgressHTML(b)}
+      ${badgeRequirementHTML(b)}
     </div>
   `;
 }
@@ -1102,6 +1228,8 @@ window.DVCBadges = {
   buildTrophyTileHTML,
   badgeTierText,
   badgeProgressHTML,
+  badgeRequirementHTML,
+  unlockedBadgeIds,
   openBadgeModal,
   closeBadgeModal,
 };

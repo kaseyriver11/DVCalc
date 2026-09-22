@@ -9,14 +9,7 @@
 // widget reading from localStorage would just always show empty for every
 // real user.
 //
-// The House Money math (calcStay() down through computeHouseMoneyStats())
-// is copied from trips.html rather than shared, matching how every other
-// self-contained page in this app (compare.html, changes.html, trips.html
-// itself) already duplicates calcStay()/estimateTripCashValue() instead of
-// depending on another page's inline <script>. This is the same
-// computeHouseMoneyStats() trips.html's own "Membership Value" gauge
-// uses -- not an approximation -- so the dashboard number always agrees
-// with the full page it links to.
+// Ownership-value calculations are shared with Membership Value.
 
 // Same destructure account.html uses -- dvc-dates.js loads before this file
 // (see home.html's script order).
@@ -102,146 +95,9 @@ function tripCashValue(trip, ownedContracts) {
   return credited ? { ...est, ...credited } : null;
 }
 
-// ---- House Money economics (copied from trips.html) ----
-const FALLBACK_PRICE_PER_POINT = 140;
+// Shared model; both screens pass the owner's saved assumptions.
+const { computeHouseMoneyStats } = window.DVCOwnerValue.create(tripCashValue);
 
-function contractInitialCostBreakdown(c) {
-  const closing = c.purchase_type === "resale" ? 1500 : 0;
-  const price = c.purchase_price != null
-    ? c.purchase_price
-    : (RESORT_INVESTMENT_DATA[c.home_resort_id]?.resalePricePerPoint || FALLBACK_PRICE_PER_POINT) * c.points_per_year;
-  return { price, closing, total: price + closing };
-}
-
-function contractOwnershipStartYear(c) {
-  const currentYear = new Date().getFullYear();
-  return c.purchase_date ? parseInt(c.purchase_date.slice(0, 4), 10) : currentYear - 2;
-}
-
-function contractDuesPaidToDate(c) {
-  const currentYear = new Date().getFullYear();
-  const startYear = contractOwnershipStartYear(c);
-  let total = 0;
-  for (let y = startYear; y <= currentYear; y++) {
-    total += getDuesForYear(c.home_resort_id, y) * c.points_per_year;
-  }
-  return total;
-}
-
-// $35/pt + 5%/yr value growth + 4%/yr dues growth -- same fix (and same
-// reasoning) as trips.html's copy of this file: see its own comments on
-// STANDARD_DELUXE_VALUE_PER_POINT/projectedDuesForYear for the full
-// writeup (a DVC-literate user flagged the old $19/pt as far too low, and
-// pointed out dues were silently frozen at today's rate forever past this
-// app's known dues-history data, 2026-09-20). Kept in sync with
-// trips.html's copy by hand, same as every other duplicated function in
-// this file.
-const STANDARD_DELUXE_VALUE_PER_POINT = 35;
-const STANDARD_VALUE_GROWTH = 0.05;
-const STANDARD_DUES_GROWTH = 0.04;
-
-function projectedDuesForYear(resortId, year) {
-  const history = DUES_HISTORY[resortId];
-  const raw = getDuesForYear(resortId, year);
-  if (!history) return raw;
-  const lastKnownYear = Math.max(...Object.keys(history).map(Number));
-  if (year <= lastKnownYear) return raw;
-  return raw * Math.pow(1 + STANDARD_DUES_GROWTH, year - lastKnownYear);
-}
-
-function contractBaselinePotentialValue(c, year, yearsFromNow) {
-  const grossValue = c.points_per_year * STANDARD_DELUXE_VALUE_PER_POINT * Math.pow(1 + STANDARD_VALUE_GROWTH, yearsFromNow);
-  const dues = c.points_per_year * projectedDuesForYear(c.home_resort_id, year);
-  return Math.max(0, grossValue - dues);
-}
-
-function computeHouseMoneyStats(contracts, trips) {
-  const currentYear = new Date().getFullYear();
-  let totalPurchasePrice = 0;
-  let totalClosingCosts = 0;
-  let totalDuesPaid = 0;
-  let earliestStartYear = currentYear;
-  for (const c of contracts) {
-    const breakdown = contractInitialCostBreakdown(c);
-    totalPurchasePrice += breakdown.price;
-    totalClosingCosts += breakdown.closing;
-    totalDuesPaid += contractDuesPaidToDate(c);
-    earliestStartYear = Math.min(earliestStartYear, contractOwnershipStartYear(c));
-  }
-  const totalInitialCost = totalPurchasePrice + totalClosingCosts;
-  const totalOutlay = totalInitialCost + totalDuesPaid;
-
-  let lifetimeValue = 0;
-  let tripsWithValue = 0;
-  for (const t of trips) {
-    const v = tripCashValue(t, contracts);
-    if (v && Number.isFinite(v.cash) && v.ownedPoints > 0) {
-      lifetimeValue += v.cash;
-      tripsWithValue++;
-    }
-  }
-
-  const yearsOwned = contracts.length ? Math.max(1, currentYear - earliestStartYear + 1) : 1;
-  const paybackPct = totalOutlay > 0 ? Math.min(100, Math.round((lifetimeValue / totalOutlay) * 100)) : 0;
-  const remaining = Math.max(0, totalOutlay - lifetimeValue);
-
-  const actualPace = tripsWithValue > 0
-    ? Math.max(lifetimeValue / yearsOwned, lifetimeValue / tripsWithValue)
-    : 0;
-
-  const baselinePotential = contracts
-    .filter(c => c.is_active)
-    .reduce((sum, c) => sum + contractBaselinePotentialValue(c, currentYear, 0), 0);
-
-  let annualVelocity, velocitySource;
-  if (tripsWithValue === 0) {
-    annualVelocity = baselinePotential;
-    velocitySource = baselinePotential > 0 ? "baseline" : "none";
-  } else {
-    annualVelocity = (actualPace + baselinePotential) / 2;
-    velocitySource = baselinePotential > 0 ? "blended" : "trips";
-  }
-
-  // Simulated year by year (not a flat remaining/annualVelocity division)
-  // -- see trips.html's copy of this same function for the full writeup.
-  let estimatedHouseMoneyDate = null;
-  if (paybackPct < 100 && annualVelocity > 0) {
-    const activeContracts = contracts.filter(c => c.is_active);
-    let cumulative = 0;
-    let yearsElapsed = 0;
-    const MAX_PROJECTION_YEARS = 60;
-    while (cumulative < remaining && yearsElapsed < MAX_PROJECTION_YEARS) {
-      const yearBaseline = activeContracts.reduce(
-        (sum, c) => sum + contractBaselinePotentialValue(c, currentYear + yearsElapsed, yearsElapsed), 0
-      );
-      const yearPace = tripsWithValue === 0 ? yearBaseline : (actualPace + yearBaseline) / 2;
-      cumulative += yearPace;
-      yearsElapsed++;
-    }
-    if (cumulative >= remaining) {
-      const finalYearPace = activeContracts.reduce(
-        (sum, c) => sum + contractBaselinePotentialValue(c, currentYear + yearsElapsed - 1, yearsElapsed - 1), 0
-      );
-      const finalYearPaceBlended = tripsWithValue === 0 ? finalYearPace : (actualPace + finalYearPace) / 2;
-      const overshoot = cumulative - remaining;
-      const monthsIntoFinalYear = finalYearPaceBlended > 0
-        ? Math.max(0, 12 - Math.ceil((overshoot / finalYearPaceBlended) * 12))
-        : 12;
-      const totalMonths = (yearsElapsed - 1) * 12 + monthsIntoFinalYear;
-      estimatedHouseMoneyDate = new Date();
-      estimatedHouseMoneyDate.setDate(1);
-      estimatedHouseMoneyDate.setMonth(estimatedHouseMoneyDate.getMonth() + totalMonths);
-    }
-  }
-
-  return {
-    totalPurchasePrice, totalClosingCosts, totalInitialCost, totalDuesPaid, totalOutlay, lifetimeValue,
-    paybackPct, remaining, yearsOwned, actualPace, baselinePotential, annualVelocity, velocitySource,
-    estimatedHouseMoneyDate,
-    tripsLogged: trips.length,
-    netFreeVacations: lifetimeValue - totalOutlay,
-  };
-}
 
 // ---- Itinerary helpers (copied from itineraries.html) ----
 function resortName(id, year) {
@@ -483,9 +339,9 @@ function renderContractsWidget(contracts) {
   `;
 }
 
-function renderHouseMoneyWidget(contracts, trips) {
+function renderHouseMoneyWidget(contracts, trips, settings) {
   const container = document.getElementById("home-house-money");
-  const stats = computeHouseMoneyStats(contracts, trips);
+  const stats = computeHouseMoneyStats(contracts, trips, settings);
   const achieved = stats.paybackPct >= 100;
   const dateLabel = stats.estimatedHouseMoneyDate
     ? stats.estimatedHouseMoneyDate.toLocaleDateString(undefined, { month: "long", year: "numeric" })
@@ -507,7 +363,7 @@ function renderHouseMoneyWidget(contracts, trips) {
   container.innerHTML = `
     ${trips.some(t => !window.DVCTripFunding.summary(t, contracts).valid) ? `<p class="house-money-note">Some trips are excluded until you <a href="trips.html#trip-list">review their point sources</a>.</p>` : ""}
     <div class="house-money-pct-row">
-      <span>${fmt(stats.lifetimeValue)} of ${fmt(stats.totalOutlay)} paid back</span>
+      <span>${fmt(stats.lifetimeValue)} logged stay value / ${fmt(stats.totalOutlay)} ownership cost</span>
       <strong>${stats.paybackPct}%</strong>
     </div>
     <div class="house-money-bar-track"><div class="house-money-bar-fill" style="width:${stats.paybackPct}%"></div></div>
@@ -518,6 +374,8 @@ function renderHouseMoneyWidget(contracts, trips) {
             ? `Estimated House Money: <strong>${dateLabel}</strong> &middot; ${fmt(stats.remaining)} remaining`
             : `${fmt(stats.remaining)} remaining to reach House Money`)}
     </div>
+    <p class="house-money-note">Projection uses your saved $${stats.settings.point_value_baseline}/point baseline, ${(stats.settings.value_growth_rate * 100).toFixed(1)}% value growth and ${(stats.settings.dues_growth_rate * 100).toFixed(1)}% dues growth. <a href="trips.html#model-assumptions">Model assumptions</a></p>
+    <p class="house-money-note">Logged value counts the owned-contract share of stays. Future value is modeled; missing purchase details use estimates.</p>
   `;
 }
 
@@ -574,11 +432,12 @@ function renderItinerariesWidget(itineraries) {
 // ---- Auth-gated data load, same waitForAuth/onAuthChange pattern as
 // trips.html/itineraries.html ----
 async function renderSignedIn() {
-  const [contracts, trips, itineraries, yearPoints] = await Promise.all([
+  const [contracts, trips, itineraries, yearPoints, settings] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
     window.DVCAuth.getItineraries(),
     window.DVCAuth.getContractYearPoints(),
+    window.DVCAuth.getUserSettings(),
   ]);
   const yearPointsByContract = {};
   for (const row of yearPoints) {
@@ -586,7 +445,7 @@ async function renderSignedIn() {
   }
   renderHealthBanner(contracts, yearPointsByContract);
   renderContractsWidget(contracts);
-  renderHouseMoneyWidget(contracts, trips);
+  renderHouseMoneyWidget(contracts, trips, settings);
   renderItinerariesWidget(itineraries);
 }
 
