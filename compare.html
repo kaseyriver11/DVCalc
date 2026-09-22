@@ -128,6 +128,94 @@ body {
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
+/* ---- Date range: one connected pill instead of two separate boxy
+   fields ---- (real user feedback: dates read as "rigid"/generic form
+   fields). A shared rounded/tinted container with a divider between the
+   two halves reads as a single "trip dates" control, closer to a travel
+   app's date-range picker, without needing a full custom calendar widget
+   -- still two native <input type="date">, just restyled to sit flush
+   inside the shared pill instead of each having its own separate boxed
+   chrome. */
+.date-range-group {
+  flex-direction: row;
+  gap: 0;
+  background: linear-gradient(135deg, #f7f5fa, #efe8f7);
+  border: 1px solid #e0d5f0;
+  border-radius: 12px;
+  padding: 2px;
+  box-shadow: 0 1px 3px rgba(74, 20, 140, 0.08);
+}
+.date-range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 14px;
+  flex: 1;
+}
+.date-range-field:first-child { border-right: 1px solid #ddd0ea; }
+.date-range-field label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.4px;
+}
+.date-range-field input[type="date"] {
+  border: none;
+  background: transparent;
+  padding: 2px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+.date-range-field input[type="date"]:focus { outline: none; box-shadow: none; }
+.date-range-field input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+
+/* ---- WDW-only toggle, restyled as a chip button ---- (moved out of the
+   settings-bar below and into the top trip controls, per direct request:
+   dates -> room -> WDW-only). Same underlying checkbox + "change" event
+   listener as before -- only the visual is different, a hidden checkbox
+   plus a label styled as a pill button. :has() (broadly supported in
+   every evergreen browser this app already assumes elsewhere, e.g.
+   compare.html's own use of fit-content/grid) lets pure CSS style the
+   label based on the checkbox's checked state without any extra JS. */
+.wdw-only-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+.wdw-only-btn-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 9px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  background: white;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.wdw-only-btn-label:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.wdw-only-btn-label:has(.wdw-only-checkbox:checked) {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+.wdw-only-btn-label:has(.wdw-only-checkbox:focus-visible) {
+  box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.35);
+}
+
 .stay-summary {
   font-size: 0.8rem;
   color: #666;
@@ -639,28 +727,25 @@ body {
   cursor: pointer;
 }
 
-.settings-bar .toggle-label {
-  cursor: pointer;
-}
-
-.settings-bar input[type="checkbox"] {
-  accent-color: var(--color-primary);
-  cursor: pointer;
-  vertical-align: middle;
-}
-
 .rental-settings {
   display: inline;
 }
 
 /* Category pills */
+/* Grid, not flex -- same guardrail as the dopamine-tiles/exit-equity-tiles
+   pattern elsewhere in this app: a row of equal-weight items should be an
+   even, viewport-relative grid, not flex-wrap (which just drops whichever
+   item doesn't fit onto its own lonely line, reported directly against a
+   screenshot: 3-Bedroom wrapping alone below the other 3 on a phone).
+   repeat(4, 1fr) forces all 4 category buttons onto one row at any width. */
 .category-pills {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 4px;
 }
 
 .category-pill {
-  padding: 5px 12px;
+  padding: 5px 8px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 0.8rem;
@@ -876,7 +961,12 @@ body {
 /* Responsive */
 @media (max-width: 800px) {
   .controls { flex-direction: column; align-items: stretch; }
-  .category-pills { flex-wrap: wrap; }
+  /* Tighter text/padding so "1-Bedroom"/"2-Bedroom"/"3-Bedroom" still fit
+     on one line inside a quarter-width grid column at phone widths --
+     the grid itself (repeat(4, 1fr) above) already guarantees 4 columns
+     at any width, this just keeps the label text from wrapping inside
+     one. */
+  .category-pill { font-size: 0.7rem; padding: 8px 4px; }
 }
 
 @media (max-width: 768px) {
@@ -905,9 +995,7 @@ body {
      -- avoids the inline "label text competing with the control for
      horizontal space" overflow an inline row had for a long resort name
      (reported directly against a live screenshot: the trigger ran off the
-     right edge of the screen). .toggle-label overrides back to a row
-     immediately below, since a checkbox + its own text is one compact unit
-     that's fine inline and looks odd stacked. */
+     right edge of the screen). */
   .settings-bar label {
     display: flex;
     flex-direction: column;
@@ -929,17 +1017,6 @@ body {
      Not .settings-label-text: this is a live value the user is actively
      adjusting, not a static field label, so it keeps normal size/case. */
   .rental-rate-line { white-space: nowrap; }
-  .settings-bar .toggle-label {
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    min-height: 36px;
-  }
-  .settings-bar .toggle-label input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
   .settings-bar input[type="range"] {
     width: 100%;
     height: 6px;
@@ -1022,13 +1099,15 @@ body {
   </div>
 
   <div class="controls">
-    <div class="control-group">
-      <label for="check-in">Check-in</label>
-      <input type="date" id="check-in">
-    </div>
-    <div class="control-group">
-      <label for="check-out">Check-out</label>
-      <input type="date" id="check-out">
+    <div class="control-group date-range-group">
+      <div class="date-range-field">
+        <label for="check-in">Check-in</label>
+        <input type="date" id="check-in">
+      </div>
+      <div class="date-range-field">
+        <label for="check-out">Check-out</label>
+        <input type="date" id="check-out">
+      </div>
     </div>
     <div class="control-group">
       <label>Room Category</label>
@@ -1038,6 +1117,21 @@ body {
         <button class="category-pill" data-cat="two">2-Bedroom</button>
         <button class="category-pill" data-cat="three">3-Bedroom</button>
       </div>
+    </div>
+    <div class="control-group">
+      <!-- Same checkbox + JS wiring as before (wdwOnlyToggle.addEventListener
+           ("change", ...)) -- only the visual treatment changed, from a
+           checkbox+label sitting in the settings-bar below to a toggle-chip
+           button living with the other trip controls (dates -> room ->
+           WDW-only), per direct request. The checkbox itself is visually
+           hidden (not display:none, so it stays focusable/keyboard-
+           operable) and .wdw-only-btn-label's :has(:checked) styles the
+           label as the visible pressed/unpressed button. */ -->
+      <label>&nbsp;</label>
+      <label class="wdw-only-btn-label" for="wdw-only-toggle">
+        <input type="checkbox" id="wdw-only-toggle" class="wdw-only-checkbox">
+        WDW (Orlando) only
+      </label>
     </div>
     <div class="stay-summary" id="stay-summary"></div>
   </div>
@@ -1050,9 +1144,6 @@ body {
   <div class="vibe-filter-row" id="vibe-filter-row" style="display:none;"></div>
 
   <div class="settings-bar">
-    <label class="toggle-label">
-      <input type="checkbox" id="wdw-only-toggle"> WDW (Orlando) only
-    </label>
     <span class="rental-settings" id="rental-settings">
       <label>
         <span class="rental-rate-line">Rental rate: <strong>$<span id="rental-rate-val">20</span></strong>/pt</span>
