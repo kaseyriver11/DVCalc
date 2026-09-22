@@ -292,26 +292,11 @@ function getYearPointsRow(yearPointsByContract, contractId, year, pointsPerYear)
 }
 
 function evaluateContractDeadlineStatus(contract, yearPointsByContract, today) {
-  const uyYear = currentUYYear(contract.use_year, today);
-  const row = getYearPointsRow(yearPointsByContract, contract.id, uyYear, contract.points_per_year);
-  if (row.points_remaining <= 0) return { kind: "accounted", contract };
-  if (isBankingWindowOpen(contract.use_year, uyYear, today)) {
-    return { kind: "bankable", contract, deadline: nextDeadlineForUseYear(contract.use_year, today) };
-  }
-  const expiresMs = useYearExpiration(contract.use_year, uyYear);
-  const todayMs = dateOnlyUTC(today.year, today.month, today.day);
-  return { kind: "use-by", contract, expiresMs, daysUntil: Math.round((expiresMs - todayMs) / 86400000) };
+  return window.DVCPointAttention.evaluate(contract, yearPointsByContract, today);
 }
 
 function computeEarliestDeadline(contracts, yearPointsByContract, today) {
-  const active = contracts.filter(c => c.is_active);
-  if (active.length === 0) return null;
-  const statuses = active.map(c => evaluateContractDeadlineStatus(c, yearPointsByContract, today));
-  const bankable = statuses.filter(s => s.kind === "bankable");
-  if (bankable.length > 0) return bankable.reduce((a, b) => (b.deadline.ms < a.deadline.ms ? b : a));
-  const useBy = statuses.filter(s => s.kind === "use-by");
-  if (useBy.length > 0) return useBy.reduce((a, b) => (b.expiresMs < a.expiresMs ? b : a));
-  return { kind: "accounted" };
+  return window.DVCPointAttention.earliest(contracts, yearPointsByContract, today);
 }
 
 // The dashboard's own coarser 3-state read, distinct from account.html's
@@ -331,6 +316,11 @@ function computeEarliestDeadline(contracts, yearPointsByContract, today) {
 const URGENCY_TIER_TO_LEVEL = { calm: "green", warning: "yellow", danger: "red" };
 
 function healthBannerState(earliest) {
+  if (earliest?.kind === 'unconfirmed') return {
+    level: 'yellow', icon: '?', label: 'Balance not confirmed',
+    detail: `<strong>${window.DVCPointAttention.label(earliest.contract, resortName(earliest.contract.home_resort_id))}</strong> &mdash; confirm your ${earliest.year} use-year balance to see available points and deadline guidance.`,
+    hint: 'Annual points are not your available balance.', actions: ['review'],
+  };
   if (!earliest || earliest.kind === "accounted") {
     return { level: "green", icon: "✅", label: "Points Status", detail: "All points are accounted for -- nothing at risk right now.", actions: [] };
   }
@@ -345,8 +335,7 @@ function healthBannerState(earliest) {
       level,
       icon: level === "green" ? "✅" : level === "red" ? "🔴" : "⏳",
       label: level === "green" ? "Points Status" : level === "red" ? "Bank Urgently" : "Bank Soon",
-      detail: `<strong>${resortName(contract.home_resort_id)}</strong> &mdash; bank or borrow by <strong>${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}</strong>`,
-      hint: level === "green" ? "" : "Tap for what you can do",
+      detail: `<strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${earliest.points} current pts; bank by <strong>${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}</strong>`,
       actions: level === "green" ? [] : ["bank", "draft"],
     };
   }
@@ -361,17 +350,29 @@ function healthBannerState(earliest) {
   return {
     level,
     icon: "🔒",
-    label: level === "red" ? "Points Expiring" : "Banking Closed",
-    detail: `<strong>${resortName(contract.home_resort_id)}</strong> &mdash; must be used by <strong>${formatDeadlineWithCountdown(expiresMs, daysUntil)}</strong> or they're forfeited`,
-    hint: "Tap for what you can do",
-    actions: ["draft"], // banking is no longer possible once the window's closed
+    label: earliest.holding ? "Holding Points to Use" : "Points to Use",
+    detail: `<strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${earliest.points} pts (${earliest.buckets}) must be used by <strong>${formatDeadlineWithCountdown(expiresMs, daysUntil)}</strong> or they're forfeited.${earliest.holding ? ' Holding points can only book stays within 60 days of check-in.' : ''}`,
+    actions: ["review", "draft"], // banking is no longer possible once the window's closed
   };
 }
 
 const HEALTH_BANNER_ACTIONS = {
-  bank: { href: "account.html", label: "Bank Now →" },
+  review: { href: "account.html", label: "Review points &rarr;" },
+  bank: { href: "account.html", label: "Review banking →" },
   draft: { href: "suggest.html", label: "Draft a Trip →" },
 };
+
+// Shared by both the per-action <a href> below and the banner-wide click
+// handler -- the whole point of factoring it out is that "which contract
+// to deep-link" can never drift between the two (a real risk if this
+// string were duplicated: the visible button and the banner's own click
+// would silently disagree about where "the" action goes).
+function healthBannerActionHref(actionKey, earliest) {
+  const base = HEALTH_BANNER_ACTIONS[actionKey].href;
+  return actionKey !== "draft" && earliest?.contract
+    ? `${base}?contract=${encodeURIComponent(earliest.contract.id)}`
+    : base;
+}
 
 function renderHealthBanner(contracts, yearPointsByContract) {
   const container = document.getElementById("home-health-banner");
@@ -383,7 +384,17 @@ function renderHealthBanner(contracts, yearPointsByContract) {
   const today = todayInEastern();
   const earliest = computeEarliestDeadline(contracts, yearPointsByContract, today);
   const state = healthBannerState(earliest);
-  const expandable = state.actions.length > 0;
+  const unconfirmed = active.filter(c => window.DVCPointAttention.evaluate(c, yearPointsByContract, today).kind === 'unconfirmed');
+  // Renamed from "expandable" -- the banner used to hide its action
+  // button(s) behind a tap-to-reveal toggle (reported directly as a real
+  // usability bug: clicking a banner with an obvious action just exposed
+  // ANOTHER button to tap, instead of going there). Actions are always
+  // visible now, and clicking anywhere on the banner outside those links
+  // navigates straight to state.actions[0] -- the array order already
+  // encodes priority (see healthBannerState(): "bank" before "draft",
+  // "review" before "draft"), so a state with 2 options doesn't need a
+  // separate "which one is primary" decision made here too.
+  const clickable = state.actions.length > 0;
   // Faded resort art behind the banner (data/resort_images.js), for the
   // one resort actually at risk (earliest.contract) -- the pure "nothing
   // owned yet"/all-accounted "accounted" case has no single resort to
@@ -404,24 +415,34 @@ function renderHealthBanner(contracts, yearPointsByContract) {
     ? ` style="background-image: linear-gradient(${BANNER_WASH[state.level]}, ${BANNER_WASH[state.level]}), url('${bannerImage}')"`
     : "";
   container.innerHTML = `
-    <div class="health-banner ${state.level}${expandable ? " expandable" : ""}" id="health-banner-el"${bannerStyle}>
+    <div class="health-banner ${state.level}${clickable ? " clickable" : ""}" id="health-banner-el"${bannerStyle}>
       <span class="health-banner-icon">${state.icon}</span>
       <div class="health-banner-body">
         <div class="health-banner-label">${state.label}</div>
         <div class="health-banner-detail">${state.detail}</div>
         ${state.hint ? `<div class="health-banner-hint">${state.hint}</div>` : ""}
-        ${expandable ? `
+        ${clickable ? `
         <div class="health-banner-actions">
-          ${state.actions.map(a => `<a href="${HEALTH_BANNER_ACTIONS[a].href}" class="health-banner-action-btn">${HEALTH_BANNER_ACTIONS[a].label}</a>`).join("")}
+          ${state.actions.map(a => `<a href="${healthBannerActionHref(a, earliest)}" class="health-banner-action-btn">${HEALTH_BANNER_ACTIONS[a].label}</a>`).join("")}
         </div>` : ""}
       </div>
     </div>
   `;
-  if (expandable) {
+  if (unconfirmed.length && earliest?.kind !== "unconfirmed") container.insertAdjacentHTML("beforeend", `<p class="house-money-note">${unconfirmed.length} contract balance(s) still need confirmation. <a href="account.html?contract=${encodeURIComponent(unconfirmed[0].id)}">Review balances</a></p>`);
+  if (clickable) {
     const el = document.getElementById("health-banner-el");
+    // Whole banner navigates to the PRIORITY action (state.actions[0]) --
+    // a state with a single action used to require tapping the banner
+    // just to reveal that one action's button, then tapping it again
+    // (the actual reported bug). A state with 2 actions still shows both
+    // buttons (visible unconditionally now, not gated behind a tap), so
+    // the less-common second choice stays reachable -- clicking a real
+    // <a> always wins over this (stopPropagation isn't even needed: the
+    // early return below just declines to also navigate the banner's own
+    // target on top of the link's).
     el.addEventListener("click", (e) => {
-      if (e.target.closest("a")) return; // let action links navigate normally
-      el.classList.toggle("expanded");
+      if (e.target.closest("a")) return;
+      window.location.href = healthBannerActionHref(state.actions[0], earliest);
     });
   }
 }
@@ -484,6 +505,7 @@ function renderHouseMoneyWidget(contracts, trips) {
   }
 
   container.innerHTML = `
+    ${trips.some(t => !window.DVCTripFunding.summary(t, contracts).valid) ? `<p class="house-money-note">Some trips are excluded until you <a href="trips.html#trip-list">review their point sources</a>.</p>` : ""}
     <div class="house-money-pct-row">
       <span>${fmt(stats.lifetimeValue)} of ${fmt(stats.totalOutlay)} paid back</span>
       <strong>${stats.paybackPct}%</strong>

@@ -116,7 +116,10 @@ body {
 .health-banner.green { background: #2e7d32; }
 .health-banner.yellow { background: #ef6c00; }
 .health-banner.red { background: #b71c1c; }
-.health-banner.expandable { cursor: pointer; }
+/* .clickable (was .expandable): the whole banner navigates straight to
+   its priority action on click now, rather than revealing a button to
+   tap next -- see renderHealthBanner()'s own comment for why. */
+.health-banner.clickable { cursor: pointer; }
 .health-banner-icon { font-size: 1.3rem; flex-shrink: 0; line-height: 1.3; }
 .health-banner-body { flex: 1; min-width: 0; }
 .health-banner-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; opacity: 0.8; }
@@ -124,12 +127,11 @@ body {
 .health-banner-detail strong { color: inherit; }
 .health-banner-hint { font-size: 0.72rem; margin-top: 4px; opacity: 0.75; }
 .health-banner-actions {
-  display: none;
+  display: flex;
   gap: 8px;
   margin-top: 10px;
   flex-wrap: wrap;
 }
-.health-banner.expanded .health-banner-actions { display: flex; }
 .health-banner-action-btn {
   font-size: 0.78rem;
   font-weight: 700;
@@ -445,6 +447,7 @@ body {
   <script src="data/resort_investment.js"></script>
   <script src="data/resort_images.js"></script>
   <script src="dvc-dates.js"></script>
+  <script src="dvc-point-attention.js"></script>
   <script src="dvc-track.js"></script>
   <script src="dvc-trip-funding.js"></script>
   <script src="home.js"></script>
