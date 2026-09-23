@@ -57,9 +57,10 @@ const avail = { ssr: 1.6, okw: 0.7 }; // avg days open out of 7, flat for the te
 const availabilityFor = resortId => avail[resortId] ?? null;
 
 test("with availability, a stay only qualifies at Good+ odds (score >= 0.75 x nights)", () => {
-  // SSR 1.6 days: 2 nights ok (1.6 >= 1.5), 3 nights not; OKW 0.7 < 0.75 never qualifies
+  // SSR 1.6 days: 1 night Excellent, 2 nights Good (1.6 >= 1.5), 3 not; OKW 0.7 < 0.75 never qualifies.
+  // Excellent odds beat length, so the 1-night stay wins.
   const stays = findStays({ points: 100, fromDate: "2026-10-05", lastNightDate: "2026-10-31", resorts, pointsFor, availabilityFor });
-  assert.deepEqual(stays.map(s => [s.resortId, s.nights]), [["ssr", 2]]);
+  assert.deepEqual(stays.map(s => [s.resortId, s.nights]), [["ssr", 1]]);
   assert.equal(stays[0].availability, 1.6);
 });
 
@@ -109,4 +110,12 @@ test("Walt Disney World resorts rank ahead of off-site ones, even with worse odd
   const odds = { ssr: 1.6, okw: 0.9, veroBeach: 2.5 };
   const stays = findStays({ points: 100, fromDate: "2026-10-05", lastNightDate: "2026-10-31", resorts: offsite, pointsFor: price, availabilityFor: r => odds[r] });
   assert.deepEqual(stays.map(s => s.resortId), ["ssr", "okw", "veroBeach"]);
+});
+
+test("within a resort, Excellent odds beat a longer Good-odds stay; among equal odds, longer wins", () => {
+  const one = [resorts[0]];
+  const excellent = findStays({ points: 100, fromDate: "2026-10-05", lastNightDate: "2026-10-31", resorts: one, pointsFor, availabilityFor: () => 1.6 });
+  assert.equal(excellent[0].nights, 1);
+  const allExcellent = findStays({ points: 100, fromDate: "2026-10-05", lastNightDate: "2026-10-31", resorts: one, pointsFor, availabilityFor: () => 7 });
+  assert.ok(allExcellent[0].nights > 1);
 });
