@@ -3481,7 +3481,7 @@ function wireTripForm(activeContracts) {
     updateSuggestions();
   });
   document.getElementById("f-room").addEventListener("change", updateSuggestions);
-  document.getElementById("f-checkin").addEventListener("change", () => { updateSuggestions(); updateBalanceDeduction(); updateTripFormTitle(); });
+  document.getElementById("f-checkin").addEventListener("change", () => { syncCheckoutMin(); updateSuggestions(); updateBalanceDeduction(); updateTripFormTitle(); });
   document.getElementById("f-deduct").addEventListener("change", () => { deductTouched = true; });
   document.getElementById("f-checkout").addEventListener("change", () => { updateSuggestions(); updateBalanceDeduction(); });
   document.getElementById("f-room").addEventListener("change", updateBalanceDeduction);
@@ -3568,6 +3568,7 @@ function openTripForm(trip, draft = null) {
   populateRoomTypesForResort(document.getElementById("f-resort").value, values?.room_type_id);
   document.getElementById("f-checkin").value = values?.check_in || "";
   document.getElementById("f-checkout").value = values?.check_out || "";
+  syncCheckoutMin();
   document.getElementById("f-points").value = values?.points_used ?? "";
   document.getElementById("f-notes").value = values?.notes || "";
   document.getElementById("f-cash-value").value = values?.custom_cash_value ?? "";
@@ -3581,6 +3582,19 @@ function openTripForm(trip, draft = null) {
 
   updateTripFormTitle();
   document.getElementById("trip-modal").classList.add("open");
+}
+
+// Check-out must come after check-in: the picker only offers later dates,
+// and moving check-in onto or past an existing check-out clears it rather
+// than leaving an impossible range for Save to reject.
+function syncCheckoutMin() {
+  const checkIn = document.getElementById("f-checkin").value;
+  const checkOut = document.getElementById("f-checkout");
+  if (!checkIn) { checkOut.min = ""; return; }
+  const next = new Date(checkIn + "T00:00:00Z");
+  next.setUTCDate(next.getUTCDate() + 1);
+  checkOut.min = next.toISOString().slice(0, 10);
+  if (checkOut.value && checkOut.value <= checkIn) checkOut.value = "";
 }
 
 // A new stay that hasn't happened yet (or has no dates yet) is a booking,
