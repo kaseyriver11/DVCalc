@@ -11,7 +11,8 @@ const fs = require('node:fs'), path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const EXPECTED = [
   ['Overview', [['home.html', 'Home'], ['badges.html', 'Achievements']]],
-  ['My Membership', [['account.html', 'My Contracts'], ['trips.html', 'Membership Value']]],
+  ['My Membership', [['account.html', 'My Contracts'], ['bookings.html', 'Bookings &amp; Stays'],
+                     ['trips.html', 'Membership Value']]],
   ['Plan a Stay', [['index.html', 'Calendar'], ['compare.html', 'Compare Resorts'],
                    ['suggest.html', 'Suggest a Stay'], ['contractvalue.html', 'Contract Value']]],
   ['My Itineraries', [['itineraries.html', 'Saved Itineraries'],
@@ -19,7 +20,7 @@ const EXPECTED = [
 ];
 // Every page that renders the nav. changes.html carries it but is not a nav
 // destination itself, so it is the one page expected to have no active tab.
-const PAGES = ['account.html', 'badges.html', 'changes.html', 'compare.html', 'contractvalue.html',
+const PAGES = ['account.html', 'badges.html', 'bookings.html', 'changes.html', 'compare.html', 'contractvalue.html',
                'home.html', 'index.html', 'itineraries.html', 'itinerarycompare.html',
                'suggest.html', 'trips.html'];
 const NO_ACTIVE_TAB = new Set(['changes.html']);

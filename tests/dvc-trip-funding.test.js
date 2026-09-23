@@ -44,7 +44,7 @@ test('invalid cash never enters value totals; zero cash is supported', () => {
   for (const cash of [-1, NaN, Infinity]) assert.equal(funding.credit(t, cash, contracts), null);
   assert.equal(funding.credit(t, 0, contracts).cash, 0);
 });
-for (const file of ['home.js', 'trips.html', 'badges.html']) {
+for (const file of ['home.js', 'dvc-stay-value.js', 'badges.html']) {
   test(`${file} uses the same credited value for both custom and estimated cash`, () => {
     const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
     const fn = source.match(/function tripCashValue\(trip, ownedContracts\) \{[\s\S]*?\n\}/)[0];

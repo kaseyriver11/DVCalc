@@ -177,4 +177,6 @@ All ten were confirmed in code and fixed on September 22, 2026 (Claude Code). **
 - [x] UX2-09 — Consistent brand destination. The brand opens Home on every page, and the installed app starts on Home (`manifest.json` `start_url`).
 - [x] UX2-10 — Explicit savings comparison baselines. "My points vs renting" / "My points vs Disney cash," with the compared costs under each figure on the mobile cards.
 
+**Still to check against the real database** (saved for later, 2026-09-23): the owner verified the record + delete-as-mistake round trip on September 22. Not yet exercised for real: (1) editing a booking that took points — the balance should move only by the difference; (2) a stay crossing the contract's use-year start date — the preview should show the split between the two use years.
+
 Also fixed while verifying: `compare.html` threw on every load wiring a `#back-link` that no longer exists. Follow-up from the owner: Home is getting cluttered — see [`home_redesign_todo.md`](home_redesign_todo.md).

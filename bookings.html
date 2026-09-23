@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookings &amp; Stays — DVC Companion</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="images/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#4a148c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg-page);
+  color: #333;
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+  color: white;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+/* ---- Site nav ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
+
+.site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
+
+.account-btn, .account-link-btn {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #f7f5fa;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
+}
+.account-btn:hover, .account-link-btn:hover { background: #ece1f7; border-color: var(--color-primary); }
+
+@media (max-width: 800px) {
+  .site-nav-toggle { display: flex; }
+  .site-nav-links { display: none; flex: 0 0 100%; width: 100%; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 4px; padding-top: 10px; border-top: 1px solid #eee; }
+  .site-nav-group { flex-direction: column; align-items: flex-start; gap: 6px; }
+  #account-control { display: none; width: 100%; margin-top: 10px; }
+  .site-nav.open .site-nav-links { display: flex; }
+  .site-nav.open #account-control { display: block; }
+  .header { padding: 10px 20px; }
+  .header h1 { font-size: 1.05rem; }
+  .header .subtitle { font-size: 0.7rem; }
+}
+
+.page {
+  max-width: 820px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.gate {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 48px 32px;
+  text-align: center;
+  color: #666;
+}
+
+.gate p { margin-bottom: 18px; font-size: 0.95rem; }
+
+.big-signin-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.big-signin-btn:hover { background: var(--color-primary-active); }
+
+.section {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  margin-bottom: 4px;
+}
+
+.section-sub {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.section-header-row h2 { margin-bottom: 4px; }
+.section-header-row .add-btn { flex-shrink: 0; }
+
+.empty-note {
+  color: #999;
+  font-style: italic;
+  font-size: 0.88rem;
+  padding: 8px 0 16px;
+}
+
+/* ---- Trip postcard feed ---- */
+.trip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* "Look 2" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md): plain
+   neutral border, no color accent -- this used to have a resort-hash-
+   colored top border (walletCardPrimaryColor()), which was one of several
+   different "how do we show resort identity" treatments that had drifted
+   across pages (reported directly, alongside contractvalue.html's purple
+   border and index.html's colored washes, as inconsistent). Now that the
+   photo itself (data/resort_images.js) carries resort identity, the
+   colored bar was redundant decoration -- dropped in favor of the same
+   plain border every other Look 2 card uses. */
+.trip-postcard {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.trip-postcard-main { flex: 1; min-width: 220px; }
+
+.trip-postcard-resort { font-weight: 700; color: #222; font-size: 0.92rem; }
+/* Darkened from #888/#666 -- both were already borderline-low-contrast on
+   plain white, and reported hard to read once a photo (data/resort_images.js)
+   sat behind them too (see resortArtCardStyle() above). */
+.trip-postcard-room { font-size: 0.78rem; color: #555; margin-top: 1px; }
+
+.trip-postcard-dates {
+  font-size: 0.78rem;
+  color: #444;
+  margin-top: 4px;
+}
+
+.trip-postcard-value {
+  text-align: right;
+  min-width: 150px;
+}
+
+.trip-postcard-pill {
+  display: inline-block;
+  background: var(--color-good-bg);
+  color: var(--color-good);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.trip-postcard-pill.no-data { background: #f0f0f0; color: #999; }
+
+.trip-postcard-points {
+  font-size: 0.68rem;
+  color: #666;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.trip-postcard-actions { display: flex; gap: 4px; }
+
+.icon-btn {
+  border: none;
+  background: none;
+  color: #aaa;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.icon-btn:hover { background: #f0f0f0; color: var(--color-primary); }
+.icon-btn.danger:hover { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* Plays once on the postcard for a trip just logged/saved via the modal. */
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(74, 20, 140, 0.35); }
+  100% { box-shadow: 0 0 0 14px rgba(74, 20, 140, 0); }
+}
+.trip-postcard.just-logged {
+  animation: pulseRing 0.6s ease-out;
+}
+
+/* ---- Badge unlock celebration ----
+   Shown once, at the top of the page, when a just-logged trip pushed one
+   or more badges over their unlock condition. Trophy Case browsing lives
+   on badges.html (the preview here was removed 2026-09-17), so without
+   this a member could unlock something and never find out -- the banner
+   is the notification, and it links through rather than re-embedding the
+   case. */
+@keyframes unlockRise {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.unlock-banner {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+  color: white;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(74, 20, 140, 0.25);
+  animation: unlockRise 0.35s ease-out;
+}
+.unlock-banner-body { flex: 1; min-width: 0; }
+.unlock-banner-eyebrow {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+.unlock-banner-names { font-size: 0.98rem; font-weight: 600; line-height: 1.35; }
+.unlock-banner-link {
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  display: inline-block;
+  margin-top: 6px;
+}
+.unlock-banner-icons { display: flex; gap: 6px; flex-shrink: 0; }
+.unlock-banner-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  animation: pulseRing 0.9s ease-out;
+}
+.unlock-banner-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+.unlock-banner-close:hover { opacity: 1; }
+
+@media (max-width: 700px) {
+  .unlock-banner { flex-wrap: wrap; gap: 12px; }
+  .unlock-banner-body { flex: 1 1 100%; order: 2; }
+  .unlock-banner-icons { order: 1; }
+  .unlock-banner-close { order: 1; margin-left: auto; }
+}
+
+.small-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #555;
+  cursor: pointer;
+}
+.small-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.small-btn.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
+
+.add-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-btn:hover { background: var(--color-primary-active); }
+
+/* ---- Log a Trip modal (2026-09-17 redesign) ----
+   Replaced the old flat .form-grid (one long vertical stack of identical
+   bare fields, reading as a tax form) with labeled .form-group sections --
+   Where You Stayed / When / The Numbers / Extra Details -- so related
+   fields read as one decision instead of N interchangeable rows. The
+   modal box itself stays capped near 480px (tokens.css's .modal-box), so
+   these are still narrow-viewport-safe multi-column rows (Mobile
+   Responsiveness Guardrail #1's "collapse to 1, not 2, columns" applies
+   below), not a wide desktop form. */
+.trip-modal-box { max-width: min(500px, 92vw); }
+
+.form-group {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.form-group:last-of-type { border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
+
+.form-group-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+
+.form-group .form-field:not(:last-child) { margin-bottom: 12px; }
+
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 480px) {
+  .form-row-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 340px) {
+  .form-row-2 { grid-template-columns: 1fr; }
+}
+
+/* min-width: 0 lets a grid item shrink below its content's intrinsic size
+   (a <select>'s widest option, a date input's native width) -- without it
+   these columns blow out past the modal's box instead of wrapping/
+   truncating inside it, forcing a horizontal scrollbar. */
+.form-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.form-field label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.4px;
+}
+
+.form-field input, .form-field select, .form-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  background: white;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74,20,140,0.12);
+}
+
+.field-hint {
+  font-size: 0.72rem;
+  color: #888;
+  min-height: 1em;
+}
+.field-hint.exact { color: var(--color-good); }
+
+/* The whole numeric card is the input surface, rather than a browser
+   input nested inside a colored box. Keep the value large and editable. */
+.insight-field {
+  background: linear-gradient(145deg, #fff, #faf8fd);
+  border: 1px solid var(--color-border-light);
+  border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.insight-field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.12);
+}
+.insight-field label {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.insight-field:not(:last-child) { margin-bottom: 10px; }
+.insight-value-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.insight-unit { color: var(--color-text-muted); font-size: 0.9rem; flex-shrink: 0; }
+.insight-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  padding: 6px 0;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  font-family: inherit;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.insight-input::-webkit-inner-spin-button,
+.insight-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.insight-input::placeholder { font-size: 1rem; font-weight: 400; color: var(--color-text-faint); }
+.insight-field .field-hint { color: var(--color-text-muted); line-height: 1.4; }
+.insight-field .field-hint.exact { color: var(--color-good); }
+
+.balance-deduct { margin: 0 0 16px; padding: 12px; border: 1px solid var(--color-border-light); border-radius: 16px; background: var(--color-bg-card); }
+.balance-deduct-toggle { display: flex; align-items: center; gap: 10px; font-size: .85rem; font-weight: 700; color: var(--color-text); cursor: pointer; }
+.balance-deduct-toggle input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.balance-deduct-lines { margin: 8px 0 0; padding: 0; list-style: none; font-size: .78rem; line-height: 1.5; color: var(--color-text-muted); }
+.balance-deduct-lines li + li { margin-top: 4px; }
+.balance-deduct-lines .deduct-skip { color: var(--color-text-muted); font-style: italic; }
+.trip-funding { margin: 16px 0; padding: 0; min-width: 0; border: 0; }
+.trip-funding legend { font-size: 0.9rem; font-weight: 700; color: var(--color-text); }
+.funding-help { font-size: 0.78rem; line-height: 1.5; color: var(--color-text-muted); margin: 8px 0; }
+
+.funding-contract-row { margin: 10px 0; border: 1px solid var(--color-border-light); border-radius: 16px; background: var(--color-bg-card); overflow: hidden; transition: border-color .15s, background .15s; }
+.funding-contract-row:has(input:checked) { border-color: var(--color-primary); background: var(--color-primary-tint-bg); }
+.funding-contract-choice { position: relative; display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 12px; cursor: pointer; }
+.funding-contract-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.funding-contract-choice:has(input:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: -4px; border-radius: 14px; }
+.funding-contract-art { width: 44px; height: 48px; border-radius: 10px; background: var(--color-primary-tint-bg); background-size: cover; background-position: center; flex-shrink: 0; }
+.funding-contract-copy { flex: 1; min-width: 0; }
+.funding-contract-copy strong { display: block; font-size: .85rem; line-height: 1.35; color: var(--color-text); }
+.funding-contract-copy small { display: block; margin-top: 4px; font-size: .72rem; line-height: 1.3; color: var(--color-text-muted); }
+.funding-check { width: 24px; height: 24px; flex-shrink: 0; border: 1.5px solid var(--color-border); border-radius: 50%; display: grid; place-items: center; color: transparent; font-size: .85rem; }
+.funding-contract-choice:has(input:checked) .funding-check { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.funding-amount { display: none; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--color-border-light); margin: 0 12px; padding: 10px 0; }
+.funding-contract-row:has(input:checked) .funding-amount { display: flex; }
+.funding-amount-label { font-size: .76rem; color: var(--color-text-muted); }
+.funding-number { display: flex; align-items: center; gap: 6px; padding: 0 10px; background: var(--color-bg-card); border-radius: 12px; color: var(--color-text-muted); font-size: .75rem; }
+.funding-number:focus-within { outline: 2px solid var(--color-primary); }
+.funding-amount input { width: 80px; min-height: 44px; border: 0; background: transparent; padding: 4px 0; font: inherit; font-size: 1.25rem; font-weight: 700; text-align: right; color: var(--color-text); outline: none; appearance: textfield; }
+.funding-amount input::-webkit-inner-spin-button, .funding-amount input::-webkit-outer-spin-button { -webkit-appearance: none; }
+#outside-funding { margin: 14px 0; border: 1px solid var(--color-border-light); border-radius: 14px; padding: 0 12px; }
+#outside-funding summary { padding: 14px 0; min-height: 48px; cursor: pointer; color: var(--color-text); font-size: .82rem; font-weight: 600; }
+#outside-funding .form-field { display: flex; flex-direction: row; align-items: center; gap: 12px; justify-content: space-between; margin: 0; padding: 8px 0; border-top: 1px solid var(--color-border-light); }
+#outside-funding .form-field label { text-transform: none; letter-spacing: 0; font-size: .78rem; line-height: 1.4; margin: 0; }
+#outside-funding .form-field input { width: 80px; flex-shrink: 0; min-height: 44px; font-size: 16px; text-align: right; border-radius: 10px; }
+.funding-summary { padding: 12px 0 8px; color: var(--color-text); font-size: .8rem; line-height: 1.4; }
+.funding-summary-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.funding-summary-line strong { font-size: .9rem; }
+.funding-summary-line span { font-size: .74rem; color: var(--color-text-muted); }
+.funding-progress { height: 5px; border-radius: 99px; background: var(--color-border-light); overflow: hidden; margin: 9px 0; }
+.funding-progress span { display: block; height: 100%; background: var(--color-primary); border-radius: inherit; transition: width .2s; }
+.funding-summary small { display: block; color: var(--color-text-muted); font-size: .74rem; }
+.funding-summary.funding-incomplete .funding-summary-line strong { color: var(--color-warning); }
+
+
+
+.save-warning {
+  font-size: 0.8rem;
+  color: #8a6d00;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.form-actions { display: flex; gap: 10px; }
+.save-btn:disabled { opacity: .6; cursor: default; }
+.danger-btn { background: var(--color-danger); }
+.danger-btn:hover { background: var(--color-danger); filter: brightness(.92); }
+.page-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.page-actions-link { font-size: .85rem; font-weight: 600; color: var(--color-primary); text-decoration: none; }
+.stay-group-title { font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-muted); margin: 4px 0 8px; }
+.balance-deduct-lines .deduct-earlier { color: var(--color-text); }
+.deduct-split { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 6px; }
+.deduct-split label { display: flex; flex-direction: column; gap: 4px; font-size: .75rem; font-weight: 600; color: var(--color-text-muted); }
+.deduct-split input { font: inherit; font-size: .9rem; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 10px; min-width: 0; }
+.deduct-split-note { font-size: .75rem; color: var(--color-warning); }
+.delete-trip-box { max-width: min(460px, 92vw); }
+.delete-trip-intro { font-size: .85rem; color: var(--color-text); margin: 0 0 12px; line-height: 1.5; }
+.delete-options { display: grid; gap: 8px; margin-bottom: 14px; }
+.delete-option { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 14px; cursor: pointer; }
+.delete-option input { margin-top: 3px; accent-color: var(--color-primary); }
+.delete-option strong { display: block; font-size: .88rem; }
+.delete-option small { display: block; font-size: .76rem; color: var(--color-text-muted); margin-top: 2px; line-height: 1.4; }
+
+.save-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.save-btn:hover { background: var(--color-primary-active); }
+
+.cancel-btn {
+  background: white;
+  color: #666;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.form-error {
+  color: var(--color-danger);
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+}
+
+  .picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--color-bg-card);
+  background-size: cover;
+  background-position: center;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+.picker-trigger:hover { border-color: #b39ddb; }
+
+/* Resort trigger with a selected filter -- same lavender-wash-over-photo
+   look (resortArtWashCSS()/applyResortArtBackground() below) as
+   index.html's own Resort trigger, set once a resort is filtered on. */
+.picker-trigger.has-art { border-color: rgba(255, 255, 255, 0.6); }
+.picker-trigger.has-art .picker-trigger-value {
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75), 0 0 1px rgba(255, 255, 255, 0.75);
+}
+
+.picker-trigger-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Bottom Sheet (ported from styles.css) ----
+   Same overlay/backdrop mechanics as tokens.css's .modal-overlay/.modal-box
+   (open/close via the .open class already defined there), just re-anchored
+   to the bottom edge and slid up instead of fading a centered box in --
+   same as index.html's #resort-sheet. */
+.sheet-overlay.open { align-items: flex-end; }
+
+.modal-box.sheet {
+  max-width: 100%;
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 16px 16px 0 0;
+  margin: 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  animation: sheet-slide-up 0.22s ease-out;
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  margin: 4px auto 12px;
+}
+
+/* Shows the currently-filtered resort's art (data/resort_images.js), hidden
+   when no resort is selected -- same scene-setting banner as index.html's
+   #resort-sheet-hero. */
+.resort-sheet-hero {
+  height: 120px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 10px;
+}
+
+.sheet-search {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+.sheet-list {
+  overflow-y: auto;
+  max-height: 60vh;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheet-empty {
+  padding: 20px 4px;
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 0.85rem;
+}
+
+.resort-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  text-align: left;
+  white-space: normal;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.resort-pick-row:hover,
+.resort-pick-row:active { background-color: var(--color-primary-tint-bg); }
+.resort-pick-row.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-tint-bg);
+  font-weight: 600;
+}
+
+/* Every DVC resort is listed (same full 17 as the calendar's own sheet),
+   not just ones this account has a saved itinerary for -- resorts/room
+   types with nothing saved are still shown, just greyed out and disabled,
+   so the list always looks/feels exactly like the calendar's and never
+   silently hides an option. */
+.resort-pick-row.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.resort-pick-row.unavailable .resort-pick-swatch { background: #bbb !important; }
+
+.resort-pick-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ---- Room Type chip grid (ported from styles.css) ----
+   Same inline accordion as index.html's Room Type picker -- .open is a
+   class (not inline style) so it's easy to toggle from JS without
+   clobbering any other inline style, same reasoning as the source. */
+.room-type-grid {
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.room-type-grid.open { display: grid; }
+
+.room-type-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  cursor: pointer;
+}
+.room-type-chip:hover { border-color: #b39ddb; }
+.room-type-chip.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-tint-bg);
+}
+.room-type-chip.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.room-type-icon { font-size: 1.3rem; line-height: 1; }
+.room-type-name { font-size: 0.76rem; font-weight: 600; color: var(--color-text); text-align: center; }
+.room-type-sleeps { font-size: 0.66rem; color: var(--color-text-muted); }
+/* The resort sheet sits above the open trip form. */
+#trip-resort-sheet { z-index: 210; }
+#trip-modal .picker-trigger { min-height: 44px; }
+#trip-modal select[hidden] { display: none; }
+#trip-resort-sheet .sheet-search { min-height: 44px; font-size: 16px; }
+#trip-resort-sheet .sheet-list { max-height: 45vh; }
+.usage-evidence { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 12px; font-size: .78rem; color: var(--color-text-muted); }
+.usage-evidence summary { cursor: pointer; color: var(--color-primary); font-weight: 600; }
+.usage-evidence p { margin: 10px 0 0; line-height: 1.5; }
+
+/* ---- Bookings & Stays list (2026-09-23) ----
+   Compact full-width rows for a history of 10+ stays; one tap expands a
+   stay's details. Groups are ordinary .section cards. */
+a.add-btn { display: inline-block; text-decoration: none; }
+.add-btn { min-height: 44px; }
+a.add-btn { display: inline-flex; align-items: center; }
+.page-actions-link { display: inline-flex; align-items: center; min-height: 44px; }
+.stay-group h2 { margin-bottom: 10px; }
+.stay-group.review { border: 1px solid #ffe082; background: #fffdf5; }
+.stay-rows { display: flex; flex-direction: column; }
+.stay-row { border-top: 1px solid var(--color-border-light); }
+.stay-row:first-child { border-top: none; }
+.stay-row-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; gap: 10px; align-items: center; width: 100%; min-height: 56px; padding: 10px 2px; border: 0; background: none; font: inherit; color: var(--color-text); text-align: left; cursor: pointer; }
+.stay-row-toggle:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; border-radius: 8px; }
+.stay-row-main { display: flex; flex-direction: column; min-width: 0; }
+.stay-row-resort { font-weight: 700; font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stay-row-dates { font-size: .8rem; color: var(--color-text-muted); }
+.stay-row-side { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.stay-row-points { font-size: .85rem; font-weight: 600; }
+.stay-row-status { font-size: .76rem; font-weight: 600; color: var(--color-good); white-space: nowrap; }
+.stay-row-status.review { color: #8a6d00; }
+.stay-row-chevron { width: 8px; height: 8px; border-right: 2px solid var(--color-text-muted); border-bottom: 2px solid var(--color-text-muted); transform: rotate(45deg); justify-self: center; transition: transform .15s; }
+.stay-row.open .stay-row-chevron { transform: rotate(-135deg); }
+.stay-details { padding: 0 2px 14px; }
+.stay-detail-line { font-size: .82rem; line-height: 1.5; color: var(--color-text); }
+.stay-detail-line + .stay-detail-line { margin-top: 2px; }
+.stay-detail-line.muted { color: var(--color-text-muted); }
+.stay-detail-line.warn { color: #8a6d00; font-weight: 600; }
+.stay-details-actions { display: flex; gap: 8px; margin-top: 10px; }
+.stay-details-actions .small-btn { min-height: 40px; padding: 8px 16px; }
+.stay-row.just-logged { animation: pulseRing 1.2s ease-out 1; border-radius: 8px; }
+.stay-year { border-top: 1px solid var(--color-border-light); }
+.stay-year:first-of-type { border-top: none; }
+.stay-year > summary { display: flex; justify-content: space-between; align-items: center; min-height: 48px; cursor: pointer; font-weight: 700; font-size: .95rem; }
+.stay-year > summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; border-radius: 6px; }
+.stay-year-count { font-size: .8rem; font-weight: 500; color: var(--color-text-muted); }
+.stay-empty .add-btn { margin-top: 12px; }
+</style>
+  <script>
+    // Injected dynamically (not a static <script async> tag) so this third-party
+    // analytics load can never hold up the page's own load/spinner state -- a
+    // static tag still counts toward window.onload even with async, so a slow
+    // or blocked gc.zgo.at could stall the tab indicator for seconds on some
+    // networks even though the app itself has already finished rendering.
+    window.addEventListener("load", () => {
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "//gc.zgo.at/count.js";
+      s.setAttribute("data-goatcounter", "https://dvcalc.goatcounter.com/count");
+      document.body.appendChild(s);
+    });
+  </script>
+  <script type="module" src="auth.js"></script>
+  <script src="nav.js"></script>
+</head>
+<body>
+
+  <nav class="site-nav">
+    <a href="home.html" class="site-nav-brand">DVC Companion</a>
+    <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Overview</span>
+        <a href="home.html">Home</a>
+        <a href="badges.html">Achievements</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="bookings.html" class="active">Bookings &amp; Stays</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
+        <a href="itineraries.html">Saved Itineraries</a>
+        <a href="itinerarycompare.html">Compare Itineraries</a>
+      </span>
+    </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
+    <h1>Bookings &amp; Stays</h1>
+    <div class="subtitle">Every stay you've recorded against your contracts</div>
+  </div>
+
+  <div class="page" id="page-content">
+    <div class="gate"><p>Loading&hellip;</p></div>
+  </div>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script src="data/cash_prices_live_summary.js"></script>
+  <script src="data/dues_historical.js"></script>
+  <script src="data/cash_value_index.js"></script>
+  <script src="data/resort_investment.js"></script>
+  <script src="data/disney_events.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="dvc-trip-funding.js"></script>
+  <script src="dvc-trip-deduct.js"></script>
+  <script src="dvc-stay-value.js"></script>
+  <script src="dvc-stay-groups.js"></script>
+  <script src="dvc-owner-value.js"></script>
+  <script src="dvc-badges.js"></script>
+  <script src="dvc-track.js"></script>
+  <script>
+const pageContent = document.getElementById("page-content");
+let contracts = [];
+let trips = [];
+let contractYearPoints = [];
+let userSettings = { point_value_baseline: 26, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
+let editingTripId = null;
+// Live deduction receipts (trip_deductions, migration 024) -- what each
+// booking took out of the ledger, so edits and deletes can put it back.
+let tripDeductions = [];
+// Retry key for a new booking: generated when the form opens and kept
+// until a save succeeds, so a second tap or a retry after a timeout returns
+// the first save (save_trip_booking) instead of recording the stay twice.
+let pendingTripId = null;
+let tripSaveInFlight = false;
+// Owner-adjusted use-year split for a stay crossing a boundary, keyed
+// "contractId|label" (dvc-trip-deduct.js planTripDeduction overrides).
+let splitOverrides = {};
+// Tracks the last value we auto-filled into Points Used, so a later
+// suggestion only overwrites the field if the user hasn't typed their own
+// number into it since -- comparing against this (not just "is it empty")
+// is what lets the suggestion keep updating as dates change without ever
+// clobbering a manual edit.
+let lastAutoFilledPoints = null;
+// Same tracking, for the Cash Value field.
+let lastAutoFilledCash = null;
+// A non-blocking warning from the most recent save or delete, shown once at
+// the top of the page then cleared.
+let pendingWarning = null;
+// The just-saved (new, not edited) booking's id, so its row gets the
+// pulseRing celebration animation on this one render only.
+let justLoggedTripId = null;
+// Unlocked-badge-id snapshot from the PREVIOUS render, so the next render
+// can diff against it and celebrate anything a just-logged booking unlocked.
+// Null until the first render completes -- a first-ever page load must not
+// celebrate the member's entire existing collection.
+let lastUnlockedBadgeIds = null;
+// Badge objects unlocked by the most recent save, shown once at the top of
+// the page then cleared (same show-once contract as pendingWarning).
+let justUnlockedBadges = [];
+
+// Same shared ownership model Membership Value uses, only so a just-logged
+// booking can be checked for newly unlocked badges.
+const { computeHouseMoneyStats } = window.DVCOwnerValue.create(tripCashValue);
+
+// Diffs this render's unlocked badges against the previous render's and
+// records anything newly unlocked for the celebration banner.
+//
+// Three deliberate choices:
+//  - Itineraries are passed as [] because this page never fetches them.
+//    Both snapshots use [] identically, so itinerary-driven badges
+//    (Split-Stay Savant, Waitlist Whisperer) simply never show up in the
+//    diff rather than producing a false "just unlocked" -- correct for a
+//    banner whose whole trigger is logging a TRIP.
+//  - evaluateUserBadges() is called directly, NOT through
+//    applyBadgePersistence(), which fires Supabase upserts. This is a
+//    read-only probe that runs on every render; badges.html remains the
+//    one place that persists tiers.
+//  - Only fires when justLoggedTripId is set, so editing a trip, deleting
+//    one, or simply revisiting the page never triggers a celebration --
+//    and lastUnlockedBadgeIds starting null means the first render after
+//    sign-in establishes a baseline instead of celebrating the member's
+//    whole existing collection at once.
+function detectNewlyUnlockedBadges(stats, pointEfficiency) {
+  let badges;
+  try {
+    badges = window.DVCBadges.evaluateUserBadges(contracts, trips, [], stats, pointEfficiency, contractYearPoints);
+  } catch (e) {
+    // A badge evaluation failure must never take down the page's real
+    // content (payback, trip list) -- the celebration is a garnish.
+    lastUnlockedBadgeIds = null;
+    justUnlockedBadges = [];
+    return;
+  }
+  const unlockedNow = window.DVCBadges.unlockedBadgeIds(badges);
+  justUnlockedBadges = (lastUnlockedBadgeIds && justLoggedTripId)
+    ? badges.filter(b => b.unlocked && !lastUnlockedBadgeIds.has(b.id))
+    : [];
+  lastUnlockedBadgeIds = unlockedNow;
+}
+
+function buildUnlockBannerHTML() {
+  if (justUnlockedBadges.length === 0) return "";
+  const names = justUnlockedBadges.map(b => b.name).join(", ");
+  const icons = justUnlockedBadges.slice(0, 3)
+    .map(b => `<div class="unlock-banner-icon">${b.icon}</div>`).join("");
+  const count = justUnlockedBadges.length;
+  return `
+    <div class="unlock-banner" id="unlock-banner">
+      <div class="unlock-banner-icons">${icons}</div>
+      <div class="unlock-banner-body">
+        <div class="unlock-banner-eyebrow">${count === 1 ? "Achievement unlocked" : `${count} achievements unlocked`}</div>
+        <div class="unlock-banner-names">${names}</div>
+        <a class="unlock-banner-link" href="badges.html">See it in the Trophy Room &rarr;</a>
+      </div>
+      <button type="button" class="unlock-banner-close" id="unlock-banner-close" aria-label="Dismiss">&times;</button>
+    </div>
+  `;
+}
+
+
+function renderGate() {
+  pageContent.innerHTML = `
+    <div class="gate">
+      <p>Sign in to see and record the stays you've booked with your points.</p>
+      <div id="gate-signin-slot"></div>
+    </div>
+  `;
+  window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
+}
+
+function renderUnconfigured() {
+  pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
+}
+
+async function renderSignedIn() {
+  if (!(await window.DVCAuth.hasMembership())) {
+    window.DVCAuth.renderMembershipGate(pageContent, {
+      title: "Keep a record of every stay",
+      body: "Record the stays you book with your points, see what each one took out of your balances, and fix or cancel them later.",
+    });
+    return;
+  }
+  [contracts, trips, contractYearPoints, userSettings, tripDeductions] = await Promise.all([
+    window.DVCAuth.getContracts(),
+    window.DVCAuth.getTrips(),
+    window.DVCAuth.getContractYearPoints(),
+    window.DVCAuth.getUserSettings(),
+    window.DVCAuth.getTripDeductions(),
+  ]);
+  // A failed read is not an empty history, and deductions must never be
+  // planned against balances that didn't load (UX2-05).
+  if (window.DVCAuth.readFailed("contracts", "trips", "contract_year_points")) {
+    pageContent.innerHTML = `<div class="section" role="alert"><h2>Couldn't load your bookings</h2><div class="section-sub">Your records couldn't be loaded right now. Nothing has been lost.</div><button type="button" class="save-btn" id="load-retry">Retry</button></div>`;
+    document.getElementById("load-retry").addEventListener("click", renderSignedIn);
+    return;
+  }
+
+  const stats = computeHouseMoneyStats(contracts, trips, userSettings);
+  const pointEfficiency = window.DVCBadges.computePointEfficiency(contracts, trips, contractYearPoints);
+  detectNewlyUnlockedBadges(stats, pointEfficiency);
+
+  pageContent.innerHTML = `
+    ${buildUnlockBannerHTML()}
+    <div class="page-actions">
+      <button type="button" class="add-btn js-add-trip">+ Record a booking</button>
+      <a class="page-actions-link" href="trips.html">Membership value &rarr;</a>
+    </div>
+    ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
+    <div id="stay-list"></div>
+    <div class="modal-overlay sheet-overlay" id="trip-resort-sheet">
+      <div class="modal-box sheet" role="dialog" aria-modal="true" aria-labelledby="trip-resort-title">
+        <div class="sheet-handle"></div>
+        <div class="modal-header"><h3 id="trip-resort-title">Choose a Resort</h3><button type="button" class="modal-close" id="trip-resort-close" aria-label="Close resort picker">&times;</button></div>
+        <div class="resort-sheet-hero" id="trip-resort-hero" hidden></div>
+        <input type="search" class="sheet-search" id="trip-resort-search" placeholder="Search resorts" aria-label="Search resorts">
+        <div class="sheet-list" id="trip-resort-list"></div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="trip-modal">
+      <div class="modal-box trip-modal-box">
+        <div class="modal-header">
+          <h3 id="trip-modal-title">Log a Trip</h3>
+          <button type="button" class="modal-close" id="trip-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="form-error" id="form-error" style="display:none;"></div>
+
+        <div class="form-group">
+          <div class="form-group-label">Where You Stayed</div>
+          <div class="form-field">
+            <label for="trip-resort-trigger">Resort</label>
+            <select id="f-resort" hidden aria-hidden="true" tabindex="-1"></select>
+            <button type="button" class="picker-trigger" id="trip-resort-trigger" aria-haspopup="dialog" aria-controls="trip-resort-sheet" aria-expanded="false"><span class="picker-trigger-value" id="trip-resort-label"></span><span class="custom-select-arrow" aria-hidden="true"></span></button>
+          </div>
+          <div class="form-field">
+            <label for="trip-room-trigger">Room Type</label>
+            <select id="f-room" hidden aria-hidden="true" tabindex="-1"></select>
+            <button type="button" class="picker-trigger" id="trip-room-trigger" aria-controls="trip-room-grid" aria-expanded="false"><span class="picker-trigger-value" id="trip-room-label"></span><span class="custom-select-arrow" aria-hidden="true"></span></button>
+            <div class="room-type-grid" id="trip-room-grid"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-label">When</div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="f-checkin">Check-in</label>
+              <input type="date" id="f-checkin">
+            </div>
+            <div class="form-field">
+              <label for="f-checkout">Check-out</label>
+              <input type="date" id="f-checkout">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-label">The Numbers</div>
+          <div class="insight-field">
+            <label for="f-points">Points Used</label>
+            <div class="insight-value-row">
+              <input type="number" id="f-points" min="1" step="1" inputmode="numeric" class="insight-input" aria-describedby="points-hint">
+              <span class="insight-unit" aria-hidden="true">pts</span>
+            </div>
+            <div class="field-hint" id="points-hint"></div>
+          </div>
+
+
+
+          <div class="insight-field">
+            <label for="f-cash-value">Cash Value</label>
+            <div class="insight-value-row">
+              <span class="insight-unit" aria-hidden="true">$</span>
+              <input type="number" id="f-cash-value" min="0" step="1" inputmode="decimal" placeholder="Total for the stay" class="insight-input" aria-describedby="cash-hint">
+            </div>
+            <div class="field-hint" id="cash-hint"></div>
+          </div>
+          <fieldset class="trip-funding" id="trip-funding">
+            <legend>Which contracts did you use?</legend>
+            <p class="funding-help">Tap a contract to assign points. Include its banked or borrowed points.</p>
+            <div id="funding-review-note" class="funding-help"></div>
+            <div id="funding-summary" class="funding-summary" role="status" aria-live="polite"></div>
+            <div id="funding-contracts"></div>
+            <details id="outside-funding">
+              <summary>Points from other sources</summary>
+              <div class="form-field"><label for="funding-one-time">Disney one-time points</label><input id="funding-one-time" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+              <div class="form-field"><label for="funding-transferred">Transferred or rented points from others</label><input id="funding-transferred" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+              <div class="form-field"><label for="funding-other">Other outside points</label><input id="funding-other" type="number" min="0" step="1" inputmode="numeric" value="0"></div>
+            </details>
+
+          </fieldset>
+          <div class="balance-deduct" id="balance-deduct" hidden>
+            <label class="balance-deduct-toggle"><input type="checkbox" id="f-deduct"><span id="f-deduct-label">Take these points out of my balances</span></label>
+            <ul class="balance-deduct-lines" id="balance-deduct-lines"></ul>
+            <small class="funding-help" id="f-deduct-hint">Leave this off if the balance you entered on My Contracts already counts this booking.</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-label">Extra Details</div>
+          <div class="form-field">
+            <label for="f-notes">Notes (optional)</label>
+            <textarea id="f-notes" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="save-btn" id="save-trip">Save Trip</button>
+          <button type="button" class="cancel-btn" id="cancel-trip">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="delete-trip-modal">
+      <div class="modal-box delete-trip-box" role="dialog" aria-modal="true" aria-labelledby="delete-trip-title">
+        <div class="modal-header">
+          <h3 id="delete-trip-title">Delete this booking?</h3>
+          <button type="button" class="modal-close" id="delete-trip-close" aria-label="Close">&times;</button>
+        </div>
+        <div id="delete-trip-body"></div>
+        <div class="form-error" id="delete-trip-error" style="display:none;"></div>
+        <div class="form-actions">
+          <button type="button" class="save-btn danger-btn" id="delete-trip-confirm">Delete</button>
+          <button type="button" class="cancel-btn" id="delete-trip-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  renderStayList();
+  wireTripForm(contracts.filter(c => c.is_active));
+  pendingWarning = null;
+  // Show-once, same contract as pendingWarning above: the banner is in the
+  // DOM now, so a later re-render doesn't replay the celebration.
+  justUnlockedBadges = [];
+  document.getElementById("unlock-banner-close")?.addEventListener("click", () => {
+    document.getElementById("unlock-banner")?.remove();
+  });
+  openCalendarTripDraft();
+  openRequestedBookingForm();
+}
+
+// bookings.html#record-booking (Home and Membership Value) opens the form
+// directly; the hash is cleared first (replaceState, so no extra history
+// entry) so later re-renders don't reopen it. #needs-review scrolls to the
+// Needs review group, which is never collapsed.
+function openRequestedBookingForm() {
+  if (window.location.hash === "#record-booking") {
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+    openTripForm(null);
+  } else if (window.location.hash === "#needs-review") {
+    document.getElementById("needs-review")?.scrollIntoView({ block: "start" });
+  }
+}
+
+// ---- Stay list (2026-09-23) ----
+// Built for a history of ten or more stays: compact full-width rows, one
+// tap to expand a stay's details (funding, receipt, Edit/Delete). Grouping
+// and order come from dvc-stay-groups.js. Expanded rows and opened/closed
+// years survive re-renders (a save or delete re-renders the page).
+const expandedStayIds = new Set();
+const yearOpenState = new Map();
+function stayNeedsReview(t) {
+  return !window.DVCTripFunding.summary(t, contracts).valid;
+}
+function stayRowHTML(t, today, justLogged) {
+  const v = tripCashValue(t, contracts);
+  const attribution = window.DVCTripFunding.summary(t, contracts);
+  const nights = nightsBetween(t.check_in, t.check_out);
+  const resort = RESORTS.find(r => r.id === t.resort_id);
+  const roomType = resort?.roomTypes.find(rt => rt.id === t.room_type_id);
+  const upcoming = window.DVCStayGroups.isUpcoming(t, today);
+  const receipts = receiptsFor(t.id);
+  const deducted = receipts.reduce((sum, d) => sum + window.DVCTripDeduct.receiptTotal(d), 0);
+  const open = expandedStayIds.has(t.id);
+  const status = !attribution.valid
+    ? `<span class="stay-row-status review">Review point sources</span>`
+    : v ? `<span class="stay-row-status">${fmt(v.cash)} ${upcoming ? "booked" : "value"}</span>` : "";
+  const funding = t.points_source_breakdown;
+  const outside = funding?.version === 2 ? [["Disney one-time points", funding.one_time], ["Transferred or rented points", funding.transferred], ["Other outside points", funding.other]].filter(([, n]) => n > 0) : [];
+  const cashTotal = t.custom_cash_value != null ? Number(t.custom_cash_value) : v?.totalCash ?? null;
+  const details = [
+    `<div class="stay-detail-line">${roomType ? fundingEscape(roomType.name) + " &middot; " : ""}${nights} night${nights === 1 ? "" : "s"}</div>`,
+    attribution.valid ? "" : `<div class="stay-detail-line warn">This stay is excluded from membership value until its point sources add up. Edit it to fix them.</div>`,
+    v ? v.byContract.map(a => `<div class="stay-detail-line">${fundingEscape(contractLabel(contracts.find(c => c.id === a.contract_id)) || "A removed contract")}: ${a.points.toLocaleString()} pts &middot; ${fmt(a.cash)}</div>`).join("") : "",
+    outside.map(([label, n]) => `<div class="stay-detail-line">${label}: ${n.toLocaleString()} pts</div>`).join(""),
+    cashTotal != null ? `<div class="stay-detail-line">Cash value for the whole stay: ${fmt(cashTotal)}${v?.outsidePoints ? " (outside share excluded)" : ""}</div>` : "",
+    deducted ? `<div class="stay-detail-line">Took ${deducted.toLocaleString()} pts out of your balances: ${receipts.map(d => `${fundingEscape(deductionContractName(contracts.find(c => c.id === d.contract_id)))} ${d.use_year_label} (${fundingEscape(window.DVCTripDeduct.describeReceipt(d))})`).join("; ")}</div>` : `<div class="stay-detail-line muted">Didn't change your balances in the app</div>`,
+    t.notes ? `<div class="stay-detail-line muted">${fundingEscape(t.notes)}</div>` : "",
+  ].join("");
+  return `
+    <div class="stay-row${open ? " open" : ""}${t.id === justLogged ? " just-logged" : ""}">
+      <button type="button" class="stay-row-toggle" aria-expanded="${open}" aria-controls="stay-details-${t.id}" data-stay-toggle="${t.id}">
+        <span class="stay-row-main">
+          <span class="stay-row-resort">${fundingEscape(shorthandResortName(t.resort_id, resortName(t.resort_id)))}</span>
+          <span class="stay-row-dates">${formatTripDateRange(t.check_in, t.check_out)}</span>
+        </span>
+        <span class="stay-row-side">
+          <span class="stay-row-points">${t.points_used.toLocaleString()} pts</span>
+          ${status}
+        </span>
+        <span class="stay-row-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="stay-details" id="stay-details-${t.id}"${open ? "" : " hidden"}>
+        ${details}
+        <div class="stay-details-actions">
+          <button type="button" class="small-btn" data-edit="${t.id}">Edit</button>
+          <button type="button" class="small-btn danger" data-delete="${t.id}">Delete</button>
+        </div>
+      </div>
+    </div>`;
+}
+function renderStayList() {
+  const list = document.getElementById("stay-list");
+  if (trips.length === 0) {
+    list.innerHTML = `<div class="section stay-empty"><h2>No bookings recorded yet</h2><p class="section-sub">Record a booking and it will show up here, with its points and value.</p><button type="button" class="add-btn js-add-trip">+ Record a booking</button></div>`;
+    return;
+  }
+  const justLogged = justLoggedTripId;
+  justLoggedTripId = null;
+  const today = localToday();
+  const groups = window.DVCStayGroups.groupStays(trips, { today, needsReview: stayNeedsReview });
+  const rows = stays => stays.map(t => stayRowHTML(t, today, justLogged)).join("");
+  const newestYear = groups.completedYears[0]?.year;
+  list.innerHTML = [
+    groups.needsReview.length ? `<section class="section stay-group review" id="needs-review" aria-labelledby="needs-review-title">
+        <h2 id="needs-review-title">Needs review</h2>
+        <p class="section-sub">These stays' point sources don't add up yet, so they aren't counted in membership value.</p>
+        <div class="stay-rows">${rows(groups.needsReview)}</div>
+      </section>` : "",
+    `<section class="section stay-group" id="upcoming" aria-labelledby="upcoming-title">
+        <h2 id="upcoming-title">Upcoming</h2>
+        ${groups.upcoming.length ? `<div class="stay-rows">${rows(groups.upcoming)}</div>` : `<p class="empty-note">No upcoming bookings.</p>`}
+      </section>`,
+    groups.completedYears.length ? `<section class="section stay-group" id="completed" aria-labelledby="completed-title">
+        <h2 id="completed-title">Completed</h2>
+        ${groups.completedYears.map(({ year, stays }) => {
+          const open = yearOpenState.has(year) ? yearOpenState.get(year) : year === newestYear;
+          return `<details class="stay-year" data-year="${year}"${open ? " open" : ""}>
+            <summary><span>${year}</span><span class="stay-year-count">${stays.length} stay${stays.length === 1 ? "" : "s"}</span></summary>
+            <div class="stay-rows">${rows(stays)}</div>
+          </details>`;
+        }).join("")}
+      </section>` : "",
+  ].join("");
+
+  list.querySelectorAll(".stay-year").forEach(el => el.addEventListener("toggle", () => yearOpenState.set(Number(el.dataset.year), el.open)));
+  list.addEventListener("click", (e) => {
+    const toggle = e.target.closest("[data-stay-toggle]");
+    const editBtn = e.target.closest("[data-edit]");
+    const deleteBtn = e.target.closest("[data-delete]");
+    if (toggle) {
+      const id = toggle.dataset.stayToggle;
+      const open = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.closest(".stay-row").classList.toggle("open", open);
+      document.getElementById("stay-details-" + id).hidden = !open;
+      if (open) expandedStayIds.add(id); else expandedStayIds.delete(id);
+    }
+    if (editBtn) {
+      const t = trips.find(t => t.id === editBtn.dataset.edit);
+      if (t) openTripForm(t);
+    }
+    if (deleteBtn) {
+      const t = trips.find(t => t.id === deleteBtn.dataset.delete);
+      if (t) openDeleteTrip(t);
+    }
+  });
+}
+
+// ---- Deleting a booking (UX2-02) ----
+// Removing an app record and canceling a Disney reservation are different
+// things, and Disney's refund depends on timing, so the owner says which
+// happened instead of the app guessing. delete_trip_booking (migration 024)
+// applies the choice to this booking's receipts in one transaction.
+let deletingTripId = null;
+let deleteInFlight = false;
+function openDeleteTrip(t) {
+  deletingTripId = t.id;
+  const receipts = receiptsFor(t.id);
+  const body = document.getElementById("delete-trip-body");
+  document.getElementById("delete-trip-error").style.display = "none";
+  const confirmBtn = document.getElementById("delete-trip-confirm");
+  if (!receipts.length) {
+    body.innerHTML = `<p class="delete-trip-intro">Your balances won't change: this booking didn't take points out of them in the app. If a balance you entered on My Contracts counts it, fix that with Adjust balance.</p>`;
+    confirmBtn.disabled = false;
+  } else {
+    const total = receipts.reduce((sum, d) => sum + window.DVCTripDeduct.receiptTotal(d), 0);
+    const from = receipts.map(d => `${fundingEscape(deductionContractName(contracts.find(c => c.id === d.contract_id)))} ${d.use_year_label}: ${window.DVCTripDeduct.describeReceipt(d)}`).join("; ");
+    const effect = window.DVCTripDeduct.cancellationEffect(t.check_in, localToday());
+    const canceledDetail = effect === "restore"
+      ? "More than 30 days before check-in, so Disney returns them to the use years they came from."
+      : effect === "holding"
+      ? "Within 30 days of check-in, so Disney moves them to Holding: they can't be banked, and only book stays within 60 days of check-in."
+      : "On or after check-in day, so Disney doesn't return them.";
+    body.innerHTML = `
+      <p class="delete-trip-intro">This booking took ${total.toLocaleString()} pts out of your balances (${from}). What happened?</p>
+      <div class="delete-options" role="radiogroup">
+        <label class="delete-option"><input type="radio" name="delete-mode" value="canceled"><span><strong>Canceled with Disney</strong><small>${canceledDetail}</small></span></label>
+        <label class="delete-option"><input type="radio" name="delete-mode" value="mistake"><span><strong>Logged by mistake</strong><small>Put the ${total.toLocaleString()} pts back exactly as they were taken.</small></span></label>
+        <label class="delete-option"><input type="radio" name="delete-mode" value="keep"><span><strong>Leave my balances as they are</strong><small>For when you've already corrected them yourself.</small></span></label>
+      </div>`;
+    confirmBtn.disabled = true;
+    body.querySelectorAll('input[name="delete-mode"]').forEach(r => r.addEventListener("change", () => { confirmBtn.disabled = false; }));
+  }
+  document.getElementById("delete-trip-modal").classList.add("open");
+}
+function closeDeleteTrip() {
+  deletingTripId = null;
+  document.getElementById("delete-trip-modal").classList.remove("open");
+}
+async function confirmDeleteTrip() {
+  if (deleteInFlight || !deletingTripId) return;
+  const mode = document.querySelector('input[name="delete-mode"]:checked')?.value || "keep";
+  const btn = document.getElementById("delete-trip-confirm");
+  const errorEl = document.getElementById("delete-trip-error");
+  deleteInFlight = true;
+  btn.disabled = true;
+  btn.textContent = "Deleting…";
+  let result;
+  try {
+    result = await window.DVCAuth.deleteTripBooking(deletingTripId, mode);
+  } finally {
+    deleteInFlight = false;
+    btn.disabled = false;
+    btn.textContent = "Delete";
+  }
+  if (result.error) {
+    errorEl.textContent = "Couldn't delete: " + result.error;
+    errorEl.style.display = "block";
+    return;
+  }
+  const missed = (result.data?.restored || []).filter(r => r.mode !== "forfeit" && !r.restored);
+  pendingWarning = missed.length
+    ? `Booking deleted, but ${missed.map(r => r.points + " pts for " + r.use_year_label).join(" and ")} couldn't go back because that use year's balance no longer exists. Fix it with Adjust balance on My Contracts.`
+    : null;
+  closeDeleteTrip();
+  renderSignedIn();
+}
+
+function populateRoomTypesForResort(resortId, selectedRoomTypeId) {
+  const years = [...new Set(RESORTS.filter(r => r.id === resortId).map(r => r.year))].sort((a, b) => b - a);
+  const resort = RESORTS.find(r => r.id === resortId && r.year === years[0]);
+  const roomSelect = document.getElementById("f-room");
+  roomSelect.innerHTML = (resort?.roomTypes || []).map(rt =>
+    `<option value="${rt.id}" ${rt.id === selectedRoomTypeId ? "selected" : ""}>${rt.name}</option>`
+  ).join("");
+}
+
+// Auto-fills Cash Value with our estimate whenever resort/room/dates
+// change -- same "suggest, don't force" pattern as Points Used below: it
+// only overwrites the field while it still holds our own last suggestion,
+// so typing a different number stops it from being touched again. Unlike
+// Points Used this field is optional (several non-WDW resorts have no cash
+// rate data at all), so an unavailable estimate just clears the hint
+// instead of blocking anything.
+function updateCashSuggestion() {
+  const resortId = document.getElementById("f-resort").value;
+  const roomTypeId = document.getElementById("f-room").value;
+  const checkIn = document.getElementById("f-checkin").value;
+  const checkOut = document.getElementById("f-checkout").value;
+  const hint = document.getElementById("cash-hint");
+  const cashInput = document.getElementById("f-cash-value");
+
+  if (!resortId || !roomTypeId || !checkIn || !checkOut) {
+    hint.textContent = "";
+    return;
+  }
+
+  const est = estimateTripCashValue(resortId, roomTypeId, checkIn, checkOut);
+  if (!est) {
+    hint.textContent = "No cash rate data available for this resort/room -- enter your best guess.";
+    return;
+  }
+
+  const currentVal = cashInput.value === "" ? null : Number(cashInput.value);
+  const untouched = currentVal === null || currentVal === lastAutoFilledCash;
+  if (untouched) {
+    cashInput.value = Math.round(est.cash);
+    lastAutoFilledCash = Math.round(est.cash);
+  }
+
+  hint.textContent = est.isDeflated
+    ? `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"} -- today's rate for these dates, adjusted down to roughly what ${est.year} pricing looked like.`
+    : `Estimated ${fmt(est.cash)} for ${est.nights} night${est.nights === 1 ? "" : "s"}, using ${est.anchorYear} rates for these same dates.`;
+}
+
+// Same pattern for Points Used, whenever resort/room/dates change -- only
+// overwrites the field while it still holds our own last suggestion. The
+// moment the user types a different number in themselves, this stops
+// touching it and just keeps the hint updated for reference.
+function updatePointsSuggestion() {
+  const resortId = document.getElementById("f-resort").value;
+  const roomTypeId = document.getElementById("f-room").value;
+  const checkIn = document.getElementById("f-checkin").value;
+  const checkOut = document.getElementById("f-checkout").value;
+  const hint = document.getElementById("points-hint");
+  const pointsInput = document.getElementById("f-points");
+
+  if (!resortId || !roomTypeId || !checkIn || !checkOut) {
+    hint.textContent = "";
+    return;
+  }
+
+  const est = estimateTripPoints(resortId, roomTypeId, checkIn, checkOut);
+  if (!est) {
+    hint.textContent = "No points chart data available for this resort/room.";
+    hint.classList.remove("exact");
+    return;
+  }
+
+  const currentVal = pointsInput.value === "" ? null : Number(pointsInput.value);
+  const untouched = currentVal === null || currentVal === lastAutoFilledPoints;
+  if (untouched) {
+    pointsInput.value = est.points;
+    lastAutoFilledPoints = est.points;
+  }
+
+  hint.textContent = est.isExactYear
+    ? `Suggested: ${est.points} pts (${est.year} points chart)`
+    : `Suggested: ${est.points} pts (estimated using ${est.year} chart -- no ${checkIn.slice(0, 4)} data)`;
+  hint.classList.toggle("exact", est.isExactYear);
+}
+
+function updateSuggestions() {
+  syncTripPickers();
+  updateCashSuggestion();
+  updatePointsSuggestion();
+  updateFundingSummary(true);
+}
+
+let lastAutoAllocation = null;
+function fundingEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+function readTripFunding() {
+  const allocations = Array.from(document.querySelectorAll('[data-funding-contract]:checked')).map(box => ({
+    contract_id: box.dataset.fundingContract,
+    points: Number(document.getElementById(box.dataset.pointsInput).value || NaN),
+  }));
+  const read = id => { const raw = document.getElementById(id).value; return raw === "" ? 0 : Number(raw); };
+  return { version: 2, allocations, one_time: read('funding-one-time'), transferred: read('funding-transferred'), other: read('funding-other') };
+}
+function renderTripFunding(values) {
+  const old = values?.points_source_breakdown;
+  const total = Number(document.getElementById('f-points').value);
+  const proposed = old?.version === 2 ? old.allocations : values?.contract_allocations;
+  let allocations = Array.isArray(proposed) ? proposed.filter(a => a && typeof a.contract_id === 'string') : [];
+  if (!allocations.length && values?.contract_id) {
+    allocations = [{ contract_id: values.contract_id, points: old?.contracts ?? total }];
+  } else if (!values && contracts.filter(c => c.is_active).length === 1) {
+    allocations = [{ contract_id: contracts.find(c => c.is_active).id, points: total }];
+  }
+  document.getElementById('funding-contracts').innerHTML = contracts.length ? contracts.map((c, index) => {
+    const row = allocations.find(a => a.contract_id === c.id);
+    const label = contractLabel(c) + (c.is_active ? '' : ' (inactive; past stays)');
+    const inputId = 'funding-points-' + index;
+    const resort = resortName(c.home_resort_id);
+    const title = c.nickname || shorthandResortName(c.home_resort_id, resort);
+    const detail = [c.nickname ? shorthandResortName(c.home_resort_id, resort) : '', c.use_year ? c.use_year + ' use year' : '', c.is_active ? '' : 'Inactive'].filter(Boolean).join(' · ');
+    const art = getResortImage(c.home_resort_id);
+    return `<div class="funding-contract-row"><label class="funding-contract-choice"><input type="checkbox" data-funding-contract="${fundingEscape(c.id)}" data-points-input="${inputId}" ${row ? 'checked' : ''}><span class="funding-contract-art" aria-hidden="true" ${art ? 'style="background-image:url(&quot;' + fundingEscape(art) + '&quot;)"' : ''}></span><span class="funding-contract-copy"><strong>${fundingEscape(title)}</strong><small>${fundingEscape(detail)}</small></span><span class="funding-check" aria-hidden="true">&#10003;</span></label><div class="funding-amount"><span class="funding-amount-label">Points used</span><div class="funding-number"><input type="number" id="${inputId}" min="1" step="1" inputmode="numeric" aria-label="Points from ${fundingEscape(label)}" value="${row && Number.isFinite(row.points) ? row.points : ''}" ${row ? '' : 'disabled'}><span>pts</span></div></div></div>`;
+  }).join('') : '<p class="funding-help">No contracts yet. <a href="account.html">Add a contract</a> to credit its vacation value, or enter outside points below.</p>';
+  document.getElementById('funding-one-time').value = old?.one_time ?? 0;
+  document.getElementById('funding-transferred').value = old?.transferred ?? 0;
+  document.getElementById('funding-other').value = old?.other ?? 0;
+  document.getElementById('outside-funding').open = !contracts.length || ['one_time', 'transferred', 'other'].some(k => old?.[k] > 0);
+  const needsReview = values?.id && !window.DVCTripFunding.summary(values, contracts).valid;
+  const missing = allocations.some(a => !contracts.some(c => c.id === a.contract_id));
+  document.getElementById('funding-review-note').textContent = needsReview
+    ? 'Review these point sources and save. This trip is excluded from membership value until its funding is confirmed.'
+    : missing ? 'A proposed contract is no longer available. Assign those points to the correct source.' : '';
+  lastAutoAllocation = allocations.length === 1 && !old && !missing ? allocations[0].points : null;
+  document.querySelectorAll('[data-funding-contract]').forEach(box => {
+    box.addEventListener('change', () => {
+      const input = document.getElementById(box.dataset.pointsInput);
+      input.disabled = !box.checked;
+      if (!box.checked) input.value = '';
+      lastAutoAllocation = null;
+      if (box.checked) {
+        const f = readTripFunding();
+        const otherOwned = f.allocations.filter(a => a.contract_id !== box.dataset.fundingContract).reduce((sum, a) => sum + (Number.isFinite(a.points) ? a.points : 0), 0);
+        input.value = Math.max(0, Number(document.getElementById('f-points').value) - otherOwned - f.one_time - f.transferred - f.other) || '';
+        if (f.allocations.length === 1 && !f.one_time && !f.transferred && !f.other) lastAutoAllocation = Number(input.value);
+      }
+      updateFundingSummary();
+    });
+  });
+  document.querySelectorAll('#trip-funding input[type="number"]').forEach(input => input.addEventListener('input', () => {
+    lastAutoAllocation = null;
+    updateFundingSummary();
+  }));
+  updateFundingSummary();
+}
+function updateFundingSummary(updateSingle = false) {
+  const el = document.getElementById('funding-summary');
+  if (!el) return;
+  const total = Number(document.getElementById('f-points').value);
+  const checked = document.querySelectorAll('[data-funding-contract]:checked');
+  if (updateSingle && lastAutoAllocation != null && checked.length === 1) {
+    const input = document.getElementById(checked[0].dataset.pointsInput);
+    if (Number(input.value) === lastAutoAllocation && Number.isInteger(total) && total > 0) {
+      input.value = total;
+      lastAutoAllocation = total;
+    }
+  }
+  const funding = readTripFunding();
+  const result = window.DVCTripFunding.validate(total, funding, contracts);
+  const assigned = funding.allocations.reduce((sum, a) => sum + (Number.isFinite(a.points) ? a.points : 0), 0) + [funding.one_time, funding.transferred, funding.other].reduce((sum, n) => sum + (Number.isFinite(n) ? n : 0), 0);
+  const validTotal = Number.isSafeInteger(total) && total > 0;
+  const remaining = total - assigned;
+  const over = validTotal && remaining < 0;
+  el.classList.toggle('funding-incomplete', over);
+  const heading = !validTotal ? 'Add your stay points above' : result.valid ? 'All points assigned' : over ? Math.abs(remaining) + ' pts over total' : remaining > 0 ? remaining + ' pts left to assign' : 'Check point amounts';
+  const progress = validTotal ? Math.max(0, Math.min(100, assigned / total * 100)) : 0;
+  const rawCash = document.getElementById('f-cash-value').value;
+  const cash = rawCash === '' ? NaN : Number(rawCash);
+  const detail = result.valid
+    ? (Number.isFinite(cash) && cash >= 0 ? fmt(cash * result.share) + ' counts toward membership value' : result.owned + ' points from your contracts') + (result.outside ? ' · Outside share excluded' : '')
+    : over ? 'Reduce an amount to match your stay.' : assigned === 0 ? 'Choose the contracts that funded this stay.' : remaining > 0 ? 'Choose another source or adjust an amount.' : result.error;
+  el.innerHTML = `<div class="funding-summary-line"><strong>${fundingEscape(heading)}</strong><span>${validTotal ? assigned + ' / ' + total + ' pts' : ''}</span></div><div class="funding-progress" aria-hidden="true"><span style="width:${progress}%"></span></div><small>${fundingEscape(detail)}</small>`;
+  updateBalanceDeduction();
+
+}
+
+// Recording a booking can take its points out of the ledger, and editing
+// one can put that deduction back and take the new amount instead. Both go
+// through save_trip_booking (migration 024), which keeps a receipt of what
+// each booking took -- so the app can always undo exactly that, never more.
+let deductTouched = false;
+function receiptsFor(tripId) {
+  return tripId ? tripDeductions.filter(d => d.trip_id === tripId) : [];
+}
+function deductionContractName(c) {
+  return c ? (c.nickname || shorthandResortName(c.home_resort_id, resortName(c.home_resort_id))) : 'A removed contract';
+}
+// Chart points for one night of the stay in the form, for splitting a
+// stay that crosses a use-year boundary night by night.
+function formNightPoints() {
+  const resortId = document.getElementById('f-resort').value;
+  const roomId = document.getElementById('f-room').value;
+  return dateStr => {
+    const resort = RESORTS.find(r => r.id === resortId && r.year === Number(dateStr.slice(0, 4)));
+    return resort ? (getPointsForDate(resort, dateStr, roomId) ?? null) : null;
+  };
+}
+function formStayDates() {
+  const checkIn = document.getElementById('f-checkin').value;
+  const checkOut = document.getElementById('f-checkout').value;
+  return { checkIn, checkOut: checkOut > checkIn && nightsBetween(checkIn, checkOut) <= MAX_TRIP_NIGHTS ? checkOut : null };
+}
+// An edit is planned against balances as they'd be with this booking's
+// earlier deduction put back, since saving restores it before drawing.
+function currentDeductionPlan() {
+  const receipts = receiptsFor(editingTripId);
+  const { checkIn, checkOut } = formStayDates();
+  return window.DVCTripDeduct.planTripDeduction({
+    allocations: readTripFunding().allocations,
+    contracts,
+    rows: receipts.length ? window.DVCTripDeduct.rowsWithReceiptsRestored(contractYearPoints, receipts) : contractYearPoints,
+    checkIn,
+    checkOut,
+    today: localToday(),
+    nightPoints: formNightPoints(),
+    overrides: splitOverrides,
+  });
+}
+function splitInputsHTML(plans) {
+  const { checkIn, checkOut } = formStayDates();
+  const byContract = new Map();
+  for (const p of plans) if (p.split && !byContract.has(p.contract_id)) byContract.set(p.contract_id, p);
+  return [...byContract.values()].map(p => {
+    const parts = window.DVCTripDeduct.splitByUseYear({ points: p.contractPoints, useYear: p.contract.use_year, checkIn, checkOut, nightPoints: formNightPoints() });
+    const inputs = parts.map(part => {
+      const key = p.contract_id + '|' + part.label;
+      const value = splitOverrides[key] ?? plans.find(x => x.contract_id === p.contract_id && x.label === part.label)?.points ?? part.points;
+      return `<label>${part.label} use year (${part.nights} night${part.nights === 1 ? '' : 's'})<input type="number" min="0" step="1" inputmode="numeric" data-split-key="${fundingEscape(key)}" value="${value}"></label>`;
+    }).join('');
+    const entered = parts.reduce((sum, part) => sum + (Number(splitOverrides[p.contract_id + '|' + part.label]) || 0), 0);
+    const touched = parts.some(part => (p.contract_id + '|' + part.label) in splitOverrides);
+    const mismatch = touched && !p.splitAdjusted ? `<div class="deduct-split-note">These add up to ${entered}; they need to total ${p.contractPoints}. Using the automatic split until they do.</div>` : '';
+    return `<li><strong>${fundingEscape(deductionContractName(p.contract))}</strong>: this stay crosses into a new use year, so its ${p.contractPoints} pts come from both. Adjust if Disney split them differently:<div class="deduct-split">${inputs}</div>${mismatch}</li>`;
+  }).join('');
+}
+function updateBalanceDeduction() {
+  const box = document.getElementById('balance-deduct');
+  if (!box) return;
+  const plans = currentDeductionPlan();
+  const receipts = receiptsFor(editingTripId);
+  const editing = !!editingTripId;
+  box.hidden = !plans.length && !receipts.length;
+  if (box.hidden) return;
+  const ready = plans.some(p => p.status === 'ready');
+  // An edit of a booking that already took points can always reconcile,
+  // even down to taking nothing (which just puts the old deduction back).
+  const canApply = ready || receipts.length > 0;
+  const toggle = document.getElementById('f-deduct');
+  toggle.disabled = !canApply;
+  if (!deductTouched || !canApply) toggle.checked = canApply && (!editing || receipts.length > 0);
+  document.getElementById('f-deduct-label').textContent = editing && receipts.length ? 'Update my balances to match' : 'Take these points out of my balances';
+  document.getElementById('f-deduct-hint').textContent = editing && receipts.length
+    ? 'Saving puts the earlier deduction back, then takes the amounts below. Turn this off to leave balances as they are.'
+    : 'Leave this off if the balance you entered on My Contracts already counts this booking.';
+  const earlier = editing
+    ? (receipts.length
+      ? `<li class="deduct-earlier">Already taken out: ${receipts.map(d => `${fundingEscape(deductionContractName(contracts.find(c => c.id === d.contract_id)))} ${d.use_year_label}: ${window.DVCTripDeduct.receiptTotal(d)} pts (${fundingEscape(window.DVCTripDeduct.describeReceipt(d))})`).join('; ')}</li>`
+      : `<li class="deduct-earlier">This booking hasn't changed your balances in the app.</li>`)
+    : '';
+  const lines = plans.map(p => {
+    const name = fundingEscape(deductionContractName(p.contract));
+    if (p.status === 'ready') return `<li><strong>${name}</strong> ${p.label} use year: ${p.points} pts (${fundingEscape(window.DVCTripDeduct.describeDraw(p.draws))}) &rarr; ${p.after.remaining + p.after.banked + p.after.borrowed + p.after.holding} left</li>`;
+    const why = p.status === 'no-balance' ? `no ${p.label} balance recorded yet` : p.status === 'ended' ? `the ${p.label} use year has ended` : `only ${p.points - p.shortfall} pts recorded for ${p.label}`;
+    return `<li class="deduct-skip"><strong>${name}</strong> ${p.label}: not changed (${why})</li>`;
+  }).join('');
+  document.getElementById('balance-deduct-lines').innerHTML = earlier + lines + splitInputsHTML(plans);
+}
+
+function uniqueResorts() {
+  const seen = new Set();
+  const list = [];
+  for (const r of RESORTS) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    list.push({ id: r.id, name: r.name });
+  }
+  return list.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const TRIP_ACCENT_COLORS = ["#4a148c", "#1b5e3a", "#0d47a1", "#7a1734", "#8d5524", "#37474f"];
+function tripAccentColor(resortId) {
+  let hash = 0;
+  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
+  return TRIP_ACCENT_COLORS[hash % TRIP_ACCENT_COLORS.length];
+}
+
+// Same lavender wash + has-art toggle as app.js's resortArtWashCSS()/
+// applyResortArtBackground(), applied to the trigger button once a resort
+// is filtered on.
+function tripResortArtWashCSS(imagePath) {
+  return `linear-gradient(rgba(236, 225, 247, 0.82), rgba(236, 225, 247, 0.82)), url('${imagePath}')`;
+}
+function applyTripResortArtBackground(el, imagePath) {
+  if (!el) return;
+  if (imagePath) {
+    el.style.backgroundImage = tripResortArtWashCSS(imagePath);
+    el.classList.add("has-art");
+  } else {
+    el.style.backgroundImage = "";
+    el.classList.remove("has-art");
+  }
+}
+
+
+function roomTypeChipIcon(name) {
+  const n = name.toLowerCase();
+  if (n.includes("grand villa")) return "\u{1F3E1}";
+  if (n.includes("two-bedroom")) return "\u{1F3E0}";
+  if (n.includes("one-bedroom")) return "\u{1F6CB}\u{FE0F}";
+  if (n.includes("cabin")) return "\u{1F3D5}\u{FE0F}";
+  return "\u{1F6CF}\u{FE0F}";
+}
+
+
+function syncTripPickers() {
+  const resort = document.getElementById('f-resort');
+  const room = document.getElementById('f-room');
+  const name = resort.selectedOptions[0]?.textContent || 'Choose a resort';
+  document.getElementById('trip-resort-label').textContent = typeof shorthandResortName === 'function' ? shorthandResortName(resort.value, name) : name;
+  applyTripResortArtBackground(document.getElementById('trip-resort-trigger'), getResortImage(resort.value));
+  document.getElementById('trip-room-label').textContent = room.selectedOptions[0]?.textContent || 'Choose a room type';
+  document.getElementById('trip-room-trigger').setAttribute('aria-expanded', document.getElementById('trip-room-grid').classList.contains('open'));
+}
+function renderTripResortList() {
+  const query = document.getElementById('trip-resort-search').value.trim().toLowerCase();
+  const selected = document.getElementById('f-resort').value;
+  const matches = uniqueResorts().filter(r => r.name.toLowerCase().includes(query));
+  document.getElementById('trip-resort-list').innerHTML = matches.length ? matches.map(r => `<button type="button" class="resort-pick-row${r.id === selected ? ' selected' : ''}" data-trip-resort="${fundingEscape(r.id)}" aria-pressed="${r.id === selected}"><span class="resort-pick-swatch" style="background:${tripAccentColor(r.id)}"></span><span>${fundingEscape(r.name)}</span></button>`).join('') : '<div class="sheet-empty" role="status">No resorts match your search.</div>';
+}
+function openTripResortPicker() {
+  const search = document.getElementById('trip-resort-search');
+  search.value = '';
+  renderTripResortList();
+  const hero = document.getElementById('trip-resort-hero');
+  const art = getResortImage(document.getElementById('f-resort').value);
+  hero.hidden = !art;
+  hero.style.backgroundImage = art ? `url('${art}')` : '';
+  document.getElementById('trip-resort-sheet').classList.add('open');
+  document.getElementById('trip-resort-trigger').setAttribute('aria-expanded', 'true');
+  document.getElementById('trip-modal').inert = true;
+  document.getElementById('trip-resort-close').focus();
+}
+function closeTripResortPicker(restoreFocus = true) {
+  const sheet = document.getElementById('trip-resort-sheet');
+  if (!sheet) return;
+  const wasOpen = sheet.classList.contains('open');
+  sheet.classList.remove('open');
+  document.getElementById('trip-modal').inert = false;
+  const trigger = document.getElementById('trip-resort-trigger');
+  trigger.setAttribute('aria-expanded', 'false');
+  if (wasOpen && restoreFocus) trigger.focus();
+}
+function renderTripRoomGrid() {
+  const resortId = document.getElementById('f-resort').value;
+  const year = Math.max(...RESORTS.filter(r => r.id === resortId).map(r => r.year));
+  const rooms = RESORTS.find(r => r.id === resortId && r.year === year)?.roomTypes || [];
+  const selected = document.getElementById('f-room').value;
+  document.getElementById('trip-room-grid').innerHTML = rooms.map(rt => `<button type="button" class="room-type-chip${rt.id === selected ? ' selected' : ''}" data-trip-room="${fundingEscape(rt.id)}" aria-pressed="${rt.id === selected}"><span class="room-type-icon" aria-hidden="true">${roomTypeChipIcon(rt.name)}</span><span class="room-type-name">${fundingEscape(rt.name)}</span>${rt.sleeps ? `<span class="room-type-sleeps">Sleeps ${rt.sleeps}</span>` : ''}</button>`).join('');
+}
+function wireTripPickers() {
+  document.getElementById('trip-resort-trigger').addEventListener('click', openTripResortPicker);
+  document.getElementById('trip-resort-close').addEventListener('click', () => closeTripResortPicker());
+  document.getElementById('trip-resort-search').addEventListener('input', renderTripResortList);
+  const sheet = document.getElementById('trip-resort-sheet');
+  sheet.addEventListener('click', e => {
+    if (e.target === sheet) closeTripResortPicker();
+    const choice = e.target.closest('[data-trip-resort]');
+    if (!choice) return;
+    const select = document.getElementById('f-resort');
+    if (select.value !== choice.dataset.tripResort) {
+      select.value = choice.dataset.tripResort;
+      document.getElementById('trip-room-grid').classList.remove('open');
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    closeTripResortPicker();
+  });
+  sheet.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeTripResortPicker(); }
+    if (e.key === 'Tab') {
+      const items = Array.from(sheet.querySelectorAll('button, input')).filter(el => !el.disabled);
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  const grid = document.getElementById('trip-room-grid');
+  const trigger = document.getElementById('trip-room-trigger');
+  trigger.addEventListener('click', () => {
+    renderTripRoomGrid();
+    grid.classList.toggle('open');
+    syncTripPickers();
+  });
+  grid.addEventListener('click', e => {
+    const choice = e.target.closest('[data-trip-room]');
+    if (!choice) return;
+    const select = document.getElementById('f-room');
+    select.value = choice.dataset.tripRoom;
+    grid.classList.remove('open');
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    trigger.focus();
+  });
+  document.getElementById('trip-modal').addEventListener('keydown', e => {
+    if (e.key === 'Escape' && grid.classList.contains('open')) {
+      e.preventDefault(); e.stopPropagation(); grid.classList.remove('open'); syncTripPickers(); trigger.focus();
+    }
+  });
+}
+
+function wireTripForm(activeContracts) {
+  wireTripPickers();
+  const resortSelect = document.getElementById("f-resort");
+  resortSelect.innerHTML = uniqueResorts().map(r => `<option value="${r.id}">${r.name}</option>`).join("");
+  populateRoomTypesForResort(resortSelect.value, null);
+
+  resortSelect.addEventListener("change", () => {
+    populateRoomTypesForResort(resortSelect.value, null);
+    updateSuggestions();
+  });
+  document.getElementById("f-room").addEventListener("change", updateSuggestions);
+  document.getElementById("f-checkin").addEventListener("change", () => { syncCheckoutMin(); updateSuggestions(); updateBalanceDeduction(); updateTripFormTitle(); });
+  document.getElementById("f-deduct").addEventListener("change", () => { deductTouched = true; });
+  document.getElementById("f-checkout").addEventListener("change", () => { updateSuggestions(); updateBalanceDeduction(); });
+  document.getElementById("f-room").addEventListener("change", updateBalanceDeduction);
+  // "change", not "input": the lines re-render, which would drop focus mid-typing.
+  document.getElementById("balance-deduct-lines").addEventListener("change", (e) => {
+    const input = e.target.closest("[data-split-key]");
+    if (!input) return;
+    splitOverrides[input.dataset.splitKey] = input.value === "" ? NaN : Number(input.value);
+    updateBalanceDeduction();
+  });
+  document.getElementById("delete-trip-confirm").addEventListener("click", confirmDeleteTrip);
+  document.getElementById("delete-trip-cancel").addEventListener("click", closeDeleteTrip);
+  document.getElementById("delete-trip-close").addEventListener("click", closeDeleteTrip);
+  document.getElementById("delete-trip-modal").addEventListener("click", (e) => {
+    if (e.target.id === "delete-trip-modal") closeDeleteTrip();
+  });
+
+  document.getElementById("f-points").addEventListener("input", () => updateFundingSummary(true));
+  document.getElementById("f-cash-value").addEventListener("input", () => updateFundingSummary());
+
+  document.querySelectorAll(".js-add-trip").forEach(btn =>
+    btn.addEventListener("click", () => openTripForm(null))
+  );
+  document.getElementById("cancel-trip").addEventListener("click", closeTripForm);
+  document.getElementById("trip-modal-close").addEventListener("click", closeTripForm);
+  // Click the dimmed backdrop (not the box itself) to close, same
+  // convention as account.html's Card Studio and index.html's modals.
+  document.getElementById("trip-modal").addEventListener("click", (e) => {
+    if (e.target.id === "trip-modal") closeTripForm();
+  });
+  document.getElementById("save-trip").addEventListener("click", saveTripForm);
+}
+
+// Consume only after authentication and form rendering. A draft never carries
+// an existing trip ID and is removed before opening, so re-renders cannot replay it.
+function openCalendarTripDraft() {
+  const session = window.DVCAuth?.getSession();
+  if (!session) return;
+  let draft;
+  try {
+    const raw = sessionStorage.getItem("dvc_trip_draft");
+    if (!raw) return;
+    sessionStorage.removeItem("dvc_trip_draft");
+    draft = JSON.parse(raw);
+  } catch (error) {
+    return;
+  }
+  if (!draft || draft.version !== 1 || draft.user_id !== session.user.id) return;
+  const resort = RESORTS.find(r => r.id === draft.resort_id && r.roomTypes.some(rt => rt.id === draft.room_type_id));
+  if (!resort || !/^\d{4}-\d{2}-\d{2}$/.test(draft.check_in) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(draft.check_out) || draft.check_out <= draft.check_in ||
+      !Number.isInteger(draft.points_used) || draft.points_used < 0) return;
+  const cash = Number.isFinite(draft.custom_cash_value) && draft.custom_cash_value >= 0
+    ? draft.custom_cash_value : null;
+  openTripForm(null, {
+    resort_id: draft.resort_id,
+    room_type_id: draft.room_type_id,
+    check_in: draft.check_in,
+    check_out: draft.check_out,
+    points_used: draft.points_used,
+    custom_cash_value: cash,
+    cash_is_custom: !!draft.cash_is_custom,
+    contract_id: contracts.some(c => c.is_active && c.id === draft.contract_id) ? draft.contract_id : null,
+    contract_allocations: Array.isArray(draft.contract_allocations) ? draft.contract_allocations : null,
+    notes: typeof draft.notes === "string" ? draft.notes : "",
+  });
+}
+
+function openTripForm(trip, draft = null) {
+  closeTripResortPicker(false);
+  document.getElementById("trip-room-grid").classList.remove("open");
+  editingTripId = trip ? trip.id : null;
+  deductTouched = false;
+  // A fresh retry key per new booking. Reusing one across different
+  // bookings would make the second save return the first (save_trip_booking).
+  pendingTripId = trip ? null : crypto.randomUUID();
+  splitOverrides = {};
+  for (const d of receiptsFor(editingTripId)) splitOverrides[d.contract_id + "|" + d.use_year_label] = window.DVCTripDeduct.receiptTotal(d);
+  const values = trip || draft;
+  lastAutoFilledPoints = null;
+  lastAutoFilledCash = null;
+  document.getElementById("form-error").style.display = "none";
+  document.getElementById("f-resort").value = values?.resort_id || document.getElementById("f-resort").value;
+  populateRoomTypesForResort(document.getElementById("f-resort").value, values?.room_type_id);
+  document.getElementById("f-checkin").value = values?.check_in || "";
+  document.getElementById("f-checkout").value = values?.check_out || "";
+  syncCheckoutMin();
+  document.getElementById("f-points").value = values?.points_used ?? "";
+  document.getElementById("f-notes").value = values?.notes || "";
+  document.getElementById("f-cash-value").value = values?.custom_cash_value ?? "";
+  updateSuggestions();
+  if (draft) {
+    lastAutoFilledPoints = Number(document.getElementById("f-points").value);
+    if (!draft.cash_is_custom) lastAutoFilledCash = Number(document.getElementById("f-cash-value").value);
+  }
+
+  renderTripFunding(values);
+
+  updateTripFormTitle();
+  document.getElementById("trip-modal").classList.add("open");
+}
+
+// Check-out must come after check-in: the picker only offers later dates,
+// and moving check-in onto or past an existing check-out clears it rather
+// than leaving an impossible range for Save to reject.
+function syncCheckoutMin() {
+  const checkIn = document.getElementById("f-checkin").value;
+  const checkOut = document.getElementById("f-checkout");
+  if (!checkIn) { checkOut.min = ""; return; }
+  const next = new Date(checkIn + "T00:00:00Z");
+  next.setUTCDate(next.getUTCDate() + 1);
+  checkOut.min = next.toISOString().slice(0, 10);
+  if (checkOut.value && checkOut.value <= checkIn) checkOut.value = "";
+}
+
+// A new stay that hasn't happened yet (or has no dates yet) is a booking,
+// not a memory; the title follows check-in as it's entered.
+function updateTripFormTitle() {
+  const checkIn = document.getElementById("f-checkin").value;
+  const upcoming = !checkIn || checkIn >= localToday();
+  document.getElementById("trip-modal-title").textContent = editingTripId ? "Edit Trip" : upcoming ? "Record a Booking" : "Log a Trip";
+  if (!tripSaveInFlight) document.getElementById("save-trip").textContent = editingTripId ? "Save Changes" : upcoming ? "Save Booking" : "Save Trip";
+}
+
+function closeTripForm() {
+  closeTripResortPicker(false);
+  editingTripId = null;
+  document.getElementById("trip-modal").classList.remove("open");
+}
+
+async function saveTripForm() {
+  const errorEl = document.getElementById("form-error");
+  errorEl.style.display = "none";
+
+  const checkIn = document.getElementById("f-checkin").value;
+  const checkOut = document.getElementById("f-checkout").value;
+  const points = Number(document.getElementById("f-points").value);
+
+  if (!checkIn || !checkOut) {
+    errorEl.textContent = "Check-in and check-out dates are required.";
+    errorEl.style.display = "block";
+    return;
+  }
+  if (checkOut <= checkIn) {
+    errorEl.textContent = "Check-out must be after check-in.";
+    errorEl.style.display = "block";
+    return;
+  }
+  if (nightsBetween(checkIn, checkOut) > MAX_TRIP_NIGHTS) {
+    errorEl.textContent = `That's a ${nightsBetween(checkIn, checkOut)}-night stay -- double-check the dates.`;
+    errorEl.style.display = "block";
+    return;
+  }
+  if (!points && points !== 0) {
+    errorEl.textContent = "Points used is required.";
+    errorEl.style.display = "block";
+    return;
+  }
+  const cashValueRaw = document.getElementById("f-cash-value").value;
+  if (!cashValueRaw || !Number.isFinite(Number(cashValueRaw)) || Number(cashValueRaw) < 0) {
+    errorEl.textContent = "Enter a cash value of zero or more for the whole stay. Only the share funded by your contracts counts toward membership value.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  const funding = readTripFunding();
+  const attribution = window.DVCTripFunding.validate(points, funding, contracts);
+  if (!attribution.valid) {
+    errorEl.textContent = attribution.error;
+    errorEl.style.display = "block";
+    updateFundingSummary();
+    document.getElementById("trip-funding").scrollIntoView({ block: "center", behavior: "smooth" });
+    return;
+  }
+
+  const payload = {
+    resort_id: document.getElementById("f-resort").value,
+    room_type_id: document.getElementById("f-room").value,
+    check_in: checkIn,
+    check_out: checkOut,
+    points_used: points,
+    notes: document.getElementById("f-notes").value.trim() || null,
+    custom_cash_value: Number(cashValueRaw),
+    points_source_breakdown: funding,
+  };
+
+  // The booking and its optional deduction are one server-side operation
+  // keyed by a retry id, and Save is disabled while it's in flight -- a
+  // second tap on a slow connection can't record the stay twice.
+  if (tripSaveInFlight) return;
+  const toggle = document.getElementById("f-deduct");
+  const reconcile = !document.getElementById("balance-deduct").hidden && !toggle.disabled && toggle.checked;
+  const plans = currentDeductionPlan();
+  const saveBtn = document.getElementById("save-trip");
+  const saveLabel = saveBtn.textContent;
+  tripSaveInFlight = true;
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving…";
+  let result;
+  try {
+    result = await window.DVCAuth.saveTripBooking({
+      p_trip_id: editingTripId || pendingTripId,
+      p_mode: editingTripId ? "update" : "create",
+      p_trip: payload,
+      p_deductions: reconcile ? window.DVCTripDeduct.deductionsPayload(plans) : [],
+      p_reconcile: reconcile,
+    });
+  } finally {
+    tripSaveInFlight = false;
+    saveBtn.disabled = false;
+    saveBtn.textContent = saveLabel;
+  }
+
+  if (result.error) {
+    errorEl.textContent = "Couldn't save: " + result.error;
+    errorEl.style.display = "block";
+    return;
+  }
+
+  // Only a brand-new trip gets the pulseRing celebration on its postcard --
+  // editing an existing one isn't a new "10-second log" moment.
+  if (!editingTripId && result.data?.trip) justLoggedTripId = result.data.trip.id;
+  pendingTripId = null;
+
+  const skipped = reconcile ? plans.filter(p => p.status !== "ready") : [];
+  pendingWarning = skipped.length
+    ? `Saved. Not taken out of balances: ${skipped.map(p => fundingEscape(deductionContractName(p.contract)) + " " + p.label).join(", ")}. Fix it with Adjust balance on My Contracts if needed.`
+    : null;
+  closeTripForm();
+  renderSignedIn();
+}
+
+
+function render(session) {
+  if (!window.DVCAuth.isConfigured()) {
+    renderUnconfigured();
+  } else if (session) {
+    renderSignedIn();
+  } else {
+    renderGate();
+  }
+}
+
+function waitForAuth(attempts) {
+  if (window.DVCAuth) {
+    window.DVCAuth.onAuthChange(render);
+  } else if (attempts > 0) {
+    setTimeout(() => waitForAuth(attempts - 1), 50);
+  } else {
+    renderUnconfigured();
+  }
+}
+waitForAuth(40);
+  </script>
+</body>
+</html>

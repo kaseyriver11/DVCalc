@@ -2936,10 +2936,10 @@ function logTripFromCalendar() {
     saveStateToSession();
     sessionStorage.setItem("dvc_return_to_calendar", "1");
   } catch (error) {
-    alert("Couldn't open the trip form. Please try again, or log the trip from Membership Value.");
+    alert("Couldn't open the trip form. Please try again, or record it from Bookings & Stays.");
     return;
   }
-  window.location.href = "trips.html";
+  window.location.href = "bookings.html";
 }
 
 function toggleSmartDrawManual(pointsNeeded) {

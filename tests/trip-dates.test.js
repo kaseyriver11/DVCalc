@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const page = fs.readFileSync(require.resolve('../trips.html'), 'utf8').replace(/\r/g, '');
+const page = fs.readFileSync(require.resolve('../bookings.html'), 'utf8').replace(/\r/g, '');
 const source = page.match(/function syncCheckoutMin\(\) \{[^]*?\n\}/)[0];
 
 function form(checkIn, checkOut) {

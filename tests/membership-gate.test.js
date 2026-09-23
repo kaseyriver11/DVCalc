@@ -63,7 +63,7 @@ test('trialing and past_due still count as members; canceled does not', () => {
 });
 
 test('every owner page renders the membership gate', () => {
-  for (const file of ['account.html', 'trips.html', 'itineraries.html', 'itinerarycompare.html', 'badges.html', 'home.js']) {
+  for (const file of ['account.html', 'bookings.html', 'trips.html', 'itineraries.html', 'itinerarycompare.html', 'badges.html', 'home.js']) {
     assert.match(fs.readFileSync(require.resolve('../' + file), 'utf8'), /hasMembership\(\)/, file);
   }
 });

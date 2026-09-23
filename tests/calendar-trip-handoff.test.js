@@ -54,14 +54,14 @@ function setup() {
     openTripForm: (...args) => opened.push(args),
   });
   vm.runInContext(handler("app.js", "logTripFromCalendar", "toggleSmartDrawManual"), context);
-  vm.runInContext(handler("trips.html", "openCalendarTripDraft", "openTripForm"), context);
+  vm.runInContext(handler("bookings.html", "openCalendarTripDraft", "openTripForm"), context);
   return { context, storage, opened, alerts, totals, contracts };
 }
 
 test("calendar opens a new prefilled trip exactly once without writing owner data", () => {
   const { context: c, storage, opened } = setup();
   c.logTripFromCalendar();
-  assert.equal(c.window.location.href, "trips.html");
+  assert.equal(c.window.location.href, "bookings.html");
   assert.equal(storage.get("dvc_return_to_calendar"), "1");
   c.openCalendarTripDraft();
   c.openCalendarTripDraft();

@@ -82,113 +82,40 @@ body {
   margin-bottom: 18px;
 }
 .page-header-row h1 { font-size: 1.4rem; font-weight: 700; color: #1a237e; }
-.page-header-sub { font-size: 0.84rem; color: #888; }
 
-/* ---- At-Risk Points Health Banner ----
-   The single most prominent thing on the dashboard when there's something
-   to act on -- sits above the widget grid, same "most urgent fact goes
-   first" convention account.html's own .deadline-countdown uses. Distinct
-   from that banner's day-based urgency gradient (14/30d) on purpose: this
-   one is a coarser green/yellow/red read tied to real forfeiture risk --
-   red specifically means the banking window has already closed (the ONLY
-   way left to save those points is to book with them), not just "running
-   low on time while still bankable."
-   "Look 1" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md): a
-   bold, saturated status color, white text, no separate border -- the
-   color itself is the frame. This USED to be a pale tint (#e8f5e9 etc,
-   matching account.html's --color-good-bg-style tokens) with dark text,
-   which read as barely-colored at a glance even before art was added
-   (reported directly -- "I don't see the color") and only got harder to
-   see once a busy photo sat behind it. home.js's renderHealthBanner()
-   layers a translucent version of these SAME hex values over the resort's
-   art (data/resort_images.js) when the at-risk contract has any. */
-.health-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  margin-bottom: 18px;
-  background-size: cover;
-  background-position: center;
-  color: white;
-}
-.health-banner.green { background: #2e7d32; }
-.health-banner.yellow { background: #ef6c00; }
-.health-banner.red { background: #b71c1c; }
-/* .clickable (was .expandable): the whole banner navigates straight to
-   its priority action on click now, rather than revealing a button to
-   tap next -- see renderHealthBanner()'s own comment for why. */
-.health-banner.clickable { cursor: pointer; }
-.health-banner-icon { font-size: 1.3rem; flex-shrink: 0; line-height: 1.3; }
-.health-banner-body { flex: 1; min-width: 0; }
-.health-banner-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; opacity: 0.8; }
-.health-banner-detail { font-size: 0.86rem; margin-top: 2px; }
-.health-banner-detail strong { color: inherit; }
-.health-banner-hint { font-size: 0.72rem; margin-top: 4px; opacity: 0.75; }
-.health-banner-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-.health-banner-action-btn {
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 20px;
-  text-decoration: none;
-  /* Explicit dark text, not color:inherit -- the banner's own text is
-     white now (Look 1 card, see .health-banner above), which would be
-     illegible on this button's light semi-transparent background. */
-  color: #333;
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(0,0,0,0.12);
-}
-.health-banner-action-btn:hover { background: rgba(255,255,255,0.9); }
-
-/* ---- Quick Actions: a fixed 3-column toolbar of compact app-shortcut
-   cards, not the wider auto-fit launcher row this replaced -- a strict
-   repeat(3, 1fr) needs its own mobile override (unlike auto-fit/minmax,
-   it won't collapse on its own), so it gets the same explicit 700px
-   breakpoint as .dashboard-grid below. ---- */
-.quick-launch-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-@media (max-width: 700px) {
-  .quick-launch-row { grid-template-columns: 1fr; }
-}
-.quick-launch-card {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  background: white;
-  border: 1px solid #e5e0ee;
-  border-radius: 8px;
-  padding: 13px 14px;
-  text-decoration: none;
-  color: #333;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.quick-launch-card:hover { border-color: #4a148c; box-shadow: 0 2px 8px rgba(74,20,140,0.12); }
-.quick-launch-title-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 700; color: #1a237e; }
-.quick-launch-sub { font-size: 0.75rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.quick-launch-arrow { flex-shrink: 0; font-weight: 700; color: #4a148c; }
+/* ---- "Next up" attention card (2026-09-23) ----
+   The one earliest thing to act on, from DVCPointAttention.earliest() via
+   dvc-home-summary.js attentionCard(). Calm tinted surface, dark text, a
+   status accent on the left edge, and a single action -- replacing the old
+   photo-backed banner with its multi-line warning copy. */
+.attention-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px 18px; margin-bottom: 16px; border-radius: 12px; border: 1px solid #e7e3ef; border-left: 5px solid var(--attention-accent); background: var(--attention-bg); color: #1d1b2e; }
+.attention-card.calm { --attention-accent: #2e7d32; --attention-bg: #f3f9f3; }
+.attention-card.warning { --attention-accent: #e65100; --attention-bg: #fff7ef; }
+.attention-card.danger { --attention-accent: #c62828; --attention-bg: #fdf2f2; }
+.attention-body { flex: 1 1 220px; min-width: 0; }
+.attention-eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5b5670; }
+.attention-title { font-size: 1.02rem; font-weight: 700; margin-top: 2px; }
+.attention-detail { font-size: 0.88rem; color: #3d3a4d; margin-top: 2px; overflow-wrap: anywhere; }
+.attention-note { font-size: 0.82rem; color: #3d3a4d; margin-top: 4px; }
+.attention-action { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 8px; background: #4a148c; color: white; font-size: 0.88rem; font-weight: 700; text-decoration: none; }
+.attention-action:hover { background: #38106b; }
+.attention-action:focus-visible, .portfolio-row:focus-visible, .home-primary-btn:focus-visible, .home-secondary-link:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
 
 /* ---- Dashboard widget grid: 2 columns on desktop, 1 on mobile (CLAUDE.md's
    mobile guardrail -- straight to 1fr under 700px, no cramped intermediate
    tier). .full-width widgets always span both columns regardless. ---- */
-.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 16px; }
+/* minmax(0, 1fr), not 1fr: a bare 1fr track can't shrink below its
+   longest unbreakable line, so one long one-line resort name (Grand
+   Californian, Aulani) used to widen the card -- and the page -- past a
+   phone screen. With a 0 minimum the name ellipsizes instead. */
+.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-bottom: 16px; }
 
 @media (max-width: 700px) {
-  .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 .widget-card {
+  min-width: 0;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -197,8 +124,8 @@ body {
 .widget-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 14px;
+  align-items: center;
+  margin-bottom: 6px;
 }
 .widget-card-header h2 {
   font-size: 1rem;
@@ -207,6 +134,9 @@ body {
 }
 .widget-link-inline {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 0.8rem;
   font-weight: 600;
   color: #4a148c;
@@ -227,7 +157,9 @@ body {
    step rather than what could read as an error/nothing-here message. */
 .widget-empty-welcome p { font-size: 0.86rem; color: #888; line-height: 1.5; margin-bottom: 10px; }
 .widget-empty-cta {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 0.84rem;
   font-weight: 700;
   color: #4a148c;
@@ -281,95 +213,36 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
 }
 .widget-signin-btn:hover { background: #38106b; }
 
-/* ---- Contracts Summary ---- */
-.contracts-summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 7px 0;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 0.88rem;
-}
-.contracts-summary-row:last-of-type { border-bottom: none; }
-.contracts-summary-row strong { color: #1a237e; }
-.contracts-resort-list { font-size: 0.78rem; color: #888; margin-top: 8px; }
-.contracts-summary-row small { font-size: 0.72rem; font-weight: 500; color: #888; }
-.coming-up { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
-.coming-up-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
-.coming-up ul { list-style: none; margin: 0; padding: 0; }
-.coming-up li { display: flex; gap: 10px; font-size: 0.8rem; line-height: 1.4; padding: 3px 0; color: #444; }
-.coming-up-date { flex: 0 0 48px; font-weight: 700; color: #4a148c; }
-.coming-up a { color: #4a148c; }
+/* ---- Points portfolio (2026-09-23) ----
+   Recorded points left across every active contract's current use year,
+   then one tap target per contract (up to three). Full use-year dates,
+   bucket breakdowns and every deadline stay on My Contracts. */
+.portfolio-headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 12px; }
+.portfolio-total { font-size: 1.8rem; font-weight: 800; color: #1d1b2e; line-height: 1.1; }
+.portfolio-total.needed { font-size: 1.2rem; color: #8a4b00; }
+.portfolio-label { font-size: 0.88rem; color: #3d3a4d; }
+.portfolio-missing { font-size: 0.82rem; font-weight: 700; color: #8a4b00; background: #fff4e0; border-radius: 999px; padding: 2px 10px; }
+.portfolio-rows { list-style: none; margin: 0; padding: 0; }
+.portfolio-row { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 10px 0; border-top: 1px solid #eee; color: #1d1b2e; text-decoration: none; }
+.portfolio-row-body { flex: 1; min-width: 0; }
+.portfolio-row-name { display: block; font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.portfolio-row-years { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 0.84rem; color: #3d3a4d; margin-top: 2px; }
+.portfolio-row-years .missing { color: #8a4b00; font-weight: 700; }
+.portfolio-row-arrow { flex-shrink: 0; color: #4a148c; font-weight: 700; }
+.portfolio-more { display: inline-block; margin-top: 10px; }
 
-/* ---- House Money progress ---- */
-.house-money-pct-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.88rem; margin-bottom: 6px; }
-.house-money-pct-row strong { font-size: 1.1rem; color: #4a148c; }
-.house-money-bar-track { background: #eee; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
-.house-money-bar-fill { background: #4a148c; height: 100%; border-radius: 5px; transition: width 0.2s; }
-.house-money-note { font-size: 0.82rem; color: #888; line-height: 1.4; }
+/* ---- Membership Value preview ---- */
+.value-preview { display: flex; align-items: baseline; gap: 8px; }
+.value-pct { font-size: 1.8rem; font-weight: 800; color: #4a148c; line-height: 1.1; }
+.value-pct-label { font-size: 0.88rem; color: #3d3a4d; }
+.value-note { font-size: 0.86rem; color: #3d3a4d; margin: 6px 0 10px; line-height: 1.45; }
+.value-note a { color: #4a148c; font-weight: 600; }
 
-/* ---- Saved Stays preview ----
-   "Look 2" card (2026-09-20 app-wide art-card sweep, see CLAUDE.md): plain
-   neutral border + shadow, no color accent -- each row used to be a bare
-   flex row separated only by a thin bottom divider, which worked fine
-   plain but let consecutive rows' photos (data/resort_images.js) visually
-   run together into one another once art was added (reported directly --
-   "the stays all blend together"). Each row is now its own bordered,
-   shadowed card with real gap between them instead of a shared divider. */
-.home-itin-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  background-size: cover;
-  background-position: center;
-}
-.home-itin-row + .home-itin-row { margin-top: 10px; }
-.home-itin-name { font-weight: 700; font-size: 0.9rem; color: #1a237e; }
-.home-itin-meta { font-size: 0.78rem; color: #888; margin-top: 2px; }
-/* Same grayscale-not-opacity treatment as itineraries.html's .itin-card.past. */
-.home-itin-row.past { filter: grayscale(0.85) brightness(0.97); }
-.home-itin-past-badge {
-  display: inline-block;
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  color: #888;
-  background: #eee;
-  border-radius: 999px;
-  padding: 2px 7px;
-  margin-left: 7px;
-  vertical-align: middle;
-}
-.home-itin-view {
-  flex-shrink: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  text-decoration: none;
-  color: #4a148c;
-}
-.home-itin-view:hover { border-color: #4a148c; background: #f7f5fa; }
-.portfolio-balances { margin-top: 18px; }
-.portfolio-contract { margin-top: 16px; }
-.portfolio-contract h3 { margin: 0 0 8px; font-size: .85rem; color: #25233b; overflow-wrap: anywhere; }
-.portfolio-cycles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.portfolio-cycle { display: flex; flex-direction: column; gap: 7px; padding: 12px; border: 1px solid #e7e3ef; border-radius: 14px; background: #faf8ff; color: #5f596e; text-decoration: none; font-size: .7rem; }
-.portfolio-cycle strong { font-size: 1.35rem; color: #322052; }
-.portfolio-cycle small { font-size: .7rem; font-weight: 500; }
-.portfolio-cycle-action { color: #4a148c; font-weight: 600; }
-.portfolio-cycle.unknown { background: #fffaf0; border-color: #eee1c5; }
-.portfolio-cycle.unknown strong { font-size: 1rem; }
-.portfolio-cycle:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
-.portfolio-balance-note { font-size: .72rem; line-height: 1.5; color: #777; margin: 12px 0 0; }
-.planning-heading { font-size: 1rem; color: #555; margin: 24px 0 12px; }
+/* ---- Actions below the cards: one primary, one secondary ---- */
+.home-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 4px; }
+.home-primary-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 8px; background: #4a148c; color: white; font-size: 0.9rem; font-weight: 700; text-decoration: none; }
+.home-primary-btn:hover { background: #38106b; }
+.home-secondary-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.9rem; font-weight: 600; color: #4a148c; text-decoration: none; }
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -409,6 +282,7 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
       <span class="site-nav-group">
         <span class="site-nav-group-label">My Membership</span>
         <a href="account.html">My Contracts</a>
+        <a href="bookings.html">Bookings &amp; Stays</a>
         <a href="trips.html">Membership Value</a>
       </span>
       <span class="site-nav-divider"></span>
@@ -431,43 +305,25 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
 
   <div class="page">
     <div class="page-header-row">
-      <h1>Dashboard</h1>
-      <span class="page-header-sub">Your contracts, points, and membership value</span>
+      <h1>Home</h1>
     </div>
 
-    <div id="home-health-banner"></div>
+    <div id="home-attention"></div>
 
     <div class="dashboard-grid">
-      <div class="widget-card">
-        <div class="widget-card-header"><h2>My Contracts</h2><a href="account.html" class="widget-link-inline">Manage &rarr;</a></div>
+      <section class="widget-card" aria-labelledby="home-contracts-title">
+        <div class="widget-card-header"><h2 id="home-contracts-title">My Contracts</h2><a href="account.html" class="widget-link-inline">Manage &rarr;</a></div>
         <div id="home-contracts-summary"><div class="widget-loading">Loading&hellip;</div></div>
-      </div>
+      </section>
 
-      <div class="widget-card">
-        <div class="widget-card-header"><h2>Membership Value</h2><a href="trips.html" class="widget-link-inline">Details &rarr;</a></div>
+      <section class="widget-card" aria-labelledby="home-value-title">
+        <div class="widget-card-header"><h2 id="home-value-title">Membership Value</h2></div>
         <div id="home-house-money"><div class="widget-loading">Loading&hellip;</div></div>
-      </div>
+      </section>
     </div>
 
-    <h2 class="planning-heading">Plan a stay</h2>
-    <div class="quick-launch-row">
-      <a href="index.html" class="quick-launch-card">
-        <div class="quick-launch-title-row"><span>Calendar</span><span class="quick-launch-arrow">&rarr;</span></div>
-        <div class="quick-launch-sub">Point charts</div>
-      </a>
-      <a href="suggest.html" class="quick-launch-card">
-        <div class="quick-launch-title-row"><span>Suggest</span><span class="quick-launch-arrow">&rarr;</span></div>
-        <div class="quick-launch-sub">Find stays</div>
-      </a>
-      <a href="compare.html" class="quick-launch-card">
-        <div class="quick-launch-title-row"><span>Compare</span><span class="quick-launch-arrow">&rarr;</span></div>
-        <div class="quick-launch-sub">Resorts side-by-side</div>
-      </a>
-    </div>
-
-    <div class="widget-card">
-      <div class="widget-card-header"><h2>Saved Stays</h2><a href="itineraries.html" class="widget-link-inline">View All &rarr;</a></div>
-      <div id="home-itineraries"><div class="widget-loading">Loading&hellip;</div></div>
+    <div class="home-actions" id="home-actions">
+      <a href="index.html" class="home-secondary-link">Plan a stay &rarr;</a>
     </div>
   </div>
 
@@ -480,6 +336,7 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
   <script src="data/resort_images.js"></script>
   <script src="dvc-dates.js"></script>
   <script src="dvc-point-attention.js"></script>
+  <script src="dvc-home-summary.js"></script>
   <script src="dvc-track.js"></script>
   <script src="dvc-trip-funding.js"></script>
   <script src="dvc-owner-value.js"></script>

@@ -1,19 +1,38 @@
-# To do: declutter Home
+# Home declutter and Bookings & Stays
 
-Status: noted, not started. Raised by the owner on September 22, 2026 while fixing UX2-07.
+Status: **implemented September 23, 2026** (Claude Code, from a ChatGPT-drafted brief). Raised by the owner on September 22 while fixing UX2-07: Home had become bloated with numbers, links, and bold text. The product is a contract manager; Home answers "what needs my attention?" and "what points do I have?"
 
-Home is becoming bloated with numbers, links, and bold text. It's the default landing spot (the brand and the installed app both open it as of 2026-09-22), and the app's framing is a contract manager with the calendar in support, so Home should answer "what do I need to know or do right now" at a glance rather than restate every page.
+## What changed
 
-Observed on the current dashboard:
-- The Membership Value card alone carries a payback line, a percent, a progress bar, a House Money estimate, two explanatory notes (assumptions and what "booked value" counts), an assumptions link, a Details link, and now a Record a booking button.
-- The health banner, contract cards, and "Coming up" deadline list can repeat the same deadline in more than one place.
-- Many figures are bold at once, so nothing stands out.
+**Home (`home.html`, `home.js`, new `dvc-home-summary.js`)**
+- The photo-backed health banner is replaced by one compact **"Next up" card**: the single earliest item from `DVCPointAttention.earliest()` (unchanged), toned with `dvc-dates.js`'s own `urgencyTier`/`expirationTier`. Use-by: "Use 400 points by Nov 30, 2026" + contract; banking: "Bank 120 points by …"; missing current balance: "Add a balance for [contract]". Holding restrictions go on a short second line. One action, deep-linking to `account.html?contract=…&year=…`. "Nothing needs attention" only appears when every current bucket is recorded and empty — an unknown balance is itself the next-up item.
+- The expanded contracts widget is replaced by a **points portfolio**: "Recorded points left" (all four buckets of each active contract's current use year), a "[N] balance(s) needed" chip, or "Balances needed" when every current balance is missing — never 0. Up to three rows ("Now · 2025: 400 pts / Next · 2026: Add balance"), each one tap target opening whichever year needs a balance first, else the current year. More than three → "View all N contracts". Every contract still counts toward the headline and the attention card.
+- Removed from Home: Total Annual Points, the resort-name sentence, the six balance tiles, the "Coming up" list (so a deadline is never shown twice), the three planning shortcut cards, and the Saved Stays card (itineraries remain under My Itineraries in the menu).
+- **Membership Value** shrinks to the payback percentage, one line ("Based on the booked value of your upcoming and completed stays"), a needs-review note when relevant, and "View membership value". Model assumptions and projection copy stay on `trips.html`.
+- One action row: **+ Record a booking** (`bookings.html#record-booking`, signed-in members) and **Plan a stay** (`index.html`).
+- Signed-out, no-contract, membership-gated, and failed-load (Retry) states are kept.
 
-- [ ] Inventory every number, link, and bold run on Home at 390px with a real two-contract account; mark each as act-now, glanceable status, or detail that belongs on its own page.
-- [ ] Keep one primary action per card; move secondary links behind the card's own "Details" destination.
-- [ ] Move explanatory notes (model assumptions, what booked value counts) to tooltips or the destination page.
-- [ ] Show each deadline in one place only.
-- [ ] Reserve bold for the single figure per card that matters most.
-- [ ] Verify at 390px and 360px, signed out, new owner with no contracts, and a multi-contract owner.
+**Bookings & Stays (new `bookings.html`)**
+- In the menu between My Contracts and Membership Value on every page (`tests/nav-structure.test.js`).
+- The whole booking-management interface **moved** here from `trips.html` — form, pickers, point-source funding, deduction preview and receipts, edit reconciliation, delete-with-cancellation choices, pending/error states, calendar draft handoff, badge-unlock celebration. Same code, not a second copy; no new migration.
+- Shared stay helpers (`tripCashValue`, cash/points estimates, date formatting, `localToday`) moved to new **`dvc-stay-value.js`**, loaded by both pages.
+- Grouping from new **`dvc-stay-groups.js`**: **Needs review** (never collapsed, `#needs-review`) → **Upcoming** (nearest check-in first) → **Completed** by checkout year (newest open, older collapsed; most recent checkout first). Each stay appears exactly once. Compact full-width rows (resort, dates, points, booked/value or "Review point sources"); tapping expands room, contract shares, outside points, cash value, deduction receipt, and Edit/Delete (`aria-expanded`, visible focus). Empty: "No bookings recorded yet". Failed load: explains and offers Retry.
+- `#record-booking` opens the new-booking form and clears the hash with `replaceState` (no extra history entry).
 
-Related: the booking entry point added to the Membership Value card for UX2-07 (`home.js` `renderHouseMoneyWidget()`) should survive the cleanup — it was the owner's explicit request.
+**Membership Value (`trips.html`)**
+- Calculations untouched. "+ Record a booking" links to `bookings.html#record-booking`. The point-source warning stays near the top and links to `bookings.html#needs-review`.
+- The stay feed is replaced by a **Bookings & Stays preview**: at most the next upcoming booking and the last completed stay, counts, and "View all stays".
+- The projection chart ("Cost vs. value over time"), Exit Equity, and the per-contract cost breakdown sit behind initially closed disclosures; the payback result stays visible. Exit Equity's collapsed header still states its verdict ("$12,451 to go until Exit House Money" / "🎉 Exit House Money achieved"), updated live with the assumption sliders, so closing it never hides the result. Each disclosure draws its own chevron, since the flex summary drops the browser's triangle. The chart has its own container so assumption changes redraw it without closing it.
+- Old `trips.html#record-booking` / `#trip-list` links, and a calendar draft landing on the old page, forward to `bookings.html` with `location.replace()`. The calendar's "Record This Booking" now goes straight to `bookings.html`.
+
+## Verification (September 23, 2026)
+
+- **Owner-reported fix:** on a real phone the pages were wider than the screen. Cause: bare `1fr` grid tracks can't shrink below their longest one-line text, so a long resort name (Grand Californian, Aulani) widened Home's cards and the page. Tracks are now `minmax(0, 1fr)` with `min-width: 0` cards, so names ellipsize; re-checked at 390/360px with the longest resort and room names, a long nickname, every stay expanded, and every disclosure open. The earlier check missed it because its fixtures used short names.
+- **Automated:** 267 tests pass, including new `tests/stay-groups.test.js`, `tests/home-summary.test.js`, and a rewritten `tests/home-balances.test.js` (renders the real `renderContractsWidget()`); the calendar handoff, trip-date, funding, gate, and nav tests now target the moved code.
+- **Browser, synthetic data only:** local server with `DVCAuth`'s data calls replaced by in-memory fixtures (three contracts on Dec/Jun/Feb use years with a confirmed zero, an unknown contract, and the 400/180 screenshot scenario; ten stays across 2024–2027 with two upcoming and one needing review). Checked at 390px and 360px: signed out, no contracts, three contracts, failed load, empty history, the ten-stay list (each stay once, correct group and order), row expansion, edit reconciliation, delete-as-mistake restore, `#record-booking`, calendar draft prefill (consumed once, not replayed), `#needs-review`, Membership Value's two-summary preview and closed disclosures, and the old-link redirects. No horizontal overflow at either width; no console errors on any page.
+
+## Limits
+
+- **No real Supabase booking transactions were exercised** in this pass. Saves, edits, and deletes ran against a simulated `save_trip_booking` / `delete_trip_booking`; the real RPCs were last verified by the owner on September 22 (record + delete-as-mistake round trip).
+- **Mobile layout was verified by measurement, not by eye.** The browser window couldn't be resized in this environment, so 390/360px checks ran in same-origin frames (media queries follow the frame width) — overflow, touch-target height, and text size were measured; screenshots were only possible at desktop width.
+- Membership Value's existing payback gauge and stat tiles still have some sub-44px targets and sub-12px labels (e.g. "PAID OFF"); they predate this pass and were left unchanged.
