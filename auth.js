@@ -694,12 +694,25 @@ function getSession() {
 // -- account.html needs to show/reactivate inactive ones, so filtering to
 // active-only happens in whichever consumer only cares about that (e.g.
 // personalization, once Phase 3 wires it up), not here.
+// Which owner-data reads failed on their most recent attempt. The reads
+// below still return [] so no caller crashes, but a failed read is not an
+// empty portfolio -- pages check readFailed() before showing "add your
+// first contract" onboarding, and offer Retry instead (UX2-05).
+const readFailures = new Set();
+function noteRead(name, error) {
+  if (error) readFailures.add(name); else readFailures.delete(name);
+}
+function readFailed(...names) {
+  return names.some(name => readFailures.has(name));
+}
+
 async function getContracts() {
   if (!configured || !currentSession || !(await hasMembership())) return [];
   const { data, error } = await supabase
     .from("contracts")
     .select("*")
     .order("created_at", { ascending: true });
+  noteRead("contracts", error);
   if (error) {
     console.error("[DVCAuth] getContracts failed:", error.message);
     return [];
@@ -746,6 +759,7 @@ async function getContractYearPoints() {
     .from("contract_year_points")
     .select("*")
     .order("use_year_label", { ascending: true });
+  noteRead("contract_year_points", error);
   if (error) {
     console.error("[DVCAuth] getContractYearPoints failed:", error.message);
     return [];
@@ -1037,6 +1051,7 @@ async function getTrips() {
     .from("trips")
     .select("*")
     .order("check_in", { ascending: false });
+  noteRead("trips", error);
   if (error) {
     console.error("[DVCAuth] getTrips failed:", error.message);
     return [];
@@ -1095,6 +1110,42 @@ async function updateTrip(id, patch) {
   return { data, error: error?.message };
 }
 
+// Booking saves through save_trip_booking (migration 024): the trip and its
+// optional balance deduction land in one transaction, keyed by a
+// client-generated id so a retried tap returns the first save instead of
+// writing a second booking or a second deduction.
+// payload: { p_trip_id, p_mode: 'create'|'update', p_trip, p_deductions, p_reconcile }
+async function saveTripBooking(payload) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  const { data, error } = await supabase.rpc("save_trip_booking", payload);
+  if (error && /save_trip_booking/.test(error.message)) {
+    return { error: "Bookings can't be saved until db/migrations/024_trip_bookings.sql is run in Supabase." };
+  }
+  return { data, error: error?.message };
+}
+
+// mode: 'canceled' (Disney cancellation rules), 'mistake' (put the points
+// back exactly), or 'keep' (leave balances alone). Safe to retry.
+async function deleteTripBooking(id, mode) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  const { data, error } = await supabase.rpc("delete_trip_booking", { p_trip_id: id, p_mode: mode });
+  return { data, error: error?.message };
+}
+
+// Live (not yet reversed) deduction receipts, for showing what a booking
+// took out of balances and re-planning an edit against them.
+async function getTripDeductions() {
+  if (!configured || !currentSession || !(await hasMembership())) return [];
+  const { data, error } = await supabase.from("trip_deductions").select("*").is("reversed_at", null);
+  if (error) {
+    console.error("[DVCAuth] getTripDeductions failed:", error.message);
+    return [];
+  }
+  return data;
+}
+
 async function deleteTrip(id) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   const { error } = await supabase.from("trips").delete().eq("id", id);
@@ -1107,6 +1158,7 @@ async function getItineraries() {
     .from("itineraries")
     .select("*")
     .order("created_at", { ascending: false });
+  noteRead("itineraries", error);
   if (error) {
     console.error("[DVCAuth] getItineraries failed:", error.message);
     return [];
@@ -1323,6 +1375,7 @@ window.DVCAuth = {
   onAuthChange,
   getSession,
   getContracts,
+  readFailed,
   addContract,
   updateContract,
   deleteContract,
@@ -1349,6 +1402,9 @@ window.DVCAuth = {
   addTrip,
   updateTrip,
   deleteTrip,
+  saveTripBooking,
+  deleteTripBooking,
+  getTripDeductions,
   getItineraries,
   addItinerary,
   updateItinerary,

@@ -556,6 +556,8 @@ body {
 .ledger-deadline-warning.warning { color: var(--color-warning); }
 .ledger-deadline-warning.danger { color: var(--color-danger); font-weight: 700; }
 .ledger-deadline-warning.muted { color: #999; font-weight: 500; }
+.load-error-card { padding: 20px; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-bg-card); }
+.load-error-card p { font-size: .85rem; color: var(--color-text-muted); margin: 6px 0 14px; }
 .leftover-stays { margin-top: 10px; }
 .leftover-stays-title { font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 6px; }
 .leftover-stays-list { display: grid; gap: 8px; }
@@ -1350,7 +1352,7 @@ body {
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVC Companion</a>
+    <a href="home.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
@@ -1902,6 +1904,13 @@ async function renderSignedIn() {
     window.DVCAuth.getContractYearPoints(),
     window.DVCAuth.getSubscription(),
   ]);
+  // A failed read must not look like an empty vault -- that would invite
+  // re-adding contracts that already exist (UX2-05).
+  if (window.DVCAuth.readFailed("contracts", "contract_year_points")) {
+    pageContent.innerHTML = `<div class="load-error-card" role="alert"><strong>Couldn't load your contracts</strong><p>Nothing has been lost. Check your connection and try again.</p><button type="button" class="save-btn" id="load-retry">Retry</button></div>`;
+    document.getElementById("load-retry").addEventListener("click", renderSignedIn);
+    return;
+  }
 
   const yearPointsByContract = {};
   for (const row of yearPoints) {
@@ -2735,9 +2744,15 @@ function getSelectedUseYear() {
 // minimum, or the 2011-03-21 general-resale cutoff) -- acceptable given
 // most owners only remember the rough year anyway, but worth knowing if a
 // borderline-year contract's Blue Card/resale status looks off by one year.
+// An edit keeps the contract's stored full date whenever its year wasn't
+// changed -- rebuilding it from the year alone silently turned a known
+// 2020-06-15 into 2020-01-01 on a nickname-only edit (UX2-04).
+let editingPurchaseDate = null;
 function acquisitionYearToPurchaseDate(yearInputEl) {
   const year = parseInt(yearInputEl.value, 10);
-  return year ? `${year}-01-01` : null;
+  if (!year) return null;
+  if (editingPurchaseDate && parseInt(editingPurchaseDate.slice(0, 4), 10) === year) return editingPurchaseDate;
+  return `${year}-01-01`;
 }
 
 function updateModalCardPreview() {
@@ -2819,6 +2834,7 @@ function openForm(contract) {
   // Editing an existing contract shows its real acquisition year; a brand
   // new one defaults to the current year, since most owners entering this
   // for the first time are doing so at (or right after) purchase.
+  editingPurchaseDate = contract?.purchase_date || null;
   document.getElementById("f-acquisition-year").value = contract?.purchase_date
     ? parseInt(contract.purchase_date.slice(0, 4), 10)
     : new Date().getFullYear();

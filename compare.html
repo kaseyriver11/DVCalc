@@ -1079,6 +1079,7 @@ body {
   margin-bottom: 12px;
 }
 .compare-card-metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.compare-card-basis { display: block; font-size: 0.7rem; color: var(--color-text-muted, #888); margin-top: 2px; }
 .compare-card-metric-label {
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -1231,7 +1232,7 @@ body {
 <body>
 
   <nav class="site-nav">
-    <a href="index.html" class="site-nav-brand">DVC Companion</a>
+    <a href="home.html" class="site-nav-brand">DVC Companion</a>
     <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="site-nav-links">
       <span class="site-nav-group">
@@ -1504,12 +1505,12 @@ const SORT_COLUMNS_FINANCIAL = {
     tooltip: "Total DVC points required for this stay, from the room type's points chart.",
   },
   rentalSavingsPct: {
-    label: "Savings (Renting)", accessor: r => r.rentalSavingsPct, defaultDir: "desc",
-    tooltip: "How much cheaper using your own points (at your dues rate) is than renting the equivalent points from another DVC owner at your set rental rate.",
+    label: "My Points vs Renting", accessor: r => r.rentalSavingsPct, defaultDir: "desc",
+    tooltip: "Using your own points (dues cost) instead of renting the same points at your rental rate.",
   },
   ownerSavingsPct: {
-    label: "Savings (Owning)", accessor: r => r.ownerSavingsPct, defaultDir: "desc",
-    tooltip: "How much cheaper using owned points (paying only their annual dues) is than paying Disney's cash rate.",
+    label: "My Points vs Cash", accessor: r => r.ownerSavingsPct, defaultDir: "desc",
+    tooltip: "Using your own points (dues cost) instead of paying Disney's cash rate.",
     align: "tooltip-align-right",
   },
 };
@@ -2206,7 +2207,7 @@ function render() {
   const ciDate = new Date(state.checkIn + "T12:00:00");
   const coDate = new Date(state.checkOut + "T12:00:00");
   const fmt = d => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  staySummary.innerHTML = `${fmt(ciDate)} — ${fmt(coDate)} &middot; <strong>${nights} night${nights !== 1 ? "s" : ""}</strong>`;
+  staySummary.innerHTML = `${fmt(ciDate)} — ${fmt(coDate)}, ${coDate.getFullYear()} &middot; <strong>${nights} night${nights !== 1 ? "s" : ""}</strong>`;
 
   // Determine which year's data to use
   const year = getYearForDates(state.checkIn);
@@ -2430,12 +2431,12 @@ function render() {
         </div>
         <div class="compare-card-grid">
           <div class="compare-card-metric">
-            <span class="compare-card-metric-label">Rental Savings</span>
-            ${rank != null ? `<span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span>` : `<span class="na">&mdash;</span>`}
+            <span class="compare-card-metric-label">My points vs renting</span>
+            ${rank != null ? `<span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span><span class="compare-card-basis">$${Math.round(row.ownerCost).toLocaleString()} dues vs $${Math.round(row.rentalCost).toLocaleString()} rent</span>` : `<span class="na">&mdash;</span>`}
           </div>
           <div class="compare-card-metric">
-            <span class="compare-card-metric-label">Owner Savings</span>
-            ${rank != null ? `<span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span>` : `<span class="na">&mdash;</span>`}
+            <span class="compare-card-metric-label">My points vs Disney cash</span>
+            ${rank != null ? `<span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span><span class="compare-card-basis">$${Math.round(row.ownerCost).toLocaleString()} dues vs $${Math.round(row.totalCash).toLocaleString()} cash</span>` : `<span class="na">&mdash;</span>`}
           </div>
         </div>
         <button type="button" class="select-resort compare-card-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select This Resort</button>
@@ -2781,8 +2782,16 @@ if (!paramCheckIn || !paramCheckOut || !paramCategory) {
   }
 }
 
-const defaultCheckIn = paramCheckIn || "2026-03-15";
-const defaultCheckOut = paramCheckOut || "2026-03-20";
+// With no dates handed in, start on an upcoming stay (5 nights, 30 days
+// out) rather than fixed dates that go stale -- this used to open on
+// March 2026 long after it had passed (UX2-08).
+function localDateOffset(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString("en-CA");
+}
+const defaultCheckIn = paramCheckIn || localDateOffset(30);
+const defaultCheckOut = paramCheckOut || localDateOffset(35);
 
 checkInInput.value = defaultCheckIn;
 checkOutInput.value = defaultCheckOut;
@@ -2865,7 +2874,7 @@ function waitForAuthPersonalization(attempts) {
 waitForAuthPersonalization(40);
 
 // Set return flag when clicking back to calendar
-document.getElementById("back-link").addEventListener("click", () => {
+document.getElementById("back-link")?.addEventListener("click", () => {
   sessionStorage.setItem("dvc_return_to_calendar", "1");
 });
   </script>

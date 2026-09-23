@@ -162,15 +162,19 @@ Ten findings: five major, four moderate, one minor. No blocker was observed in t
 4. **Preserve known acquisition dates during unrelated edits** (UX2-04).
 5. **Show recoverable data-load failures instead of empty portfolios** (UX2-05).
 
-## Open checklist
+## Checklist
 
-- [ ] UX2-01 — Duplicate booking saves.
-- [ ] UX2-02 — Booking correction/removal and balance reconciliation.
-- [ ] UX2-03 — Cross-use-year booking deductions.
-- [ ] UX2-04 — Acquisition-date preservation.
-- [ ] UX2-05 — Failed reads versus empty portfolios.
-- [ ] UX2-06 — Upcoming versus delivered stay value.
-- [ ] UX2-07 — Direct access to recorded bookings.
-- [ ] UX2-08 — Relevant comparison default dates.
-- [ ] UX2-09 — Consistent brand destination.
-- [ ] UX2-10 — Explicit savings comparison baselines.
+All ten were confirmed in code and fixed on September 22, 2026 (Claude Code). **UX2-01/02/03 need [migration 024](../db/migrations/024_trip_bookings.sql) run in Supabase before booking saves work.**
+
+- [x] UX2-01 — Duplicate booking saves. Save is disabled and reads "Saving…" while in flight, and the booking plus its deduction is one `save_trip_booking` call keyed by an id generated when the form opens — a retry returns the first save. Verified: three taps during a 1.5 s delayed save made one call and one booking.
+- [x] UX2-02 — Booking correction/removal and balance reconciliation. Each deduction is stored as a receipt (`trip_deductions`, bucket by bucket). Editing shows what was already taken and, by default, puts it back and takes the new amounts in the same transaction. Deleting asks what happened: canceled with Disney (DVC's timing rule — 31+ days back to their use years, 1–30 days to Holding, check-in day forfeited), logged by mistake (restored exactly), or leave balances alone. Bookings saved before receipts existed say balances won't change and point to Adjust balance.
+- [x] UX2-03 — Cross-use-year booking deductions. Each contract's points are split across the use years its nights fall in, by chart points per night (`splitByUseYear()`), with editable per-year amounts that must still sum to the contract's share.
+- [x] UX2-04 — Acquisition-date preservation. An edit keeps the stored full date unless the year itself changes.
+- [x] UX2-05 — Failed reads versus empty portfolios. `auth.js` records failed reads (`readFailed()`); Home, My Contracts, and Membership Value show "Couldn't load… Nothing has been lost" with Retry instead of onboarding or an empty history.
+- [x] UX2-06 — Upcoming versus delivered stay value. Upcoming bookings still count toward House Money immediately (owner's explicit decision), but are listed under Upcoming as "booked value," separate from Completed stays; page and Home copy say "booked" rather than "delivered."
+- [x] UX2-07 — Direct access to recorded bookings. "+ Record a Booking" at the top of Membership Value and on Home's Membership Value card (`trips.html#record-booking` opens the form).
+- [x] UX2-08 — Relevant comparison default dates. Defaults to 5 nights starting 30 days out; the date summary now includes the year.
+- [x] UX2-09 — Consistent brand destination. The brand opens Home on every page, and the installed app starts on Home (`manifest.json` `start_url`).
+- [x] UX2-10 — Explicit savings comparison baselines. "My points vs renting" / "My points vs Disney cash," with the compared costs under each figure on the mobile cards.
+
+Also fixed while verifying: `compare.html` threw on every load wiring a `#back-link` that no longer exists. Follow-up from the owner: Home is getting cluttered — see [`home_redesign_todo.md`](home_redesign_todo.md).

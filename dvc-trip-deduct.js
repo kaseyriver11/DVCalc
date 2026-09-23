@@ -48,26 +48,117 @@
     remaining: row.points_remaining || 0,
   });
 
+  function nightsOf(checkIn, checkOut) {
+    const nights = [];
+    if (!checkOut || checkOut <= checkIn) return [checkIn];
+    for (let ms = Date.parse(checkIn + "T00:00:00Z"); ms < Date.parse(checkOut + "T00:00:00Z"); ms += 86400000) {
+      nights.push(new Date(ms).toISOString().slice(0, 10));
+    }
+    return nights;
+  }
+
+  // One contract's share of a stay, divided between the use years its
+  // nights fall in -- each night is paid from the use year it belongs to,
+  // same grouping as the calendar's stayYearGroups(). Split by each
+  // cycle's chart points (nights when a chart value is missing), whole
+  // points by largest remainder so the parts always sum to `points`.
+  // Returns [{ label, points, nights }] in use-year order.
+  function splitByUseYear({ points, useYear, checkIn, checkOut, nightPoints }) {
+    const groups = new Map();
+    const nights = nightsOf(checkIn, checkOut);
+    const priced = nights.map(date => ({ date, pts: nightPoints ? nightPoints(date) : null }));
+    const useChart = priced.every(n => Number.isFinite(n.pts) && n.pts > 0);
+    for (const n of priced) {
+      const label = useYearLabelFor(useYear, n.date);
+      const g = groups.get(label) || { label, weight: 0, nights: 0 };
+      g.weight += useChart ? n.pts : 1;
+      g.nights += 1;
+      groups.set(label, g);
+    }
+    const list = [...groups.values()].sort((a, b) => a.label - b.label);
+    const totalWeight = list.reduce((s, g) => s + g.weight, 0);
+    let assigned = 0;
+    const parts = list.map(g => {
+      const exact = points * g.weight / totalWeight;
+      const whole = Math.floor(exact);
+      assigned += whole;
+      return { label: g.label, points: whole, nights: g.nights, frac: exact - whole };
+    });
+    [...parts].sort((a, b) => b.frac - a.frac || a.label - b.label).slice(0, points - assigned).forEach(p => { p.points += 1; });
+    return parts.map(({ frac, ...p }) => p);
+  }
+
   // status: "ready" (will deduct), "no-balance" (no confirmed balance for
   // that use year -- nothing to deduct from), "ended" (that use year is
   // over, so its points are gone either way), or "short" (not enough
   // recorded points; left alone rather than zeroing the row out).
-  function planTripDeduction({ allocations, contracts, rows, checkIn, today }) {
+  //
+  // A stay crossing a contract's use-year boundary yields one entry per use
+  // year (split: true). overrides["contractId|label"] replaces the automatic
+  // split for that contract when the owner's amounts still add up to its
+  // allocation; otherwise the automatic split stands (splitAdjusted: false).
+  function planTripDeduction({ allocations, contracts, rows, checkIn, checkOut, today, nightPoints, overrides }) {
     if (!checkIn) return [];
     return (allocations || [])
       .filter(a => Number.isSafeInteger(a.points) && a.points > 0)
-      .map(a => {
+      .flatMap(a => {
         const contract = contracts.find(c => c.id === a.contract_id);
-        if (!contract?.use_year) return null;
-        const label = useYearLabelFor(contract.use_year, checkIn);
-        const base = { contract, contract_id: contract.id, label, points: a.points };
-        if (useYearEndsOn(contract.use_year, label) < today) return { ...base, status: "ended" };
-        const row = rows.find(r => r.contract_id === contract.id && r.use_year_label === label);
-        if (!row || !row.balance_confirmed_at) return { ...base, status: "no-balance" };
-        const result = drawPoints(bucketsOf(row), a.points);
-        return { ...base, row, ...result, status: result.shortfall ? "short" : "ready" };
-      })
-      .filter(Boolean);
+        if (!contract?.use_year) return [];
+        let parts = splitByUseYear({ points: a.points, useYear: contract.use_year, checkIn, checkOut, nightPoints });
+        const split = parts.length > 1;
+        let splitAdjusted = false;
+        if (split && overrides) {
+          const owned = parts.map(p => overrides[contract.id + "|" + p.label]);
+          if (owned.every(n => Number.isSafeInteger(n) && n >= 0) && owned.reduce((s, n) => s + n, 0) === a.points) {
+            parts = parts.map((p, i) => ({ ...p, points: owned[i] }));
+            splitAdjusted = true;
+          }
+        }
+        return parts.filter(p => p.points > 0).map(p => {
+          const base = { contract, contract_id: contract.id, label: p.label, points: p.points, nights: p.nights, split, splitAdjusted, contractPoints: a.points };
+          if (useYearEndsOn(contract.use_year, p.label) < today) return { ...base, status: "ended" };
+          const row = rows.find(r => r.contract_id === contract.id && r.use_year_label === p.label);
+          if (!row || !row.balance_confirmed_at) return { ...base, status: "no-balance" };
+          const result = drawPoints(bucketsOf(row), p.points);
+          return { ...base, row, ...result, status: result.shortfall ? "short" : "ready" };
+        });
+      });
+  }
+
+  // Ledger rows as they'd be with a booking's current receipts put back --
+  // what an edit is re-planned against, since saving the edit restores
+  // those receipts before drawing again (save_trip_booking, migration 024).
+  function rowsWithReceiptsRestored(rows, receipts) {
+    return rows.map(r => {
+      const mine = (receipts || []).filter(d => d.contract_id === r.contract_id && d.use_year_label === r.use_year_label);
+      if (!mine.length) return r;
+      const add = k => mine.reduce((s, d) => s + (d[k] || 0), 0);
+      return {
+        ...r,
+        points_holding: (r.points_holding || 0) + add("points_holding"),
+        points_banked: (r.points_banked || 0) + add("points_banked"),
+        points_borrowed: (r.points_borrowed || 0) + add("points_borrowed"),
+        points_remaining: (r.points_remaining || 0) + add("points_remaining"),
+      };
+    });
+  }
+
+  // The p_deductions payload for save_trip_booking: only "ready" entries.
+  function deductionsPayload(plans) {
+    return plans.filter(p => p.status === "ready").map(p => ({ contract_id: p.contract_id, use_year_label: p.label, points: p.points }));
+  }
+
+  // What a Disney cancellation today does to a booking's points, by days
+  // before check-in (DVC On-Line Booking T&C; server applies the same rule
+  // in delete_trip_booking): 31+ back to their use year, 1-30 Holding, 0 or
+  // later forfeited.
+  function cancellationEffect(checkIn, today) {
+    const days = Math.round((Date.parse(checkIn + "T00:00:00Z") - Date.parse(today + "T00:00:00Z")) / 86400000);
+    return days >= 31 ? "restore" : days >= 1 ? "holding" : "forfeit";
+  }
+
+  function receiptTotal(d) {
+    return (d.points_holding || 0) + (d.points_banked || 0) + (d.points_borrowed || 0) + (d.points_remaining || 0);
   }
 
   // The contract_year_points upsert for one "ready" plan entry.
@@ -94,7 +185,13 @@
     return parts.join(" + ");
   }
 
-  const api = { drawPoints, useYearLabelFor, useYearEndsOn, planTripDeduction, ledgerRowAfter, describeDraw };
+  // "20 banked + 19 current" for a stored receipt (trip_deductions row).
+  function describeReceipt(d) {
+    return describeDraw({ holding: d.points_holding || 0, banked: d.points_banked || 0, borrowed: d.points_borrowed || 0, remaining: d.points_remaining || 0 });
+  }
+
+  const api = { drawPoints, useYearLabelFor, useYearEndsOn, splitByUseYear, planTripDeduction, rowsWithReceiptsRestored,
+    deductionsPayload, cancellationEffect, receiptTotal, describeReceipt, ledgerRowAfter, describeDraw };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else window.DVCTripDeduct = api;
 })();

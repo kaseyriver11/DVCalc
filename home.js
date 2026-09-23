@@ -402,7 +402,7 @@ function renderHouseMoneyWidget(contracts, trips, settings) {
     container.innerHTML = `
       <div class="widget-empty-welcome">
         <p>Add a contract or log your first past trip to start tracking how much Deluxe hotel value your membership has delivered.</p>
-        <a href="trips.html" class="widget-empty-cta">+ Log your first trip</a>
+        <a href="trips.html#record-booking" class="widget-empty-cta">+ Record a booking</a>
       </div>
     `;
     return;
@@ -411,7 +411,7 @@ function renderHouseMoneyWidget(contracts, trips, settings) {
   container.innerHTML = `
     ${trips.some(t => !window.DVCTripFunding.summary(t, contracts).valid) ? `<p class="house-money-note">Some trips are excluded until you <a href="trips.html#trip-list">review their point sources</a>.</p>` : ""}
     <div class="house-money-pct-row">
-      <span>${fmt(stats.lifetimeValue)} logged stay value / ${fmt(stats.totalOutlay)} ownership cost</span>
+      <span>${fmt(stats.lifetimeValue)} booked stay value / ${fmt(stats.totalOutlay)} ownership cost</span>
       <strong>${stats.paybackPct}%</strong>
     </div>
     <div class="house-money-bar-track"><div class="house-money-bar-fill" style="width:${stats.paybackPct}%"></div></div>
@@ -423,7 +423,8 @@ function renderHouseMoneyWidget(contracts, trips, settings) {
             : `${fmt(stats.remaining)} remaining to reach House Money`)}
     </div>
     <p class="house-money-note">Projection uses your saved $${stats.settings.point_value_baseline}/point baseline, ${(stats.settings.value_growth_rate * 100).toFixed(1)}% value growth and ${(stats.settings.dues_growth_rate * 100).toFixed(1)}% dues growth. <a href="trips.html#model-assumptions">Model assumptions</a></p>
-    <p class="house-money-note">Logged value counts the owned-contract share of stays. Future value is modeled; missing purchase details use estimates.</p>
+    <p class="house-money-note">Booked value counts the owned-contract share of upcoming and completed stays. Future value is modeled; missing purchase details use estimates.</p>
+    <a href="trips.html#record-booking" class="widget-empty-cta">+ Record a booking</a>
   `;
 }
 
@@ -504,11 +505,29 @@ async function renderSignedIn() {
   for (const row of yearPoints) {
     (yearPointsByContract[row.contract_id] ||= []).push(row);
   }
-  renderHealthBanner(contracts, yearPointsByContract);
-  renderContractsWidget(contracts, yearPointsByContract);
-  renderHouseMoneyWidget(contracts, trips, settings);
-  renderItinerariesWidget(itineraries);
+  // A failed read is not an empty account: show Retry, never onboarding
+  // or a missing deadline banner (UX2-05).
+  const failed = (...names) => window.DVCAuth.readFailed(...names);
+  const contractsFailed = failed("contracts", "contract_year_points");
+  document.getElementById("home-health-banner").innerHTML = "";
+  if (contractsFailed) {
+    document.getElementById("home-contracts-summary").innerHTML = loadErrorHTML("your contracts");
+  } else {
+    renderHealthBanner(contracts, yearPointsByContract);
+    renderContractsWidget(contracts, yearPointsByContract);
+  }
+  if (contractsFailed || failed("trips")) document.getElementById("home-house-money").innerHTML = loadErrorHTML("your membership value");
+  else renderHouseMoneyWidget(contracts, trips, settings);
+  if (failed("itineraries")) document.getElementById("home-itineraries").innerHTML = loadErrorHTML("your saved stays");
+  else renderItinerariesWidget(itineraries);
 }
+
+function loadErrorHTML(what) {
+  return `<div class="widget-load-error" role="alert"><p>Couldn't load ${what}. Nothing has been lost.</p><button type="button" class="widget-empty-cta" data-home-retry>Retry</button></div>`;
+}
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-home-retry]")) renderSignedIn();
+});
 
 function renderSignedOut() {
   document.getElementById("home-health-banner").innerHTML = DASHBOARD_SIGNIN_HTML;

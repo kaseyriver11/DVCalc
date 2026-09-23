@@ -5,9 +5,9 @@ const vm = require('node:vm');
 const auth = fs.readFileSync(require.resolve('../auth.js'), 'utf8');
 const fnSource = name => auth.match(new RegExp('(?:async )?function ' + name + '\\([^]*?\\n\\}'))[0];
 
-const READS = ['getContracts', 'getContractYearPoints', 'getUserBadges', 'getTrips', 'getItineraries'];
+const READS = ['getContracts', 'getContractYearPoints', 'getUserBadges', 'getTrips', 'getItineraries', 'getTripDeductions'];
 const WRITES = ['addContract', 'updateContract', 'upsertContractYearPoints', 'recordPointMovement', 'upsertUserBadge',
-  'incrementBadgeEvent', 'addTrip', 'updateTrip', 'addItinerary', 'updateItinerary'];
+  'incrementBadgeEvent', 'addTrip', 'updateTrip', 'addItinerary', 'updateItinerary', 'saveTripBooking', 'deleteTripBooking'];
 
 function context(member) {
   let queried = false;
