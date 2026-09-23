@@ -934,7 +934,7 @@ async function getSubscription() {
 // badges -- needs an active membership. Flip this to false to open every
 // owner feature to any signed-in user (e.g. until live-mode Stripe is set
 // up, since nobody can pay before then).
-const MEMBERSHIP_GATE_ENABLED = true;
+const MEMBERSHIP_GATE_ENABLED = false;
 // past_due still counts: Stripe retries a failed card for a while before
 // canceling, and one declined charge shouldn't lock an owner out of their
 // own ledger mid-retry (subscriptions_plan.md Phase 7).

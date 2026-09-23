@@ -24,7 +24,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // table exactly -- keep both in sync if this ever changes.
 // Mirrors auth.js: set false to email every opted-in owner regardless of
 // membership. past_due still counts (Stripe is retrying the card).
-const MEMBERSHIP_GATE_ENABLED = true;
+const MEMBERSHIP_GATE_ENABLED = false;
 const MEMBER_STATUSES = ["active", "trialing", "past_due"];
 
 const DEADLINE_BY_USE_YEAR: Record<string, { month: number; day: number }> = {

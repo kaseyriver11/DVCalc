@@ -39,10 +39,22 @@ test('owner-data writes are refused for non-members without querying', async () 
   }
 });
 
-test('trialing and past_due still count as members; canceled does not', () => {
+// Status rules are checked with the gate forced on, independent of the
+// shipped MEMBERSHIP_GATE_ENABLED value (off until live-mode Stripe exists).
+function statusCheck(gateEnabled) {
   const ctx = vm.createContext({});
-  vm.runInContext(auth.match(/const MEMBERSHIP_GATE_ENABLED = [^;]+;/)[0] + auth.match(/const MEMBER_STATUSES = [^;]+;/)[0] + fnSource('isMemberStatus') , ctx);
-  const is = s => vm.runInContext(`isMemberStatus(${JSON.stringify(s)})`, ctx);
+  vm.runInContext(`const MEMBERSHIP_GATE_ENABLED = ${gateEnabled};` + auth.match(/const MEMBER_STATUSES = [^;]+;/)[0] + fnSource('isMemberStatus'), ctx);
+  return s => vm.runInContext(`isMemberStatus(${JSON.stringify(s)})`, ctx);
+}
+
+test('with the gate off, every signed-in owner counts as a member', () => {
+  const is = statusCheck(false);
+  assert.equal(is('canceled'), true);
+  assert.equal(is(undefined), true);
+});
+
+test('trialing and past_due still count as members; canceled does not', () => {
+  const is = statusCheck(true);
   assert.equal(is('active'), true);
   assert.equal(is('trialing'), true);
   assert.equal(is('past_due'), true);

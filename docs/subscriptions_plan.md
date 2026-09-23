@@ -318,7 +318,10 @@ with the 5 events above selected.
 `MEMBERSHIP_REQUIRED_ERROR` for non-members, and each owner page shows a
 "Start 7-day free trial" card (`renderMembershipGate()`). The
 `send-banking-reminders` function skips non-members (needs a redeploy).
-`MEMBERSHIP_GATE_ENABLED` in both files turns it all off.
+`MEMBERSHIP_GATE_ENABLED` in both files turns it all off. **Shipped off
+(2026-09-22)** in both `auth.js` and `send-banking-reminders` — Stripe is still
+test-mode only, so turning it on would gate every owner out of their own data
+with no way to subscribe. Flip both to `true` as part of Phase 6.
 
 **Before relying on it:**
 - Live-mode Stripe (Phase 6) must exist first, or nobody can subscribe.
