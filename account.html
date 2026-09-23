@@ -1050,8 +1050,8 @@ body {
 .use-points-btn { display: flex; align-items: center; justify-content: center; min-height: 48px; margin: 8px 0 4px; border-radius: 12px; background: var(--color-primary); color: #fff; font-weight: 700; font-size: .92rem; text-decoration: none; }
 .use-points-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
-.point-action-clear { padding: 10px 12px; border-radius: 10px; background: var(--color-good-bg); color: var(--color-good); font-size: .86rem; font-weight: 600; }
-.point-action-clear.small { background: none; padding: 4px 0 0; color: var(--color-text-muted); font-weight: 400; font-size: .78rem; }
+.point-action-clear { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; background: var(--color-good-bg); color: var(--color-good); font-size: .84rem; font-weight: 700; }
+.point-action-clear::before { content: "¹3"; }
 
 /* ---- Notification Settings modal ---- */
 .notif-settings-row {
@@ -1780,7 +1780,6 @@ function buildPointActionsHTML(contracts, yearPointsByContract, today) {
   const groups = window.DVCPointAttention.groups(contracts, yearPointsByContract, today);
   if (!groups.length) return "";
   const withEvents = groups.filter(g => g.events.length);
-  const clear = groups.filter(g => !g.events.length);
   const name = c => window.DVCPointAttention.label(c, resortName(c.home_resort_id));
   const total = withEvents.reduce((n, g) => n + g.events.length, 0);
   return `
@@ -1804,8 +1803,7 @@ function buildPointActionsHTML(contracts, yearPointsByContract, today) {
               <div class="point-action-links">${pointActionLinks(event)}</div>
             </article>`;
           }).join("")}
-        </div>`).join("") : `<div class="point-action-clear">Nothing needs action. Every current balance is recorded.</div>`}
-      ${withEvents.length && clear.length ? `<div class="point-action-clear small">No action needed: ${clear.map(g => name(g.contract)).join(", ")}</div>` : ""}
+        </div>`).join("") : `<span class="point-action-clear">No actions needed</span>`}
     </section>`;
 }
 
