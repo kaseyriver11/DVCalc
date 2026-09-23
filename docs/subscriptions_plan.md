@@ -311,6 +311,23 @@ with the 5 events above selected.
 
 ---
 
+## Phase 4b — Feature gate — **Built (2026-09-22), client-side only**
+
+`auth.js` now enforces the tier split above: `hasMembership()` (`active`/
+`trialing`/`past_due`), owner-data reads return `[]` and writes return
+`MEMBERSHIP_REQUIRED_ERROR` for non-members, and each owner page shows a
+"Start 7-day free trial" card (`renderMembershipGate()`). The
+`send-banking-reminders` function skips non-members (needs a redeploy).
+`MEMBERSHIP_GATE_ENABLED` in both files turns it all off.
+
+**Before relying on it:**
+- Live-mode Stripe (Phase 6) must exist first, or nobody can subscribe.
+- Give your own account an `active` `subscriptions` row (SQL editor) or you'll
+  be gated out of your own contracts.
+- It's not a security boundary: RLS still lets any signed-in user read/write
+  their own rows directly. Server-side enforcement would mean adding a
+  membership check to the owner-table RLS policies.
+
 ## Phase 7 — Later / optional
 
 - Wire `subscriptions.status = 'active'` into the "Active Member Pass"

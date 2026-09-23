@@ -538,6 +538,12 @@ body {
   padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
   animation: sheet-slide-up 0.22s ease-out;
 }
+/* On desktop a full-bleed sheet turns each card into a 1500px-wide strip;
+   keep it phone-sheet sized and centered. */
+@media (min-width: 769px) {
+  .modal-box.sheet { max-width: 560px; }
+}
+
 @keyframes sheet-slide-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -1235,6 +1241,12 @@ body {
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
         <a href="index.html">Calendar</a>
         <a href="compare.html" class="active">Compare Resorts</a>
@@ -1246,12 +1258,6 @@ body {
         <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Membership</span>
-        <a href="account.html">My Contracts</a>
-        <a href="trips.html">Membership Value</a>
       </span>
     </div>
     <span id="account-control"></span>

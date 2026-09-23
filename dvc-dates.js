@@ -127,6 +127,14 @@
     return daysUntil <= 30 ? "danger" : daysUntil <= 60 ? "warning" : "calm";
   }
 
+  // Points whose banking window already closed can only be used or lost, so
+  // that state is never "calm" no matter how much runway is left -- a green
+  // banner next to "or they're forfeited" read as a contradiction.
+  function expirationTier(daysUntil) {
+    const tier = urgencyTier(daysUntil);
+    return tier === "calm" ? "warning" : tier;
+  }
+
   // Countdown copy shared by every deadline/expiration display: "Ends
   // today" at zero, a friendly "X months, Y days remaining" once there's
   // more than 60 days of runway (the calm tier -- months are approximated
@@ -193,6 +201,7 @@
     formatDeadlineDate,
     useYearExpiration,
     urgencyTier,
+    expirationTier,
     formatDeadlineWithCountdown,
     monthsFromDate,
     isInFinalWindowMonth,

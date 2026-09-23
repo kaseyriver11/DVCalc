@@ -360,3 +360,21 @@ test("mastery score can actually reach 100% and no badge is malformed", () => {
   assert.ok(mastery.max > 0);
   assert.ok(mastery.earned <= mastery.max, "earned tiers exceed the maximum reachable");
 });
+
+test("7-Month Sniper needs an away stay the contract can actually reach", () => {
+  const saved = { summary: window.DVCTripFunding.summary, access: window.DVCAuth.getUserResortAccess };
+  window.DVCTripFunding.summary = () => ({ valid: true, owned: 20 });
+  // A home-only resale contract: reaches nothing beyond its own resort.
+  window.DVCAuth.getUserResortAccess = ([c]) => ({ homeResortIds: new Set([c.home_resort_id]), sevenMoResortIds: new Set(c.purchase_type === "resale" ? [] : ["copperCreek"]) });
+  const trip = contract_id => ({ resort_id: "copperCreek", room_type_id: "x", check_in: "2026-09-27", check_out: "2026-09-30", points_used: 20,
+    points_source_breakdown: { version: 2, allocations: [{ contract_id, points: 20 }], one_time: 0, transferred: 0, other: 0 } });
+  const sniper = contract => B.evaluateUserBadges([contract], [trip(contract.id)], [], { paybackPct: 0 }, null, []).find(b => b.id === "sniper");
+  try {
+    assert.equal(sniper({ id: "d", is_active: true, home_resort_id: "riviera", purchase_type: "direct" }).unlocked, true);
+    assert.equal(sniper({ id: "r", is_active: true, home_resort_id: "riviera", purchase_type: "resale" }).unlocked, false);
+    assert.equal(sniper({ id: "h", is_active: true, home_resort_id: "copperCreek", purchase_type: "direct" }).unlocked, false);
+  } finally {
+    window.DVCTripFunding.summary = saved.summary;
+    window.DVCAuth.getUserResortAccess = saved.access;
+  }
+});

@@ -697,6 +697,12 @@ body {
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
@@ -708,12 +714,6 @@ body {
         <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html" class="active">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Membership</span>
-        <a href="account.html">My Contracts</a>
-        <a href="trips.html">Membership Value</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1494,6 +1494,13 @@ function wireCardEvents() {
 }
 
 async function renderSignedIn() {
+  if (!(await window.DVCAuth.hasMembership())) {
+    window.DVCAuth.renderMembershipGate(pageContent, {
+      title: "Save and revisit your planned stays",
+      body: "Save stays from the calendar, reload them later, and see which contract's points they'll use.",
+    });
+    return;
+  }
   itineraries = await window.DVCAuth.getItineraries();
 
   if (itineraries.length === 0) {

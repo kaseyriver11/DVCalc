@@ -60,7 +60,7 @@ function contractBaselinePotentialValue(c, year, yearsFromNow, settings) {
   return Math.max(0, grossValue - dues);
 }
 
-function buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, currentYear, settings) {
+function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings) {
   if (contracts.length === 0) return null;
   const activeContracts = contracts.filter(c => c.is_active);
   const startYear = contracts.reduce((min, c) => Math.min(min, contractOwnershipStartYear(c)), currentYear);
@@ -120,7 +120,7 @@ function buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, cur
       const yearBaseline = activeContracts
         .filter(c => !contractExpiredBy(c, y))
         .reduce((sum, c) => sum + contractBaselineGrossValue(c, yearsFromNow, settings), 0);
-      valueThisYear = tripsWithValue === 0 ? yearBaseline : (actualPace + yearBaseline) / 2;
+      valueThisYear = paceReady ? (actualPace + yearBaseline) / 2 : yearBaseline;
     }
     cumValue += valueThisYear;
 
@@ -164,11 +164,13 @@ function computeHouseMoneyStats(contracts, trips, settings) {
 
   let lifetimeValue = 0;
   let tripsWithValue = 0;
+  let loggedOwnedPoints = 0;
   for (const t of trips) {
     const v = tripCashValue(t, contracts);
     if (v && Number.isFinite(v.cash) && v.ownedPoints > 0) {
       lifetimeValue += v.cash;
       tripsWithValue++;
+      loggedOwnedPoints += v.ownedPoints;
     }
   }
 
@@ -184,16 +186,23 @@ function computeHouseMoneyStats(contracts, trips, settings) {
     .filter(c => c.is_active)
     .reduce((sum, c) => sum + contractBaselinePotentialValue(c, currentYear, 0, settings), 0);
 
+  // Trip history only earns a say in the projection once it covers at least
+  // one full year of the owner's points. Before that, a new owner's first
+  // logged stay is a fraction of a year's usage, and blending it in 50/50
+  // made logging that first trip push the payback date years LATER.
+  const annualPoints = contracts.filter(c => c.is_active).reduce((sum, c) => sum + (c.points_per_year || 0), 0);
+  const paceReady = tripsWithValue > 0 && loggedOwnedPoints >= annualPoints;
+
   let annualVelocity, velocitySource;
-  if (tripsWithValue === 0) {
+  if (!paceReady) {
     annualVelocity = baselinePotential;
-    velocitySource = baselinePotential > 0 ? "baseline" : "none";
+    velocitySource = baselinePotential > 0 ? (tripsWithValue ? "baseline-early" : "baseline") : "none";
   } else {
     annualVelocity = (actualPace + baselinePotential) / 2;
     velocitySource = baselinePotential > 0 ? "blended" : "trips";
   }
 
-  const series = buildHouseMoneySeries(contracts, trips, tripsWithValue, actualPace, currentYear, settings);
+  const series = buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings);
   let estimatedHouseMoneyDate = null;
   const projectedIndex = series ? series.years.findIndex((year, i) => year > currentYear && series.value[i] >= series.outlay[i]) : -1;
   if (paybackPct < 100 && annualVelocity > 0 && projectedIndex >= 0) {

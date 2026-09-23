@@ -54,3 +54,14 @@ test('both screens call the shared model and Home loads saved assumptions',()=>{
     assert.match(s,/DVCAuth\.getUserSettings\(\)/);
   }
 });
+test('a first partial-year trip cannot push the payback date later',()=>{
+  const api=setup();
+  const before=api.computeHouseMoneyStats([contract],[],defaults);
+  const after=api.computeHouseMoneyStats([contract],[{check_out:'2026-04-01',credit:{cash:30,ownedPoints:3}}],defaults);
+  assert.equal(after.velocitySource,'baseline-early');
+  assert.ok(after.estimatedHouseMoneyDate<=before.estimatedHouseMoneyDate);
+});
+test('trip history blends in once it covers a full year of points',()=>{
+  const stats=setup().computeHouseMoneyStats([contract],[{check_out:'2026-04-01',credit:{cash:300,ownedPoints:10}}],defaults);
+  assert.equal(stats.velocitySource,'blended');
+});

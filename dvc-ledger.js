@@ -69,12 +69,52 @@
   const HOLDING_RULES_TEXT =
     "From a reservation canceled or modified 1-30 days before check-in. Cannot be banked or borrowed. Book DVC Resort stays no more than 60 days before check-in, and use these points before the use year ends.";
 
+  // What canceling a reservation TODAY would do to its points, and until
+  // when that stays true. Per Disney's On-Line Booking T&C (effective
+  // 2025-06-01): 31+ days out, points return to the use year the stay falls
+  // in; 1-30 days out they go to Holding; on check-in day they're forfeited.
+  // Only CURRENT-year points come back bankable, and only until that use
+  // year's banking deadline -- banked and borrowed points stay where they
+  // were moved (both moves are final), confirmed against DVC Fan and
+  // planDisney 2026-09-22. All inputs are UTC date-only ms.
+  //   kind: "bankable"  -- current pts return and can still be banked
+  //         "returns"   -- pts return to the use year but can't be banked
+  //         "holding"   -- pts go to Holding
+  //         "forfeit"   -- pts are lost
+  //   untilMs: last day this outcome holds (null for forfeit)
+  //   next: the outcome after untilMs
+  function cancellationOutcome({ todayMs, checkInMs, bankingDeadlineMs }) {
+    const daysOut = Math.round((checkInMs - todayMs) / MS_PER_DAY);
+    if (daysOut <= 0) return { kind: "forfeit", untilMs: null, next: null };
+    if (pointsEnterHolding(daysOut)) return { kind: "holding", untilMs: checkInMs - MS_PER_DAY, next: "forfeit" };
+    const lastNormalCancelMs = checkInMs - 31 * MS_PER_DAY;
+    if (todayMs <= bankingDeadlineMs) {
+      return bankingDeadlineMs < lastNormalCancelMs
+        ? { kind: "bankable", untilMs: bankingDeadlineMs, next: "returns" }
+        : { kind: "bankable", untilMs: lastNormalCancelMs, next: "holding" };
+    }
+    return { kind: "returns", untilMs: lastNormalCancelMs, next: "holding" };
+  }
+
+  // Whether to suggest banking now instead of booking, for a stay that
+  // falls after its use year's banking deadline. Once booked, "bank then
+  // borrow" gives no protection -- canceled borrowed points return to the
+  // stay's use year, unbankable, same as current ones -- so the advice only
+  // holds while the owner is still deciding: banking before the deadline
+  // keeps the points safe if the trip doesn't happen, and borrowing from
+  // next year (no deadline) can still fund it if it does.
+  function shouldSuggestBankFirst({ todayMs, checkInMs, bankingDeadlineMs, currentPoints }) {
+    return currentPoints > 0 && todayMs <= bankingDeadlineMs && checkInMs > bankingDeadlineMs;
+  }
+
   const api = {
     MAX_BORROW_RATIO,
     HOLDING_BOOKING_WINDOW_DAYS,
     validateBorrowedPoints,
     pointsEnterHolding,
     holdingExpiration,
+    cancellationOutcome,
+    shouldSuggestBankFirst,
     HOLDING_RULES_TEXT,
   };
 

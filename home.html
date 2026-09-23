@@ -256,6 +256,15 @@ body {
   background: #f7f5fa;
   border: 1px solid #ece1f7;
 }
+.home-member-gate .gate {
+  padding: 22px 20px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  text-align: center;
+  color: #666;
+  background: #f7f5fa;
+  border: 1px solid #ece1f7;
+}
 .dashboard-signin-banner p { margin: 0; font-size: 0.92rem; font-weight: 600; color: #4a148c; }
 .widget-signin-btn {
   background: #4a148c;
@@ -282,6 +291,13 @@ body {
 .contracts-summary-row:last-of-type { border-bottom: none; }
 .contracts-summary-row strong { color: #1a237e; }
 .contracts-resort-list { font-size: 0.78rem; color: #888; margin-top: 8px; }
+.contracts-summary-row small { font-size: 0.72rem; font-weight: 500; color: #888; }
+.coming-up { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
+.coming-up-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+.coming-up ul { list-style: none; margin: 0; padding: 0; }
+.coming-up li { display: flex; gap: 10px; font-size: 0.8rem; line-height: 1.4; padding: 3px 0; color: #444; }
+.coming-up-date { flex: 0 0 48px; font-weight: 700; color: #4a148c; }
+.coming-up a { color: #4a148c; }
 
 /* ---- House Money progress ---- */
 .house-money-pct-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.88rem; margin-bottom: 6px; }
@@ -339,6 +355,19 @@ body {
   color: #4a148c;
 }
 .home-itin-view:hover { border-color: #4a148c; background: #f7f5fa; }
+.portfolio-balances { margin-top: 18px; }
+.portfolio-contract { margin-top: 16px; }
+.portfolio-contract h3 { margin: 0 0 8px; font-size: .85rem; color: #25233b; overflow-wrap: anywhere; }
+.portfolio-cycles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.portfolio-cycle { display: flex; flex-direction: column; gap: 7px; padding: 12px; border: 1px solid #e7e3ef; border-radius: 14px; background: #faf8ff; color: #5f596e; text-decoration: none; font-size: .7rem; }
+.portfolio-cycle strong { font-size: 1.35rem; color: #322052; }
+.portfolio-cycle small { font-size: .7rem; font-weight: 500; }
+.portfolio-cycle-action { color: #4a148c; font-weight: 600; }
+.portfolio-cycle.unknown { background: #fffaf0; border-color: #eee1c5; }
+.portfolio-cycle.unknown strong { font-size: 1rem; }
+.portfolio-cycle:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
+.portfolio-balance-note { font-size: .72rem; line-height: 1.5; color: #777; margin: 12px 0 0; }
+.planning-heading { font-size: 1rem; color: #555; margin: 24px 0 12px; }
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -376,6 +405,12 @@ body {
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
@@ -388,12 +423,6 @@ body {
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
       </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Membership</span>
-        <a href="account.html">My Contracts</a>
-        <a href="trips.html">Membership Value</a>
-      </span>
     </div>
     <span id="account-control"></span>
   </nav>
@@ -401,7 +430,7 @@ body {
   <div class="page">
     <div class="page-header-row">
       <h1>Dashboard</h1>
-      <span class="page-header-sub">Disney Vacation Club command center</span>
+      <span class="page-header-sub">Your contracts, points, and membership value</span>
     </div>
 
     <div id="home-health-banner"></div>
@@ -413,11 +442,12 @@ body {
       </div>
 
       <div class="widget-card">
-        <div class="widget-card-header"><h2>House Money Progress</h2><a href="trips.html" class="widget-link-inline">Details &rarr;</a></div>
+        <div class="widget-card-header"><h2>Membership Value</h2><a href="trips.html" class="widget-link-inline">Details &rarr;</a></div>
         <div id="home-house-money"><div class="widget-loading">Loading&hellip;</div></div>
       </div>
     </div>
 
+    <h2 class="planning-heading">Plan a stay</h2>
     <div class="quick-launch-row">
       <a href="index.html" class="quick-launch-card">
         <div class="quick-launch-title-row"><span>Calendar</span><span class="quick-launch-arrow">&rarr;</span></div>

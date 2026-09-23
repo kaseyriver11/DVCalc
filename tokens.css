@@ -487,7 +487,7 @@
    rate "slider" CLAUDE.md mentions is actually a plain number input), so
    this is a fresh custom <input type="range"> treatment, themed to match
    the rest of the app's purple palette. ---- */
-.multi-split-offer { margin-top: 8px; }
+.multi-split-offer { margin-top: 8px; font-size: 0.78rem; color: var(--color-text-muted); }
 
 .multi-split-totals {
   font-size: 0.8rem;

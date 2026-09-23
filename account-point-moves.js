@@ -5,6 +5,7 @@ function pointMoveHTML() {
     <div class="modal-header"><h3 id="point-move-title"></h3><button class="modal-close" id="point-move-close" aria-label="Close" onclick="closePointMove()">&times;</button></div>
     <p id="point-move-contract"></p><p class="balance-setup-intro">Already completed this with Disney? Record it here to update both years. This does not move points with Disney.</p>
     <p class="balance-card-hint">Use balances from before the move. If your balances already include it, choose Adjust balance instead.</p>
+    <p class="point-move-deadline" id="point-move-deadline" role="note" hidden></p>
     <label class="balance-total" for="point-move-amount"><input id="point-move-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="0" oninput="renderPointMovePreview()"><span>points to record</span></label>
     <div id="point-move-preview" aria-live="polite"></div>
     <p id="point-move-error" role="alert" hidden></p>
@@ -29,6 +30,12 @@ function openPointMove(kind, year) {
   } catch (_) { /* Storage errors are shown before any write is attempted. */ }
   document.getElementById('point-move-title').textContent = kind === 'bank' ? 'Record banking' : 'Record borrowing';
   document.getElementById('point-move-contract').textContent = contract.nickname || resortName(contract.home_resort_id);
+  // Disney won't bank after the deadline. Recording a move made before it is
+  // still valid, so this warns rather than blocks.
+  const deadlineNote = document.getElementById('point-move-deadline');
+  const bankingClosed = kind === 'bank' && !isBankingWindowOpen(contract.use_year, year, todayInEastern());
+  deadlineNote.hidden = !bankingClosed;
+  if (bankingClosed) deadlineNote.textContent = `The banking deadline for ${year} points was ${formatDeadlineDate(window.DVCDates.deadlineForCycle(contract.use_year, year))}. Only record this if you banked with Disney before then.`;
   const input = document.getElementById('point-move-amount');
   input.value = pointMove.payload?.p_points || '';
   input.disabled = !!pointMove.payload;

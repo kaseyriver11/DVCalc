@@ -32,8 +32,22 @@
     if (!active.length) return null;
     return active.flatMap(c => eventsForContract(c, rows, today)).sort((a,b) => deadline(a)-deadline(b))[0] || { kind:'accounted' };
   }
+  // Every current-cycle event across all active contracts, soonest first --
+  // Home's "Coming up" list, so a second contract's deadline isn't hidden
+  // behind whichever one happens to be earliest.
+  function timeline(contracts, rows, today) {
+    return contracts.filter(c => c.is_active).flatMap(c => eventsForContract(c, rows, today)).sort((a,b) => deadline(a)-deadline(b));
+  }
+  // Points usable right now on one contract (its current cycle's confirmed
+  // total), or null when that balance hasn't been confirmed.
+  function availableNow(contract, rows, today) {
+    const year = window.DVCDates.currentUYYear(contract.use_year, today);
+    const row = (rows[contract.id] || []).find(r => r.use_year_label === year);
+    if (!row?.balance_confirmed_at) return null;
+    return ['points_remaining','points_banked','points_borrowed','points_holding'].reduce((sum, k) => sum + Math.max(0, Number(row[k]) || 0), 0);
+  }
   function label(contract, fallback) {
     return String(contract.nickname || fallback).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
   }
-  window.DVCPointAttention = { eventsForContract, evaluate, earliest, label };
+  window.DVCPointAttention = { eventsForContract, evaluate, earliest, timeline, availableNow, label };
 })();

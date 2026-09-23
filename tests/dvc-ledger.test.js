@@ -74,3 +74,53 @@ test("holding expiry is due today on the last use-year day", () => {
 test("60 days describes the booking window", () => {
   assert.equal(HOLDING_BOOKING_WINDOW_DAYS, 60);
 });
+
+// ---- cancellationOutcome / shouldSuggestBankFirst ----
+// Disney On-Line Booking T&C (2025-06-01) + DVC Fan / planDisney, 2026-09-22.
+const { cancellationOutcome, shouldSuggestBankFirst } = require("../dvc-ledger.js");
+const d = (y, m, day) => Date.UTC(y, m - 1, day);
+
+test("cancel 31+ days out before the banking deadline comes back bankable until the deadline", () => {
+  const r = cancellationOutcome({ todayMs: d(2026, 9, 1), checkInMs: d(2026, 12, 20), bankingDeadlineMs: d(2026, 10, 31) });
+  assert.deepEqual(r, { kind: "bankable", untilMs: d(2026, 10, 31), next: "returns" });
+});
+
+test("bankable window ends at 31 days out when that comes before the deadline", () => {
+  const r = cancellationOutcome({ todayMs: d(2026, 9, 1), checkInMs: d(2026, 10, 15), bankingDeadlineMs: d(2026, 10, 31) });
+  assert.deepEqual(r, { kind: "bankable", untilMs: d(2026, 9, 14), next: "holding" });
+});
+
+test("cancel 31+ days out after the deadline returns points that can't be banked", () => {
+  const r = cancellationOutcome({ todayMs: d(2026, 11, 5), checkInMs: d(2027, 1, 20), bankingDeadlineMs: d(2026, 10, 31) });
+  assert.deepEqual(r, { kind: "returns", untilMs: d(2026, 12, 20), next: "holding" });
+});
+
+test("the banking deadline day itself is still bankable", () => {
+  assert.equal(cancellationOutcome({ todayMs: d(2026, 10, 31), checkInMs: d(2027, 1, 20), bankingDeadlineMs: d(2026, 10, 31) }).kind, "bankable");
+});
+
+test("31 days out is the last normal cancellation; 30 days out is holding", () => {
+  const deadline = d(2026, 1, 1);
+  assert.equal(cancellationOutcome({ todayMs: d(2026, 9, 1), checkInMs: d(2026, 10, 2), bankingDeadlineMs: deadline }).kind, "returns");
+  assert.deepEqual(cancellationOutcome({ todayMs: d(2026, 9, 1), checkInMs: d(2026, 10, 1), bankingDeadlineMs: deadline }), { kind: "holding", untilMs: d(2026, 9, 30), next: "forfeit" });
+});
+
+test("canceling on check-in day forfeits the points", () => {
+  assert.equal(cancellationOutcome({ todayMs: d(2026, 10, 1), checkInMs: d(2026, 10, 1), bankingDeadlineMs: d(2026, 12, 1) }).kind, "forfeit");
+});
+
+test("bank-first advice: stay after the deadline, deadline not yet passed, current points in play", () => {
+  assert.equal(shouldSuggestBankFirst({ todayMs: d(2026, 9, 1), checkInMs: d(2026, 11, 20), bankingDeadlineMs: d(2026, 10, 31), currentPoints: 120 }), true);
+});
+
+test("no bank-first advice once the deadline has passed", () => {
+  assert.equal(shouldSuggestBankFirst({ todayMs: d(2026, 11, 1), checkInMs: d(2026, 11, 20), bankingDeadlineMs: d(2026, 10, 31), currentPoints: 120 }), false);
+});
+
+test("no bank-first advice for a stay before the deadline (cancel stays bankable)", () => {
+  assert.equal(shouldSuggestBankFirst({ todayMs: d(2026, 9, 1), checkInMs: d(2026, 10, 10), bankingDeadlineMs: d(2026, 10, 31), currentPoints: 120 }), false);
+});
+
+test("no bank-first advice when the stay uses no current-year points", () => {
+  assert.equal(shouldSuggestBankFirst({ todayMs: d(2026, 9, 1), checkInMs: d(2026, 11, 20), bankingDeadlineMs: d(2026, 10, 31), currentPoints: 0 }), false);
+});

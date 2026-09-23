@@ -18,16 +18,17 @@ Sourced 2026-09-22 from ~1,480 r/dvcmember posts (27 math-related RSS searches, 
 | 10 | Expiration / resale value | 120 | `sellAtEnd` residual, net of broker fee |
 
 ## Step 0 — Housekeeping
-- [ ] Commit in-flight work so each feature below diffs cleanly
+- [x] Commit in-flight work so each feature below diffs cleanly (6a1c9a1)
 - [x] Verify DVC rules before encoding them — see "Verified rules" below
-- [ ] Fix CLAUDE.md row #5's stale Holding description (60-day rebook clock → 60-day booking window)
+- [x] Fix CLAUDE.md row #5's stale Holding description (60-day rebook clock → 60-day booking window)
 
 ## Phase 1 — Quick wins on existing surfaces
 **1. Bank/borrow decision help** (Q1) — `account.html`, `app.js` Smart Draw, `dvc-ledger.js`
-- [ ] "Which points does this use?" line under Smart Draw
-- [ ] Bank-or-book advisor for stays past the banking deadline
-- [ ] Stranded-points helper for small unbankable/expiring balances
-- [ ] Tests in `tests/dvc-ledger.test.js`
+- [x] "Which points does this use?" — already existed (Smart Draw's per-bucket lines)
+- [x] "If you cancel by {date}" outcome line — `cancellationOutcome()` + `buildCancelOutcomeHTML()`
+- [x] Bank-first advice for stays past the banking deadline — `shouldSuggestBankFirst()`
+- [x] Leftover-points finder on the ledger's expiring state — `dvc-leftover-points.js` + `buildLeftoverStaysHTML()`
+- [x] Tests — `tests/dvc-ledger.test.js`, `tests/leftover-points.test.js`
 
 **2. Discounted-cash comparison** (Q4) — `contractvalue.html` Adjust assumptions
 - [ ] "Typical cash discount you get (%)" input, default 0, feeding Cash Ratio

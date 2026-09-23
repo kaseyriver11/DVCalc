@@ -13,7 +13,7 @@
 
 // Same destructure account.html uses -- dvc-dates.js loads before this file
 // (see home.html's script order).
-const { currentUYYear, todayInEastern, isBankingWindowOpen, nextDeadlineForUseYear, useYearExpiration, dateOnlyUTC, formatDeadlineDate, urgencyTier, formatDeadlineWithCountdown } = window.DVCDates;
+const { currentUYYear, todayInEastern, isBankingWindowOpen, nextDeadlineForUseYear, useYearExpiration, dateOnlyUTC, formatDeadlineDate, urgencyTier, expirationTier, formatDeadlineWithCountdown } = window.DVCDates;
 
 // ---- calcStay + trip cash/points estimation (copied from trips.html) ----
 const MAX_TRIP_NIGHTS = 90;
@@ -202,7 +202,7 @@ function healthBannerState(earliest) {
   // signal that banking specifically is no longer an option, independent
   // of how urgent the color itself reads.
   const { contract, expiresMs, daysUntil } = earliest;
-  const level = URGENCY_TIER_TO_LEVEL[urgencyTier(daysUntil)];
+  const level = URGENCY_TIER_TO_LEVEL[expirationTier(daysUntil)];
   return {
     level,
     icon: "🔒",
@@ -284,7 +284,7 @@ function renderHealthBanner(contracts, yearPointsByContract) {
       </div>
     </div>
   `;
-  if (unconfirmed.length && earliest?.kind !== "unconfirmed") container.insertAdjacentHTML("beforeend", `<p class="house-money-note">${unconfirmed.length} contract balance(s) still need confirmation. <a href="account.html?contract=${encodeURIComponent(unconfirmed[0].id)}">Review balances</a></p>`);
+  if (unconfirmed.length && earliest?.kind !== "unconfirmed") container.insertAdjacentHTML("beforeend", `<p class="house-money-note">${unconfirmed.length === 1 ? "1 contract balance still needs" : `${unconfirmed.length} contract balances still need`} confirmation. <a href="account.html?contract=${encodeURIComponent(unconfirmed[0].id)}">Review balances</a></p>`);
   if (clickable) {
     const el = document.getElementById("health-banner-el");
     // Whole banner navigates to the PRIORITY action (state.actions[0]) --
@@ -316,9 +316,10 @@ const DASHBOARD_SIGNIN_HTML = `
   </div>
 `;
 const WIDGET_LOCKED_HTML = `<div class="widget-empty">Sign in above to see this.</div>`;
+const WIDGET_MEMBER_HTML = `<div class="widget-empty">Part of Active Member.</div>`;
 const UNCONFIGURED_HTML = `<div class="widget-empty">Accounts aren't set up on this deployment yet.</div>`;
 
-function renderContractsWidget(contracts) {
+function renderContractsWidget(contracts, yearPointsByContract) {
   const container = document.getElementById("home-contracts-summary");
   const active = contracts.filter(c => c.is_active);
   if (active.length === 0) {
@@ -332,11 +333,58 @@ function renderContractsWidget(contracts) {
   }
   const totalPoints = active.reduce((sum, c) => sum + (c.points_per_year || 0), 0);
   const resortNames = [...new Set(active.map(c => resortName(c.home_resort_id, c.use_year)))];
+  const today = todayInEastern();
+  const available = active.map(c => window.DVCPointAttention.availableNow(c, yearPointsByContract, today));
+  const availableTotal = available.reduce((sum, n) => sum + (n || 0), 0);
+  const unconfirmed = available.filter(n => n == null).length;
+  const availableLabel = unconfirmed === active.length
+    ? "&mdash;"
+    : `${availableTotal.toLocaleString()} pts${unconfirmed ? ` <small>+ ${unconfirmed} not added</small>` : ""}`;
   container.innerHTML = `
-    <div class="contracts-summary-row"><span>Active Contracts</span><strong>${active.length}</strong></div>
+    <div class="contracts-summary-row"><span>Available Now</span><strong>${availableLabel}</strong></div>
     <div class="contracts-summary-row"><span>Total Annual Points</span><strong>${totalPoints.toLocaleString()} pts</strong></div>
-    <div class="contracts-resort-list">${resortNames.join(" &middot; ")}</div>
+    <div class="contracts-resort-list">${active.length} active &middot; ${resortNames.join(" &middot; ")}</div>
+    ${buildComingUpHTML(active, yearPointsByContract, today)}
+    ${buildContractBalancesHTML(active, yearPointsByContract, today)}
   `;
+}
+
+// Keep each contract's actual cycle visible: different use years are not
+// interchangeable balances, and an absent row is never an annual allotment.
+function buildContractBalancesHTML(active, rows, today) {
+  const dates = window.DVCDates;
+  return `<div class="portfolio-balances">${active.map(c => {
+    const current = dates.currentUYYear(c.use_year, today);
+    const name = window.DVCPointAttention.label(c, resortName(c.home_resort_id));
+    return `<section class="portfolio-contract"><h3>${name}</h3><div class="portfolio-cycles">${[current, current + 1].map((year, index) => {
+      const row = (rows[c.id] || []).find(r => Number(r.use_year_label) === year);
+      const known = Boolean(row?.balance_confirmed_at);
+      const total = known ? ['points_remaining', 'points_banked', 'points_borrowed', 'points_holding'].reduce((n, key) => n + Math.max(0, Number(row[key]) || 0), 0) : null;
+      const start = dates.dateOnlyUTC(year, dates.USE_YEAR_START_MONTH[c.use_year], 1);
+      const format = ms => new Date(ms).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+      return `<a class="portfolio-cycle${known ? '' : ' unknown'}" href="account.html?contract=${encodeURIComponent(c.id)}&amp;year=${year}">
+        <span>${index ? 'Next' : 'Current'} &middot; ${year} use year</span>
+        <strong>${known ? `${total.toLocaleString()} <small>pts left</small>` : 'Add balance'}</strong>
+        <span>${format(start)} &ndash; ${format(dates.useYearExpiration(c.use_year, year))}</span>
+        <span class="portfolio-cycle-action">${known ? 'Manage points' : 'Not added yet'} &rarr;</span>
+      </a>`;
+    }).join('')}</div></section>`;
+  }).join('')}<p class="portfolio-balance-note">Saved balances include banked, borrowed, and holding points. Each use year has its own dates and restrictions.</p></div>`;
+}
+
+// Every contract's next actions in date order, so a second contract's
+// deadline isn't hidden behind the banner's single earliest one.
+function buildComingUpHTML(active, yearPointsByContract, today) {
+  const events = window.DVCPointAttention.timeline(active, yearPointsByContract, today).slice(0, 4);
+  if (!events.length) return "";
+  const name = c => window.DVCPointAttention.label(c, resortName(c.home_resort_id));
+  const items = events.map(e => {
+    if (e.kind === "unconfirmed") return `<li><span class="coming-up-date">&mdash;</span><span><strong>${name(e.contract)}</strong> &middot; <a href="account.html?contract=${encodeURIComponent(e.contract.id)}">add points left</a></span></li>`;
+    const ms = e.kind === "bankable" ? e.deadline.ms : e.expiresMs;
+    const what = e.kind === "bankable" ? `bank ${e.points} current pts` : `use ${e.points} pts or lose them`;
+    return `<li><span class="coming-up-date">${new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" })}</span><span><a href="account.html?contract=${encodeURIComponent(e.contract.id)}&amp;year=${e.year}"><strong>${name(e.contract)}</strong> &middot; ${what}</a></span></li>`;
+  }).join("");
+  return `<div class="coming-up"><div class="coming-up-title">Coming up</div><ul>${items}</ul></div>`;
 }
 
 function renderHouseMoneyWidget(contracts, trips, settings) {
@@ -431,7 +479,20 @@ function renderItinerariesWidget(itineraries) {
 
 // ---- Auth-gated data load, same waitForAuth/onAuthChange pattern as
 // trips.html/itineraries.html ----
+function renderNonMember() {
+  const banner = document.getElementById("home-health-banner");
+  banner.innerHTML = `<div class="home-member-gate"></div>`;
+  window.DVCAuth.renderMembershipGate(banner.firstElementChild, {
+    title: "Your DVC command center",
+    body: "See every contract's points, the next deadline to act on, your membership's payback and your saved stays in one place.",
+  });
+  document.getElementById("home-contracts-summary").innerHTML = WIDGET_MEMBER_HTML;
+  document.getElementById("home-house-money").innerHTML = WIDGET_MEMBER_HTML;
+  document.getElementById("home-itineraries").innerHTML = WIDGET_MEMBER_HTML;
+}
+
 async function renderSignedIn() {
+  if (!(await window.DVCAuth.hasMembership())) return renderNonMember();
   const [contracts, trips, itineraries, yearPoints, settings] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
@@ -444,7 +505,7 @@ async function renderSignedIn() {
     (yearPointsByContract[row.contract_id] ||= []).push(row);
   }
   renderHealthBanner(contracts, yearPointsByContract);
-  renderContractsWidget(contracts);
+  renderContractsWidget(contracts, yearPointsByContract);
   renderHouseMoneyWidget(contracts, trips, settings);
   renderItinerariesWidget(itineraries);
 }

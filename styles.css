@@ -366,6 +366,12 @@ select, input, textarea, button {
   animation: sheet-slide-up 0.22s ease-out;
 }
 
+/* On desktop a full-bleed sheet turns each card into a 1500px-wide strip;
+   keep it phone-sheet sized and centered. */
+@media (min-width: 769px) {
+  .modal-box.sheet { max-width: 560px; }
+}
+
 @keyframes sheet-slide-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -1973,6 +1979,11 @@ select, input, textarea, button {
 .contract-eligibility.contract-ok {
   color: var(--color-good);
   background: var(--color-good-bg);
+}
+
+.contract-eligibility.contract-warn {
+  color: #7a4a00;
+  background: var(--color-warning-bg);
 }
 
 .contract-eligibility.contract-blocked {

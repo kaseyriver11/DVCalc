@@ -1,9 +1,9 @@
 # DVC Companion: Owner UI/UX Review
 
 Review date: September 21, 2026  
-Status: Review complete. UX-01 through UX-12 implemented and verified locally. The owner confirmed applying migration 022 in Supabase; migration 023 is pending. UX-13 is next; remaining findings are open. The summary below supersedes historical recommendations where the owner clarified the intended behavior.
+Status: Review complete. UX-01 through UX-14 implemented and verified locally. The owner confirmed applying migration 022 in Supabase; migration 023 is pending. All 14 original findings are resolved locally; pending database and production verification remain noted below. The summary below supersedes historical recommendations where the owner clarified the intended behavior.
 
-## Changes completed: #1–#12
+## Changes completed: #1–#14
 
 Updated September 22, 2026. This is the handoff summary for a fresh session.
 
@@ -23,6 +23,10 @@ Updated September 22, 2026. This is the handoff summary for a fresh session.
 
 | **#12 — Logged usage evidence** | Membership Value counts owned points assigned to logged stays, with outside points and incomplete attribution explained separately. Balance changes cannot inflate this total. The Points Steward badge discloses its separate coverage estimate. | Zero logged stays means zero logged usage. Upcoming recorded bookings count; saved plans do not. No expired or unreconciled totals are guessed. |
 
+| **#13 - Contract-first Home and navigation** | My Membership precedes planning in every menu. Home shows current/next use-year cards per active contract with dates, saved balances, and direct management links. Deadline entries link to their contract and year; planning has a secondary heading below ownership summaries. | Owners can find their points and manage the right cycle directly from Home. Zero and missing balances remain distinct. |
+
+| **#14 - Mobile contract entry** | Compact summary, independently scrolling active step, persistent Back/Continue/Save controls, explicit progression, and step validation. Use year must be selected; invalid point or financial values remain correctable. Saves disable repeat taps and preserve inputs on failure. | Owners can complete or correct Add/Edit Contract without unexpected step changes or scrolling to find Save. |
+
 ### Decisions to preserve
 
 - This is a **contract manager first**, with planning as a supporting feature. Use mobile cards and progressive disclosure rather than dense forms.
@@ -33,16 +37,16 @@ Updated September 22, 2026. This is the handoff summary for a fresh session.
 
 ### Verification and database handoff
 
-- **179 automated tests currently pass** across the workspace, including the owner-flow regression tests and tests added by concurrent work. UX-11 adds seven focused itinerary-editing/persistence tests; UX-12 adds six logged-usage tests.
+- **228 automated tests currently pass** across the workspace, including the owner-flow regression tests and tests added by concurrent work. UX-11 adds seven focused itinerary-editing/persistence tests; UX-12 adds six logged-usage tests.
 - Local mobile testing used isolated synthetic owner data at 390px and 360px. For #5, verified new-contract handoff, 0/100 balances, skipping, full-allotment entry, optional bucket math, invalid totals, unknown Home state, and partial-save failure/retry without repeating the successful year. The 360px sheet has no horizontal overflow and keeps Save/Later visible.
 - The user confirmed running **[migration 019](../db/migrations/019_validate_trip_funding.sql)** for trip funding.
 - **Run [migration 020](../db/migrations/020_confirm_point_balances.sql) before using the new balance flow with Supabase.** It adds `balance_confirmed_at`, trusts existing saved rows, and leaves newly created unknown rows unconfirmed. The backfill runs only when the column is first introduced. The timestamp means owner-entered, not verified against Disney. The migration is also included in `db/schema.sql`.
 - The owner confirmed applying **[migration 022](../db/migrations/022_record_point_movements.sql)** in Supabase on September 22. It requires migration 020. No migration was executed by this session; real authenticated movement saves and production deployment have not been verified. The attempted temporary local PostgreSQL test-engine download was interrupted, so the database function has not been runtime-tested here. No commit or deployment was performed for this handoff.
 - Earlier #2/#3 log entries describe estimated allotments for missing rows; **#5 supersedes that behavior with unknown balances**. The original findings below remain historical evidence.
 
-### Start the next session with #13
+### Original review complete
 
-**UX-13 is next: prioritize ownership management in navigation and Home.** Inspect the current screens first: concurrent work has changed navigation since the original review. Preserve completed fixes and address only remaining gaps.
+**All 14 original review issues are resolved locally.** No numbered issues remain. Mobile push notifications and other feature work have separate to-do documents. Pending migration and real-account verification notes still apply.
 
 **Before using UX-11 against Supabase, run [migration 023](../db/migrations/023_itinerary_booking_context.sql).** It adds the optional `booking_contract_id` and validates ownership; deleting the contract clears that planning context. No migration was executed by this session. The same SQL is appended to `db/schema.sql`. Existing itineraries have no recoverable prior Booking As value; the owner can choose one and save it going forward.
 
@@ -115,8 +119,8 @@ The IDs below are stable references for addressing findings one at a time. Check
 - [x] UX-10 — Make failed ledger saves recoverable and unambiguous.
 - [x] UX-11 — Distinguish editing an itinerary from saving a copy (migration 023 pending).
 - [x] UX-12 — Separate logged usage from inferred consumption.
-- [ ] UX-13 — Prioritize ownership management in navigation and Home.
-- [ ] UX-14 — Improve mobile contract-form navigation and validation.
+- [x] UX-13 — Prioritize ownership management in navigation and Home.
+- [x] UX-14 — Improve mobile contract-form navigation and validation.
 
 ## Findings ranked by impact on owners
 
@@ -328,6 +332,24 @@ The IDs below are stable references for addressing findings one at a time. Check
 Use the stable issue IDs when choosing the next fix. For each selected issue, reproduce it against the current code before making changes, implement the agreed scope, and verify the original scenario plus relevant failure/recovery behavior. Update its checklist entry and record the outcome below. Related IDs are context, not authorization to expand a selected fix automatically.
 
 ### Resolution log
+
+### September 22, 2026 - UX-14 resolved locally
+
+- Replaced the full-size wallet preview with a compact text summary. Only the active step is displayed; its fields scroll independently of the header, stepper, error, and footer. Back, Continue, Cancel, and Save remain visible on mobile.
+- Removed resort/preset/blur auto-advancement and the shortcut that bypassed purchase details. Explicit Continue validates resort, selected use year, and positive whole points before advancing. Save also validates optional purchase price and acquisition year, returning focus to the field requiring correction. Editing retains step navigation and values.
+- Save uses a busy guard and disabled controls to prevent duplicate taps; returned or thrown errors retain input for retry. Successful new saves still hand off to starting balances; editing updates the same record.
+- Synthetic browser checks completed Add, failed save/retry, starting-balance handoff, Back with retained points, and editing 200 to 150 points without adding a record. Empty and fractional points were blocked on step 2; a preset and input blur stayed on step 2. At 390x844 and 360x640, controls remained visible and there was no horizontal overflow; details scroll at the smaller height. A physical-device soft keyboard was not tested.
+- All 228 workspace tests pass, including three new contract-form validation tests. No migration required for UX-14; no real owner data or production writes were used. All original review issues are now checked off.
+
+
+### September 22, 2026 - UX-13 resolved locally
+
+- Moved My Membership (My Contracts and Membership Value) ahead of planning across all 11 navigation copies. Updated the shared navigation regression expectations while preserving destinations and each active-page highlight.
+- Added compact current/next use-year cards for every active contract on Home, including actual cycle dates, all four point buckets in saved totals, and contract/year-specific links to My Contracts. Missing or unconfirmed rows invite adding a balance; zero stays zero. No annual allotment is substituted.
+- Preserved concurrent additions for Available Now and the multi-contract Coming up list. Made dated entries directly actionable for their contract and cycle. Membership Value remains above planning, which now has its own secondary heading.
+- Mobile synthetic checks at 390px verified 60 points from 20 banked + 30 borrowed + 10 holding, a zero next-year balance, a December contract whose current cycle is 2025, and an unknown next-year balance. Tapping the 2027 card opened the correct contract and 2027 ledger; the reordered menu and empty-state contract link navigated successfully. Populated and empty Home had no horizontal overflow.
+- All 224 workspace tests pass, including three new balance-card tests and 23 navigation checks. Auth and membership were simulated locally; no real owner data, subscription, or Supabase writes were used. No new migration required. Concurrent changes outside UX-13 were preserved.
+
 
 ### September 22, 2026 - UX-12 resolved locally
 

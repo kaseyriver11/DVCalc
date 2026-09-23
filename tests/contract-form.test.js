@@ -1,0 +1,27 @@
+const test = require('node:test'), assert = require('node:assert/strict');
+const fs = require('node:fs'), vm = require('node:vm'), path = require('node:path');
+const source = fs.readFileSync(path.join(__dirname, '../account.html'), 'utf8');
+function form(values = {}, chosen = true) {
+  const fields = Object.fromEntries(['f-points', 'f-price', 'f-acquisition-year', 'resort-chip-search', 'form-error'].map(id => [id, { value: values[id] ?? '', style: {}, focus() { this.focused = true; } }]));
+  const c = vm.createContext({ useYearChosen: chosen, document: { getElementById: id => fields[id], querySelector: () => ({ focus() {} }) }, showStudioStep(step) { c.step = step; } });
+  vm.runInContext(source.match(/function validateContractStep\([^]*?\n\}/)[0], c);
+  return { c, fields };
+}
+test('missing, zero, negative and fractional points return to the points step', () => {
+  for (const value of ['', '0', '-1', '150.5']) {
+    const { c, fields } = form({ 'f-points': value });
+    assert.equal(c.validateContractStep(2), false);
+    assert.equal(c.step, 2); assert.equal(fields['f-points'].focused, true);
+  }
+});
+test('use year must be chosen explicitly and whole points are accepted', () => {
+  assert.equal(form({ 'f-points': '200' }, false).c.validateContractStep(2), false);
+  assert.equal(form({ 'f-points': '200' }).c.validateContractStep(2), true);
+});
+test('optional financial entries validate before saving', () => {
+  assert.equal(form().c.validateContractStep(3), true);
+  assert.equal(form({ 'f-price': '-10' }).c.validateContractStep(3), false);
+  assert.equal(form({ 'f-acquisition-year': '1900' }).c.validateContractStep(3), false);
+  assert.equal(form({ 'f-acquisition-year': '2020.5' }).c.validateContractStep(3), false);
+  assert.equal(form({ 'f-price': '0', 'f-acquisition-year': '2020' }).c.validateContractStep(3), true);
+});

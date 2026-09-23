@@ -416,6 +416,12 @@ body {
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
@@ -427,12 +433,6 @@ body {
         <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html" class="active">Compare Itineraries</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Membership</span>
-        <a href="account.html">My Contracts</a>
-        <a href="trips.html">Membership Value</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1065,6 +1065,13 @@ function renderComparison() {
 }
 
 async function renderSignedIn() {
+  if (!(await window.DVCAuth.hasMembership())) {
+    window.DVCAuth.renderMembershipGate(pageContent, {
+      title: "Compare your saved itineraries",
+      body: "Put up to three saved itineraries side by side, including booking windows and whether your points cover them.",
+    });
+    return;
+  }
   const [itins, contracts, cyp] = await Promise.all([
     window.DVCAuth.getItineraries(),
     window.DVCAuth.getContracts(),

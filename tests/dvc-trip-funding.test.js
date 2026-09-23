@@ -64,7 +64,7 @@ for (const name of ['addTrip', 'updateTrip']) {
     const chain = { insert: () => chain, update: () => chain, eq: () => chain, select: () => chain,
       single: async () => { writes++; return { error: { message: 'Missing points_source_breakdown column' } }; } };
     const context = vm.createContext({ configured: true, currentSession: { user: { id: 'owner' } },
-      supabase: { from: () => chain }, isMissingColumnError: () => true });
+      supabase: { from: () => chain }, isMissingColumnError: () => true, hasMembership: async () => true });
     vm.runInContext(fn, context);
     const payload = trip(sources([{ contract_id: 'a', points: 100 }]));
     const result = name === 'addTrip' ? await context[name](payload) : await context[name]('trip', payload);

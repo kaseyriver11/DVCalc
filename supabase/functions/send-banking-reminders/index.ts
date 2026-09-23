@@ -22,6 +22,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // same-year deadlines (Feb/Mar/Apr) and next-year ones (Jun/Aug/Sep/Oct/Dec)
 // without hardcoding which roll over. Mirrors account.html's copy of this
 // table exactly -- keep both in sync if this ever changes.
+// Mirrors auth.js: set false to email every opted-in owner regardless of
+// membership. past_due still counts (Stripe is retrying the card).
+const MEMBERSHIP_GATE_ENABLED = true;
+const MEMBER_STATUSES = ["active", "trialing", "past_due"];
+
 const DEADLINE_BY_USE_YEAR: Record<string, { month: number; day: number }> = {
   Feb: { month: 9, day: 30 },  // Sep 30
   Mar: { month: 10, day: 31 }, // Oct 31
@@ -103,7 +108,23 @@ Deno.serve(async () => {
 
     if (profileError) throw new Error(`profiles query failed: ${profileError.message}`);
 
+    // Reminders are an Active Member feature -- keep in sync with auth.js's
+    // MEMBERSHIP_GATE_ENABLED / MEMBER_STATUSES.
+    let memberIds: Set<string> | null = null;
+    if (MEMBERSHIP_GATE_ENABLED) {
+      const { data: subs, error: subError } = await supabase
+        .from("subscriptions")
+        .select("user_id")
+        .in("status", MEMBER_STATUSES);
+      if (subError) throw new Error(`subscriptions query failed: ${subError.message}`);
+      memberIds = new Set((subs ?? []).map((s) => s.user_id));
+    }
+
     for (const profile of profiles ?? []) {
+      if (memberIds && !memberIds.has(profile.id)) {
+        skipped++;
+        continue;
+      }
       const { data: contracts, error: contractError } = await supabase
         .from("contracts")
         .select("id, home_resort_id, use_year, nickname")

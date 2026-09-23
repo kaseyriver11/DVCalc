@@ -576,9 +576,21 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
     detail: "A badge estimate combining logged owned points and saved remaining, banked, and holding balances against estimated allotments. These records can overlap. This is not logged trip usage or proof that no points expired.",
   });
 
+  // An away stay only counts when the funding contract can actually reach
+  // that resort at 7 months -- a resale-restricted contract logged against a
+  // resort it can't book is a data slip, not a 7-month booking.
+  const sevenMonthReach = contract => {
+    if (!window.DVCAuth?.getUserResortAccess) return true;
+    return window.DVCAuth.getUserResortAccess([contract], [...new Set(RESORTS.map(r => r.id))]).sevenMoResortIds;
+  };
   const crossResortStay = trips.some(t => {
     if (!window.DVCTripFunding.summary(t, contracts).valid) return false;
-    return t.points_source_breakdown.allocations.some(a => t.resort_id !== contractById.get(a.contract_id)?.home_resort_id);
+    return t.points_source_breakdown.allocations.some(a => {
+      const contract = contractById.get(a.contract_id);
+      if (!contract || t.resort_id === contract.home_resort_id) return false;
+      const reach = sevenMonthReach(contract);
+      return reach === true || reach.has(t.resort_id);
+    });
   });
   const splitStaySavant = (itineraries || []).some(itin =>
     new Set((itin.segments || []).map(s => s.resortId)).size >= 2
@@ -587,8 +599,8 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   const sniper = evaluateSpecialBadge({
     id: "sniper", icon: "🎯", name: "7-Month Sniper", category: "planning",
     unlocked: crossResortStay,
-    requirement: "Log a stay away from that contract's home resort",
-    detail: "Log a stay (linked to a contract) at a resort other than that contract's home resort -- only bookable once the 7-month window opens availability to every member, past your own 11-month home resort priority.",
+    requirement: "Log a stay your contract booked away from home",
+    detail: "Log a stay (linked to a contract) at a resort that contract reaches at 7 months -- anywhere other than its home resort that it's allowed to book.",
   });
   const savant = evaluateSpecialBadge({
     id: "savant", icon: "🔀", name: "Split-Stay Savant", category: "planning",

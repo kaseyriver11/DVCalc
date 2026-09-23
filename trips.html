@@ -1160,6 +1160,12 @@ body {
 .insight-field .field-hint { color: var(--color-text-muted); line-height: 1.4; }
 .insight-field .field-hint.exact { color: var(--color-good); }
 
+.balance-deduct { margin: 0 0 16px; padding: 12px; border: 1px solid var(--color-border-light); border-radius: 16px; background: var(--color-bg-card); }
+.balance-deduct-toggle { display: flex; align-items: center; gap: 10px; font-size: .85rem; font-weight: 700; color: var(--color-text); cursor: pointer; }
+.balance-deduct-toggle input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.balance-deduct-lines { margin: 8px 0 0; padding: 0; list-style: none; font-size: .78rem; line-height: 1.5; color: var(--color-text-muted); }
+.balance-deduct-lines li + li { margin-top: 4px; }
+.balance-deduct-lines .deduct-skip { color: var(--color-text-muted); font-style: italic; }
 .trip-funding { margin: 16px 0; padding: 0; min-width: 0; border: 0; }
 .trip-funding legend { font-size: 0.9rem; font-weight: 700; color: var(--color-text); }
 .funding-help { font-size: 0.78rem; line-height: 1.5; color: var(--color-text-muted); margin: 8px 0; }
@@ -1480,6 +1486,12 @@ body {
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="trips.html" class="active">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
@@ -1491,12 +1503,6 @@ body {
         <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Membership</span>
-        <a href="account.html">My Contracts</a>
-        <a href="trips.html" class="active">Membership Value</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1521,6 +1527,7 @@ body {
   <script src="data/resort_images.js"></script>
   <script src="data/resort_shorthand.js"></script>
   <script src="dvc-trip-funding.js"></script>
+  <script src="dvc-trip-deduct.js"></script>
   <script src="dvc-owner-value.js"></script>
   <script src="dvc-badges.js"></script>
   <script src="dvc-track.js"></script>
@@ -1921,6 +1928,7 @@ const VELOCITY_SOURCE_LABEL = {
   trips: "from your trip history",
   blended: "blended: trip history + contract potential",
   baseline: "estimated from contract potential -- no trips logged yet",
+  "baseline-early": "estimated from contract potential -- your trips count once they add up to a year of points",
   none: "",
 };
 
@@ -2656,6 +2664,13 @@ function buildUnlockBannerHTML() {
 }
 
 async function renderSignedIn() {
+  if (!(await window.DVCAuth.hasMembership())) {
+    window.DVCAuth.renderMembershipGate(pageContent, {
+      title: "Track what your membership has paid back",
+      body: "Log your stays against your contracts to see how much Deluxe hotel value your membership has delivered, and when it pays for itself.",
+    });
+    return;
+  }
   [contracts, trips, contractYearPoints, userSettings] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
@@ -2801,6 +2816,11 @@ async function renderSignedIn() {
             </details>
 
           </fieldset>
+          <div class="balance-deduct" id="balance-deduct" hidden>
+            <label class="balance-deduct-toggle"><input type="checkbox" id="f-deduct"><span>Take these points out of my balances</span></label>
+            <ul class="balance-deduct-lines" id="balance-deduct-lines"></ul>
+            <small class="funding-help">Leave this off if the balance you entered on My Contracts already counts this booking.</small>
+          </div>
         </div>
 
         <div class="form-group">
@@ -3067,7 +3087,53 @@ function updateFundingSummary(updateSingle = false) {
     ? (Number.isFinite(cash) && cash >= 0 ? fmt(cash * result.share) + ' counts toward membership value' : result.owned + ' points from your contracts') + (result.outside ? ' · Outside share excluded' : '')
     : over ? 'Reduce an amount to match your stay.' : assigned === 0 ? 'Choose the contracts that funded this stay.' : remaining > 0 ? 'Choose another source or adjust an amount.' : result.error;
   el.innerHTML = `<div class="funding-summary-line"><strong>${fundingEscape(heading)}</strong><span>${validTotal ? assigned + ' / ' + total + ' pts' : ''}</span></div><div class="funding-progress" aria-hidden="true"><span style="width:${progress}%"></span></div><small>${fundingEscape(detail)}</small>`;
+  updateBalanceDeduction();
 
+}
+
+// Logging a NEW trip can also take its points out of the ledger. Editing an
+// existing trip never touches balances -- we can't know whether the earlier
+// save deducted, so a second deduction could double-count.
+let deductTouched = false;
+function localToday() {
+  return new Date().toLocaleDateString('en-CA');
+}
+function currentDeductionPlan() {
+  return window.DVCTripDeduct.planTripDeduction({
+    allocations: readTripFunding().allocations,
+    contracts,
+    rows: contractYearPoints,
+    checkIn: document.getElementById('f-checkin').value,
+    today: localToday(),
+  });
+}
+function updateBalanceDeduction() {
+  const box = document.getElementById('balance-deduct');
+  if (!box) return;
+  const plans = editingTripId ? [] : currentDeductionPlan();
+  box.hidden = !plans.length;
+  if (!plans.length) return;
+  const ready = plans.some(p => p.status === 'ready');
+  const toggle = document.getElementById('f-deduct');
+  toggle.disabled = !ready;
+  if (!deductTouched || !ready) toggle.checked = ready;
+  const name = p => fundingEscape(p.contract.nickname || shorthandResortName(p.contract.home_resort_id, resortName(p.contract.home_resort_id)));
+  document.getElementById('balance-deduct-lines').innerHTML = plans.map(p => {
+    if (p.status === 'ready') return `<li><strong>${name(p)}</strong> ${p.label} use year: ${p.points} pts (${fundingEscape(window.DVCTripDeduct.describeDraw(p.draws))}) &rarr; ${p.after.remaining + p.after.banked + p.after.borrowed + p.after.holding} left</li>`;
+    const why = p.status === 'no-balance' ? `no ${p.label} balance recorded yet` : p.status === 'ended' ? `the ${p.label} use year has ended` : `only ${p.points - p.shortfall} pts recorded for ${p.label}`;
+    return `<li class="deduct-skip"><strong>${name(p)}</strong>: not changed (${why})</li>`;
+  }).join('');
+}
+async function applyBalanceDeduction() {
+  const toggle = document.getElementById('f-deduct');
+  if (editingTripId || !toggle?.checked || toggle.disabled) return [];
+  const failures = [];
+  const confirmedAt = new Date().toISOString();
+  for (const plan of currentDeductionPlan().filter(p => p.status === 'ready')) {
+    const result = await window.DVCAuth.upsertContractYearPoints(window.DVCTripDeduct.ledgerRowAfter(plan, confirmedAt));
+    if (result.error) failures.push(fundingEscape(`${plan.contract.nickname || resortName(plan.contract.home_resort_id)}: ${result.error}`));
+  }
+  return failures;
 }
 
 function uniqueResorts() {
@@ -3221,7 +3287,8 @@ function wireTripForm(activeContracts) {
     updateSuggestions();
   });
   document.getElementById("f-room").addEventListener("change", updateSuggestions);
-  document.getElementById("f-checkin").addEventListener("change", updateSuggestions);
+  document.getElementById("f-checkin").addEventListener("change", () => { updateSuggestions(); updateBalanceDeduction(); });
+  document.getElementById("f-deduct").addEventListener("change", () => { deductTouched = true; });
   document.getElementById("f-checkout").addEventListener("change", updateSuggestions);
 
   document.getElementById("f-points").addEventListener("input", () => updateFundingSummary(true));
@@ -3279,6 +3346,7 @@ function openTripForm(trip, draft = null) {
   closeTripResortPicker(false);
   document.getElementById("trip-room-grid").classList.remove("open");
   editingTripId = trip ? trip.id : null;
+  deductTouched = false;
   const values = trip || draft;
   lastAutoFilledPoints = null;
   lastAutoFilledCash = null;
@@ -3298,8 +3366,10 @@ function openTripForm(trip, draft = null) {
 
   renderTripFunding(values);
 
-  document.getElementById("trip-modal-title").textContent = trip ? "Edit Trip" : "Log a Trip";
-  document.getElementById("save-trip").textContent = trip ? "Save Changes" : "Save Trip";
+  // A future stay handed over from the calendar is a booking, not a memory.
+  const upcoming = !trip && values?.check_in && values.check_in >= localToday();
+  document.getElementById("trip-modal-title").textContent = trip ? "Edit Trip" : upcoming ? "Record a Booking" : "Log a Trip";
+  document.getElementById("save-trip").textContent = trip ? "Save Changes" : upcoming ? "Save Booking" : "Save Trip";
   document.getElementById("trip-modal").classList.add("open");
 }
 
@@ -3376,11 +3446,15 @@ async function saveTripForm() {
     return;
   }
 
+  // Balances are written after the trip itself, so a failed trip save can
+  // never leave points deducted for a trip that doesn't exist.
+  const deductFailures = await applyBalanceDeduction();
+
   // Only a brand-new trip gets the pulseRing celebration on its postcard --
   // editing an existing one isn't a new "10-second log" moment.
   if (!editingTripId && result.data) justLoggedTripId = result.data.id;
 
-  pendingWarning = result.warning || null;
+  pendingWarning = [result.warning, deductFailures.length ? `Trip saved, but a balance wasn't updated (${deductFailures.join('; ')}). Fix it with Adjust balance on My Contracts.` : null].filter(Boolean).join(' ') || null;
   closeTripForm();
   renderSignedIn();
 }

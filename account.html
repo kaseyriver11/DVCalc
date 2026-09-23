@@ -516,6 +516,8 @@ body {
   cursor: pointer;
 }
 .ledger-year-tab:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.ledger-row [data-setup-balance] { margin-top: 10px; }
+.ledger-year-range { display: block; font-size: 0.66rem; font-weight: 500; opacity: 0.8; }
 .ledger-year-tab.selected { background: var(--color-primary); border-color: var(--color-primary); color: white; }
 .ledger-year-tab.add-year { border-style: dashed; color: #999; }
 .ledger-year-tab.add-year:hover { border-color: var(--color-primary); color: var(--color-primary); }
@@ -554,6 +556,16 @@ body {
 .ledger-deadline-warning.warning { color: var(--color-warning); }
 .ledger-deadline-warning.danger { color: var(--color-danger); font-weight: 700; }
 .ledger-deadline-warning.muted { color: #999; font-weight: 500; }
+.leftover-stays { margin-top: 10px; }
+.leftover-stays-title { font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 6px; }
+.leftover-stays-list { display: grid; gap: 8px; }
+.leftover-stay { display: block; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-bg-card); color: var(--color-text); text-decoration: none; }
+.leftover-stay-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.leftover-stay-name { font-weight: 600; min-width: 0; }
+.leftover-stay-odds { flex-shrink: 0; font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--color-primary-tint-bg); color: var(--color-primary); }
+.leftover-stay-odds.excellent { background: var(--color-good-bg); color: var(--color-good); }
+.leftover-stay-detail { display: block; font-size: 0.76rem; margin-top: 4px; color: var(--color-text-muted); }
+.leftover-stays-note { font-size: 0.72rem; color: var(--color-text-muted); margin-top: 6px; }
 
 .ledger-row .ledger-bar { margin-top: 12px; }
 
@@ -704,6 +716,18 @@ body {
   margin-bottom: 6px;
 }
 
+.resort-chip-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.85rem;
+}
+.resort-chip-empty { font-size: 0.8rem; color: var(--color-text-muted); }
+.resort-chip[hidden] { display: none; }
 .resort-chip-grid {
   display: grid;
   /* minmax(0, 1fr), not a bare 1fr -- grid tracks default to a content-based
@@ -1019,6 +1043,23 @@ body {
 /* ---- Notification Center: a short dismissible list of other active
    contracts' notable statuses, below whichever one is already the lead
    .deadline-countdown banner above. ---- */
+.reminder-offer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--color-primary-tint-bg);
+  border: 1px solid var(--color-border-light);
+}
+.reminder-offer-icon { font-size: 1.3rem; }
+.reminder-offer-text { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; color: var(--color-text-muted); }
+.reminder-offer-text strong { font-size: 0.88rem; color: var(--color-text); }
+.reminder-offer-actions { display: flex; gap: 8px; align-items: center; }
+.reminder-offer-actions .save-btn { width: auto; margin: 0; padding: 8px 16px; }
+.reminder-offer-dismiss { border: 0; background: none; color: var(--color-text-muted); font: inherit; font-size: 0.8rem; cursor: pointer; }
 .notification-center {
   display: flex;
   flex-direction: column;
@@ -1133,7 +1174,9 @@ body {
      push away from, Danger Zone sat flush against the ledger card. */
   margin-top: 20px;
 }
-.danger-zone h2 { color: #a3401f; }
+.danger-zone h2 { color: #a3401f; display: inline; font-size: 0.9rem; }
+.danger-zone summary { cursor: pointer; }
+.danger-zone[open] summary { margin-bottom: 10px; }
 .delete-account-btn {
   background: white;
   color: var(--color-danger);
@@ -1255,6 +1298,7 @@ body {
 .balance-year-card[data-unsaved="true"] .balance-card-status,
 .balance-year-card[data-save-unknown="true"] .balance-card-status { color: #8a5700; }
 .balance-card-hint, .balance-source-details p { margin: 2px 0 10px; color: var(--color-text-muted); font-size: .74rem; line-height: 1.4; }
+.point-move-deadline { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: #fff4e5; color: var(--color-warning); font-size: .78rem; line-height: 1.4; font-weight: 600; }
 .balance-source-details { border-top: 1px solid var(--color-border-light); }
 .balance-source-details summary { cursor: pointer; font-size: .76rem; padding: 14px 0; min-height: 44px; color: var(--color-text); }
 .balance-source-details label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0; font-size: .8rem; }
@@ -1273,6 +1317,18 @@ body {
 .point-move-numbers {font-size:1.8rem;font-weight:700;}
 .point-move-numbers small {font-size:.75rem;font-weight:400;}
 #point-move-error {color:var(--color-danger,#b42318);}
+#contract-modal .modal-box { display: flex; flex-direction: column; height: min(760px, 92dvh); overflow: hidden; padding: 18px; }
+#contract-modal .modal-header, #contract-modal .studio-stepper, #contract-modal .studio-nav, #contract-modal .form-error, #contract-modal .studio-summary { flex-shrink: 0; }
+#contract-modal .studio-summary { font-size: .78rem; line-height: 1.5; background: #f5f2fa; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+#contract-modal .studio-wizard-viewport { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#contract-modal .studio-wizard-track { display: block; transform: none; }
+#contract-modal .studio-step-pane[hidden] { display: none; }
+#contract-modal .studio-nav { flex-direction: row; align-items: center; gap: 8px; margin-top: 10px; padding-top: 12px; border-top: 1px solid #eee; }
+#contract-modal .studio-nav-right { flex: 1; flex-direction: row; justify-content: flex-end; gap: 8px; }
+#contract-modal .studio-nav button { width: auto; min-height: 44px; padding: 10px; }
+#contract-modal .studio-nav > .cancel-btn { font-size: .8rem; }
+#contract-modal .studio-stepper-pill { font-size: .7rem; padding: 8px; }
+#contract-modal .form-error { margin: 6px 0; }
 </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -1304,6 +1360,12 @@ body {
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html" class="active">My Contracts</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
         <span class="site-nav-group-label">Plan a Stay</span>
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
@@ -1315,12 +1377,6 @@ body {
         <span class="site-nav-group-label">My Itineraries</span>
         <a href="itineraries.html">Saved Itineraries</a>
         <a href="itinerarycompare.html">Compare Itineraries</a>
-      </span>
-      <span class="site-nav-divider"></span>
-      <span class="site-nav-group">
-        <span class="site-nav-group-label">My Membership</span>
-        <a href="account.html" class="active">My Contracts</a>
-        <a href="trips.html">Membership Value</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1342,15 +1398,19 @@ body {
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
   <script src="data/resort_images.js"></script>
+  <script src="data/resort_shorthand.js"></script>
   <script src="dvc-dates.js"></script>
   <script src="dvc-point-attention.js"></script>
   <script src="dvc-ledger.js"></script>
+  <script src="data/availability_data.js"></script>
+  <script src="dvc-leftover-points.js"></script>
+  <script src="dvc-compare-handoff.js"></script>
   <script src="dvc-balances.js"></script>
   <script src="dvc-point-moves.js"></script>
   <script src="account-point-moves.js"></script>
   <script src="dvc-ui.js"></script>
   <script>
-const { currentUYYear, todayInEastern, nextDeadlineForUseYear, isBankingWindowOpen, formatDeadlineDate, useYearExpiration, dateOnlyUTC, USE_YEAR_START_MONTH, urgencyTier, formatDeadlineWithCountdown } = window.DVCDates;
+const { currentUYYear, todayInEastern, nextDeadlineForUseYear, isBankingWindowOpen, formatDeadlineDate, useYearExpiration, dateOnlyUTC, USE_YEAR_START_MONTH, urgencyTier, expirationTier, formatDeadlineWithCountdown } = window.DVCDates;
 const { initCustomSelect } = window.DVCUI;
 const USE_YEARS = ["Feb", "Mar", "Apr", "Jun", "Aug", "Sep", "Oct", "Dec"];
 
@@ -1402,6 +1462,22 @@ function walletCardPrimaryColor(resortId) {
 const pageContent = document.getElementById("page-content");
 
 // Unique resorts (data.js has one entry per resort per year -- dedupe by id).
+// Owners call resorts by their short names and abbreviations, so the Add
+// Contract picker sorts and searches on those rather than on the official
+// "Disney's ..." / "The Villas at ..." names.
+const RESORT_ABBREVIATIONS = {
+  animalKingdomVillas: "akv akl jambo kidani", bayLakeTower: "blt", beachClubVillas: "bcv", boardwalkVillas: "bwv",
+  boulderRidge: "brv blv wilderness lodge", copperCreek: "ccv wilderness lodge", fortWildernessCabins: "cabins fw",
+  grandFloridian: "vgf", oldKeyWest: "okw", polynesianVillas: "pvb poly", rivieraResort: "rr riv", saratogaSprings: "ssr",
+  aulani: "aul hawaii ko olina", hiltonHead: "hhi", veroBeach: "vb", disneylandHotel: "vdh dlh", grandCalifornian: "vgc",
+};
+function resortChipsInPickerOrder(resorts) {
+  return [...resorts].sort((a, b) => shorthandResortName(a.id, a.name).localeCompare(shorthandResortName(b.id, b.name)));
+}
+function resortChipSearchText(r) {
+  return `${r.name} ${shorthandResortName(r.id, r.name)} ${RESORT_ABBREVIATIONS[r.id] || ""}`.toLowerCase().replace(/"/g, "");
+}
+
 function uniqueResorts() {
   const seen = new Set();
   const list = [];
@@ -1644,7 +1720,7 @@ function buildDeadlineCountdownHTML(earliest) {
     // is closed" signal, independent of how urgent that color reads.
     const { contract, expiresMs, daysUntil } = earliest;
     return `
-    <div class="deadline-countdown ${urgencyTier(daysUntil)}">
+    <div class="deadline-countdown ${expirationTier(daysUntil)}">
       <span class="deadline-countdown-icon">🔒</span>
       <div class="deadline-countdown-text">
         <div class="deadline-countdown-label">Use-Year Expiration</div>
@@ -1742,7 +1818,7 @@ function buildNotificationCenterHTML(contracts, yearPointsByContract, today, lea
           ? `${status.points} current pts; bank by ${formatDeadlineWithCountdown(dateMs, daysUntil)}`
           : `${status.points} pts (${status.buckets}) expire ${formatDeadlineWithCountdown(dateMs, daysUntil)}`;
         return `
-        <div class="notification-item ${urgencyTier(daysUntil)}" data-notif-id="${id}">
+        <div class="notification-item ${isBankable ? urgencyTier(daysUntil) : expirationTier(daysUntil)}" data-notif-id="${id}">
           <span class="notification-item-icon">${isBankable ? "⏳" : "🔒"}</span>
           <div class="notification-item-text"><strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${text}</div>
           <div class="notification-item-actions">
@@ -1755,7 +1831,71 @@ function buildNotificationCenterHTML(contracts, yearPointsByContract, today, lea
   `;
 }
 
+// "Dec 2025 – Nov 2026". DVC labels a use year by its deposit year, which
+// reads as last year's for most of the cycle, so tabs show the real dates.
+function useYearRangeLabel(useYear, label) {
+  const fmt = ms => new Date(ms).toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" });
+  return `${fmt(dateOnlyUTC(label, USE_YEAR_START_MONTH[useYear], 1))} – ${fmt(useYearExpiration(useYear, label))}`;
+}
+
+// Email reminders are off by default and otherwise live behind the small
+// bell icon, so once there's a contract to remind about, offer them once.
+const REMINDER_OFFER_DISMISSED_KEY = "dvc_reminder_offer_dismissed";
+function buildReminderOfferHTML(profile, contracts) {
+  if (profile?.reminder_opt_in || !contracts.some(c => c.is_active)) return "";
+  try { if (localStorage.getItem(REMINDER_OFFER_DISMISSED_KEY)) return ""; } catch (_) {}
+  return `
+    <div class="reminder-offer" id="reminder-offer">
+      <span class="reminder-offer-icon" aria-hidden="true">🔔</span>
+      <div class="reminder-offer-text"><strong>Get an email before a deadline</strong><span>We'll email you ${profile?.reminder_lead_days || 14} days before a banking deadline so points don't expire unnoticed.</span></div>
+      <div class="reminder-offer-actions"><button type="button" class="save-btn" id="reminder-offer-on">Turn on</button><button type="button" class="reminder-offer-dismiss" id="reminder-offer-dismiss">Not now</button></div>
+    </div>`;
+}
+function wireReminderOffer() {
+  const offer = document.getElementById("reminder-offer");
+  if (!offer) return;
+  document.getElementById("reminder-offer-on").addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    e.target.textContent = "Turning on...";
+    const { error } = await window.DVCAuth.updateProfile({ reminder_opt_in: true });
+    if (error) {
+      e.target.disabled = false;
+      e.target.textContent = "Try again";
+      return;
+    }
+    await renderSignedIn();
+  });
+  document.getElementById("reminder-offer-dismiss").addEventListener("click", () => {
+    try { localStorage.setItem(REMINDER_OFFER_DISMISSED_KEY, "1"); } catch (_) {}
+    offer.remove();
+  });
+}
+
+// Collapsed by default: a destructive action shouldn't be one of the most
+// prominent things on the page, least of all on a brand-new account.
+const DANGER_ZONE_HTML = `
+    <details class="section danger-zone">
+      <summary><h2>Danger Zone</h2></summary>
+      <div class="section-sub">Permanently deletes your account, every contract, all trip history, and every saved itinerary. There's no undo.</div>
+      <button type="button" class="delete-account-btn" id="delete-account">Delete My Account</button>
+    </details>
+`;
+
 async function renderSignedIn() {
+  if (!(await window.DVCAuth.hasMembership())) {
+    pageContent.innerHTML = `
+      ${buildCheckoutReturnBannerHTML()}
+      <div id="membership-gate"></div>
+      ${DANGER_ZONE_HTML}
+    `;
+    window.DVCAuth.renderMembershipGate(document.getElementById("membership-gate"), {
+      title: "Track your contracts, points and deadlines",
+      body: "Add your DVC contracts to see what's left in each use year, get banking and expiration reminders, record banking and borrowing, and book on the calendar as your own contract. Anything you've already saved stays put.",
+    });
+    document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
+    handleCheckoutReturn();
+    return;
+  }
   const [contracts, profile, yearPoints, subscription] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getProfile(),
@@ -1789,6 +1929,7 @@ async function renderSignedIn() {
     ${inAppEnabled ? buildDeadlineCountdownHTML(earliestDeadline) : ""}
     ${inAppEnabled ? buildNotificationCenterHTML(contracts, yearPointsByContract, today, earliestDeadline?.contract?.id) : ""}
     </div>
+    ${buildReminderOfferHTML(profile, contracts)}
 
     <div class="modal-overlay" id="notif-settings-modal">
       <div class="modal-box">
@@ -1841,28 +1982,30 @@ async function renderSignedIn() {
       <div class="contract-list" id="contract-list"></div>
       <button type="button" class="add-btn" id="show-add-form">+ Add Contract</button>
       <div class="modal-overlay" id="contract-modal">
-        <div class="modal-box">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="contract-modal-title">
           <div class="modal-header">
             <h3 id="contract-modal-title">Add Contract</h3>
             <button type="button" class="modal-close" id="contract-modal-close" aria-label="Close">&times;</button>
           </div>
-          <div class="wallet-card modal-preview-card" id="modal-card-preview"></div>
+          <div class="studio-summary" id="modal-card-preview"></div>
 
           <div class="studio-stepper" id="studio-stepper">
             <button type="button" class="studio-stepper-pill" data-step-dot="1">1. Resort</button>
             <button type="button" class="studio-stepper-pill" data-step-dot="2">2. Points &amp; Use Year</button>
             <button type="button" class="studio-stepper-pill" data-step-dot="3">3. Details</button>
           </div>
-          <div class="form-error" id="form-error" style="display:none;"></div>
+          <div class="form-error" id="form-error" role="alert" style="display:none;"></div>
 
           <div class="studio-wizard-viewport">
             <div class="studio-wizard-track" id="studio-wizard-track">
               <div class="studio-step-pane" data-step-panel="1">
                 <div class="studio-panel">
-                  <label class="studio-step-label">Pick Your Home Resort</label>
+                  <label class="studio-step-label" for="resort-chip-search">Pick Your Home Resort</label>
+                  <input type="search" id="resort-chip-search" class="resort-chip-search" placeholder="Search, e.g. Riviera or SSR" autocomplete="off">
                   <div class="resort-chip-grid" id="resort-chip-grid">
-                    ${resorts.map(r => `<button type="button" class="resort-chip" data-resort="${r.id}" style="background:${walletCardGradient(r.id)}">${r.name}</button>`).join("")}
+                    ${resortChipsInPickerOrder(resorts).map(r => `<button type="button" class="resort-chip" data-resort="${r.id}" data-search="${resortChipSearchText(r)}" title="${r.name}" style="background:${walletCardGradient(r.id)}">${shorthandResortName(r.id, r.name)}</button>`).join("")}
                   </div>
+                  <p class="resort-chip-empty" id="resort-chip-empty" hidden>No resort matches that search.</p>
                   <select id="f-resort" class="native-select">
                     ${resorts.map(r => `<option value="${r.id}">${r.name}</option>`).join("")}
                   </select>
@@ -1912,6 +2055,7 @@ async function renderSignedIn() {
                   <div class="studio-perks-note">Entering your buy-in price and acquisition year unlocks lifetime cost-of-ownership tracking.</div>
                   <div class="form-field">
                     <label>Blue Card Status</label>
+                    <div class="field-hint">Membership Extras for direct buyers above a points minimum. Auto-Detect is right for most owners.</div>
                     <div class="purchase-type-toggle" id="f-bluecard-toggle">
                       <button type="button" id="f-bluecard-auto" class="selected" data-override="">Auto-Detect</button>
                       <button type="button" id="f-bluecard-eligible" data-override="true">Eligible</button>
@@ -1928,7 +2072,6 @@ async function renderSignedIn() {
             <button type="button" class="cancel-btn" id="cancel-contract">Cancel</button>
             <div class="studio-nav-right">
               <button type="button" class="ghost-btn" id="studio-back">&lt; Back</button>
-              <button type="button" class="ghost-btn" id="studio-skip-save" style="display:none;">Skip Financial Details</button>
               <button type="button" class="save-btn" id="studio-next">Next: Financials &rarr;</button>
               <button type="button" class="save-btn" id="save-contract" style="display:none;">Save Deed to Vault</button>
             </div>
@@ -1939,11 +2082,7 @@ async function renderSignedIn() {
 
     <div id="active-contract-details"></div>
 
-    <div class="section danger-zone">
-      <h2>Danger Zone</h2>
-      <div class="section-sub">Permanently deletes your account, every contract, all trip history, and every saved itinerary. There's no undo.</div>
-      <button type="button" class="delete-account-btn" id="delete-account">Delete My Account</button>
-    </div>
+    ${DANGER_ZONE_HTML}
   `;
 
   renderContractList(contracts, resorts, yearPointsByContract);
@@ -1957,19 +2096,14 @@ async function renderSignedIn() {
     if (e.target.id === "contract-modal") closeForm();
   });
   document.getElementById("save-contract").addEventListener("click", () => saveForm(contracts));
-  document.getElementById("studio-next").addEventListener("click", () => showStudioStep(modalStep + 1));
+  document.getElementById("studio-next").addEventListener("click", () => { if (validateContractStep(modalStep)) showStudioStep(modalStep + 1); });
   document.getElementById("studio-back").addEventListener("click", () => showStudioStep(modalStep - 1));
-  // Saves immediately with whatever Step 3 already defaults to (Direct,
-  // no nickname/price/date) -- for someone who just wants their booking
-  // windows active now and doesn't care about the House Money tracker yet.
-  document.getElementById("studio-skip-save").addEventListener("click", () => saveForm(contracts));
-  // Stepper pills only navigate while editing an existing contract (see
-  // .studio-stepper.jumpable) -- a brand-new contract walks the steps in
-  // order via the resort-chip auto-advance and Next/Back below.
+  // Editing can revisit earlier steps; advancing validates the visible step.
   document.getElementById("studio-stepper").addEventListener("click", (e) => {
     const pill = e.target.closest(".studio-stepper-pill");
     if (!pill || !isEditingMode) return;
-    showStudioStep(Number(pill.dataset.stepDot));
+    const target = Number(pill.dataset.stepDot);
+    if (target <= modalStep || validateContractStep(modalStep)) showStudioStep(target);
   });
   document.getElementById("f-type-direct").addEventListener("click", () => { setPurchaseType("direct"); updateModalCardPreview(); });
   document.getElementById("f-type-resale").addEventListener("click", () => { setPurchaseType("resale"); updateModalCardPreview(); });
@@ -1980,11 +2114,17 @@ async function renderSignedIn() {
     setBlueCardOverride(raw === "true" ? true : raw === "false" ? false : null);
     updateModalCardPreview();
   });
-  // Step 1: tapping a resort chip is the only way to change resort now --
-  // the native <select> stays in the DOM purely as saveForm()'s value store.
-  // Picking one immediately slides to Step 2 for a brand-new contract, like
-  // a native onboarding flow -- editing an existing contract (reached via
-  // the jumpable stepper) leaves the user right where they navigated to.
+  // Selection updates the summary; Continue is the only forward action.
+  document.getElementById("resort-chip-search").addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    let shown = 0;
+    document.querySelectorAll(".resort-chip").forEach(chip => {
+      const match = !q || chip.dataset.search.includes(q);
+      chip.hidden = !match;
+      if (match) shown++;
+    });
+    document.getElementById("resort-chip-empty").hidden = shown > 0;
+  });
   document.getElementById("resort-chip-grid").addEventListener("click", (e) => {
     const chip = e.target.closest(".resort-chip");
     if (!chip) return;
@@ -1992,12 +2132,13 @@ async function renderSignedIn() {
     chip.classList.add("selected");
     document.getElementById("f-resort").value = chip.dataset.resort;
     updateModalCardPreview();
-    if (!isEditingMode) showStudioStep(2);
+
   });
   document.getElementById("f-useyear-chips").addEventListener("click", (e) => {
     const btn = e.target.closest(".use-year-chip");
     if (!btn) return;
     setUseYear(btn.dataset.year);
+    useYearChosen = true;
     updateModalCardPreview();
   });
   document.getElementById("f-points-presets").addEventListener("click", (e) => {
@@ -2008,22 +2149,8 @@ async function renderSignedIn() {
     document.getElementById("f-points").value = btn.dataset.points;
     updateModalCardPreview();
     updateStudioNextLabel();
-    // Tapping a preset is one discrete, complete action -- same reasoning
-    // as a resort chip auto-advancing Step 1 -> 2, so this advances
-    // straight to Step 3 instead of making the user also tap "Next"/
-    // "Review & Save Deed" for a value they've already fully committed to.
-    if (modalStep === 2) showStudioStep(3);
   });
   document.getElementById("f-points").addEventListener("input", () => { updateModalCardPreview(); updateStudioNextLabel(); });
-  // "change" (fires on blur/Enter), not "input" (fires every keystroke) --
-  // auto-advancing on the first digit of a multi-digit number would yank
-  // the user to Step 3 before they finish typing "250". Blurring the field
-  // (tabbing away, or tapping elsewhere) is the discrete "I'm done with
-  // this value" signal a preset-chip tap already gives for free.
-  document.getElementById("f-points").addEventListener("change", () => {
-    const points = parseInt(document.getElementById("f-points").value, 10);
-    if (points > 0 && modalStep === 2) showStudioStep(3);
-  });
   document.getElementById("f-nickname").addEventListener("input", updateModalCardPreview);
   // Blue Card eligibility and resale-restriction status both depend on
   // acquisition year -- refresh the live preview as soon as it's picked,
@@ -2042,14 +2169,8 @@ async function renderSignedIn() {
   document.getElementById("notif-settings-save").addEventListener("click", saveNotificationSettings);
 
   document.getElementById("membership-action-btn").addEventListener("click", handleMembershipAction);
-
-  const checkoutBanner = document.getElementById("checkout-return-banner");
-  if (checkoutBanner) {
-    // Strip the param so a refresh/re-share of this URL doesn't re-show
-    // the banner or re-trigger the poll below.
-    window.history.replaceState({}, "", window.location.pathname);
-    if (checkoutBanner.classList.contains("success")) startCheckoutSuccessPoll();
-  }
+  wireReminderOffer();
+  handleCheckoutReturn();
 
   // Notification Center dismiss buttons -- delegated since the list
   // re-renders on every page load and each item's own lifetime is short.
@@ -2343,13 +2464,77 @@ function applyDeckPeekSpacing() {
 // The ledger (use-year rows, bars, steppers, +Plan a year) and Edit/
 // Deactivate/Delete actions for whichever card is active -- lives below
 // the deck, not inside the card face. Empty when there are no contracts.
+// Short-notice stay ideas for expiring, unbankable points
+// (dvc-leftover-points.js). Expiring points always mean booking close in,
+// when most resorts are sold out, so a stay is only suggested when DVC
+// Field Guide history (data/availability_data.js) gives Good+ odds at that
+// lead time -- same bar as the calendar's Booking Outlook. Respects this
+// contract's own booking windows (11 months home, 7 months elsewhere, none
+// at resale-restricted resorts) and Holding's 60-day booking rule. Cached
+// per contract/balance: the ledger re-renders on every stepper edit and
+// the search walks every resort/room/night in the window.
+const leftoverStaysCache = new Map();
+function findLeftoverStays(c, status, todayMs) {
+  const key = [c.id, status.points, status.holding, status.expiresMs, todayMs].join("|");
+  if (leftoverStaysCache.has(key)) return leftoverStaysCache.get(key);
+  const D = window.DVCDates, L = window.DVCLeftoverPoints, DAY = 86400000;
+  const iso = ms => new Date(ms).toISOString().slice(0, 10);
+  const allIds = [...new Set(RESORTS.map(r => r.id))];
+  const access = window.DVCAuth.getUserResortAccess([c], allIds);
+  const holdingCap = status.holding > 0 ? iso(todayMs + window.DVCLedger.HOLDING_BOOKING_WINDOW_DAYS * DAY) : "9999-12-31";
+  const capFor = id => access.homeResortIds.has(id) ? D.monthsFromDate(11) : access.sevenMoResortIds.has(id) ? D.monthsFromDate(7) : null;
+  const resorts = allIds.map(id => {
+    const cap = capFor(id);
+    const chart = RESORTS.find(r => r.id === id);
+    return cap && chart ? { resortId: id, maxCheckIn: cap < holdingCap ? cap : holdingCap, roomTypeIds: chart.roomTypes.map(rt => rt.id) } : null;
+  }).filter(Boolean);
+  const priceCache = new Map();
+  const pointsFor = (resortId, roomTypeId, dateStr) => {
+    const k = resortId + "|" + roomTypeId + "|" + dateStr;
+    if (!priceCache.has(k)) {
+      const chart = RESORTS.find(r => r.id === resortId && r.year === Number(dateStr.slice(0, 4)));
+      priceCache.set(k, chart ? (getPointsForDate(chart, dateStr, roomTypeId) ?? null) : null);
+    }
+    return priceCache.get(k);
+  };
+  const availabilityFor = (resortId, roomTypeId, nightStr, checkInStr) =>
+    L.availabilityScore(window.AVAILABILITY_DATA ?? (typeof AVAILABILITY_DATA !== "undefined" ? AVAILABILITY_DATA : null),
+      resortId, roomTypeId, nightStr, L.bookingWindowKey((Date.parse(checkInStr + "T00:00:00Z") - todayMs) / DAY));
+  const search = { points: status.points, fromDate: iso(todayMs + DAY), lastNightDate: iso(status.expiresMs), resorts, pointsFor };
+  const stays = L.findStays({ ...search, availabilityFor });
+  // Only needed to word the empty state: too few points vs. no likely openings.
+  const result = { stays, affordable: stays.length > 0 || L.findStays({ ...search, limit: 1 }).length > 0 };
+  leftoverStaysCache.set(key, result);
+  return result;
+}
+
+function buildLeftoverStaysHTML(c, status, todayMs) {
+  if (!window.DVCLeftoverPoints || !window.DVCAuth?.getUserResortAccess || !window.DVCCompareHandoff || typeof RESORTS === "undefined" || typeof AVAILABILITY_DATA === "undefined") return "";
+  const { stays, affordable } = findLeftoverStays(c, status, todayMs);
+  const transfer = "You can transfer them to another member (one transfer per use year).";
+  if (!stays.length) {
+    return `<div class="ledger-deadline-warning muted">${affordable
+      ? `Resorts this contract can book rarely have openings this close in. ${transfer}`
+      : `No night costs ${status.points} pts or less before they expire. ${transfer}`}</div>`;
+  }
+  const fmt = s => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const items = stays.map(s => {
+    const chart = RESORTS.find(r => r.id === s.resortId);
+    const room = chart.roomTypes.find(rt => rt.id === s.roomTypeId)?.name || s.roomTypeId;
+    const href = window.DVCCompareHandoff.url({ resortId: s.resortId, roomTypeId: s.roomTypeId, checkIn: s.checkIn, checkOut: s.checkOut });
+    const odds = window.DVCLeftoverPoints.oddsLabel(s.availability, s.nights);
+    return `<a class="leftover-stay" href="${href}"><span class="leftover-stay-head"><span class="leftover-stay-name">${shorthandResortName(s.resortId, chart.name)}</span><span class="leftover-stay-odds ${odds.toLowerCase()}">${odds} odds</span></span><span class="leftover-stay-detail">${room} &middot; ${s.nights} night${s.nights === 1 ? "" : "s"} &middot; ${s.pointsUsed} pts &middot; from ${fmt(s.checkIn)} &rarr;</span></a>`;
+  }).join("");
+  return `<div class="leftover-stays"><div class="leftover-stays-title">Most likely to have short-notice openings${status.holding > 0 ? " within 60 days" : ""}</div><div class="leftover-stays-list">${items}</div><div class="leftover-stays-note">Based on past availability this close in. Odds drop as dates get closer, so book soon.</div></div>`;
+}
+
 function buildLedgerAttentionHTML(c, row, status, todayMs) {
   if (!row.balance_confirmed_at) return `<div class="ledger-deadline-warning muted">Balance not added. Your ${c.points_per_year} annual points are not an available balance.</div>`;
   const holdingStatus = row.points_holding > 0 ? window.DVCLedger.holdingExpiration(row.expiresMs, todayMs) : null;
   return `        ${status?.kind === "bankable"
           ? `<div class="ledger-deadline-warning ${urgencyTier(status.deadline.daysUntil)}">⏳ Bank current points by ${formatDeadlineWithCountdown(status.deadline.ms, status.deadline.daysUntil)}</div>`
           : status?.kind === "use-by"
-          ? `<div class="ledger-deadline-warning ${urgencyTier(status.daysUntil)}">🔒 ${status.points} pts (${status.buckets}) expire ${formatDeadlineWithCountdown(status.expiresMs, status.daysUntil)}${status.holding ? ". Holding points: book within 60 days of check-in." : ""}</div>`
+          ? `<div class="ledger-deadline-warning ${expirationTier(status.daysUntil)}">🔒 ${status.points} pts (${status.buckets}) expire ${formatDeadlineWithCountdown(status.expiresMs, status.daysUntil)}${status.holding ? ". Holding points: book within 60 days of check-in." : ""}</div>${buildLeftoverStaysHTML(c, status, todayMs)}`
           : status?.kind === "accounted"
           ? `<div class="ledger-deadline-warning muted">✅ All points accounted for this year</div>`
           : `<div class="ledger-deadline-warning muted">For use between ${formatDeadlineDate(dateOnlyUTC(row.year, USE_YEAR_START_MONTH[c.use_year], 1))} and ${formatDeadlineDate(row.expiresMs)}</div>`}
@@ -2421,7 +2606,7 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
     </div>
 
     <div class="ledger-year-tabs">
-      ${rows.map(r => `<button type="button" class="ledger-year-tab${r.year === activeLedgerYearTab ? " selected" : ""}" data-select-year="${r.year}">${r.year === uyYear ? "Current Year" : "Plan Ahead"} (${r.year})</button>`).join("")}
+      ${rows.map(r => `<button type="button" class="ledger-year-tab${r.year === activeLedgerYearTab ? " selected" : ""}" data-select-year="${r.year}">${r.year === uyYear ? "Current Year" : "Plan Ahead"} (${r.year})<small class="ledger-year-range">${useYearRangeLabel(c.use_year, r.year)}</small></button>`).join("")}
       ${canAddYear ? `<button type="button" class="ledger-year-tab add-year" data-add-year="${nextAddableYear}" data-contract-id="${c.id}">+ Plan ${nextAddableYear}</button>` : ""}
     </div>
 
@@ -2444,7 +2629,7 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
           <div class="ledger-bar-seg ledger-seg-holding" style="flex-grow:${row.points_holding}"></div>
         </div>
         <div class="point-bucket-summary">${[['Current',row.points_remaining],['Banked',row.points_banked],['Borrowed',row.points_borrowed],['Holding',row.points_holding]].map(([label,n])=>`<div><span>${label}</span><strong>${n}</strong></div>`).join('')}</div>
-        <div class="point-ledger-actions"><button type="button" data-point-action="bank">Record banking <span>Move current points to ${row.year+1} &rarr;</span></button><button type="button" data-point-action="borrow">Record borrowing <span>Bring current points from ${row.year+1} &rarr;</span></button><button type="button" data-point-action="adjust">Adjust balance <span>Correct what is left in ${row.year} &rarr;</span></button></div>
+        <div class="point-ledger-actions"><button type="button" data-point-action="bank">Record banking <span>${isBankingWindowOpen(c.use_year, row.year, todayInEastern()) ? `Move current points to ${row.year+1}` : `Deadline passed ${formatDeadlineDate(window.DVCDates.deadlineForCycle(c.use_year, row.year))}`} &rarr;</span></button><button type="button" data-point-action="borrow">Record borrowing <span>Bring current points from ${row.year+1} &rarr;</span></button><button type="button" data-point-action="adjust">Adjust balance <span>Correct what is left in ${row.year} &rarr;</span></button></div>
         ${borrowCheck && !borrowCheck.valid
           ? `<div class="ledger-validation-note">⚠ ${row.points_borrowed.toLocaleString()} pts borrowed exceeds next year's full ${borrowCheck.maxAllowed.toLocaleString()}-pt allotment on this contract -- double-check this against your real Member Services balance.</div>`
           : ""}
@@ -2539,11 +2724,7 @@ function getSelectedUseYear() {
   return document.querySelector(".use-year-chip.selected")?.dataset.year || USE_YEARS[0];
 }
 
-// Mirrors the real wallet card exactly (buildWalletCardFaceHTML(), same as
-// the deck), so the modal previews what the saved contract will actually
-// look like -- called on open and after every field change in any step,
-// since all three steps stay mounted in the DOM at once (see the wizard
-// track) and can be edited in any order once in edit mode.
+// Compact live summary keeps the chosen contract visible above the fields.
 // The rest of the app (Blue Card eligibility, resale-restriction dates,
 // trips.html's amortization schedule) all key off a real purchase_date
 // string -- storing January 1st of the acquisition year, rather than
@@ -2569,10 +2750,8 @@ function updateModalCardPreview() {
   const blueCardOverride = getSelectedBlueCardOverride();
   const deadline = nextDeadlineForUseYear(useYear, todayInEastern());
   const preview = document.getElementById("modal-card-preview");
-  preview.style.background = walletCardGradient(resortId);
-  preview.innerHTML = buildWalletCardFaceHTML({
-    resortId, nickname, pointsPerYear: points, useYear, purchaseType, purchaseDate, blueCardOverride, isActive: true, deadline,
-  });
+  preview.style.background = "";
+  preview.textContent = [resortName(resortId), points > 0 ? points + ' points / year' : 'Points not added', useYearChosen ? useYear + ' use year' : 'Choose use year'].join(' / ');
 
   // Shows what auto-detection alone would say, regardless of which toggle
   // is currently selected -- so overriding it is an informed choice
@@ -2588,55 +2767,52 @@ function updateModalCardPreview() {
   }
 }
 
-// Card Studio step navigation -- slides the .studio-wizard-track to the
-// requested step via transform (see tokens.css), updates the stepper pills,
-// and swaps Next/Back/Save Deed visibility. instant:true skips the slide
-// animation entirely (used when opening straight into Step 3 to edit an
-// existing contract, so the modal doesn't visibly animate through 1 and 2
-// on open).
+// Keep only the active step visible and its navigation outside the scroll area.
 let modalStep = 1;
 function showStudioStep(step, { instant = false } = {}) {
   modalStep = step;
-  const track = document.getElementById("studio-wizard-track");
-  if (instant) {
-    track.classList.add("no-transition");
-    track.offsetHeight; // force a reflow so the transform below applies with no transition
-  }
-  track.style.transform = `translateX(-${(step - 1) * 100}%)`;
-  if (instant) {
-    track.offsetHeight;
-    track.classList.remove("no-transition");
-  }
+  document.getElementById("form-error").style.display = "none";
+  // Until a new contract has a resort, the preview card would just show
+  // whichever resort happens to sort first.
+  document.getElementById("modal-card-preview").style.display = !isEditingMode && step === 1 ? "none" : "";
+  document.querySelectorAll('[data-step-panel]').forEach(panel => { panel.hidden = Number(panel.dataset.stepPanel) !== step; });
+  document.querySelector('#contract-modal .studio-wizard-viewport').scrollTop = 0;
   document.querySelectorAll(".studio-stepper-pill").forEach(p => {
     p.classList.toggle("active", Number(p.dataset.stepDot) === step);
   });
   document.getElementById("studio-back").style.visibility = step === 1 ? "hidden" : "visible";
-  document.getElementById("studio-next").style.display = step === 2 ? "" : "none";
-  document.getElementById("studio-skip-save").style.display = step === 2 ? "" : "none";
+  document.getElementById("studio-next").style.display = step < 3 ? "" : "none";
   document.getElementById("save-contract").style.display = step === 3 ? "" : "none";
-  if (step === 2) updateStudioNextLabel();
+  updateStudioNextLabel();
 }
 
-// "Fast-Pass" flow: once Points per Year actually has a value, the Next
-// button stops sounding like just another step and starts sounding like
-// the finish line -- Step 3 is entirely optional fields, so a user who's
-// filled in the two REQUIRED fields (Use Year always has a default; Points
-// is the one that matters) is realistically one tap from done either way.
 function updateStudioNextLabel() {
-  const points = parseInt(document.getElementById("f-points").value, 10);
-  document.getElementById("studio-next").textContent = points > 0 ? "Review & Save Deed →" : "Next: Financials →";
+  document.getElementById("studio-next").textContent = modalStep === 1 ? "Continue to points" : "Continue to details";
 }
 
+let useYearChosen = false;
 function openForm(contract) {
   editingId = contract ? contract.id : null;
+  useYearChosen = !!contract;
   isEditingMode = !!contract;
   document.getElementById("studio-stepper").classList.toggle("jumpable", isEditingMode);
   document.getElementById("form-error").style.display = "none";
   document.getElementById("f-nickname").value = contract?.nickname || "";
+  // A new contract starts with nothing picked -- f-resort still needs a value
+  // for the (hidden-on-step-1) preview, but no chip claims to be chosen.
   const resortId = contract?.home_resort_id || uniqueResorts()[0].id;
   document.getElementById("f-resort").value = resortId;
-  document.querySelectorAll(".resort-chip").forEach(chip => chip.classList.toggle("selected", chip.dataset.resort === resortId));
+  document.querySelectorAll(".resort-chip").forEach(chip => {
+    chip.classList.toggle("selected", !!contract && chip.dataset.resort === resortId);
+    chip.hidden = false;
+  });
+  document.getElementById("resort-chip-search").value = "";
+  document.getElementById("resort-chip-empty").hidden = true;
   setUseYear(contract?.use_year || USE_YEARS[0]);
+  if (!contract) {
+    document.querySelectorAll(".use-year-chip").forEach(chip => chip.classList.remove("selected"));
+    document.getElementById("f-useyear-deadline").textContent = "Choose the use year printed on your contract.";
+  }
   document.getElementById("f-points").value = contract?.points_per_year || "";
   document.querySelectorAll(".points-preset-chip").forEach(chip => chip.classList.toggle("selected", chip.dataset.points == contract?.points_per_year));
   document.getElementById("f-price").value = contract?.purchase_price || "";
@@ -2649,7 +2825,7 @@ function openForm(contract) {
   setPurchaseType(contract?.purchase_type || "direct");
   setBlueCardOverride(contract?.blue_card_override ?? null);
   document.getElementById("contract-modal-title").textContent = contract ? "Edit Contract" : "Add Contract";
-  document.getElementById("save-contract").textContent = contract ? "Save Changes" : "Save Deed to Vault";
+  document.getElementById("save-contract").textContent = contract ? "Save Changes" : "Save Contract";
   updateModalCardPreview();
   // A brand-new contract walks the guided onboarding from Step 1; editing
   // an existing one skips straight to Step 3 (its most-likely-to-be-tweaked
@@ -2812,21 +2988,44 @@ document.addEventListener('keydown', e => {
   }
 });
 
+function validateContractStep(step) {
+  let message = '', field = null;
+  const points = document.getElementById('f-points');
+  const price = document.getElementById('f-price');
+  const year = document.getElementById('f-acquisition-year');
+  if (step === 1 && !document.querySelector('.resort-chip.selected')) {
+    message = 'Choose your home resort to continue.'; field = document.getElementById('resort-chip-search');
+  } else if (step === 2 && !useYearChosen) {
+    message = 'Choose the use year on your contract.'; field = document.querySelector('.use-year-chip');
+  } else if (step === 2 && (!Number.isSafeInteger(Number(points.value)) || Number(points.value) <= 0)) {
+    message = 'Enter a positive whole number of points per year.'; field = points;
+  } else if (step === 3 && price.value && (!Number.isFinite(Number(price.value)) || Number(price.value) < 0)) {
+    message = 'Enter a purchase price of zero or more, or leave it blank.'; field = price;
+  } else if (step === 3 && year.value && (!Number.isInteger(Number(year.value)) || Number(year.value) < 1991 || Number(year.value) > new Date().getFullYear())) {
+    message = 'Enter an acquisition year from 1991 to this year, or leave it blank.'; field = year;
+  }
+  if (!message) return true;
+  showStudioStep(step);
+  const error = document.getElementById('form-error');
+  error.textContent = message; error.style.display = 'block';
+  field?.focus();
+  return false;
+}
+
 function closeForm() {
+  if (contractSaving) return;
   editingId = null;
   document.getElementById("contract-modal").classList.remove("open");
 }
 
+let contractSaving = false;
 async function saveForm() {
+  if (contractSaving) return;
   const errorEl = document.getElementById("form-error");
   errorEl.style.display = "none";
 
-  const points = parseInt(document.getElementById("f-points").value, 10);
-  if (!points || points <= 0) {
-    errorEl.textContent = "Points per year is required and must be a positive number.";
-    errorEl.style.display = "block";
-    return;
-  }
+  if (!validateContractStep(1) || !validateContractStep(2) || !validateContractStep(3)) return;
+  const points = Number(document.getElementById("f-points").value);
 
   const payload = {
     nickname: document.getElementById("f-nickname").value.trim() || null,
@@ -2839,9 +3038,24 @@ async function saveForm() {
     blue_card_override: getSelectedBlueCardOverride(),
   };
 
-  const result = editingId
-    ? await window.DVCAuth.updateContract(editingId, payload)
-    : await window.DVCAuth.addContract(payload);
+  contractSaving = true;
+  const controls = [...document.querySelectorAll('#contract-modal button, #contract-modal input')];
+  controls.forEach(el => el.disabled = true);
+  const saveButton = document.getElementById('save-contract');
+  const saveLabel = saveButton.textContent;
+  saveButton.textContent = 'Saving...';
+  let result;
+  try {
+    result = editingId
+      ? await window.DVCAuth.updateContract(editingId, payload)
+      : await window.DVCAuth.addContract(payload);
+  } catch (error) {
+    result = { error: error.message || 'Connection error. Try again.' };
+  } finally {
+    contractSaving = false;
+    controls.forEach(el => el.disabled = false);
+    saveButton.textContent = saveLabel;
+  }
 
   if (result.error) {
     errorEl.textContent = "Couldn't save: " + result.error;
@@ -2889,6 +3103,17 @@ async function handleMembershipAction() {
 // getSubscription() right on load can race it and still show "Free."
 // Polls a handful of times before giving up -- re-rendering the whole
 // page (renderSignedIn) each time is simplest and already idempotent.
+// Runs on both the member and gated views: a fresh checkout lands on the
+// gated view until the webhook writes the subscription row.
+function handleCheckoutReturn() {
+  const checkoutBanner = document.getElementById("checkout-return-banner");
+  if (!checkoutBanner) return;
+  // Strip the param so a refresh/re-share of this URL doesn't re-show
+  // the banner or re-trigger the poll below.
+  window.history.replaceState({}, "", window.location.pathname);
+  if (checkoutBanner.classList.contains("success")) startCheckoutSuccessPoll();
+}
+
 function startCheckoutSuccessPoll(attempt = 0) {
   const MAX_ATTEMPTS = 6;
   setTimeout(async () => {

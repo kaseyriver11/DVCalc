@@ -39,6 +39,7 @@ async function init() {
   notify();
   supabase.auth.onAuthStateChange((_event, session) => {
     currentSession = session;
+    membershipCache = null;
     notify();
   });
 }
@@ -481,6 +482,42 @@ function injectEmailCodeStyles() {
   emailCodeStylesInjected = true;
   const style = document.createElement("style");
   style.textContent = `
+.membership-gate-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary, #5b2a86);
+}
+.membership-gate-title {
+  margin: 6px 0 8px;
+  font-size: 1.15rem;
+  color: var(--color-text, #1f1f3a);
+}
+.membership-gate p {
+  max-width: 440px;
+  margin: 0 auto 16px;
+  line-height: 1.5;
+}
+.membership-gate-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 22px;
+  background: var(--color-primary, #5b2a86);
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.membership-gate-btn:disabled { opacity: 0.7; cursor: default; }
+.membership-gate-fine,
+.membership-gate-error {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #777);
+}
+.membership-gate-error { color: var(--color-danger, #b71c1c); }
+
 /* .dvc-signin-cluster (flex column, align-items: center) is what actually
    centers every child here -- these three rules only size/style their own
    content, not position themselves, so they render identically no matter
@@ -658,7 +695,7 @@ function getSession() {
 // active-only happens in whichever consumer only cares about that (e.g.
 // personalization, once Phase 3 wires it up), not here.
 async function getContracts() {
-  if (!configured || !currentSession) return [];
+  if (!configured || !currentSession || !(await hasMembership())) return [];
   const { data, error } = await supabase
     .from("contracts")
     .select("*")
@@ -677,6 +714,7 @@ async function getContracts() {
 // contract_year_points -- see getContractYearPoints()/upsertContractYearPoints().
 async function addContract(contract) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const payload = { ...contract, user_id: currentSession.user.id };
   let { data, error } = await supabase.from("contracts").insert(payload).select().single();
   if (error && isMissingColumnError(error, "blue_card_override")) {
@@ -689,6 +727,7 @@ async function addContract(contract) {
 
 async function updateContract(id, patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   let { data, error } = await supabase.from("contracts").update(patch).eq("id", id).select().single();
   if (error && isMissingColumnError(error, "blue_card_override")) {
     const { blue_card_override, ...rest } = patch;
@@ -702,7 +741,7 @@ async function updateContract(id, patch) {
 // contracts (account.html groups these by contract_id client-side) -- same
 // fetch-everything-and-group pattern as getContracts()/getTrips().
 async function getContractYearPoints() {
-  if (!configured || !currentSession) return [];
+  if (!configured || !currentSession || !(await hasMembership())) return [];
   const { data, error } = await supabase
     .from("contract_year_points")
     .select("*")
@@ -721,6 +760,7 @@ async function getContractYearPoints() {
 // constraint on that pair is what makes the upsert target unambiguous.
 async function upsertContractYearPoints(row) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { data, error } = await supabase
     .from("contract_year_points")
     .upsert({ ...row, user_id: currentSession.user.id }, { onConflict: "contract_id,use_year_label" })
@@ -731,6 +771,7 @@ async function upsertContractYearPoints(row) {
 
 async function recordPointMovement(payload) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { data, error } = await supabase.rpc("record_point_movement", payload);
   return { data, error: error?.message };
 }
@@ -742,7 +783,7 @@ async function deleteContractYearPoints(id) {
 }
 
 async function getUserBadges() {
-  if (!configured || !currentSession) return [];
+  if (!configured || !currentSession || !(await hasMembership())) return [];
   const { data, error } = await supabase.from("user_badges").select("*");
   if (error) {
     console.error("[DVCAuth] getUserBadges failed:", error.message);
@@ -760,6 +801,7 @@ async function getUserBadges() {
 // high-water-mark rule itself, it just writes what it's given.
 async function upsertUserBadge(patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { data, error } = await supabase
     .from("user_badges")
     .upsert({ ...patch, user_id: currentSession.user.id }, { onConflict: "user_id,badge_id" })
@@ -793,6 +835,7 @@ async function getBadgeRarityStats() {
 // Silently no-ops when signed out/unconfigured, same as upsertUserBadge.
 async function incrementBadgeEvent(badgeId) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { error } = await supabase.rpc("increment_badge_event", { p_badge_id: badgeId });
   if (error) console.error("[DVCAuth] incrementBadgeEvent failed:", error.message);
   return { error: error?.message };
@@ -881,8 +924,71 @@ async function getSubscription() {
     console.error("[DVCAuth] getSubscription failed:", error.message);
     return null;
   }
+  membershipCache = Promise.resolve(isMemberStatus(data?.status));
   return data;
 }
+
+// ---- Active Member gate (docs/subscriptions_plan.md "Tier split") ----
+// Planning tools on public data stay free; anything built on the owner's
+// own portfolio -- contracts, the points ledger, trips, itineraries,
+// badges -- needs an active membership. Flip this to false to open every
+// owner feature to any signed-in user (e.g. until live-mode Stripe is set
+// up, since nobody can pay before then).
+const MEMBERSHIP_GATE_ENABLED = true;
+// past_due still counts: Stripe retries a failed card for a while before
+// canceling, and one declined charge shouldn't lock an owner out of their
+// own ledger mid-retry (subscriptions_plan.md Phase 7).
+const MEMBER_STATUSES = new Set(["active", "trialing", "past_due"]);
+const MEMBERSHIP_REQUIRED_ERROR = "This is part of Active Member. Start a free trial on My Contracts to use it.";
+let membershipCache = null;
+
+function isMemberStatus(status) {
+  return !MEMBERSHIP_GATE_ENABLED || MEMBER_STATUSES.has(status);
+}
+
+// Cached per session -- every owner-data read goes through this, and the
+// subscription row only changes via checkout (whose return poll calls
+// getSubscription(), which refreshes the cache) or sign-in/out.
+function hasMembership() {
+  if (!configured || !currentSession) return Promise.resolve(false);
+  if (!MEMBERSHIP_GATE_ENABLED) return Promise.resolve(true);
+  return (membershipCache ||= getSubscription().then(sub => isMemberStatus(sub?.status)));
+}
+
+// The upsell a gated page shows in place of its owner content. Reuses the
+// page's own .gate card so it matches that page's sign-in gate.
+function renderMembershipGate(container, { title, body }) {
+  injectEmailCodeStyles();
+  container.innerHTML = `
+    <div class="gate membership-gate">
+      <div class="membership-gate-eyebrow">Active Member</div>
+      <h3 class="membership-gate-title">${title}</h3>
+      <p>${body}</p>
+      <button type="button" class="membership-gate-btn" data-membership-upgrade>Start 7-day free trial</button>
+      <div class="membership-gate-fine">Then $49.99/yr. Cancel anytime.</div>
+      <div class="membership-gate-error" role="alert" hidden></div>
+    </div>
+  `;
+}
+
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest?.("[data-membership-upgrade]");
+  if (!btn) return;
+  const errorEl = btn.parentElement.querySelector(".membership-gate-error");
+  btn.disabled = true;
+  btn.textContent = "Opening checkout...";
+  const result = await subscribeToMembership();
+  if (result.url) {
+    window.location.href = result.url;
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = "Start 7-day free trial";
+  if (errorEl) {
+    errorEl.textContent = "Couldn't open checkout: " + (result.error || "unknown error");
+    errorEl.hidden = false;
+  }
+});
 
 // supabase-js's functions.invoke() collapses any non-2xx response into a
 // generic FunctionsHttpError ("Edge Function returned a non-2xx status
@@ -926,7 +1032,7 @@ async function manageMembership() {
 }
 
 async function getTrips() {
-  if (!configured || !currentSession) return [];
+  if (!configured || !currentSession || !(await hasMembership())) return [];
   const { data, error } = await supabase
     .from("trips")
     .select("*")
@@ -953,6 +1059,7 @@ function isMissingColumnError(error, column) {
 // user_id filled in here, same reasoning as addContract().
 async function addTrip(trip) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const payload = { ...trip, user_id: currentSession.user.id };
   let { data, error } = await supabase.from("trips").insert(payload).select().single();
   // Confirmed funding must never be silently discarded by a compatibility retry.
@@ -972,6 +1079,7 @@ async function addTrip(trip) {
 
 async function updateTrip(id, patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   let { data, error } = await supabase.from("trips").update(patch).eq("id", id).select().single();
   if (error && patch.points_source_breakdown?.version === 2) return { error: error.message };
   if (error && isMissingColumnError(error, "custom_cash_value")) {
@@ -994,7 +1102,7 @@ async function deleteTrip(id) {
 }
 
 async function getItineraries() {
-  if (!configured || !currentSession) return [];
+  if (!configured || !currentSession || !(await hasMembership())) return [];
   const { data, error } = await supabase
     .from("itineraries")
     .select("*")
@@ -1010,6 +1118,7 @@ async function getItineraries() {
 // checkIn, checkOut }], user_id filled in here, same reasoning as addTrip().
 async function addItinerary(itinerary) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const table = supabase.from("itineraries");
   const row = { ...itinerary, user_id: currentSession.user.id };
   // The calendar keeps one random ID across retries of a new/copy save.
@@ -1022,6 +1131,7 @@ async function addItinerary(itinerary) {
 
 async function updateItinerary(id, itinerary) {
   if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { name, year, segments, booking_contract_id } = itinerary;
   const { data, error } = await supabase.from("itineraries")
     .update({ name, year, segments, booking_contract_id })
@@ -1230,6 +1340,9 @@ window.DVCAuth = {
   saveUserSettings,
   DEFAULT_USER_SETTINGS,
   getSubscription,
+  hasMembership,
+  renderMembershipGate,
+  MEMBERSHIP_REQUIRED_ERROR,
   subscribeToMembership,
   manageMembership,
   getTrips,

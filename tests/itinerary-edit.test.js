@@ -32,7 +32,7 @@ test('blank names do not call persistence',async()=>{const ui=setup();ui.input.v
 
 test('persistence updates only the signed-in owner record and copies use retry-safe IDs',async()=>{
   const calls=[];const query={};for(const method of ['upsert','insert','update','eq','select'])query[method]=(...args)=>{calls.push([method,...args]);return query};query.single=async()=>({data:{id:'saved'}});
-  const context=vm.createContext({configured:true,currentSession:{user:{id:'owner'}},supabase:{from:()=>query}});
+  const context=vm.createContext({configured:true,currentSession:{user:{id:'owner'}},supabase:{from:()=>query},hasMembership:async()=>true});
   const auth=fs.readFileSync(require.resolve('../auth.js'),'utf8');
   for(const name of ['addItinerary','updateItinerary'])vm.runInContext(auth.match(new RegExp('async function '+name+'\\([^]*?\\n\\}'))[0],context);
   await context.updateItinerary('original',{name:'Revised',year:2026,segments:[],booking_contract_id:'c',user_id:'wrong-owner'});
