@@ -27,7 +27,10 @@ with checks(migration, kind, tbl, name) as (values
   ('023', 'col', 'itineraries', 'booking_contract_id'),
   ('024', 'fn', null, 'save_trip_booking'),
   ('025', 'fn', null, 'reconcile_points'),
-  ('026', 'col', 'profiles', 'holding_reminder_lead_days')
+  ('026', 'col', 'profiles', 'holding_reminder_lead_days'),
+  ('027', 'tbl', 'waitlists', null),
+  ('027', 'tbl', 'booking_cancellations', null),
+  ('027', 'col', 'trips', 'disney_confirmation_number')
 )
 select
   migration,

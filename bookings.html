@@ -788,6 +788,26 @@ a.add-btn { display: inline-flex; align-items: center; }
 .stay-year > summary { display: flex; justify-content: space-between; align-items: center; min-height: 48px; cursor: pointer; font-weight: 700; font-size: .95rem; }
 .stay-year > summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; border-radius: 6px; }
 .stay-year-count { font-size: .8rem; font-weight: 500; color: var(--color-text-muted); }
+/* ---- Waitlists and canceled bookings (Prompt 5) ---- */
+.waitlist-card, .canceled-row { padding: 10px 0; border-top: 1px solid var(--color-border-light); min-width: 0; }
+.waitlist-card:first-of-type { border-top: none; }
+.waitlist-card.due { border-left: 3px solid #e65100; padding-left: 10px; }
+.waitlist-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; min-width: 0; }
+.waitlist-top .stay-row-resort { min-width: 0; overflow-wrap: anywhere; }
+.waitlist-status { flex-shrink: 0; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #fff3e0; color: #a3401f; }
+.waitlist-status.fulfilled { background: var(--color-good-bg); color: var(--color-good); }
+.waitlist-status.canceled { background: #f1f1f4; color: #555; }
+.waitlist-actions { flex-wrap: wrap; }
+.small-btn.primary { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.small-btn.primary:hover { color: #fff; background: var(--color-primary-active); }
+.waitlist-closed { margin-top: 6px; }
+.wl-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.wl-chip { display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: 999px; background: #fff; font: inherit; font-size: .82rem; cursor: pointer; }
+.wl-chip[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-tint-bg); color: var(--color-primary); font-weight: 700; }
+.wl-chip:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.form-field-label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 4px; }
+.waitlist-convert-note { background: var(--color-primary-tint-bg); padding: 8px 10px; border-radius: 8px; }
+.page-actions { flex-wrap: wrap; }
 </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -862,6 +882,9 @@ a.add-btn { display: inline-flex; align-items: center; }
   <script src="data/resort_shorthand.js"></script>
   <script src="dvc-trip-funding.js"></script>
   <script src="dvc-trip-deduct.js"></script>
+  <script src="dvc-ui.js"></script>
+  <script src="dvc-waitlists.js"></script>
+  <script src="bookings-waitlists.js"></script>
   <script src="dvc-stay-value.js"></script>
   <script src="dvc-stay-groups.js"></script>
   <script src="dvc-owner-value.js"></script>
@@ -996,6 +1019,7 @@ async function renderSignedIn() {
     window.DVCAuth.getContractYearPoints(),
     window.DVCAuth.getUserSettings(),
     window.DVCAuth.getTripDeductions(),
+    loadWaitlistData(), // waitlists + cancellation history (bookings-waitlists.js)
   ]);
   // A failed read is not an empty history, and deductions must never be
   // planned against balances that didn't load (UX2-05).
@@ -1013,6 +1037,7 @@ async function renderSignedIn() {
     ${buildUnlockBannerHTML()}
     <div class="page-actions">
       <button type="button" class="add-btn js-add-trip">+ Record a booking</button>
+      ${waitlistsMissing ? "" : `<button type="button" class="small-btn js-add-waitlist">+ Waitlist request</button>`}
       <a class="page-actions-link" href="trips.html">Membership value &rarr;</a>
     </div>
     ${pendingWarning ? `<div class="save-warning">${pendingWarning}</div>` : ""}
@@ -1033,6 +1058,7 @@ async function renderSignedIn() {
           <button type="button" class="modal-close" id="trip-modal-close" aria-label="Close">&times;</button>
         </div>
         <div class="form-error" id="form-error" style="display:none;"></div>
+        <p class="funding-help waitlist-convert-note" id="waitlist-convert-note" hidden>Recording the booking Disney confirmed for your waitlist request. Enter Disney's actual dates, points and sources. The request is marked confirmed only when this booking saves.</p>
 
         <div class="form-group">
           <div class="form-group-label">Where You Stayed</div>
@@ -1107,6 +1133,17 @@ async function renderSignedIn() {
 
         <div class="form-group">
           <div class="form-group-label">Extra Details</div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="f-confirmation">Disney confirmation # (optional)</label>
+              <input type="text" id="f-confirmation" maxlength="40" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="form-field">
+              <label for="f-checked-on">Last checked in Disney</label>
+              <input type="date" id="f-checked-on">
+            </div>
+          </div>
+          <small class="funding-help">For your records. DVC Companion can't see Disney's system, so these aren't a verification.</small>
           <div class="form-field">
             <label for="f-notes">Notes (optional)</label>
             <textarea id="f-notes" rows="2"></textarea>
@@ -1120,6 +1157,7 @@ async function renderSignedIn() {
       </div>
     </div>
 
+    ${waitlistModalHTML()}
     <div class="modal-overlay" id="delete-trip-modal">
       <div class="modal-box delete-trip-box" role="dialog" aria-modal="true" aria-labelledby="delete-trip-title">
         <div class="modal-header">
@@ -1138,6 +1176,7 @@ async function renderSignedIn() {
 
   renderStayList();
   wireTripForm(contracts.filter(c => c.is_active));
+  wireWaitlists();
   pendingWarning = null;
   // Show-once, same contract as pendingWarning above: the banner is in the
   // DOM now, so a later re-render doesn't replay the celebration.
@@ -1196,6 +1235,9 @@ function stayRowHTML(t, today, justLogged) {
     outside.map(([label, n]) => `<div class="stay-detail-line">${label}: ${n.toLocaleString()} pts</div>`).join(""),
     cashTotal != null ? `<div class="stay-detail-line">Cash value for the whole stay: ${fmt(cashTotal)}${v?.outsidePoints ? " (outside share excluded)" : ""}</div>` : "",
     deducted ? `<div class="stay-detail-line">Took ${deducted.toLocaleString()} pts out of your balances: ${receipts.map(d => `${fundingEscape(deductionContractName(contracts.find(c => c.id === d.contract_id)))} ${d.use_year_label} (${fundingEscape(window.DVCTripDeduct.describeReceipt(d))})`).join("; ")}</div>` : `<div class="stay-detail-line muted">Didn't change your balances in the app</div>`,
+    t.disney_confirmation_number ? `<div class="stay-detail-line">Disney confirmation (as entered): ${fundingEscape(t.disney_confirmation_number)}${t.disney_checked_on ? ` &middot; you last checked it in Disney ${wlDay(t.disney_checked_on)}` : ""}</div>`
+      : t.disney_checked_on ? `<div class="stay-detail-line">You last checked it in Disney ${wlDay(t.disney_checked_on)}</div>` : "",
+    phase === "upcoming" ? cancellationDatesHTML(t.check_in, today) : "",
     t.notes ? `<div class="stay-detail-line muted">${fundingEscape(t.notes)}</div>` : "",
   ].join("");
   return `
@@ -1220,10 +1262,18 @@ function stayRowHTML(t, today, justLogged) {
       </div>
     </div>`;
 }
+// Disney's cancellation thresholds for an upcoming booking, as dates.
+function cancellationDatesHTML(checkIn, today) {
+  const d = window.DVCWaitlists.cancellationDates(checkIn);
+  if (today <= d.restoreThrough) return `<div class="stay-detail-line muted">If you cancel with Disney by ${wlDay(d.restoreThrough)}, points go back to their use years; ${wlDay(d.holdingFrom)} to ${wlDay(d.holdingThrough)}, they go to Holding.</div>`;
+  if (today <= d.holdingThrough) return `<div class="stay-detail-line muted">Canceling with Disney now sends the points to Holding (until ${wlDay(d.holdingThrough)}); on check-in day they're lost.</div>`;
+  return "";
+}
 function renderStayList() {
   const list = document.getElementById("stay-list");
+  wireWaitlistActions(list);
   if (trips.length === 0) {
-    list.innerHTML = `<div class="section stay-empty"><h2>No bookings recorded yet</h2><p class="section-sub">Record a booking and it will show up here, with its points and value.</p></div>`;
+    list.innerHTML = `<div class="section stay-empty"><h2>No bookings recorded yet</h2><p class="section-sub">Record a booking and it will show up here, with its points and value.</p></div>${waitlistSectionHTML()}${cancellationHistoryHTML()}`;
     return;
   }
   const justLogged = justLoggedTripId;
@@ -1238,6 +1288,7 @@ function renderStayList() {
         <p class="section-sub">These stays' point sources don't add up yet, so they aren't counted in membership value.</p>
         <div class="stay-rows">${rows(groups.needsReview)}</div>
       </section>` : "",
+    waitlistSectionHTML(),
     groups.inProgress.length ? `<section class="section stay-group" id="in-progress" aria-labelledby="in-progress-title">
         <h2 id="in-progress-title">In progress</h2>
         <div class="stay-rows">${rows(groups.inProgress)}</div>
@@ -1256,6 +1307,7 @@ function renderStayList() {
           </details>`;
         }).join("")}
       </section>` : "",
+    cancellationHistoryHTML(),
   ].join("");
 
   list.querySelectorAll(".stay-year").forEach(el => el.addEventListener("toggle", () => yearOpenState.set(Number(el.dataset.year), el.open)));
@@ -1296,8 +1348,14 @@ function openDeleteTrip(t) {
   document.getElementById("delete-trip-error").style.display = "none";
   const confirmBtn = document.getElementById("delete-trip-confirm");
   if (!receipts.length) {
-    body.innerHTML = `<p class="delete-trip-intro">Your balances won't change: this booking didn't take points out of them in the app. If a balance you entered on My Contracts counts it, fix that with Adjust balance.</p>`;
-    confirmBtn.disabled = false;
+    body.innerHTML = `
+      <p class="delete-trip-intro">Your balances won't change: this booking didn't take points out of them in the app. If a balance you entered on My Contracts counts it, fix that with Adjust balance. What happened?</p>
+      <div class="delete-options" role="radiogroup">
+        <label class="delete-option"><input type="radio" name="delete-mode" value="canceled"><span><strong>Canceled with Disney</strong><small>Keeps a record of the cancellation under Canceled with Disney.</small></span></label>
+        <label class="delete-option"><input type="radio" name="delete-mode" value="keep"><span><strong>Logged by mistake</strong><small>Removes this record. Nothing is kept.</small></span></label>
+      </div>`;
+    confirmBtn.disabled = true;
+    body.querySelectorAll('input[name="delete-mode"]').forEach(r => r.addEventListener("change", () => { confirmBtn.disabled = false; }));
   } else {
     const total = receipts.reduce((sum, d) => sum + window.DVCTripDeduct.receiptTotal(d), 0);
     const from = receipts.map(d => `${fundingEscape(deductionContractName(contracts.find(c => c.id === d.contract_id)))} ${d.use_year_label}: ${window.DVCTripDeduct.describeReceipt(d)}`).join("; ");
@@ -1310,7 +1368,7 @@ function openDeleteTrip(t) {
     body.innerHTML = `
       <p class="delete-trip-intro">This booking took ${total.toLocaleString()} pts out of your balances (${from}). What happened?</p>
       <div class="delete-options" role="radiogroup">
-        <label class="delete-option"><input type="radio" name="delete-mode" value="canceled"><span><strong>Canceled with Disney</strong><small>${canceledDetail}</small></span></label>
+        <label class="delete-option"><input type="radio" name="delete-mode" value="canceled"><span><strong>Canceled with Disney</strong><small>${canceledDetail} A record of the cancellation is kept.</small></span></label>
         <label class="delete-option"><input type="radio" name="delete-mode" value="mistake"><span><strong>Logged by mistake</strong><small>Put the ${total.toLocaleString()} pts back exactly as they were taken.</small></span></label>
         <label class="delete-option"><input type="radio" name="delete-mode" value="keep"><span><strong>Leave my balances as they are</strong><small>For when you've already corrected them yourself.</small></span></label>
       </div>`;
@@ -1870,6 +1928,12 @@ function openTripForm(trip, draft = null) {
   syncCheckoutMin();
   document.getElementById("f-points").value = values?.points_used ?? "";
   document.getElementById("f-notes").value = values?.notes || "";
+  document.getElementById("f-confirmation").value = trip?.disney_confirmation_number || "";
+  document.getElementById("f-checked-on").value = trip?.disney_checked_on || "";
+  document.getElementById("f-checked-on").max = localToday();
+  // "Disney confirmed this" on a waitlist request (bookings-waitlists.js).
+  convertingWaitlistId = !trip && draft?.waitlist_id ? draft.waitlist_id : null;
+  document.getElementById("waitlist-convert-note").hidden = !convertingWaitlistId;
   document.getElementById("f-cash-value").value = values?.custom_cash_value ?? "";
   updateSuggestions();
   if (draft) {
@@ -1908,6 +1972,7 @@ function updateTripFormTitle() {
 function closeTripForm() {
   closeTripResortPicker(false);
   editingTripId = null;
+  convertingWaitlistId = null;
   document.getElementById("trip-modal").classList.remove("open");
 }
 
@@ -1946,6 +2011,14 @@ async function saveTripForm() {
     return;
   }
 
+  const confirmation = document.getElementById("f-confirmation").value.trim();
+  const checkedOn = document.getElementById("f-checked-on").value;
+  if (checkedOn && checkedOn > localToday()) {
+    errorEl.textContent = "The date you last checked Disney can't be in the future.";
+    errorEl.style.display = "block";
+    return;
+  }
+
   const funding = readTripFunding();
   const attribution = window.DVCTripFunding.validate(points, funding, contracts);
   if (!attribution.valid) {
@@ -1965,7 +2038,11 @@ async function saveTripForm() {
     notes: document.getElementById("f-notes").value.trim() || null,
     custom_cash_value: Number(cashValueRaw),
     points_source_breakdown: funding,
+    disney_confirmation_number: confirmation || null,
+    disney_checked_on: checkedOn || null,
   };
+  const waitlist = !editingTripId && convertingWaitlistId ? waitlists.find(w => w.id === convertingWaitlistId) : null;
+  if (waitlist) payload.waitlist_id = waitlist.id;
 
   // The booking and its optional deduction are one server-side operation
   // keyed by a retry id, and Save is disabled while it's in flight -- a
@@ -2009,6 +2086,12 @@ async function saveTripForm() {
   pendingWarning = skipped.length
     ? `Saved. Not taken out of balances: ${skipped.map(p => fundingEscape(deductionContractName(p.contract)) + " " + p.label).join(", ")}. Fix it with Adjust balance on My Contracts if needed.`
     : null;
+  if (waitlist) {
+    const backup = waitlist.backup_trip_id && trips.find(t => t.id === waitlist.backup_trip_id);
+    pendingWarning = [pendingWarning, backup
+      ? `Waitlist request marked Disney confirmed. Your backup booking (${fundingEscape(wlTripLabel(backup))}) is still recorded: if you canceled it with Disney, open it and choose Delete, then Canceled with Disney.`
+      : "Waitlist request marked Disney confirmed."].filter(Boolean).join(" ");
+  }
   closeTripForm();
   renderSignedIn();
 }

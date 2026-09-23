@@ -821,6 +821,53 @@ const getPointReconciliations = () => readOwnRows("point_reconciliations", "poin
 // Every receipt, including reversed ones (getTripDeductions() returns only live ones).
 const getTripDeductionHistory = () => readOwnRows("trip_deductions", "trip_deduction_history");
 
+// Waitlist requests and booking cancellation history (migration 027). A
+// table that doesn't exist yet reads as { missing: true } -- "not set up
+// yet", not a failed read or an empty history. Any other failure is
+// reported through readFailed(name).
+async function readOptionalTable(table) {
+  if (!configured || !currentSession || !(await hasMembership())) return { rows: [], missing: false };
+  const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false });
+  if (error && (error.code === "42P01" || error.code === "PGRST205" || /does not exist|could not find the table/i.test(error.message))) {
+    noteRead(table, null);
+    return { rows: [], missing: true };
+  }
+  noteRead(table, error);
+  if (error) console.error(`[DVCAuth] ${table} read failed:`, error.message);
+  return { rows: error ? [] : data, missing: false };
+}
+const getWaitlists = () => readOptionalTable("waitlists");
+const getBookingCancellations = () => readOptionalTable("booking_cancellations");
+
+const WAITLIST_FIELDS = ["resort_id", "room_type_id", "check_in", "check_out", "requested_on", "backup_trip_id", "notes", "remind_days_before"];
+// Add (isNew, with a client id kept until success -- a retried add finds
+// the first one instead of duplicating it) or edit an open request. Marking
+// one fulfilled only happens inside save_trip_booking.
+async function saveWaitlist(row, { isNew }) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  const fields = Object.fromEntries(WAITLIST_FIELDS.map(k => [k, row[k] ?? null]));
+  const query = isNew
+    ? supabase.from("waitlists").insert({ id: row.id, ...fields }).select().single()
+    : supabase.from("waitlists").update({ ...fields, review_reminded_at: null, updated_at: new Date().toISOString() }).eq("id", row.id).select().single();
+  let { data, error } = await query;
+  if (error?.code === "23505" && isNew) ({ data, error } = await supabase.from("waitlists").select("*").eq("id", row.id).single());
+  if (error && /waitlists/.test(error.message) && /does not exist|could not find/i.test(error.message)) {
+    return { error: "Waitlists can't be saved until db/migrations/027_waitlists_and_booking_records.sql is run in Supabase." };
+  }
+  return { data, error: error?.message };
+}
+// Cancel (owner canceled the request with Disney) or reopen one. Safe to repeat.
+async function setWaitlistStatus(id, status) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  if (!["pending", "canceled"].includes(status)) return { error: "Invalid waitlist status." };
+  const { data, error } = await supabase.from("waitlists")
+    .update({ status, canceled_at: status === "canceled" ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+    .eq("id", id).select().single();
+  return { data, error: error?.message };
+}
+
 async function deleteContractYearPoints(id) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   const { error } = await supabase.from("contract_year_points").delete().eq("id", id);
@@ -1417,6 +1464,10 @@ window.DVCAuth = {
   getPointMovements,
   getPointReconciliations,
   getTripDeductionHistory,
+  getWaitlists,
+  getBookingCancellations,
+  saveWaitlist,
+  setWaitlistStatus,
   deleteContractYearPoints,
   getUserBadges,
   upsertUserBadge,

@@ -164,6 +164,16 @@ without stopping the banking emails. Each email's unsubscribe link carries
 `&type=expiration` or `&type=holding`, so **redeploy `unsubscribe-reminders`
 too**; a link without `type` still means banking reminders.
 
+**Waitlist review emails (added 2026-09-23, migration 027).** A third loop
+(`_shared/waitlist-reminder-run.js`) emails once for each pending waitlist
+request whose owner chose "Remind me N days before check-in", when check-in
+is that close. It says DVC Companion can't see Disney's waitlist and asks the
+owner to check Disney's site. Dedup is the request's own
+`review_reminded_at` (claimed before sending, released if the send fails,
+cleared when the owner edits the request). Dry run plans them as
+`waitlist_review`. `unsubscribe-reminders?type=waitlist` turns off every
+pending request's reminder.
+
 It returns `{"sent": N, "skipped": N, "errors": [...]}`. To actually see a
 send happen, you'll need at least one opted-in profile with an active
 contract whose use year's deadline falls within its `reminder_lead_days` —
