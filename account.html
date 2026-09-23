@@ -363,6 +363,11 @@ body {
   visibility: visible;
   pointer-events: auto;
 }
+/* The dot sits mid-card after the use-year/points pills, so a left-aligned
+   210px card ran ~40px past a 360px screen (hidden tooltips still widen
+   the page). Centered on the dot, it stays inside. */
+.wallet-card-bottom-left .wallet-card-perk-dot .tooltip-card { left: 50%; transform: translateX(-50%); }
+.wallet-card-bottom-left .wallet-card-perk-dot .tooltip-card::before { left: 50%; transform: translateX(-50%); }
 
 /* A standout glass chip, not another muted pill -- the deadline is the one
    piece of information on the face worth drawing the eye to. */
@@ -1313,6 +1318,48 @@ body {
 .point-bucket-summary span {display:block;font-size:.7rem;color:var(--color-text-muted);}
 .point-bucket-summary strong {font-size:1.2rem;}
 .point-ledger-actions {display:grid;gap:8px;margin:16px 0;}
+/* ---- Reconcile with Disney (Prompt 2) ---- */
+.reconcile-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 10px 0 4px; }
+.reconcile-status { font-size: .8rem; color: var(--color-text-muted); }
+.reconcile-status.checked { color: var(--color-good); font-weight: 600; }
+.reconcile-btn { min-height: 44px; padding: 0 14px; border: 1px solid var(--color-primary); border-radius: 10px; background: var(--color-bg-card); color: var(--color-primary); font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.reconcile-btn:focus-visible, .ledger-activity > summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.reconcile-contract { font-size: .9rem; margin: 0 0 6px; }
+.reconcile-contract span { font-size: .8rem; color: var(--color-text-muted); }
+.reconcile-notice { margin: 8px 0; padding: 10px 12px; border-radius: 10px; background: #fff4e5; color: #7a4a00; font-size: .84rem; }
+.reconcile-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.reconcile-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.reconcile-field-label { font-size: .78rem; font-weight: 700; color: var(--color-text); }
+.reconcile-field input { font: inherit; font-size: 1.3rem; font-weight: 700; padding: 10px 12px; min-height: 48px; border: 1px solid var(--color-border); border-radius: 12px; min-width: 0; width: 100%; box-sizing: border-box; }
+.reconcile-field-recorded { font-size: .72rem; color: var(--color-text-muted); }
+.reconcile-match { padding: 10px 12px; border-radius: 10px; background: var(--color-good-bg); color: var(--color-good); font-size: .88rem; font-weight: 600; }
+.reconcile-diff-card { padding: 10px 12px; border: 1px solid var(--color-border-light); border-radius: 12px; }
+.reconcile-diff-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: .86rem; }
+.reconcile-diff-row.total { border-top: 1px solid var(--color-border-light); margin-top: 4px; padding-top: 8px; font-weight: 700; }
+.reconcile-diff-row em { font-style: normal; font-weight: 700; margin-left: 4px; }
+.reconcile-diff-row em.up { color: var(--color-good); }
+.reconcile-diff-row em.down { color: var(--color-danger); }
+.reconcile-reason { border: 0; padding: 0; margin: 12px 0 0; min-width: 0; }
+.reconcile-reason legend { font-size: .85rem; font-weight: 700; margin-bottom: 6px; }
+.reconcile-reason-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.reconcile-reason-chips label { position: relative; }
+.reconcile-reason-chips input { position: absolute; opacity: 0; }
+.reconcile-reason-chips span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: 999px; font-size: .84rem; cursor: pointer; }
+.reconcile-reason-chips input:checked + span { border-color: var(--color-primary); background: var(--color-primary-tint-bg); color: var(--color-primary); font-weight: 700; }
+.reconcile-reason-chips input:focus-visible + span { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.reconcile-notes-label { display: block; font-size: .8rem; margin: 10px 0 4px; color: var(--color-text-muted); }
+#reconcile-notes { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 10px; }
+.reconcile-error { color: var(--color-danger); font-size: .85rem; }
+.ledger-activity { margin: 8px 0 0; }
+.ledger-activity > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: .85rem; font-weight: 600; color: var(--color-primary); }
+.ledger-activity-list { list-style: none; margin: 0; padding: 0; }
+.ledger-activity-list li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--color-border-light); font-size: .82rem; }
+.ledger-activity-when { color: var(--color-text-muted); white-space: nowrap; }
+.ledger-activity-text small { display: block; color: var(--color-text-muted); }
+.ledger-activity-source { grid-column: 2; font-size: .72rem; font-weight: 700; color: var(--color-text-muted); }
+.ledger-activity-source.owner { color: var(--color-primary); }
+.ledger-activity-note { font-size: .76rem; color: var(--color-text-muted); margin: 6px 0 0; }
+.ledger-activity-note.warn { color: #8a6d00; }
 .point-ledger-actions button {text-align:left;padding:14px 16px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);color:var(--color-text);font:inherit;font-weight:600;}
 .point-ledger-actions span {display:block;font-size:.76rem;font-weight:400;margin-top:4px;color:var(--color-text-muted);}
 .point-move-card {margin-top:12px;padding:14px;}
@@ -1411,6 +1458,8 @@ body {
   <script src="dvc-balances.js"></script>
   <script src="dvc-point-moves.js"></script>
   <script src="account-point-moves.js"></script>
+  <script src="dvc-reconcile.js"></script>
+  <script src="account-reconcile.js"></script>
   <script src="dvc-ui.js"></script>
   <script>
 const { currentUYYear, todayInEastern, nextDeadlineForUseYear, isBankingWindowOpen, formatDeadlineDate, useYearExpiration, dateOnlyUTC, USE_YEAR_START_MONTH, urgencyTier, expirationTier, formatDeadlineWithCountdown } = window.DVCDates;
@@ -1504,8 +1553,8 @@ function resortName(id) {
 function getYearPointsRow(yearPointsByContract, contractId, year, pointsPerYear) {
   const found = (yearPointsByContract[contractId] || []).find(r => r.use_year_label === year);
   return found
-    ? { balance_confirmed_at: found.balance_confirmed_at || null, points_remaining: found.points_remaining, points_banked: found.points_banked, points_borrowed: found.points_borrowed, points_holding: found.points_holding || 0, points_holding_entered_at: found.points_holding_entered_at || null }
-    : { balance_confirmed_at: null, points_remaining: 0, points_banked: 0, points_borrowed: 0, points_holding: 0, points_holding_entered_at: null };
+    ? { balance_confirmed_at: found.balance_confirmed_at || null, points_remaining: found.points_remaining, points_banked: found.points_banked, points_borrowed: found.points_borrowed, points_holding: found.points_holding || 0, points_holding_entered_at: found.points_holding_entered_at || null, last_checked_against_disney_at: found.last_checked_against_disney_at || null }
+    : { balance_confirmed_at: null, points_remaining: 0, points_banked: 0, points_borrowed: 0, points_holding: 0, points_holding_entered_at: null, last_checked_against_disney_at: null };
 }
 
 // Which year-rows to show for a contract's ledger: always the current and
@@ -1529,6 +1578,27 @@ function buildLedgerRows(contract, yearPointsByContract, today) {
     // row from an earlier cycle, and either way the owner can clear it.
     removable: year !== uyYear && year !== uyYear + 1,
   }));
+}
+
+// Point history for the per-use-year activity view (Prompt 2): point
+// moves, booking deduction receipts (including reversed ones) and
+// owner reconciliations. Set by renderSignedIn().
+let pointActivity = { movements: [], reconciliations: [], deductionHistory: [], incomplete: false };
+function buildActivityHTML(contractId, year) {
+  const events = DVCReconcile.activity({
+    year,
+    movements: pointActivity.movements.filter(m => m.contract_id === contractId),
+    deductions: pointActivity.deductionHistory.filter(d => d.contract_id === contractId),
+    reconciliations: pointActivity.reconciliations.filter(r => r.contract_id === contractId),
+  });
+  const when = at => new Date(at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const esc = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  return `<details class="ledger-activity">
+      <summary>Activity for ${year}</summary>
+      ${pointActivity.incomplete ? `<p class="ledger-activity-note warn">Some activity couldn't be loaded, so this list may be incomplete.</p>` : ""}
+      ${events.length ? `<ul class="ledger-activity-list">${events.map(e => `<li><span class="ledger-activity-when">${when(e.at)}</span><span class="ledger-activity-text">${esc(e.text)}${e.notes ? `<small>${esc(e.notes)}</small>` : ""}</span><span class="ledger-activity-source ${e.source}">${e.source === "owner" ? "You entered" : "Recorded in app"}</span></li>`).join("")}</ul>` : `<p class="ledger-activity-note">No activity recorded for this use year yet.</p>`}
+      <p class="ledger-activity-note">Balances entered or corrected with Add points left / Adjust balance, and bookings recorded before deduction receipts existed, aren't listed here.</p>
+    </details>`;
 }
 
 let editingId = null; // contract id currently being edited, or null for "adding new"
@@ -1899,12 +1969,19 @@ async function renderSignedIn() {
     handleCheckoutReturn();
     return;
   }
-  const [contracts, profile, yearPoints, subscription] = await Promise.all([
+  const [contracts, profile, yearPoints, subscription, movements, reconciliations, deductionHistory] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getProfile(),
     window.DVCAuth.getContractYearPoints(),
     window.DVCAuth.getSubscription(),
+    window.DVCAuth.getPointMovements?.() ?? [],
+    window.DVCAuth.getPointReconciliations?.() ?? [],
+    window.DVCAuth.getTripDeductionHistory?.() ?? [],
   ]);
+  // Activity is supporting context: if a history read fails, the ledger
+  // still renders and the activity view says it's incomplete.
+  pointActivity = { movements, reconciliations, deductionHistory,
+    incomplete: window.DVCAuth.readFailed?.("point_movements", "point_reconciliations", "trip_deduction_history") ?? false };
   // A failed read must not look like an empty vault -- that would invite
   // re-adding contracts that already exist (UX2-05).
   if (window.DVCAuth.readFailed("contracts", "contract_year_points")) {
@@ -1933,6 +2010,7 @@ async function renderSignedIn() {
   pageContent.innerHTML = `
     ${balanceSetupHTML()}
     ${pointMoveHTML()}
+    ${reconcileHTML()}
     ${buildCheckoutReturnBannerHTML()}
     ${buildMembershipCardHTML(subscription, contracts)}
 <div id="point-attention">
@@ -2263,6 +2341,8 @@ async function renderSignedIn() {
   document.getElementById('active-contract-details').addEventListener('click', e => {
     const button = e.target.closest('[data-setup-balance]');
     if (button) openBalanceSetup(activeWalletCardId, Number(button.dataset.setupBalance));
+    const reconcileBtn = e.target.closest('[data-reconcile]');
+    if (reconcileBtn) openReconcile(Number(reconcileBtn.dataset.reconcile));
     const action = e.target.closest('[data-point-action]');
     if (action?.dataset.pointAction === 'adjust') openBalanceSetup(activeWalletCardId, activeLedgerYearTab, true);
     else if (action) openPointMove(action.dataset.pointAction, activeLedgerYearTab);
@@ -2630,6 +2710,11 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
           ${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}
         </div>
         <div class="ledger-attention">${buildLedgerAttentionHTML(c, row, status, todayMs)}</div>
+        <div class="reconcile-row">
+          <span class="reconcile-status${row.last_checked_against_disney_at ? " checked" : ""}">${row.last_checked_against_disney_at ? `Checked against Disney on ${formatDeadlineDate(Date.parse(row.last_checked_against_disney_at))}` : "Not checked against Disney yet"}</span>
+          <button type="button" class="reconcile-btn" data-reconcile="${row.year}">Reconcile with Disney</button>
+        </div>
+        ${buildActivityHTML(c.id, row.year)}
         ${!row.balance_confirmed_at ? `<button type="button" class="save-btn" data-setup-balance="${row.year}">Add points left</button>` : ""}
         <div ${row.balance_confirmed_at ? "" : "hidden"}>
         <div class="ledger-bar">

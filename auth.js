@@ -790,6 +790,37 @@ async function recordPointMovement(payload) {
   return { data, error: error?.message };
 }
 
+// Owner-led reconciliation with Disney (migration 025). payload:
+// { p_id, p_contract, p_year, p_expected, p_after, p_reason, p_notes } --
+// p_id is the retry key; p_expected is the row as the sheet read it.
+async function reconcilePoints(payload) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  const { data, error } = await supabase.rpc("reconcile_points", payload);
+  if (error && /reconcile_points/.test(error.message)) {
+    return { error: "Reconciling can't be saved until db/migrations/025_point_reconciliation.sql is run in Supabase." };
+  }
+  return { data, error: error?.message };
+}
+
+// Read-only history for the per-use-year activity view. Each read is
+// optional context: a failure is reported by readFailed(name), never
+// treated as "no activity".
+async function readOwnRows(table, name) {
+  if (!configured || !currentSession || !(await hasMembership())) return [];
+  const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false });
+  noteRead(name, error);
+  if (error) {
+    console.error(`[DVCAuth] ${name} read failed:`, error.message);
+    return [];
+  }
+  return data;
+}
+const getPointMovements = () => readOwnRows("point_movements", "point_movements");
+const getPointReconciliations = () => readOwnRows("point_reconciliations", "point_reconciliations");
+// Every receipt, including reversed ones (getTripDeductions() returns only live ones).
+const getTripDeductionHistory = () => readOwnRows("trip_deductions", "trip_deduction_history");
+
 async function deleteContractYearPoints(id) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   const { error } = await supabase.from("contract_year_points").delete().eq("id", id);
@@ -1382,6 +1413,10 @@ window.DVCAuth = {
   getContractYearPoints,
   upsertContractYearPoints,
   recordPointMovement,
+  reconcilePoints,
+  getPointMovements,
+  getPointReconciliations,
+  getTripDeductionHistory,
   deleteContractYearPoints,
   getUserBadges,
   upsertUserBadge,
