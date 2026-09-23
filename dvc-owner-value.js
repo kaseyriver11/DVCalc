@@ -17,7 +17,11 @@ const actualFor = (actuals, c) => (actuals && actuals[c.id]) || null;
 
 function contractInitialCostBreakdown(c, actual = null) {
   const closingActual = actual?.closing != null;
-  const closing = closingActual ? dollars(actual.closing) : c.purchase_type === "resale" ? 1500 : 0;
+  // The purchase price is what the owner paid all in, closing costs
+  // included, so nothing is added on top of it (a flat $1,500 resale
+  // estimate used to be, double-counting closing for anyone who entered
+  // their total). Only a separately entered closing amount adds here.
+  const closing = closingActual ? dollars(actual.closing) : 0;
   const priceEntered = c.purchase_price != null;
   const price = priceEntered
     ? Number(c.purchase_price)

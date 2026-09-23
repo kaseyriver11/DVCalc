@@ -390,7 +390,9 @@ body {
 .assumptions-inline { margin-top: 14px; border-top: 1px solid var(--color-border-light); padding-top: 4px; }
 .assumptions-inline .assumptions-toggle { min-height: 44px; }
 .assumptions-result { padding: 10px 12px; border-radius: 10px; background: var(--color-primary-tint-bg); font-size: .88rem; color: var(--color-text); }
-.chart-assumptions { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border-light); }
+.chart-assumptions { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border-light); display: flex; flex-direction: column; gap: 12px; }
+.opportunity-toggle { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: .85rem; font-weight: 700; color: var(--color-text); cursor: pointer; }
+.opportunity-toggle input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--color-primary); }
 .assumptions-toggle {
   display: block;
   width: 100%;
@@ -1208,9 +1210,9 @@ function buildPaybackBreakdownHTML(stats, dateLabel) {
       <div class="payback-breakdown-row">
         <span>Contract Purchase Price(s)${stats.costSources.estimatedPrices ? " (partly estimated)" : ""}</span><span>${fmt(stats.totalPurchasePrice)}</span>
       </div>
-      <div class="payback-breakdown-row sub">
-        <span>+ Closing Costs (${stats.costSources.closingEstimated ? (stats.costSources.closingActual ? "partly estimated" : "estimated") : "actual"})</span><span>${fmt(stats.totalClosingCosts)}</span>
-      </div>
+      ${stats.totalClosingCosts ? `<div class="payback-breakdown-row sub">
+        <span>+ Closing Costs (entered separately)</span><span>${fmt(stats.totalClosingCosts)}</span>
+      </div>` : ""}
       <div class="payback-breakdown-row total">
         <span>= Total Initial Investment</span><span>${fmt(stats.totalInitialCost)}</span>
       </div>
@@ -1244,10 +1246,9 @@ function buildPaybackBreakdownHTML(stats, dateLabel) {
 // listeners have to attach to real DOM nodes, not a string).
 function buildHouseMoneyChartHTML(stats) {
   if (!stats.series || stats.series.years.length < 2) return "";
-  // Alt Fund line only shown once the Opportunity Cost Rate slider is
-  // actually above 0% -- at 0% the simulated fund is just "cash spent as
-  // needed, no growth," which isn't a comparison worth a 3rd line on every
-  // owner's chart by default.
+  // Alt Fund line only shown once the opportunity-cost checkbox is on
+  // (rate > 0 -- the checkbox has no separate stored state, see
+  // buildOpportunityControlsHTML()).
   const showAltFund = stats.settings.opportunity_cost_rate > 0;
   const lastYear = stats.series.years[stats.series.years.length - 1];
   // Both readings of the same gap, because they answer different
@@ -1690,8 +1691,8 @@ const POINT_VALUE_PRESETS = [
   { label: "$26", sub: "AP / Promo", value: 26 },
   { label: "$21", sub: "Point Rental", value: 21 },
 ];
+// No 0% chip: "off" is the checkbox's job (buildOpportunityControlsHTML()).
 const OPPORTUNITY_COST_PRESETS = [
-  { label: "0%", sub: "None", value: 0 },
   { label: "4%", sub: "HYSA", value: 0.04 },
   { label: "7%", sub: "S&P 500", value: 0.07 },
 ];
@@ -1781,6 +1782,7 @@ function assumptionsResultHTML(stats) {
 // change) goes through a full renderSignedIn().
 function handleAssumptionChange(field, value) {
   userSettings = { ...userSettings, [field]: value };
+  if (field === "opportunity_cost_rate" && value > 0) lastOpportunityCostRate = value;
   const out = document.getElementById(`a-${field}-out`);
   if (out) out.textContent = ASSUMPTION_FORMATTERS[field](value);
   document.querySelectorAll(`.assumption-chip[data-field="${field}"]`).forEach(chip => {
@@ -1857,22 +1859,37 @@ function showSettingsSaveStatus(message, retry = false) {
 }
 
 function attachAssumptionsListeners() {
+  // Runs again after renderOpportunityControls() rebuilds just the chart's
+  // controls, so each node is wired once (data-wired) rather than twice.
+  const once = el => {
+    if (!el || el.dataset.wired) return false;
+    el.dataset.wired = "1";
+    return true;
+  };
   // Direct DOM toggle, not a full renderSignedIn() -- opening/closing this
   // panel doesn't change anything the rest of the page shows, so there's
   // no reason to re-fetch contracts/trips/settings over the network just
   // to flip one boolean.
-  document.getElementById("assumptions-toggle")?.addEventListener("click", (e) => {
+  const assumptionsToggle = document.getElementById("assumptions-toggle");
+  if (once(assumptionsToggle)) assumptionsToggle.addEventListener("click", (e) => {
     assumptionsOpen = !assumptionsOpen;
     document.getElementById("assumptions-panel")?.classList.toggle("open", assumptionsOpen);
     e.currentTarget.setAttribute("aria-expanded", String(assumptionsOpen));
     e.currentTarget.innerHTML = `&#9881; ${assumptionsOpen ? "Hide" : "Adjust"} projection assumptions ${assumptionsOpen ? "&#9652;" : "&#9662;"}`;
   });
+  const opportunityToggle = document.getElementById("opportunity-toggle");
+  if (once(opportunityToggle)) opportunityToggle.addEventListener("change", (e) => {
+    handleAssumptionChange("opportunity_cost_rate", e.target.checked ? lastOpportunityCostRate : 0);
+    renderOpportunityControls();
+  });
   // Sliders live in two places: the projection panel and the chart's own
   // Opportunity Cost control.
   document.querySelectorAll("#assumptions-panel .assumption-slider, #chart-assumptions .assumption-slider").forEach(input => {
+    if (!once(input)) return;
     input.addEventListener("input", () => handleAssumptionChange(input.dataset.field, parseFloat(input.value)));
   });
   document.querySelectorAll("#assumptions-panel .assumption-chip, #chart-assumptions .assumption-chip").forEach(btn => {
+    if (!once(btn)) return;
     btn.addEventListener("click", () => {
       const field = btn.dataset.field;
       const value = parseFloat(btn.dataset.value);
@@ -1958,7 +1975,7 @@ async function renderSignedIn() {
       ${activeContracts.length === 0 ? `<div class="empty-note">No active contracts yet -- <a href="account.html">add one</a>.</div>` : `
       <details class="disclosure">
         <summary>Cost breakdown by contract</summary>
-        <div class="section-sub">Dues are your actual figures where you've entered them, otherwise each year's published rate. Buy-in is the purchase price plus closing costs.</div>
+        <div class="section-sub">Dues are your actual figures where you've entered them, otherwise each year's published rate. Buy-in is the purchase price you entered, closing costs included.</div>
         ${contractCostCards}
       </details>`}
     </div>
@@ -1977,10 +1994,33 @@ async function renderSignedIn() {
 function buildChartDisclosureHTML(stats) {
   const chart = buildHouseMoneyChartHTML(stats);
   if (!chart) return "";
-  return `<details class="disclosure" id="chart-disclosure"><summary>Cost vs. value over time</summary>
+  return `<details class="disclosure" id="chart-disclosure"><summary>Cost vs. Value vs. Opportunity Cost</summary>
       <div id="house-money-chart-body">${chart}</div>
-      <div class="chart-assumptions" id="chart-assumptions">${assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate", userSettings.opportunity_cost_rate, 0, 0.10, 0.005, OPPORTUNITY_COST_PRESETS)}</div>
+      <div class="chart-assumptions" id="chart-assumptions">${buildOpportunityControlsHTML()}</div>
     </details>`;
+}
+
+// The Alt. Fund comparison is opt-in: a checkbox, and the rate slider only
+// once it's on. The checkbox is just opportunity_cost_rate > 0, so it needs
+// no new user_settings column and a saved rate reopens the page checked.
+// Unchecking stores 0; re-checking restores the last rate used this visit
+// (the saved rate, else 4%). The slider's floor is 0.5% so dragging can't turn
+// the line off behind a still-checked box.
+let lastOpportunityCostRate = 0.04;
+function buildOpportunityControlsHTML() {
+  const rate = userSettings.opportunity_cost_rate;
+  const on = rate > 0;
+  if (on) lastOpportunityCostRate = rate; // a saved rate, not the 4% default
+  return `
+    <label class="opportunity-toggle"><input type="checkbox" id="opportunity-toggle"${on ? " checked" : ""}><span>Compare with investing the money instead</span></label>
+    ${on ? assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate", rate, 0.005, 0.10, 0.005, OPPORTUNITY_COST_PRESETS) : ""}`;
+}
+
+function renderOpportunityControls() {
+  const el = document.getElementById("chart-assumptions");
+  if (!el) return;
+  el.innerHTML = buildOpportunityControlsHTML();
+  attachAssumptionsListeners();
 }
 
 // Booking management lives on bookings.html; this is its preview: at most

@@ -34,9 +34,7 @@ function costSourceNoteHTML(stats) {
   const parts = [s.actualDuesYears
     ? `Actual dues entered for ${s.actualDuesYears} of ${plural(s.duesYears, "year")}; the rest use published rates.`
     : `Dues use published rates for all ${plural(s.duesYears, "year")} so far.`];
-  if (s.closingActual && s.closingEstimated) parts.push(`Closing costs: actual for ${s.closingActual}, estimated for ${s.closingEstimated}.`);
-  else if (s.closingEstimated) parts.push("Closing costs are estimated.");
-  else if (s.closingActual) parts.push("Closing costs are your actual figures.");
+  if (s.closingActual) parts.push(`Includes closing costs you entered separately for ${plural(s.closingActual, "contract")}.`);
   if (s.interestYears) parts.push(`Includes financing interest you entered for ${plural(s.interestYears, "year")}.`);
   if (s.estimatedPrices) parts.push(`Purchase price estimated for ${plural(s.estimatedPrices, "contract")} with none entered.`);
   if (s.estimatedStarts) parts.push(`Start year assumed for ${plural(s.estimatedStarts, "contract")} with no purchase date.`);
@@ -58,7 +56,7 @@ function contractCostCardHTML(b) {
   const sources = [
     `Dues: ${b.actualDuesYears ? `${b.actualDuesYears} of ${plural(b.years.length, "year")} actual` : "published rates"}`,
     `Price: ${b.priceSource === "entered" ? "entered" : "estimated"}`,
-    `Closing: ${b.closingSource === "actual" ? "actual" : "estimated"}`,
+    b.closingSource === "actual" ? `Closing: ${fmt(b.closing)} entered` : "",
     b.interestTotal ? `Interest: ${fmt(b.interestTotal)} entered` : "",
   ].filter(Boolean).join(" &middot; ");
   const rows = b.years.slice().reverse().map(y => `<tr><td>${y.year}</td><td>${fmt(y.dues)}</td><td>${y.duesSource === "actual" ? "Actual" : `$${y.publishedRate.toFixed(2)}/pt`}</td></tr>`).join("");
@@ -146,7 +144,7 @@ function renderCostFields() {
       ${years.map(y => costFieldHTML(`cost-dues-${y.year}`, `${y.year} dues`, value("dues", y.year), `Published estimate: ${fmt(y.dues)} ($${y.publishedRate.toFixed(2)}/pt &times; ${c.points_per_year})`)).join("")}
     </fieldset>
     <fieldset class="costs-group"><legend>Closing costs (one time)</legend>
-      ${costFieldHTML("cost-closing", "Closing costs", value("closing"), `Estimate: ${fmt(est.closing)} (${c.purchase_type === "resale" ? "typical resale closing" : "none for a direct purchase"})`)}
+      ${costFieldHTML("cost-closing", "Closing costs", value("closing"), "Leave blank if your purchase price already includes them")}
     </fieldset>
     <details class="costs-group costs-interest"${hasInterest ? " open" : ""}><summary>Financing interest (optional)</summary>
       <p class="cost-field-hint">Interest only. Your purchase price already counts the loan principal.</p>

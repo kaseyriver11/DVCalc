@@ -52,11 +52,13 @@ test('changes: only edited fields are sent; blank removes an actual; errors bloc
 test('one contract: actual dues replace the published rate year by year; blank years stay estimated', () => {
   const est = M.computeHouseMoneyStats([ssr], [], defaults);
   assert.equal(est.totalDuesPaid, 800 + 900 + 1000);
-  assert.equal(est.totalClosingCosts, 1500);
-  assert.deepEqual(plain(est.costSources), { duesYears: 3, actualDuesYears: 0, closingActual: 0, closingEstimated: 1, estimatedPrices: 0, estimatedStarts: 0, interestYears: 0 });
+  // The purchase price is the all-in amount: no closing estimate on top.
+  assert.equal(est.totalClosingCosts, 0);
+  assert.equal(est.totalOutlay, 15000 + 2700);
+  assert.deepEqual(plain(est.costSources), { duesYears: 3, actualDuesYears: 0, closingActual: 0, closingEstimated: 0, estimatedPrices: 0, estimatedStarts: 0, interestYears: 0 });
   const act = M.computeHouseMoneyStats([ssr], [], defaults, idx([{ contract_id: 'a', kind: 'dues', year: 2025, amount: '1234.56' }, { contract_id: 'a', kind: 'closing', year: null, amount: '0' }]));
   assert.equal(Math.round(act.totalDuesPaid * 100), 80000 + 123456 + 100000);
-  assert.equal(act.totalClosingCosts, 0); // a saved zero is an actual zero, not "use $1,500"
+  assert.equal(act.totalClosingCosts, 0);
   assert.equal(act.costSources.actualDuesYears, 1);
   assert.equal(act.costSources.closingActual, 1);
   const b = act.perContract[0];
@@ -85,7 +87,7 @@ test('financing interest adds only the interest; the purchase price is the princ
   const s = M.computeHouseMoneyStats([ssr], [], defaults, idx([{ contract_id: 'a', kind: 'interest', year: 2024, amount: '450.25' }, { contract_id: 'a', kind: 'interest', year: 2025, amount: '400' }]));
   assert.equal(s.totalPurchasePrice, 15000);
   assert.equal(Math.round(s.totalInterestPaid * 100), 85025);
-  assert.equal(Math.round(s.totalOutlay * 100), Math.round((15000 + 1500 + 2700 + 850.25) * 100));
+  assert.equal(Math.round(s.totalOutlay * 100), Math.round((15000 + 2700 + 850.25) * 100));
   assert.equal(s.costSources.interestYears, 2);
 });
 
