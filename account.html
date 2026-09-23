@@ -1500,7 +1500,7 @@ function buildActivityHTML(contractId, year) {
   return `<details class="ledger-activity">
       <summary>Activity for ${year}</summary>
       ${pointActivity.incomplete ? `<p class="ledger-activity-note warn">Some activity couldn't be loaded, so this list may be incomplete.</p>` : ""}
-      ${events.length ? `<ul class="ledger-activity-list">${events.map(e => `<li><span class="ledger-activity-when">${when(e.at)}</span><span class="ledger-activity-text">${esc(e.text)}${e.notes ? `<small>${esc(e.notes)}</small>` : ""}</span><span class="ledger-activity-source ${e.source}">${e.source === "owner" ? "You entered" : "Recorded in app"}</span></li>`).join("")}</ul>` : `<p class="ledger-activity-note">No activity recorded for this use year yet.</p>`}
+      ${events.length ? `<ul class="ledger-activity-list">${events.map(e => `<li><span class="ledger-activity-when">${when(e.at)}</span><span class="ledger-activity-text">${esc(e.text)}${e.notes ? `<small>${esc(e.notes)}</small>` : ""}</span></li>`).join("")}</ul>` : `<p class="ledger-activity-note">No activity recorded for this use year yet.</p>`}
       <p class="ledger-activity-note">Balances entered or corrected with Add points left / Adjust balance, and bookings recorded before deduction receipts existed, aren't listed here.</p>
     </details>`;
 }
