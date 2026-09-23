@@ -22,8 +22,8 @@ const EXPECTED = [
 // destination itself, so it is the one page expected to have no active tab.
 const PAGES = ['account.html', 'badges.html', 'bookings.html', 'changes.html', 'compare.html', 'contractvalue.html',
                'home.html', 'index.html', 'itineraries.html', 'itinerarycompare.html',
-               'suggest.html', 'trips.html'];
-const NO_ACTIVE_TAB = new Set(['changes.html']);
+               'suggest.html', 'trips.html', 'use-points.html'];
+const NO_ACTIVE_TAB = new Set(['changes.html', 'use-points.html']); // reached from My Contracts, not the nav
 
 function navOf(file) {
   const html = fs.readFileSync(path.join(ROOT, file), 'utf8');

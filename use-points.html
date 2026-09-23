@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Use These Points — DVC Companion</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="images/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#4a148c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--color-bg-page); color: #333; min-height: 100vh; }
+.header { background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)); color: white; padding: 16px 24px; text-align: center; }
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+/* ---- Site nav (same as every page) ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
+.site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
+.account-btn, .account-link-btn { font: inherit; font-size: 0.78rem; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid #ddd; background: #f7f5fa; color: var(--color-primary); cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
+@media (max-width: 800px) {
+  .site-nav-toggle { display: flex; }
+  .site-nav-links { display: none; flex: 0 0 100%; width: 100%; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 4px; padding-top: 10px; border-top: 1px solid #eee; }
+  .site-nav-group { flex-direction: column; align-items: flex-start; gap: 6px; }
+  #account-control { display: none; width: 100%; margin-top: 10px; }
+  .site-nav.open .site-nav-links { display: flex; }
+  .site-nav.open #account-control { display: block; }
+  .header { padding: 10px 20px; }
+  .header h1 { font-size: 1.05rem; }
+  .header .subtitle { font-size: 0.7rem; }
+}
+
+.page { max-width: 640px; margin: 20px auto; padding: 0 16px 60px; }
+.gate { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 40px 24px; text-align: center; color: #666; }
+.gate p { margin-bottom: 16px; }
+.big-signin-btn { background: var(--color-primary); color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.back-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; font-weight: 600; color: var(--color-primary); text-decoration: none; }
+
+.card { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; margin-bottom: 14px; min-width: 0; }
+.card h2 { font-size: 1rem; color: var(--color-secondary); margin-bottom: 8px; }
+.muted { color: var(--color-text-muted); }
+.small { font-size: .8rem; }
+
+/* Budget */
+.budget-name { font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
+.budget-range { font-size: .8rem; color: var(--color-text-muted); margin-top: 2px; }
+.budget-total { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 8px; }
+.budget-total strong { font-size: 2rem; line-height: 1; color: var(--color-secondary); }
+.budget-buckets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.budget-bucket { background: var(--color-primary-tint-bg); border-radius: 10px; padding: 6px 8px; min-width: 0; }
+.budget-bucket span { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .3px; color: var(--color-text-muted); }
+.budget-bucket strong { font-size: .95rem; }
+.budget-lines { margin-top: 10px; display: grid; gap: 4px; font-size: .82rem; }
+.budget-lines .warn { color: #8a4b00; font-weight: 600; }
+.budget-empty { margin-top: 10px; padding: 12px; border-radius: 10px; background: #fff4e5; color: #6b3d00; font-size: .88rem; }
+.primary-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--color-primary); color: #fff; font: inherit; font-weight: 700; font-size: .95rem; text-decoration: none; cursor: pointer; width: 100%; margin-top: 12px; }
+.primary-btn:disabled { opacity: .6; cursor: default; }
+.link-list { margin-top: 8px; display: grid; gap: 4px; }
+.link-list a { display: flex; align-items: center; min-height: 44px; font-weight: 600; color: var(--color-primary); overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: 999px; background: #fff; font: inherit; font-size: .85rem; color: var(--color-text); cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-tint-bg); color: var(--color-primary); font-weight: 700; }
+.chip:focus-visible, .primary-btn:focus-visible, .result-actions a:focus-visible, .result-math > summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.year-chips { margin-top: 10px; }
+
+/* Questions */
+.q { margin-top: 14px; }
+.q:first-of-type { margin-top: 4px; }
+.q-label { display: block; font-size: .82rem; font-weight: 700; margin-bottom: 6px; }
+.month-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.month-chips .chip { flex: 0 0 auto; }
+.date-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 7rem); gap: 10px; margin-top: 10px; }
+.date-row label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; font-weight: 600; min-width: 0; }
+.date-row input { font: inherit; font-size: 1rem; min-height: 44px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 10px; min-width: 0; width: 100%; }
+.custom-select { margin-top: 2px; }
+.select-stack { display: grid; gap: 10px; }
+
+/* Results */
+.results-head { margin: 18px 0 8px; }
+.results-head h2 { font-size: 1.05rem; color: var(--color-secondary); }
+.results-head p { font-size: .8rem; color: var(--color-text-muted); margin-top: 2px; }
+.result { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 14px 16px; margin-bottom: 12px; border-left: 4px solid var(--color-primary); min-width: 0; }
+.result-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.result-name { font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; min-width: 0; }
+.result-room { font-size: .84rem; color: var(--color-text-muted); margin-top: 2px; }
+.result-dates { font-size: .9rem; font-weight: 600; margin-top: 6px; }
+.result-facts { list-style: none; margin-top: 10px; display: grid; gap: 6px; }
+.result-facts li { display: grid; grid-template-columns: 1.2rem minmax(0, 1fr); gap: 6px; font-size: .84rem; }
+.result-facts li strong { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .3px; color: var(--color-text-muted); }
+.fact-bad { color: var(--color-danger); font-weight: 600; }
+.pill { flex-shrink: 0; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+.pill.excellent, .pill.good { background: var(--color-good-bg); color: var(--color-good); }
+.pill.limited { background: #fff3e0; color: #a3401f; }
+.pill.unknown { background: #f1f1f4; color: #555; }
+.result-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; }
+.result-actions a { display: inline-flex; align-items: center; min-height: 44px; font-size: .86rem; font-weight: 700; color: var(--color-primary); }
+.result-math { margin-top: 4px; border-top: 1px solid var(--color-border-light); }
+.result-math > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--color-primary); }
+.math-nights { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 6px; }
+.math-night { background: var(--color-primary-tint-bg); border-radius: 8px; padding: 4px 6px; font-size: .74rem; text-align: center; }
+.math-night strong { display: block; font-size: .9rem; }
+.math-lines { margin-top: 10px; display: grid; gap: 6px; font-size: .82rem; }
+.math-lines .warn { color: #8a4b00; }
+.empty { background: white; border-radius: 14px; padding: 18px 16px; text-align: center; color: var(--color-text-muted); font-size: .9rem; }
+.footnote { font-size: .76rem; color: var(--color-text-muted); margin-top: 14px; }
+.searching { text-align: center; padding: 20px; color: var(--color-text-muted); }
+  </style>
+  <script type="module" src="auth.js"></script>
+  <script src="nav.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="home.html" class="site-nav-brand">DVC Companion</a>
+    <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Overview</span>
+        <a href="home.html">Home</a>
+        <a href="badges.html">Achievements</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="bookings.html">Bookings &amp; Stays</a>
+        <a href="trips.html">Membership Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
+        <a href="itineraries.html">Saved Itineraries</a>
+        <a href="itinerarycompare.html">Compare Itineraries</a>
+      </span>
+    </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
+    <h1>Use These Points</h1>
+    <div class="subtitle">Stay ideas from one contract's recorded balance</div>
+  </div>
+
+  <main class="page" id="page-content">
+    <div class="gate"><p>Loading&hellip;</p></div>
+  </main>
+
+  <script src="data/data.js"></script>
+  <script src="data/data_historical.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="data/availability_data.js"></script>
+  <script src="dvc-dates.js"></script>
+  <script src="dvc-leftover-points.js"></script>
+  <script src="dvc-plan-funding.js"></script>
+  <script src="dvc-use-points.js"></script>
+  <script src="dvc-compare-handoff.js"></script>
+  <script src="dvc-ui.js"></script>
+  <script>
+// ---- Use These Points (Prompt 4) -----------------------------------------
+// Entry: account.html's "Use these points" (?contract=&year=). The balance
+// is re-read here rather than passed in the URL, so it's always the latest
+// recorded one. Ranking, funding and window rules live in dvc-use-points.js
+// (tests/use-points.test.js); this file only reads data and renders.
+// Nothing here books with Disney, records a booking or deducts points --
+// recording a confirmed booking stays an intentional step in Bookings &
+// Stays.
+const pageContent = document.getElementById("page-content");
+const D = window.DVCDates, U = window.DVCUsePoints, L = window.DVCLeftoverPoints;
+const DAY = 86400000;
+const DISNEY_MEMBER_SITE = "https://disneyvacationclub.disney.go.com/";
+// data/availability_data.js was last refreshed from DVC Field Guide on this
+// date (git history). Outlooks are past patterns, not live inventory.
+const AVAILABILITY_AS_OF = "March 2026";
+const params = new URLSearchParams(location.search);
+const today = D.todayInEastern();
+const todayMs = D.dateOnlyUTC(today.year, today.month, today.day);
+const iso = ms => new Date(ms).toISOString().slice(0, 10);
+const todayStr = iso(todayMs);
+const allIds = [...new Set(RESORTS.map(r => r.id))];
+
+let contracts = [], rows = [];
+const state = { contractId: params.get("contract"), year: Number(params.get("year")) || null, when: "any", partySize: 0, size: "", resortId: "", roomTypeId: "", wdwOnly: true, checkIn: "", nights: 4, results: null, searching: false, error: null };
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const chartFor = (id, year) => RESORTS.find(r => r.id === id && r.year === year) || RESORTS.find(r => r.id === id);
+const resortName = id => chartFor(id, today.year)?.name || id;
+const shortName = id => (typeof shorthandResortName === "function" ? shorthandResortName(id, resortName(id)) : resortName(id));
+const contractName = c => c.nickname || resortName(c.home_resort_id);
+const rowFor = (c, year) => rows.find(r => r.contract_id === c.id && Number(r.use_year_label) === year) || null;
+const partsOf = s => ({ year: +s.slice(0, 4), month: +s.slice(5, 7), day: +s.slice(8, 10) });
+const fmtMs = ms => D.formatDeadlineDate(ms);
+const fmtDay = s => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const fmtMonth = m => new Date(m + "-01T00:00:00Z").toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+const roomName = (resortId, roomTypeId) => chartFor(resortId, today.year)?.roomTypes.find(rt => rt.id === roomTypeId)?.name || roomTypeId;
+
+// Check-in minus N months, same rollover rule as the calendar (app.js).
+function opensOn(checkIn, months) {
+  const [y, m, d] = checkIn.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setMonth(dt.getMonth() - months);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+// Chart price for one night (cached: a search walks every resort/room/night).
+const priceCache = new Map();
+function pointsFor(resortId, roomTypeId, dateStr) {
+  const k = resortId + "|" + roomTypeId + "|" + dateStr;
+  if (!priceCache.has(k)) {
+    const chart = RESORTS.find(r => r.id === resortId && r.year === Number(dateStr.slice(0, 4)));
+    priceCache.set(k, chart ? (getPointsForDate(chart, dateStr, roomTypeId) ?? null) : null);
+  }
+  return priceCache.get(k);
+}
+// DVC Field Guide history at the window nearest the check-in's lead time.
+function availabilityFor(resortId, roomTypeId, nightStr, checkInStr) {
+  return L.availabilityScore(AVAILABILITY_DATA, resortId, roomTypeId, nightStr, L.bookingWindowKey((Date.parse(checkInStr + "T00:00:00Z") - todayMs) / DAY));
+}
+function worstAvailability(stay) {
+  let worst = Infinity;
+  for (let i = 0; i < stay.nights; i++) {
+    const v = availabilityFor(stay.resortId, stay.roomTypeId, iso(Date.parse(stay.checkIn + "T00:00:00Z") + i * DAY), stay.checkIn);
+    if (v == null) return null;
+    worst = Math.min(worst, v);
+  }
+  return worst;
+}
+
+function currentContract() { return contracts.find(c => c.id === state.contractId) || null; }
+function currentBudget() {
+  const c = currentContract();
+  return U.budget({ contract: c, row: rowFor(c, state.year), year: state.year, today, dates: D });
+}
+function accessFor(c) { return window.DVCAuth.getUserResortAccess([c], allIds); }
+function eligible(c, { forSearch = true } = {}) {
+  const charts = allIds.map(id => chartFor(id, today.year)).filter(Boolean);
+  return U.eligibleResorts({ charts, access: accessFor(c), caps: { 11: D.monthsFromDate(11), 7: D.monthsFromDate(7) },
+    partySize: forSearch ? state.partySize : 0, size: forSearch ? state.size || null : null, resortId: forSearch ? state.resortId || null : null, wdwOnly: forSearch && state.wdwOnly });
+}
+
+function fundingFor(c, b, stay, nights) {
+  // Other active contracts, plus this one for nights past its use-year end.
+  const others = [c, ...contracts.filter(o => o.is_active && o.id !== c.id)].map(o => ({ contract: o, rowFor: date => { const year = D.currentUYYear(o.use_year, partsOf(date)); return { year, row: rowFor(o, year) }; } }));
+  return U.fund({ nights, resortId: stay.resortId, checkIn: stay.checkIn, primary: { contract: c, year: state.year, b }, others, accessFor, opensOn, todayStr, allocate: window.DVCPlanFunding.allocate, dates: D });
+}
+
+// ---- Search ----
+function runSearch() {
+  const c = currentContract(), b = currentBudget();
+  state.error = null;
+  if (state.when === "dates") {
+    if (!state.resortId || !state.roomTypeId || !/^\d{4}-\d{2}-\d{2}$/.test(state.checkIn)) { state.error = "Choose a resort, a room and a check-in date."; state.results = null; return; }
+    if (state.checkIn <= todayStr) { state.error = "Choose a check-in after today."; state.results = null; return; }
+    const nightsN = Math.round(Number(state.nights));
+    if (!(nightsN >= 1 && nightsN <= 14)) { state.error = "Choose 1 to 14 nights."; state.results = null; return; }
+    const stay = { resortId: state.resortId, roomTypeId: state.roomTypeId, checkIn: state.checkIn, nights: nightsN, checkOut: iso(Date.parse(state.checkIn + "T00:00:00Z") + nightsN * DAY) };
+    const nights = U.nightly({ ...stay, pointsFor });
+    if (!nights) { state.error = "There's no point chart for part of those dates yet."; state.results = null; return; }
+    stay.pointsUsed = nights.reduce((s, x) => s + x.points, 0);
+    stay.availability = worstAvailability(stay);
+    stay.outlook = U.outlook(stay.availability, stay.nights);
+    state.results = [{ ...stay, nightsList: nights, funding: fundingFor(c, b, stay, nights), checked: true }];
+    return;
+  }
+  const ideas = U.suggest({ b, today, dates: D, resorts: eligible(c), pointsFor, availabilityFor, worstAvailability, findStays: L.findStays, month: state.when === "any" ? null : state.when });
+  state.results = ideas.map(s => { const nights = U.nightly({ ...s, pointsFor }); return { ...s, nightsList: nights, funding: fundingFor(c, b, s, nights) }; });
+}
+
+// ---- Render ----
+function budgetHTML(c, b) {
+  const cur = D.currentUYYear(c.use_year, today);
+  const years = [cur, cur + 1];
+  const range = `${fmtMs(b.startMs)} – ${fmtMs(b.endMs)}`;
+  const ledger = `account.html?contract=${encodeURIComponent(c.id)}&year=${b.year}`;
+  let body;
+  if (b.state === "unknown") {
+    body = `<div class="budget-empty">No balance is recorded for the ${b.year} use year, so there's nothing to plan with yet. Annual points aren't a balance &mdash; check Disney's member site and add what's left.</div>
+      <a class="primary-btn" href="${ledger}">Add or check this balance first</a>`;
+  } else if (b.state === "zero") {
+    const withPoints = contracts.filter(o => o.is_active && o.id !== c.id).map(o => { const y = D.currentUYYear(o.use_year, today); const ob = U.budget({ contract: o, row: rowFor(o, y), year: y, today, dates: D }); return { o, y, ob }; }).filter(x => x.ob.state === "ok");
+    body = `<div class="budget-total"><strong>0</strong><span class="muted">points recorded for ${b.year}</span></div>
+      ${withPoints.length ? `<p class="small">Other contracts with recorded points:</p><div class="link-list">${withPoints.map(({ o, y, ob }) => `<a href="use-points.html?contract=${encodeURIComponent(o.id)}&year=${y}">Use ${ob.total.toLocaleString()} points on ${esc(contractName(o))} (${y}) &rarr;</a>`).join("")}</div>` : `<p class="small muted">No other contract has recorded points for its current use year.</p>`}`;
+  } else {
+    const bk = b.buckets;
+    const lines = [];
+    lines.push(b.expired ? `<div class="warn">This use year has ended.</div>` : `<div><strong>Use by ${fmtMs(b.endMs)}</strong> <span class="muted">(${b.daysLeft} days)</span>. Stays must fall inside this use year.</div>`);
+    if (b.holding) lines.push(`<div>${b.holding.toLocaleString()} Holding points only book stays checking in by ${fmtMs(todayMs + U.HOLDING_DAYS * DAY)} (60 days ahead).</div>`);
+    if (b.bankingOpen && bk.current) lines.push(`<div class="muted">Current points can still be banked with Disney until ${fmtMs(b.bankingDeadlineMs)} if you'd rather use them next year.</div>`);
+    const f = b.freshness;
+    lines.push(`<div class="muted small">${f.checkedAt ? `Checked against Disney on ${fmtMs(Date.parse(f.checkedAt))}` : `Recorded here ${fmtMs(Date.parse(f.recordedAt))} &middot; not checked against Disney yet`}</div>`);
+    body = `<div class="budget-total"><strong>${b.total.toLocaleString()}</strong><span class="muted">points recorded</span></div>
+      <div class="budget-buckets">${[["Current", bk.current], ["Banked", bk.banked], ["Borrowed", bk.borrowed], ["Holding", bk.holding]].map(([k, v]) => `<div class="budget-bucket"><span>${k}</span><strong>${v.toLocaleString()}</strong></div>`).join("")}</div>
+      <div class="budget-lines">${lines.join("")}</div>`;
+  }
+  return `<section class="card" aria-labelledby="budget-title">
+      <div class="budget-name" id="budget-title">${esc(contractName(c))}</div>
+      <div class="budget-range">${b.year} use year &middot; ${range}</div>
+      <div class="chips year-chips" role="group" aria-label="Use year">${years.map(y => `<button type="button" class="chip" data-year="${y}" aria-pressed="${y === b.year}">${y === cur ? "Current" : "Next"} (${y})</button>`).join("")}</div>
+      ${body}
+    </section>`;
+}
+
+function selectHTML(id, label, options, value) {
+  return `<label class="q-label" for="${id}">${label}</label><div class="custom-select"><select id="${id}" class="native-select">${options.map(([v, t]) => `<option value="${esc(v)}" ${v === value ? "selected" : ""}>${esc(t)}</option>`).join("")}</select><button type="button" class="custom-select-trigger"><span class="custom-select-value"></span><span class="custom-select-arrow"></span></button><div class="custom-select-dropdown"></div></div>`;
+}
+
+function questionsHTML(c, b) {
+  const monthList = U.months(b, today, D);
+  const chip = (attr, val, text, on) => `<button type="button" class="chip" ${attr}="${esc(val)}" aria-pressed="${on}">${text}</button>`;
+  const resorts = eligible(c, { forSearch: false }).filter(r => !state.wdwOnly || state.when === "dates" || !["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"].includes(r.resortId));
+  const resortOptions = [["", state.when === "dates" ? "Choose a resort" : "Any resort this contract can book"], ...resorts.map(r => [r.resortId, shortName(r.resortId)]).sort((a, b) => a[1].localeCompare(b[1]))];
+  const roomOptions = state.resortId ? [["", "Choose a room"], ...(chartFor(state.resortId, today.year)?.roomTypes || []).map(rt => [rt.id, rt.name])] : null;
+  const dates = state.when === "dates";
+  return `<section class="card" aria-labelledby="q-title">
+      <h2 id="q-title">What would work for you?</h2>
+      <div class="q"><span class="q-label">When</span>
+        <div class="month-chips" role="group" aria-label="When">${chip("data-when", "any", "Any time", state.when === "any")}${monthList.map(m => chip("data-when", m, fmtMonth(m), state.when === m)).join("")}${chip("data-when", "dates", "Specific dates", dates)}</div>
+      </div>
+      ${dates ? `<div class="q select-stack">
+          ${selectHTML("q-resort", "Resort", resortOptions, state.resortId)}
+          ${roomOptions ? selectHTML("q-room", "Room", roomOptions, state.roomTypeId) : ""}
+          <div class="date-row"><label>Check-in<input type="date" id="q-checkin" min="${iso(todayMs + DAY)}" value="${esc(state.checkIn)}"></label><label>Nights<input type="number" id="q-nights" min="1" max="14" step="1" inputmode="numeric" value="${esc(state.nights)}"></label></div>
+        </div>` : `
+      <div class="q"><span class="q-label">Party size</span><div class="chips" role="group" aria-label="Party size">${[[0, "Any"], [2, "2+"], [4, "4+"], [5, "5+"], [8, "8+"], [12, "12"]].map(([v, t]) => chip("data-party", v, t, state.partySize === v)).join("")}</div></div>
+      <div class="q"><span class="q-label">Room size</span><div class="chips" role="group" aria-label="Room size">${chip("data-size", "", "Any", !state.size)}${U.SIZES.map(([v, t]) => chip("data-size", v, t, state.size === v)).join("")}</div></div>
+      <div class="q"><span class="q-label">Where</span><div class="chips" role="group" aria-label="Where">${chip("data-wdw", "1", "Walt Disney World", state.wdwOnly)}${chip("data-wdw", "0", "Anywhere", !state.wdwOnly)}</div></div>
+      <div class="q select-stack">${selectHTML("q-resort", "Resort (optional)", resortOptions, state.resortId)}</div>`}
+      <button type="button" class="primary-btn" id="q-go" ${state.searching ? "disabled" : ""}>${state.searching ? "Looking…" : dates ? "Check this stay" : "Show stay ideas"}</button>
+      ${state.error ? `<p class="small" role="alert" style="color:var(--color-danger);margin-top:8px;">${esc(state.error)}</p>` : ""}
+    </section>`;
+}
+
+const OUTLOOK_TEXT = { excellent: "Excellent history", good: "Good history", limited: "Often full", unknown: "No history" };
+function windowWord(checkIn) { const key = L.bookingWindowKey((Date.parse(checkIn + "T00:00:00Z") - todayMs) / DAY); return `${parseInt(key, 10)} month${key === "1Mo" ? "" : "s"} out`; }
+
+function resultHTML(r, b, c) {
+  const f = r.funding;
+  const covered = f.primary.points;
+  const left = b.state === "ok" ? b.total - covered : 0;
+  const disneyHref = DISNEY_MEMBER_SITE;
+  const calHref = window.DVCCompareHandoff.url({ resortId: r.resortId, roomTypeId: r.roomTypeId, checkIn: r.checkIn, checkOut: r.checkOut });
+  // Three honest states: this balance covers it; it needs other recorded
+  // balances too; or recorded points fall short.
+  const [fitsLabel, fits] = f.shortfall === 0 && !f.others.length
+    ? ["Fits recorded points", `Uses ${covered.toLocaleString()} of ${b.total.toLocaleString()} recorded points${left ? ` (${left.toLocaleString()} left)` : ""}`]
+    : !f.shortfall
+    ? ["Fits with other recorded balances", `${r.pointsUsed.toLocaleString()} points needed; the ${state.year} balance covers ${covered.toLocaleString()}. See the point math for the rest.`]
+    : ["Doesn't fit recorded points", `<span class="fact-bad">${f.shortfall.toLocaleString()} points short</span> of ${r.pointsUsed.toLocaleString()} needed, after every eligible recorded balance.`];
+  const windowText = f.primary.window
+    ? (f.primary.openNow ? `${f.primary.window}-month window opened ${fmtDay(f.primary.opens)}` : `${f.primary.window}-month window opens ${fmtDay(f.primary.opens)}`)
+    : "This contract can't book this resort";
+  const lines = [];
+  lines.push(`<div><strong>Booking window:</strong> ${windowText}${f.primary.window === 11 ? " (home resort)" : ""}.</div>`);
+  if (f.outsideYear) lines.push(`<div class="warn">${f.outsideYear} night${f.outsideYear === 1 ? " falls" : "s fall"} outside the ${state.year} use year, so these points can't pay for ${f.outsideYear === 1 ? "it" : "them"}.</div>`);
+  if (f.holdingExcluded) lines.push(`<div class="warn">Holding points can't be used: check-in is more than 60 days away.</div>`);
+  if (r.usesHolding) lines.push(`<div>Uses Holding points, so book no more than 60 days before check-in.</div>`);
+  for (const o of f.others) lines.push(`<div>${o.contract.id === c.id ? "This contract's" : `${esc(contractName(o.contract))}'s`} ${o.year} use-year points could cover ${o.points.toLocaleString()}${o.openNow ? "" : ` once its ${o.window}-month window opens ${fmtDay(o.opens)}`}.</div>`);
+  for (const u of f.unknown) lines.push(`<div class="muted">${esc(contractName(u.contract))} has no recorded ${u.year} balance, so it isn't counted.</div>`);
+  if (f.blocked.length) lines.push(`<div class="muted">Can't book this resort: ${f.blocked.map(x => esc(contractName(x))).join(", ")}.</div>`);
+  if (f.shortfall) lines.push(`<div class="warn"><strong>${f.shortfall.toLocaleString()} points short</strong> after every eligible recorded balance.</div>`);
+  return `<article class="result">
+      <div class="result-top"><div class="result-name">${esc(shortName(r.resortId))}</div><span class="pill ${r.outlook}">${OUTLOOK_TEXT[r.outlook]}</span></div>
+      <div class="result-room">${esc(roomName(r.resortId, r.roomTypeId))} &middot; ${r.nights} night${r.nights === 1 ? "" : "s"}</div>
+      <div class="result-dates">${fmtDay(r.checkIn)} &rarr; ${fmtDay(r.checkOut)}</div>
+      <ul class="result-facts">
+        <li><span aria-hidden="true">${f.shortfall ? "✕" : "✓"}</span><div><strong>${fitsLabel}</strong>${fits}</div></li>
+        <li><span aria-hidden="true">📈</span><div><strong>Historical availability outlook</strong>${OUTLOOK_TEXT[r.outlook]} ${r.outlook === "unknown" ? "for this room and season" : `for this room at about ${windowWord(r.checkIn)}`}. Past patterns only; not a room that's open now.</div></li>
+        <li><span aria-hidden="true">↗</span><div><strong>Check live availability with Disney</strong>Only Disney's member site shows what's open and books it.</div></li>
+      </ul>
+      <div class="result-actions"><a href="${disneyHref}" target="_blank" rel="noopener">Check with Disney &#8599;</a><a href="${calHref}">Open in Calendar</a></div>
+      <details class="result-math"${r.checked ? " open" : ""}><summary>See the point math</summary>
+        ${r.nightsList ? `<div class="math-nights">${r.nightsList.map(x => `<div class="math-night">${new Date(x.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric", timeZone: "UTC" })}<strong>${x.points}</strong></div>`).join("")}</div>` : ""}
+        <div class="math-lines"><div><strong>Total:</strong> ${r.pointsUsed.toLocaleString()} points. ${esc(contractName(c))}'s ${state.year} balance covers ${covered === r.pointsUsed ? "all of them" : covered.toLocaleString()}.</div>${lines.join("")}</div>
+      </details>
+    </article>`;
+}
+
+function resultsHTML(c, b) {
+  if (state.searching) return `<div class="searching" role="status">Looking for stays&hellip;</div>`;
+  if (!state.results) return "";
+  const head = state.when === "dates"
+    ? `<div class="results-head"><h2>This stay</h2><p>Point math from recorded balances. Check live availability and book with Disney.</p></div>`
+    : `<div class="results-head"><h2>Stay ideas for ${b.total.toLocaleString()} points</h2><p>Possible with recorded points and bookable now. Outlook is past availability, not live inventory.</p></div>`;
+  if (!state.results.length) {
+    return `${head}<div class="empty">No stays fit these points with these choices${state.when !== "any" ? " in that month" : ""}. Try any time, any room size${state.wdwOnly ? ", or anywhere" : ""}.</div>`;
+  }
+  return `${head}${state.results.map(r => resultHTML(r, b, c)).join("")}
+    <p class="footnote">Outlooks come from DVC Field Guide history (last updated here ${AVAILABILITY_AS_OF}). Nothing on this page books, holds or deducts points. After you book with Disney, record the stay in <a href="bookings.html">Bookings &amp; Stays</a>.</p>`;
+}
+
+function renderPage() {
+  const c = currentContract();
+  if (!c) {
+    pageContent.innerHTML = `<div class="gate"><p>${contracts.length ? "Choose a contract from My Contracts to plan with its points." : "Add a contract first to plan with its points."}</p><a class="big-signin-btn" href="account.html" style="text-decoration:none;display:inline-block">Go to My Contracts</a></div>`;
+    return;
+  }
+  const cur = D.currentUYYear(c.use_year, today);
+  if (state.year !== cur && state.year !== cur + 1) state.year = cur;
+  const b = currentBudget();
+  pageContent.innerHTML = `<a class="back-link" href="account.html?contract=${encodeURIComponent(c.id)}&year=${state.year}">&larr; My Contracts</a>
+    ${budgetHTML(c, b)}
+    ${b.state === "ok" && !b.expired ? questionsHTML(c, b) + resultsHTML(c, b) : ""}`;
+  pageContent.querySelectorAll("select.native-select").forEach(el => window.DVCUI.initCustomSelect(el));
+}
+
+pageContent.addEventListener("click", e => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  if (t.dataset.year) { state.year = Number(t.dataset.year); state.results = null; history.replaceState(null, "", `use-points.html?contract=${encodeURIComponent(state.contractId)}&year=${state.year}`); }
+  else if (t.dataset.when) { state.when = t.dataset.when; state.results = null; if (state.when !== "dates") state.roomTypeId = ""; }
+  else if (t.dataset.party != null) state.partySize = Number(t.dataset.party);
+  else if (t.dataset.size != null) state.size = t.dataset.size;
+  else if (t.dataset.wdw) { state.wdwOnly = t.dataset.wdw === "1"; if (state.wdwOnly && ["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"].includes(state.resortId)) state.resortId = ""; }
+  else if (t.id === "q-go") {
+    state.searching = true;
+    renderPage();
+    setTimeout(() => {
+      try { runSearch(); } catch (err) { console.error(err); state.error = "Couldn't finish that search. Try again."; state.results = null; }
+      state.searching = false;
+      renderPage();
+      document.querySelector(".results-head, [role=alert]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 20);
+    return;
+  } else return;
+  renderPage();
+});
+pageContent.addEventListener("change", e => {
+  if (e.target.id === "q-resort") { state.resortId = e.target.value; state.roomTypeId = ""; renderPage(); }
+  else if (e.target.id === "q-room") state.roomTypeId = e.target.value;
+  else if (e.target.id === "q-checkin") state.checkIn = e.target.value;
+  else if (e.target.id === "q-nights") state.nights = e.target.value;
+});
+pageContent.addEventListener("input", e => {
+  if (e.target.id === "q-checkin") state.checkIn = e.target.value;
+  else if (e.target.id === "q-nights") state.nights = e.target.value;
+});
+
+// ---- Auth ----
+function renderGate() {
+  pageContent.innerHTML = `<div class="gate"><p>Sign in to plan with the points you've recorded.</p><div id="gate-signin-slot"></div></div>`;
+  window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
+}
+async function renderSignedIn() {
+  if (!(await window.DVCAuth.hasMembership())) {
+    window.DVCAuth.renderMembershipGate(pageContent, { title: "Plan with your recorded points", body: "Start from a contract's balance and see stays those points could cover, with the point math and the Disney booking step." });
+    return;
+  }
+  [contracts, rows] = await Promise.all([window.DVCAuth.getContracts(), window.DVCAuth.getContractYearPoints()]);
+  if (window.DVCAuth.readFailed("contracts", "contract_year_points")) {
+    pageContent.innerHTML = `<div class="gate"><p>Couldn't load your contracts and balances. Nothing is shown rather than a guess.</p><button type="button" class="big-signin-btn" onclick="renderSignedIn()">Try again</button></div>`;
+    return;
+  }
+  if (!state.contractId) state.contractId = contracts.find(c => c.is_active)?.id || null;
+  renderPage();
+}
+function render(session) {
+  if (!window.DVCAuth.isConfigured()) pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
+  else if (session) renderSignedIn();
+  else renderGate();
+}
+(function waitForAuth(attempts) {
+  if (window.DVCAuth) window.DVCAuth.onAuthChange(render);
+  else if (attempts > 0) setTimeout(() => waitForAuth(attempts - 1), 50);
+  else pageContent.innerHTML = `<div class="gate"><p>Accounts aren't set up on this deployment yet.</p></div>`;
+})(40);
+  </script>
+</body>
+</html>

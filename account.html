@@ -988,6 +988,8 @@ body {
 .point-action-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; }
 .point-action-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .84rem; font-weight: 600; color: var(--color-primary); }
 .point-action-link.primary { font-weight: 700; }
+.use-points-btn { display: flex; align-items: center; justify-content: center; min-height: 48px; margin: 8px 0 4px; border-radius: 12px; background: var(--color-primary); color: #fff; font-weight: 700; font-size: .92rem; text-decoration: none; }
+.use-points-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-clear { padding: 10px 12px; border-radius: 10px; background: var(--color-good-bg); color: var(--color-good); font-size: .86rem; font-weight: 600; }
 .point-action-clear.small { background: none; padding: 4px 0 0; color: var(--color-text-muted); font-weight: 400; font-size: .78rem; }
@@ -1685,7 +1687,11 @@ function pointActionLinks(event) {
   const open = (label, primary) => `<a class="point-action-link${primary ? " primary" : ""}" href="${ledger}" data-open-ledger="${c.id}" data-open-year="${event.year}">${label}</a>`;
   if (event.kind === "unconfirmed") return open("Add or check balance", true);
   const dateMs = event.kind === "bankable" ? event.deadline.ms : event.expiresMs;
-  const links = [open(event.kind === "bankable" ? "View balance" : "View balance and stay ideas", true)];
+  // Points that can only be used now go straight to "Use these points"
+  // (use-points.html, Prompt 4); banking is a Disney step, so its item opens
+  // the balance.
+  const links = event.kind === "bankable" ? [open("View balance", true)]
+    : [`<a class="point-action-link primary" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${event.year}">Use these points</a>`, open("View balance", false)];
   links.push(`<a class="point-action-link" href="${googleCalendarLink(c, dateMs, event.kind)}" target="_blank" rel="noopener">+ Calendar</a>`);
   return links.join("");
 }
@@ -2552,6 +2558,7 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
           <span class="reconcile-status${row.last_checked_against_disney_at ? " checked" : ""}">${row.last_checked_against_disney_at ? `Checked against Disney on ${formatDeadlineDate(Date.parse(row.last_checked_against_disney_at))}` : "Not checked against Disney yet"}</span>
           <button type="button" class="reconcile-btn" data-reconcile="${row.year}">Reconcile with Disney</button>
         </div>
+        ${c.is_active ? `<a class="use-points-btn" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${row.year}">Use these points &rarr;</a>` : ""}
         ${buildActivityHTML(c.id, row.year)}
         ${!row.balance_confirmed_at ? `<button type="button" class="save-btn" data-setup-balance="${row.year}">Add points left</button>` : ""}
         <div ${row.balance_confirmed_at ? "" : "hidden"}>

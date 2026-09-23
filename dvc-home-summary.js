@@ -36,10 +36,12 @@
     const tone = event.kind === "unconfirmed" ? "warning"
       : event.kind === "bankable" ? tiers.urgency(event.deadline.daysUntil)
       : tiers.expiration(event.daysUntil);
-    const label = { unconfirmed: "Check balance", bankable: "Review banking" }[event.kind] || "Review points";
+    // Points that can only be used now open "Use these points" (Prompt 4).
+    const usable = event.kind === "use-by" || event.kind === "holding";
+    const label = { unconfirmed: "Check balance", bankable: "Review banking" }[event.kind] || "Use these points";
     return { tone, title: copy.title, detail: `${name} &middot; ${event.year} use year`,
       note: event.kind === "holding" ? "Book no more than 60 days before check-in." : null,
-      action: { label, href: ledgerHref(event.contract, event.year) },
+      action: { label, href: usable ? `use-points.html?contract=${encodeURIComponent(event.contract.id)}&year=${event.year}` : ledgerHref(event.contract, event.year) },
       more: { label: total > 1 ? `View all ${total} point actions` : "View all point actions", href: "account.html#point-actions" } };
   }
 

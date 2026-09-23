@@ -22,7 +22,8 @@ test('screenshot scenario: 400 current past the deadline, 180 next year, one con
   assert.equal(card.title, 'Use 400 points before Nov 30, 2026');
   assert.equal(card.detail, 'Saratoga Springs &middot; 2025 use year');
   assert.deepEqual(card.more, { label: 'View all point actions', href: 'account.html#point-actions' });
-  assert.equal(card.action.href, 'account.html?contract=a&year=2025');
+  assert.equal(card.action.href, 'use-points.html?contract=a&year=2025');
+  assert.equal(card.action.label, 'Use these points');
   // The portfolio beside it states balances, never that deadline again.
   const summary = portfolioSummary(contracts.filter(x => x.is_active), rows, { currentYear: x => D.currentUYYear(x.use_year, today), name: x => x.id });
   assert.equal(summary.total, 400);
