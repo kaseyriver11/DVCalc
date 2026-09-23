@@ -197,6 +197,9 @@ create table if not exists trips (
   -- never marks a booking verified.
   disney_confirmation_number text check (char_length(disney_confirmation_number) <= 40),
   disney_checked_on date,
+  -- Owner estimate of financing interest paid to date (migration 029);
+  -- interest only, the purchase price already covers the principal.
+  financing_interest_paid numeric(12,2) check (financing_interest_paid >= 0 and financing_interest_paid <= 10000000),
   created_at timestamptz not null default now(),
   constraint trips_checkout_after_checkin check (check_out > check_in)
 );

@@ -28,8 +28,6 @@
 // its own profile setting, lead time, reminder_log type and unsubscribe
 // link. They run separately, so a failure there (e.g. migration 026 not
 // applied yet) is recorded in the heartbeat without stopping banking emails.
-// A third loop sends owner-set waitlist review reminders (Prompt 5,
-// ../_shared/waitlist-reminder-run.js, migration 027).
 //
 // Deployment: see docs/phase5_deployment.md. Needs SUPABASE_URL,
 // SUPABASE_SERVICE_ROLE_KEY and RESEND_API_KEY secrets and the daily
@@ -42,11 +40,7 @@ import { normalizeBaseUrl } from "../_shared/base_url.ts";
 import { todayInEastern } from "../_shared/banking-reminder.js";
 import { runBankingReminders } from "../_shared/banking-reminder-run.js";
 import { runPointReminders } from "../_shared/point-reminder-run.js";
-import { runWaitlistReminders } from "../_shared/waitlist-reminder-run.js";
 
-// "saratogaSprings" -> "Saratoga Springs": the resort data files aren't
-// available to the function, and a waitlist email needs a readable name.
-const resortLabel = (id: string) => id.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
 
 // Mirrors auth.js: set false to email every opted-in owner regardless of
 // membership. past_due still counts (Stripe is retrying the card).
@@ -83,7 +77,6 @@ Deno.serve(async (req) => {
       unsubscribeBaseUrl: Deno.env.get("UNSUBSCRIBE_FUNCTION_URL"), // https://<ref>.supabase.co/functions/v1/unsubscribe-reminders
       memberIds,
       dryRun,
-      resortLabel,
       send: async ({ to, subject, html }: { to: string; subject: string; html: string }) => {
         const resp = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -93,7 +86,7 @@ Deno.serve(async (req) => {
         return resp.ok ? { ok: true } : { ok: false, error: await resp.text() };
       },
     };
-    for (const [name, run] of [["banking", runBankingReminders], ["expiration/holding", runPointReminders], ["waitlist", runWaitlistReminders]] as const) {
+    for (const [name, run] of [["banking", runBankingReminders], ["expiration/holding", runPointReminders]] as const) {
       try {
         const r = await run(options);
         result.sent += r.sent;

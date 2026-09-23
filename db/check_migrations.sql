@@ -31,7 +31,8 @@ with checks(migration, kind, tbl, name) as (values
   ('027', 'tbl', 'waitlists', null),
   ('027', 'tbl', 'booking_cancellations', null),
   ('027', 'col', 'trips', 'disney_confirmation_number'),
-  ('028', 'fn', null, 'save_ownership_costs')
+  ('028', 'fn', null, 'save_ownership_costs'),
+  ('029', 'col', 'contracts', 'financing_interest_paid')
 )
 select
   migration,

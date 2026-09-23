@@ -867,31 +867,7 @@ body {
   color: var(--color-secondary);
 }
 
-/* ---- My actual costs (Prompt 6) ---- */
-.cost-source-note { margin: 12px 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--color-primary-tint-bg); font-size: .8rem; color: #444; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.cost-source-note p { flex: 1 1 220px; min-width: 0; margin: 0; }
-.cost-source-warn { color: #8a4b00; font-weight: 600; }
-.cost-edit-btn { min-height: 44px; padding: 0 14px; border: 1px solid var(--color-primary); border-radius: 10px; background: #fff; color: var(--color-primary); font: inherit; font-size: .84rem; font-weight: 700; cursor: pointer; }
-.cost-edit-btn.small { min-height: 40px; margin-top: 8px; }
-.cost-edit-btn:focus-visible, .cost-chip:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .cost-card-sources { margin-top: 6px; font-size: .74rem; color: #555; overflow-wrap: anywhere; }
-.costs-box { max-height: 90vh; overflow-y: auto; }
-.costs-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
-.cost-chip { min-height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: 999px; background: #fff; font: inherit; font-size: .82rem; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cost-chip[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-tint-bg); color: var(--color-primary); font-weight: 700; }
-.costs-contract-name { font-weight: 700; overflow-wrap: anywhere; }
-.costs-intro { font-size: .82rem; color: #555; margin: 0 0 10px; }
-.costs-notice { font-size: .8rem; padding: 8px 10px; border-radius: 8px; background: #fff4e5; color: #6b3d00; margin: 0 0 10px; }
-.costs-group { border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
-.costs-group legend, .costs-interest > summary { font-size: .85rem; font-weight: 700; color: var(--color-secondary); margin-bottom: 6px; }
-.costs-interest > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
-.cost-field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 9rem); gap: 2px 10px; align-items: center; padding: 8px 10px; margin-bottom: 6px; border: 1px solid var(--color-border-light); border-radius: 10px; }
-.cost-field-label { font-size: .86rem; font-weight: 600; }
-.cost-field-input { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.cost-field-input input { font: inherit; font-size: 1rem; min-height: 44px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid var(--color-border); border-radius: 8px; text-align: right; }
-.cost-field-input input[aria-invalid="true"] { border-color: var(--color-danger); box-shadow: 0 0 0 2px var(--color-danger-bg); }
-.cost-field-hint { grid-column: 1 / -1; font-size: .74rem; color: #666; }
-.costs-error { color: var(--color-danger); font-size: .85rem; margin: 6px 0; }
 
 .small-btn {
   font-size: 0.78rem;
@@ -1104,8 +1080,6 @@ a.add-btn { display: inline-flex; align-items: center; }
   <script src="dvc-stay-value.js"></script>
   <script src="dvc-stay-groups.js"></script>
   <script src="dvc-owner-value.js"></script>
-  <script src="dvc-actual-costs.js"></script>
-  <script src="trips-actual-costs.js"></script>
   <script src="dvc-badges.js"></script>
   <script src="dvc-track.js"></script>
   <script>
@@ -1126,10 +1100,64 @@ let settingsSaveQueue = Promise.resolve();
 let settingsRevision = 0;
 let settingsSaveNote = '';
 
-// Cost of Ownership cards and the "My actual costs" editor live in
-// trips-actual-costs.js; per-contract figures come from the shared model's
+// One active contract's Cost of Ownership card, from the shared model's
 // contractCostBreakdown() (dvc-owner-value.js), so a card and the payback
-// totals can never disagree.
+// totals can never disagree. Dues use each year's published rate; the
+// buy-in is the purchase price as entered (closing included).
+const pluralize = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+function contractCostCardHTML(b) {
+  const c = b.contract;
+  const buyIn = b.price + b.interest;
+  const total = b.totalToDate;
+  const duesPct = total > 0 ? Math.round((b.duesTotal / total) * 100) : 0;
+  const notes = [
+    b.priceSource === "estimated" ? "Price estimated (none entered)" : "",
+    b.interest ? `Includes ${fmt(b.interest)} financing interest (your estimate)` : "",
+  ].filter(Boolean).join(" &middot; ");
+  const rows = b.years.slice().reverse().map(y => `<tr><td>${y.year}</td><td>$${y.publishedRate.toFixed(2)}/pt</td><td>${fmt(y.dues)}</td></tr>`).join("");
+  return `
+    <div class="contract-cost-card payback-info-anchor" style="${resortArtCardStyle(c.home_resort_id)}">
+      <div class="contract-cost-header">
+        <div class="contract-cost-name">${contractLabel(c)}</div>
+        <div class="contract-cost-owned-since">Owned since ${b.startYear}${b.startEstimated ? " (assumed: no purchase date)" : ""} &middot; ${pluralize(b.years.length, "yr")}</div>
+      </div>
+      <div class="cost-card-tiles">
+        <div class="cost-card-tile">
+          <div class="cost-card-tile-value">${fmt(b.duesTotal)}</div>
+          <div class="cost-card-tile-label">Dues to Date
+            <button type="button" class="payback-info-trigger" aria-label="Show dues by year" aria-expanded="false"><span class="payback-info-trigger-glyph">i</span></button></div>
+        </div>
+        <div class="cost-card-tile">
+          <div class="cost-card-tile-value">${fmt(buyIn)}</div>
+          <div class="cost-card-tile-label">Buy-In</div>
+        </div>
+        <div class="cost-card-tile net">
+          <div class="cost-card-tile-value">${fmt(total)}</div>
+          <div class="cost-card-tile-label">Total Spent</div>
+        </div>
+      </div>
+      <div class="ledger-bar cost-card-bar">
+        <div class="ledger-bar-seg cost-seg-dues" style="flex-grow:${b.duesTotal}"></div>
+        <div class="ledger-bar-seg cost-seg-buyin" style="flex-grow:${buyIn}"></div>
+      </div>
+      <div class="cost-card-bar-legend">
+        <span><i class="cost-legend-dot cost-seg-dues"></i>Dues (${duesPct}%)</span>
+        <span><i class="cost-legend-dot cost-seg-buyin"></i>Buy-in (${100 - duesPct}%)</span>
+      </div>
+      ${notes ? `<div class="cost-card-sources">${notes}</div>` : ""}
+      <div class="payback-breakdown-card">
+        <div class="payback-breakdown-header"><span>Dues by Year</span><button type="button" class="payback-breakdown-close" aria-label="Close">&times;</button></div>
+        <div class="dues-breakdown-table-wrap">
+          <table class="dues-breakdown-table">
+            <thead><tr><th>Year</th><th>Rate</th><th>Dues</th></tr></thead>
+            <tbody>${rows}</tbody>
+            <tfoot><tr><td colspan="2">Total</td><td>${fmt(b.duesTotal)}</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="payback-breakdown-footnote">Each year's published per-point dues rate &times; ${c.points_per_year} points.</div>
+      </div>
+    </div>`;
+}
 
 function renderGate() {
   pageContent.innerHTML = `
@@ -1210,16 +1238,13 @@ function buildPaybackBreakdownHTML(stats, dateLabel) {
       <div class="payback-breakdown-row">
         <span>Contract Purchase Price(s)${stats.costSources.estimatedPrices ? " (partly estimated)" : ""}</span><span>${fmt(stats.totalPurchasePrice)}</span>
       </div>
-      ${stats.totalClosingCosts ? `<div class="payback-breakdown-row sub">
-        <span>+ Closing Costs (entered separately)</span><span>${fmt(stats.totalClosingCosts)}</span>
-      </div>` : ""}
       <div class="payback-breakdown-row total">
         <span>= Total Initial Investment</span><span>${fmt(stats.totalInitialCost)}</span>
       </div>
       <div class="payback-breakdown-row">
-        <span>+ Dues Paid to Date (${stats.costSources.actualDuesYears} of ${stats.costSources.duesYears} yrs actual)</span><span>${fmt(stats.totalDuesPaid)}</span>
+        <span>+ Cumulative Dues Paid to Date</span><span>${fmt(stats.totalDuesPaid)}</span>
       </div>
-      ${stats.totalInterestPaid ? `<div class="payback-breakdown-row sub"><span>+ Financing Interest (entered)</span><span>${fmt(stats.totalInterestPaid)}</span></div>` : ""}
+      ${stats.totalInterestPaid ? `<div class="payback-breakdown-row sub"><span>+ Financing Interest (your estimate)</span><span>${fmt(stats.totalInterestPaid)}</span></div>` : ""}
       <div class="payback-breakdown-row total">
         <span>= Total Spent So Far</span><span>${fmt(stats.totalOutlay)}</span>
       </div>
@@ -1794,7 +1819,7 @@ function handleAssumptionChange(field, value) {
 
 
 function refreshHouseMoneyOutputs() {
-  const stats = computeHouseMoneyStats(contracts, trips, userSettings, costActuals);
+  const stats = computeHouseMoneyStats(contracts, trips, userSettings);
   const body = document.getElementById("house-money-body");
   if (body) body.innerHTML = buildGaugeHTML(stats);
   const result = document.getElementById("assumptions-result");
@@ -1913,7 +1938,6 @@ async function renderSignedIn() {
     window.DVCAuth.getTrips(),
     window.DVCAuth.getContractYearPoints(),
     window.DVCAuth.getUserSettings(),
-    loadOwnershipCosts(), // owner-entered actual costs (trips-actual-costs.js)
   ]);
   // A failed read is not an empty history, and deductions must never be
   // planned against balances that didn't load (UX2-05).
@@ -1931,7 +1955,7 @@ async function renderSignedIn() {
   // Achievements, so there's one canonical place for it instead of two
   // partial copies. pointEfficiency is still computed here since the
   // dopamine stat tiles below use it directly.
-  const stats = computeHouseMoneyStats(contracts, trips, userSettings, costActuals);
+  const stats = computeHouseMoneyStats(contracts, trips, userSettings);
   const exitEquity = computeExitEquity(contracts, stats);
   // ---- Cost of ownership: one card per active contract, from the same model ----
   const contractCostCards = stats.perContract.filter(b => b.contract.is_active).map(contractCostCardHTML).join("");
@@ -1949,7 +1973,6 @@ async function renderSignedIn() {
       <div id="house-money-body">
         ${buildGaugeHTML(stats)}
       </div>
-      ${costSourceNoteHTML(stats)}
       ${buildAssumptionsPanelHTML(userSettings, stats)}
       <details class="disclosure" id="payback-details">
         <summary>More payback details</summary>
@@ -1975,16 +1998,14 @@ async function renderSignedIn() {
       ${activeContracts.length === 0 ? `<div class="empty-note">No active contracts yet -- <a href="account.html">add one</a>.</div>` : `
       <details class="disclosure">
         <summary>Cost breakdown by contract</summary>
-        <div class="section-sub">Dues are your actual figures where you've entered them, otherwise each year's published rate. Buy-in is the purchase price you entered, closing costs included.</div>
+        <div class="section-sub">Dues use each year's published rate. Buy-in is the purchase price you entered (closing costs included), plus any financing interest you've estimated.</div>
         ${contractCostCards}
       </details>`}
     </div>
   `;
 
-  pageContent.insertAdjacentHTML("beforeend", costsModalHTML());
   renderHouseMoneyChart(stats);
   attachAssumptionsListeners();
-  wireCostEditor();
 }
 
 // The projection chart sits behind a closed disclosure so the payback

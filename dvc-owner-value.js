@@ -1,47 +1,40 @@
-// One ownership-value model for Home and Membership Value.
+// One ownership-value model for Home, Membership Value and the Trophy Room.
 // tripCashValue resolves the logged value attributable to owned contracts.
 //
-// Owner-entered actual costs (Prompt 6, migration 028) are optional: the
-// `actuals` argument is DVCActualCosts.index() output, { [contractId]:
-// { dues: {year: cents}, interest: {year: cents}, closing: cents|null } }.
-// Where an actual exists it replaces the estimate (published dues rate,
-// estimated closing cost); everything else stays modeled, and every figure
-// carries its source. Financing interest is added only as entered -- the
-// purchase price is already the principal, so loan principal is never
-// counted twice. Future years always use projected dues.
+// Costs to date: the purchase price as entered -- what the owner paid all
+// in, closing included, so nothing is added on top (a resale-price
+// estimate stands in only when no price was entered) -- each year's
+// published dues rate, and the owner's own estimate of financing interest
+// paid to date (contracts.financing_interest_paid, migration 029), if any.
+// The purchase price is the loan principal, so interest never counts it
+// twice. Future years use projected dues.
 (function () {
   function create(tripCashValue) {
 const FALLBACK_PRICE_PER_POINT = 140;
-const dollars = cents => cents / 100;
-const actualFor = (actuals, c) => (actuals && actuals[c.id]) || null;
 
-function contractInitialCostBreakdown(c, actual = null) {
-  const closingActual = actual?.closing != null;
-  // The purchase price is what the owner paid all in, closing costs
-  // included, so nothing is added on top of it (a flat $1,500 resale
-  // estimate used to be, double-counting closing for anyone who entered
-  // their total). Only a separately entered closing amount adds here.
-  const closing = closingActual ? dollars(actual.closing) : 0;
+function contractInitialCostBreakdown(c) {
   const priceEntered = c.purchase_price != null;
   const price = priceEntered
     ? Number(c.purchase_price)
     : (RESORT_INVESTMENT_DATA[c.home_resort_id]?.resalePricePerPoint || FALLBACK_PRICE_PER_POINT) * c.points_per_year;
-  return { price, closing, total: price + closing, priceSource: priceEntered ? "entered" : "estimated", closingSource: closingActual ? "actual" : "estimated" };
+  return { price, total: price, priceSource: priceEntered ? "entered" : "estimated" };
 }
 
-function contractInitialCost(c, actual = null) {
-  return contractInitialCostBreakdown(c, actual).total;
+function contractInitialCost(c) {
+  return contractInitialCostBreakdown(c).total;
 }
 
-// One calendar year's dues for a contract: the owner's actual when entered
-// (past and current years only), else the published rate; projected after
-// this year.
-function duesForYear(c, year, actual, currentYear, duesGrowthRate) {
+// The owner's estimate of financing interest paid so far (0 if none).
+function contractInterestPaid(c) {
+  const n = Number(c.financing_interest_paid);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+// One calendar year's dues: the published rate, projected after this year.
+function duesForYear(c, year, currentYear, duesGrowthRate) {
   if (year > currentYear) return { amount: c.points_per_year * projectedDuesForYear(c.home_resort_id, year, duesGrowthRate), source: "projected" };
-  if (actual?.dues?.[year] != null) return { amount: dollars(actual.dues[year]), source: "actual" };
   return { amount: getDuesForYear(c.home_resort_id, year) * c.points_per_year, source: "published" };
 }
-const interestForYear = (actual, year) => (actual?.interest?.[year] != null ? dollars(actual.interest[year]) : 0);
 
 function contractOwnershipStartYear(c) {
   const currentYear = new Date().getFullYear();
@@ -58,34 +51,32 @@ function contractExpiredBy(c, year) {
   return exp != null && year > exp;
 }
 
-function contractDuesPaidToDate(c, actual = null) {
+function contractDuesPaidToDate(c) {
   const currentYear = new Date().getFullYear();
   const startYear = contractOwnershipStartYear(c);
   let total = 0;
   for (let y = startYear; y <= currentYear; y++) {
-    total += duesForYear(c, y, actual, currentYear, 0).amount;
+    total += duesForYear(c, y, currentYear, 0).amount;
   }
   return total;
 }
 
-// Everything one contract has cost so far, year by year, with each
-// figure's source -- the per-contract breakdown on Membership Value.
-function contractCostBreakdown(c, actual = null) {
+// Everything one contract has cost so far -- the per-contract cards on
+// Membership Value -- with the price's and start year's source.
+function contractCostBreakdown(c) {
   const currentYear = new Date().getFullYear();
   const startYear = contractOwnershipStartYear(c);
   const years = [];
-  let duesTotal = 0, interestTotal = 0, actualDuesYears = 0;
+  let duesTotal = 0;
   for (let y = startYear; y <= currentYear; y++) {
-    const d = duesForYear(c, y, actual, currentYear, 0);
-    const interest = actual?.interest?.[y] != null ? dollars(actual.interest[y]) : null;
-    years.push({ year: y, dues: d.amount, duesSource: d.source, publishedRate: getDuesForYear(c.home_resort_id, y), interest });
+    const d = duesForYear(c, y, currentYear, 0);
+    years.push({ year: y, dues: d.amount, publishedRate: getDuesForYear(c.home_resort_id, y) });
     duesTotal += d.amount;
-    interestTotal += interest || 0;
-    if (d.source === "actual") actualDuesYears++;
   }
-  const initial = contractInitialCostBreakdown(c, actual);
-  return { contract: c, startYear, startEstimated: !c.purchase_date, years, duesTotal, interestTotal, actualDuesYears,
-    ...initial, totalToDate: initial.total + duesTotal + interestTotal };
+  const initial = contractInitialCostBreakdown(c);
+  const interest = contractInterestPaid(c);
+  return { contract: c, startYear, startEstimated: !c.purchase_date, years, duesTotal, interest,
+    ...initial, totalToDate: initial.total + duesTotal + interest };
 }
 
 function projectedDuesForYear(resortId, year, duesGrowthRate) {
@@ -107,7 +98,7 @@ function contractBaselinePotentialValue(c, year, yearsFromNow, settings) {
   return Math.max(0, grossValue - dues);
 }
 
-function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings, actuals = null) {
+function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings) {
   if (contracts.length === 0) return null;
   const activeContracts = contracts.filter(c => c.is_active);
   const startYear = contracts.reduce((min, c) => Math.min(min, contractOwnershipStartYear(c)), currentYear);
@@ -142,7 +133,9 @@ function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentY
     let pointsThisYear = 0;
     for (const c of contracts) {
       if (contractOwnershipStartYear(c) === y) {
-        const initialCost = contractInitialCostBreakdown(c, actualFor(actuals, c)).total;
+        // Financing interest to date is part of what buying cost, so it lands
+        // with the buy-in (the chart has no per-year interest to spread it by).
+        const initialCost = contractInitialCostBreakdown(c).total + contractInterestPaid(c);
         cumOutlay += initialCost;
         fund += initialCost;
       }
@@ -152,14 +145,8 @@ function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentY
         && !contractExpiredBy(c, y)
         && (c.is_active || y <= currentYear);
       if (!ownedThisYear) continue;
-      const actual = actualFor(actuals, c);
-      const dues = duesForYear(c, y, actual, currentYear, settings.dues_growth_rate).amount;
-      // Entered financing interest is cash spent that year (principal is
-      // already the purchase price); like the buy-in, it's cash the
-      // alternative fund would have kept.
-      const interest = y <= currentYear ? interestForYear(actual, y) : 0;
-      cumOutlay += dues + interest;
-      fund += interest;
+      const dues = duesForYear(c, y, currentYear, settings.dues_growth_rate).amount;
+      cumOutlay += dues;
       duesThisYear += dues;
       pointsThisYear += c.points_per_year;
     }
@@ -197,31 +184,25 @@ function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentY
   return { years, outlay, value, altFund, crossoverYear, altFundDepletionYear, currentYear, horizonIsDeed };
 }
 
-function computeHouseMoneyStats(contracts, trips, settings, actuals = null) {
+function computeHouseMoneyStats(contracts, trips, settings) {
   settings = { ...window.DVCAuth.DEFAULT_USER_SETTINGS, ...settings };
   const currentYear = new Date().getFullYear();
   let totalPurchasePrice = 0;
-  let totalClosingCosts = 0;
   let totalDuesPaid = 0;
   let totalInterestPaid = 0;
   let earliestStartYear = currentYear;
-  // Which figures are the owner's own and which are modeled.
-  const costSources = { duesYears: 0, actualDuesYears: 0, closingActual: 0, closingEstimated: 0, estimatedPrices: 0, estimatedStarts: 0, interestYears: 0 };
-  const perContract = contracts.map(c => contractCostBreakdown(c, actualFor(actuals, c)));
+  // Which figures are estimated rather than entered by the owner.
+  const costSources = { estimatedPrices: 0, estimatedStarts: 0 };
+  const perContract = contracts.map(c => contractCostBreakdown(c));
   for (const b of perContract) {
     totalPurchasePrice += b.price;
-    totalClosingCosts += b.closing;
     totalDuesPaid += b.duesTotal;
-    totalInterestPaid += b.interestTotal;
+    totalInterestPaid += b.interest;
     earliestStartYear = Math.min(earliestStartYear, b.startYear);
-    costSources.duesYears += b.years.length;
-    costSources.actualDuesYears += b.actualDuesYears;
-    costSources.interestYears += b.years.filter(y => y.interest != null).length;
-    if (b.closingSource === "actual") costSources.closingActual++; else if (b.closing > 0) costSources.closingEstimated++;
     if (b.priceSource === "estimated") costSources.estimatedPrices++;
     if (b.startEstimated) costSources.estimatedStarts++;
   }
-  const totalInitialCost = totalPurchasePrice + totalClosingCosts;
+  const totalInitialCost = totalPurchasePrice;
   const totalOutlay = totalInitialCost + totalDuesPaid + totalInterestPaid;
 
   let lifetimeValue = 0;
@@ -264,7 +245,7 @@ function computeHouseMoneyStats(contracts, trips, settings, actuals = null) {
     velocitySource = baselinePotential > 0 ? "blended" : "trips";
   }
 
-  const series = buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings, actuals);
+  const series = buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings);
   let estimatedHouseMoneyDate = null;
   const projectedIndex = series ? series.years.findIndex((year, i) => year > currentYear && series.value[i] >= series.outlay[i]) : -1;
   if (paybackPct < 100 && annualVelocity > 0 && projectedIndex >= 0) {
@@ -280,7 +261,7 @@ function computeHouseMoneyStats(contracts, trips, settings, actuals = null) {
   }
 
   return {
-    totalPurchasePrice, totalClosingCosts, totalInitialCost, totalDuesPaid, totalInterestPaid, totalOutlay, lifetimeValue,
+    totalPurchasePrice, totalInitialCost, totalDuesPaid, totalInterestPaid, totalOutlay, lifetimeValue,
     costSources, perContract,
     paybackPct, remaining, yearsOwned, actualPace, baselinePotential, annualVelocity, velocitySource,
     estimatedHouseMoneyDate, series, settings,
@@ -290,7 +271,7 @@ function computeHouseMoneyStats(contracts, trips, settings, actuals = null) {
 }
 
 
-return { contractInitialCostBreakdown, contractInitialCost, contractOwnershipStartYear, contractDeedExpirationYear, contractExpiredBy, contractDuesPaidToDate, contractCostBreakdown, duesForYear, projectedDuesForYear, contractBaselineGrossValue, contractBaselinePotentialValue, buildHouseMoneySeries, computeHouseMoneyStats };
+return { contractInitialCostBreakdown, contractInitialCost, contractInterestPaid, contractOwnershipStartYear, contractDeedExpirationYear, contractExpiredBy, contractDuesPaidToDate, contractCostBreakdown, duesForYear, projectedDuesForYear, contractBaselineGrossValue, contractBaselinePotentialValue, buildHouseMoneySeries, computeHouseMoneyStats };
 }
 window.DVCOwnerValue = { create };
 })();

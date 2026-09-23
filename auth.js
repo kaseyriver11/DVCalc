@@ -728,8 +728,13 @@ async function getContracts() {
 async function addContract(contract) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
-  const payload = { ...contract, user_id: currentSession.user.id };
+  let payload = { ...contract, user_id: currentSession.user.id };
   let { data, error } = await supabase.from("contracts").insert(payload).select().single();
+  if (error && isMissingColumnError(error, "financing_interest_paid")) {
+    payload = { ...payload }; delete payload.financing_interest_paid;
+    ({ data, error } = await supabase.from("contracts").insert(payload).select().single());
+    if (!error && contract.financing_interest_paid != null) return { data, warning: "Contract saved, but financing interest wasn't stored -- the database needs db/migrations/029_contract_financing_interest.sql run against it." };
+  }
   if (error && isMissingColumnError(error, "blue_card_override")) {
     const { blue_card_override, ...rest } = payload;
     ({ data, error } = await supabase.from("contracts").insert(rest).select().single());
@@ -742,6 +747,12 @@ async function updateContract(id, patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
   if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   let { data, error } = await supabase.from("contracts").update(patch).eq("id", id).select().single();
+  if (error && isMissingColumnError(error, "financing_interest_paid")) {
+    const had = patch.financing_interest_paid != null;
+    patch = { ...patch }; delete patch.financing_interest_paid;
+    ({ data, error } = await supabase.from("contracts").update(patch).eq("id", id).select().single());
+    if (!error && had) return { data, warning: "Contract saved, but financing interest wasn't stored -- the database needs db/migrations/029_contract_financing_interest.sql run against it." };
+  }
   if (error && isMissingColumnError(error, "blue_card_override")) {
     const { blue_card_override, ...rest } = patch;
     ({ data, error } = await supabase.from("contracts").update(rest).eq("id", id).select().single());
@@ -821,10 +832,10 @@ const getPointReconciliations = () => readOwnRows("point_reconciliations", "poin
 // Every receipt, including reversed ones (getTripDeductions() returns only live ones).
 const getTripDeductionHistory = () => readOwnRows("trip_deductions", "trip_deduction_history");
 
-// Waitlist requests and booking cancellation history (migration 027). A
-// table that doesn't exist yet reads as { missing: true } -- "not set up
-// yet", not a failed read or an empty history. Any other failure is
-// reported through readFailed(name).
+// Canceled-with-Disney booking history (migration 027). A table that
+// doesn't exist yet reads as { missing: true } -- "not set up yet", not a
+// failed read or an empty history. Any other failure is reported through
+// readFailed(name).
 async function readOptionalTable(table) {
   if (!configured || !currentSession || !(await hasMembership())) return { rows: [], missing: false };
   const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false });
@@ -836,51 +847,7 @@ async function readOptionalTable(table) {
   if (error) console.error(`[DVCAuth] ${table} read failed:`, error.message);
   return { rows: error ? [] : data, missing: false };
 }
-const getWaitlists = () => readOptionalTable("waitlists");
 const getBookingCancellations = () => readOptionalTable("booking_cancellations");
-// Owner-entered actual dues, closing costs and financing interest
-// (migration 028). { rows, missing } like the waitlist reads.
-const getOwnershipCosts = () => readOptionalTable("ownership_costs");
-// entries: [{ kind, year, amount }] for ONE contract; amount null removes
-// that actual. All-or-nothing, and safe to retry.
-async function saveOwnershipCosts(contractId, entries) {
-  if (!configured || !currentSession) return { error: "Not signed in" };
-  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
-  const { data, error } = await supabase.rpc("save_ownership_costs", { p_contract: contractId, p_entries: entries });
-  if (error && /save_ownership_costs/.test(error.message)) {
-    return { error: "Actual costs can't be saved until db/migrations/028_ownership_costs.sql is run in Supabase." };
-  }
-  return { data, error: error?.message };
-}
-
-const WAITLIST_FIELDS = ["resort_id", "room_type_id", "check_in", "check_out", "requested_on", "backup_trip_id", "notes", "remind_days_before"];
-// Add (isNew, with a client id kept until success -- a retried add finds
-// the first one instead of duplicating it) or edit an open request. Marking
-// one fulfilled only happens inside save_trip_booking.
-async function saveWaitlist(row, { isNew }) {
-  if (!configured || !currentSession) return { error: "Not signed in" };
-  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
-  const fields = Object.fromEntries(WAITLIST_FIELDS.map(k => [k, row[k] ?? null]));
-  const query = isNew
-    ? supabase.from("waitlists").insert({ id: row.id, ...fields }).select().single()
-    : supabase.from("waitlists").update({ ...fields, review_reminded_at: null, updated_at: new Date().toISOString() }).eq("id", row.id).select().single();
-  let { data, error } = await query;
-  if (error?.code === "23505" && isNew) ({ data, error } = await supabase.from("waitlists").select("*").eq("id", row.id).single());
-  if (error && /waitlists/.test(error.message) && /does not exist|could not find/i.test(error.message)) {
-    return { error: "Waitlists can't be saved until db/migrations/027_waitlists_and_booking_records.sql is run in Supabase." };
-  }
-  return { data, error: error?.message };
-}
-// Cancel (owner canceled the request with Disney) or reopen one. Safe to repeat.
-async function setWaitlistStatus(id, status) {
-  if (!configured || !currentSession) return { error: "Not signed in" };
-  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
-  if (!["pending", "canceled"].includes(status)) return { error: "Invalid waitlist status." };
-  const { data, error } = await supabase.from("waitlists")
-    .update({ status, canceled_at: status === "canceled" ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
-    .eq("id", id).select().single();
-  return { data, error: error?.message };
-}
 
 async function deleteContractYearPoints(id) {
   if (!configured || !currentSession) return { error: "Not signed in" };
@@ -1478,12 +1445,7 @@ window.DVCAuth = {
   getPointMovements,
   getPointReconciliations,
   getTripDeductionHistory,
-  getWaitlists,
   getBookingCancellations,
-  saveWaitlist,
-  setWaitlistStatus,
-  getOwnershipCosts,
-  saveOwnershipCosts,
   deleteContractYearPoints,
   getUserBadges,
   upsertUserBadge,

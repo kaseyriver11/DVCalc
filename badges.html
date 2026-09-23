@@ -198,7 +198,6 @@ body {
   <script src="data/resort_images.js"></script>
   <script src="dvc-trip-funding.js"></script>
   <script src="dvc-owner-value.js"></script>
-  <script src="dvc-actual-costs.js"></script>
   <script src="dvc-badges.js"></script>
   <script src="dvc-track.js"></script>
   <script>
@@ -298,10 +297,10 @@ function tripCashValue(trip, ownedContracts) {
 }
 
 // House Money comes from the same model as Membership Value and Home
-// (dvc-owner-value.js), with the owner's saved assumptions and actual costs,
+// (dvc-owner-value.js), with the owner's saved assumptions,
 // so the House Money badge tracks the exact payback % shown there. (This page
 // used to keep its own copy, which had drifted: different rounding, a fixed
-// value per point, and no actual costs.)
+// value per point, and an extra closing-cost estimate.)
 const { computeHouseMoneyStats } = window.DVCOwnerValue.create(tripCashValue);
 
 // computePointEfficiency moved to dvc-badges.js (window.DVCBadges) --
@@ -316,7 +315,7 @@ async function renderSignedIn() {
     });
     return;
   }
-  const [contracts, trips, itineraries, userBadges, rarityStats, contractYearPoints, settings, costs] = await Promise.all([
+  const [contracts, trips, itineraries, userBadges, rarityStats, contractYearPoints, settings] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
     window.DVCAuth.getItineraries(),
@@ -324,10 +323,9 @@ async function renderSignedIn() {
     window.DVCAuth.getBadgeRarityStats(),
     window.DVCAuth.getContractYearPoints(),
     window.DVCAuth.getUserSettings(),
-    window.DVCAuth.getOwnershipCosts(),
   ]);
 
-  const stats = computeHouseMoneyStats(contracts, trips, settings, window.DVCActualCosts.index(costs.rows));
+  const stats = computeHouseMoneyStats(contracts, trips, settings);
   const pointEfficiency = window.DVCBadges.computePointEfficiency(contracts, trips, contractYearPoints);
   const allBadges = window.DVCBadges.applyRarityStats(
     window.DVCBadges.applyBadgePersistence(

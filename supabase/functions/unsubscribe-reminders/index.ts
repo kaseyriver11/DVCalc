@@ -7,13 +7,11 @@
 // GET /unsubscribe-reminders?token=<profiles.reminder_unsubscribe_token>[&type=]
 //   type=banking (or absent -- every link sent before Prompt 3): banking
 //   deadline reminders; type=expiration / type=holding: those opt-in
-//   reminders (migration 026); type=waitlist: every pending waitlist request's
-//   review reminder (migration 027); type=all: every reminder email.
+//   reminders (migration 026); type=all: every reminder email.
 const TYPES: Record<string, { columns: string[]; what: string }> = {
   banking: { columns: ["reminder_opt_in"], what: "banking deadline reminder emails" },
   expiration: { columns: ["expiration_reminder_opt_in"], what: "use-year expiration reminder emails" },
   holding: { columns: ["holding_reminder_opt_in"], what: "Holding point reminder emails" },
-  waitlist: { columns: [], what: "waitlist review reminder emails" },
   all: { columns: ["reminder_opt_in", "expiration_reminder_opt_in", "holding_reminder_opt_in"], what: "all DVC Companion reminder emails" },
 };
 
@@ -45,17 +43,15 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(supabaseUrl, serviceKey);
-  const profiles = supabase.from("profiles");
-  const { data, error } = type.columns.length
-    ? await profiles.update(Object.fromEntries(type.columns.map((c) => [c, false]))).eq("reminder_unsubscribe_token", token).select("id").maybeSingle()
-    : await profiles.select("id").eq("reminder_unsubscribe_token", token).maybeSingle();
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(Object.fromEntries(type.columns.map((c) => [c, false])))
+    .eq("reminder_unsubscribe_token", token)
+    .select("id")
+    .maybeSingle();
 
   if (error || !data) {
     return page("We couldn't find that reminder subscription -- it may already be unsubscribed.");
-  }
-  if (type === TYPES.waitlist || type === TYPES.all) {
-    const { error: waitlistError } = await supabase.from("waitlists").update({ remind_days_before: null }).eq("user_id", data.id).eq("status", "pending");
-    if (waitlistError && type === TYPES.waitlist) return page("Something went wrong turning off waitlist reminders. Try again, or turn them off by editing each request.");
   }
 
   return page(`You've been unsubscribed from ${type.what}. You can re-enable them anytime from My Contracts.`);

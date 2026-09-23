@@ -563,16 +563,6 @@ body {
 .ledger-deadline-warning.muted { color: #999; font-weight: 500; }
 .load-error-card { padding: 20px; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-bg-card); }
 .load-error-card p { font-size: .85rem; color: var(--color-text-muted); margin: 6px 0 14px; }
-.leftover-stays { margin-top: 10px; }
-.leftover-stays-title { font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 6px; }
-.leftover-stays-list { display: grid; gap: 8px; }
-.leftover-stay { display: block; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-bg-card); color: var(--color-text); text-decoration: none; }
-.leftover-stay-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.leftover-stay-name { font-weight: 600; min-width: 0; }
-.leftover-stay-odds { flex-shrink: 0; font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--color-primary-tint-bg); color: var(--color-primary); }
-.leftover-stay-odds.excellent { background: var(--color-good-bg); color: var(--color-good); }
-.leftover-stay-detail { display: block; font-size: 0.76rem; margin-top: 4px; color: var(--color-text-muted); }
-.leftover-stays-note { font-size: 0.72rem; color: var(--color-text-muted); margin-top: 6px; }
 
 .ledger-row .ledger-bar { margin-top: 12px; }
 
@@ -944,6 +934,75 @@ body {
   margin-bottom: 10px;
 }
 
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.section-title-row h2 { margin-bottom: 0; }
+.notif-settings-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-light);
+  background: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.notif-settings-btn:hover { border-color: var(--color-primary); }
+
+/* ---- Membership card: lives above "Your Contracts" as its own small
+   section, same grouping idea as the notif-settings gear -- an
+   account-level setting, not a contract. See docs/subscriptions_plan.md
+   Phase 4. */
+.membership-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.membership-card-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: #999; font-weight: 700; margin-bottom: 2px; }
+.membership-card-status { font-size: 0.95rem; font-weight: 700; color: #333; }
+.membership-card-status.is-active { color: var(--color-primary); }
+.membership-card-status.is-warning { color: #a3401f; }
+.membership-card-detail { font-size: 0.8rem; color: #777; margin-top: 2px; }
+/* Task 10 pricing-anchor line -- a touch bolder/colored than the plain
+   detail line above it, since this one's carrying the actual persuasion
+   (price framing), not just a feature description. */
+.membership-card-anchor { font-size: 0.78rem; color: var(--color-primary); font-weight: 600; margin-top: 4px; }
+.membership-card-btn {
+  flex-shrink: 0;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 9px 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.membership-card-btn:hover { background: var(--color-primary-active); }
+.membership-card-btn:disabled { opacity: 0.6; cursor: default; }
+.membership-card-btn.secondary { background: #f7f5fa; color: var(--color-primary); border: 1px solid #ddd; }
+.membership-card-btn.secondary:hover { background: var(--color-primary-tint-bg); }
+.membership-card-msg { flex-basis: 100%; font-size: 0.78rem; color: var(--color-danger); }
+.membership-checkout-banner {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+.membership-checkout-banner.success { background: var(--color-primary-tint-bg); color: var(--color-primary); }
 .membership-checkout-banner.cancelled { background: #f0f0f0; color: #666; }
 
 .reminder-offer {
@@ -990,8 +1049,6 @@ body {
 .point-action-link.primary { font-weight: 700; }
 .use-points-btn { display: flex; align-items: center; justify-content: center; min-height: 48px; margin: 8px 0 4px; border-radius: 12px; background: var(--color-primary); color: #fff; font-weight: 700; font-size: .92rem; text-decoration: none; }
 .use-points-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
-.contract-costs-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .84rem; font-weight: 600; color: var(--color-primary); }
-.contract-costs-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-clear { padding: 10px 12px; border-radius: 10px; background: var(--color-good-bg); color: var(--color-good); font-size: .86rem; font-weight: 600; }
 .point-action-clear.small { background: none; padding: 4px 0 0; color: var(--color-text-muted); font-weight: 400; font-size: .78rem; }
@@ -1255,8 +1312,18 @@ body {
 .ledger-activity-note.warn { color: #8a6d00; }
 .point-ledger-actions button {text-align:left;padding:14px 16px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);color:var(--color-text);font:inherit;font-weight:600;}
 .point-ledger-actions span {display:block;font-size:.76rem;font-weight:400;margin-top:4px;color:var(--color-text-muted);}
-.point-ledger-actions span.checked {color:var(--color-good);font-weight:600;}
-.point-ledger-actions button {min-height:56px;width:100%;cursor:pointer;}
+.point-ledger-actions button {width:100%;cursor:pointer;}
+/* Two equal secondary actions under "Use these points"; Adjust balance
+   opens the three balance changes as a compact list below them. */
+.ledger-secondary {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;}
+.ledger-secondary-btn {min-height:44px;padding:0 10px;border:1px solid var(--color-primary);border-radius:12px;background:var(--color-bg-card);color:var(--color-primary);font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;}
+.ledger-secondary-btn[aria-expanded="true"] {background:var(--color-primary-tint-bg);}
+.ledger-secondary-btn:focus-visible {outline:3px solid var(--color-primary);outline-offset:2px;}
+.adjust-options {margin:8px 0 0;gap:6px;}
+.adjust-options[hidden] {display:none;}
+.adjust-options button {padding:10px 14px;border-radius:12px;}
+.reconcile-status-line {margin-top:8px;font-size:.76rem;color:var(--color-text-muted);text-align:center;}
+.reconcile-status-line.checked {color:var(--color-good);font-weight:600;}
 .point-ledger-actions button:focus-visible {outline:3px solid var(--color-primary);outline-offset:2px;}
 /* The one primary action in a ledger row: Add points left (no balance)
    or Use these points (a recorded balance). Everything else is a
@@ -1355,8 +1422,6 @@ body {
   <script src="dvc-dates.js"></script>
   <script src="dvc-point-attention.js"></script>
   <script src="dvc-ledger.js"></script>
-  <script src="data/availability_data.js"></script>
-  <script src="dvc-leftover-points.js"></script>
   <script src="dvc-compare-handoff.js"></script>
   <script src="dvc-balances.js"></script>
   <script src="dvc-point-moves.js"></script>
@@ -1987,7 +2052,12 @@ async function renderSignedIn() {
                   </div>
                   <div class="form-field">
                     <label for="f-price">Purchase Price (optional)</label>
-                    <input type="number" id="f-price" min="0" step="1" placeholder="Total $ paid">
+                    <input type="number" id="f-price" min="0" step="1" placeholder="Total $ paid, incl. closing">
+                  </div>
+                  <div class="form-field">
+                    <label for="f-interest">Financing interest paid to date (optional)</label>
+                    <input type="number" id="f-interest" min="0" step="1" inputmode="numeric" placeholder="Rough total is fine">
+                    <div class="field-hint">Only if you financed. Interest only: the purchase price already covers the loan amount.</div>
                   </div>
                   <div class="form-field">
                     <label for="f-acquisition-year">Acquisition Year (optional)</label>
@@ -2204,6 +2274,13 @@ async function renderSignedIn() {
   document.getElementById('active-contract-details').addEventListener('click', e => {
     const button = e.target.closest('[data-setup-balance]');
     if (button) openBalanceSetup(activeWalletCardId, Number(button.dataset.setupBalance));
+    const adjustToggle = e.target.closest('[data-toggle-adjust]');
+    if (adjustToggle) {
+      const panel = document.getElementById(adjustToggle.getAttribute("aria-controls"));
+      const open = panel.hidden;
+      panel.hidden = !open;
+      adjustToggle.setAttribute("aria-expanded", String(open));
+    }
     const reconcileBtn = e.target.closest('[data-reconcile]');
     if (reconcileBtn) openReconcile(Number(reconcileBtn.dataset.reconcile));
     const action = e.target.closest('[data-point-action]');
@@ -2417,71 +2494,6 @@ function applyDeckPeekSpacing() {
 // The ledger (use-year rows, bars, steppers, +Plan a year) and Edit/
 // Deactivate/Delete actions for whichever card is active -- lives below
 // the deck, not inside the card face. Empty when there are no contracts.
-// Short-notice stay ideas for expiring, unbankable points
-// (dvc-leftover-points.js). Expiring points always mean booking close in,
-// when most resorts are sold out, so a stay is only suggested when DVC
-// Field Guide history (data/availability_data.js) gives Good+ odds at that
-// lead time -- same bar as the calendar's Booking Outlook. Respects this
-// contract's own booking windows (11 months home, 7 months elsewhere, none
-// at resale-restricted resorts) and Holding's 60-day booking rule. Cached
-// per contract/balance: the ledger re-renders on every stepper edit and
-// the search walks every resort/room/night in the window.
-const leftoverStaysCache = new Map();
-function findLeftoverStays(c, status, todayMs) {
-  const holdingOnly = status.kind === "holding";
-  const key = [c.id, status.kind, status.points, status.expiresMs, todayMs].join("|");
-  if (leftoverStaysCache.has(key)) return leftoverStaysCache.get(key);
-  const D = window.DVCDates, L = window.DVCLeftoverPoints, DAY = 86400000;
-  const iso = ms => new Date(ms).toISOString().slice(0, 10);
-  const allIds = [...new Set(RESORTS.map(r => r.id))];
-  const access = window.DVCAuth.getUserResortAccess([c], allIds);
-  const holdingCap = holdingOnly ? iso(todayMs + window.DVCLedger.HOLDING_BOOKING_WINDOW_DAYS * DAY) : "9999-12-31";
-  const capFor = id => access.homeResortIds.has(id) ? D.monthsFromDate(11) : access.sevenMoResortIds.has(id) ? D.monthsFromDate(7) : null;
-  const resorts = allIds.map(id => {
-    const cap = capFor(id);
-    const chart = RESORTS.find(r => r.id === id);
-    return cap && chart ? { resortId: id, maxCheckIn: cap < holdingCap ? cap : holdingCap, roomTypeIds: chart.roomTypes.map(rt => rt.id) } : null;
-  }).filter(Boolean);
-  const priceCache = new Map();
-  const pointsFor = (resortId, roomTypeId, dateStr) => {
-    const k = resortId + "|" + roomTypeId + "|" + dateStr;
-    if (!priceCache.has(k)) {
-      const chart = RESORTS.find(r => r.id === resortId && r.year === Number(dateStr.slice(0, 4)));
-      priceCache.set(k, chart ? (getPointsForDate(chart, dateStr, roomTypeId) ?? null) : null);
-    }
-    return priceCache.get(k);
-  };
-  const availabilityFor = (resortId, roomTypeId, nightStr, checkInStr) =>
-    L.availabilityScore(window.AVAILABILITY_DATA ?? (typeof AVAILABILITY_DATA !== "undefined" ? AVAILABILITY_DATA : null),
-      resortId, roomTypeId, nightStr, L.bookingWindowKey((Date.parse(checkInStr + "T00:00:00Z") - todayMs) / DAY));
-  const search = { points: status.points, fromDate: iso(todayMs + DAY), lastNightDate: iso(status.expiresMs), resorts, pointsFor };
-  const stays = L.findStays({ ...search, availabilityFor });
-  // Only needed to word the empty state: too few points vs. no likely openings.
-  const result = { stays, affordable: stays.length > 0 || L.findStays({ ...search, limit: 1 }).length > 0 };
-  leftoverStaysCache.set(key, result);
-  return result;
-}
-
-function buildLeftoverStaysHTML(c, status, todayMs) {
-  if (!window.DVCLeftoverPoints || !window.DVCAuth?.getUserResortAccess || !window.DVCCompareHandoff || typeof RESORTS === "undefined" || typeof AVAILABILITY_DATA === "undefined") return "";
-  const { stays, affordable } = findLeftoverStays(c, status, todayMs);
-  const transfer = "You can transfer them to another member (one transfer per use year).";
-  if (!stays.length) {
-    return `<div class="ledger-deadline-warning muted">${affordable
-      ? `Resorts this contract can book rarely have openings this close in. ${transfer}`
-      : `No night costs ${status.points} pts or less before they expire. ${transfer}`}</div>`;
-  }
-  const fmt = s => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  const items = stays.map(s => {
-    const chart = RESORTS.find(r => r.id === s.resortId);
-    const room = chart.roomTypes.find(rt => rt.id === s.roomTypeId)?.name || s.roomTypeId;
-    const href = window.DVCCompareHandoff.url({ resortId: s.resortId, roomTypeId: s.roomTypeId, checkIn: s.checkIn, checkOut: s.checkOut });
-    const odds = window.DVCLeftoverPoints.oddsLabel(s.availability, s.nights);
-    return `<a class="leftover-stay" href="${href}"><span class="leftover-stay-head"><span class="leftover-stay-name">${shorthandResortName(s.resortId, chart.name)}</span><span class="leftover-stay-odds ${odds.toLowerCase()}">${odds} odds</span></span><span class="leftover-stay-detail">${room} &middot; ${s.nights} night${s.nights === 1 ? "" : "s"} &middot; ${s.pointsUsed} pts &middot; from ${fmt(s.checkIn)} &rarr;</span></a>`;
-  }).join("");
-  return `<div class="leftover-stays"><div class="leftover-stays-title">Most likely to have short-notice openings${status.kind === "holding" ? " within 60 days" : ""}</div><div class="leftover-stays-list">${items}</div><div class="leftover-stays-note">Based on past availability this close in. Odds drop as dates get closer, so book soon.</div></div>`;
-}
-
 // events: this row's DVCPointAttention events when it's the current cycle
 // of an active contract, else null (a Plan Ahead row just shows its dates).
 // Same one-line-per-bucket split as the Point actions list above.
@@ -2495,13 +2507,6 @@ function buildLedgerAttentionHTML(c, row, events, todayMs) {
     if (e.kind === "holding") return `<div class="ledger-deadline-warning ${expirationTier(e.daysUntil)}">🅿️ ${e.points} Holding pts: use by ${formatDeadlineWithCountdown(e.expiresMs, e.daysUntil)}; book no more than 60 days before check-in</div>`;
     return "";
   }).join("");
-}
-
-// Short-notice stay ideas for points that can only be used now, shown right
-// under "Use these points" (which has the full search) rather than between
-// the warning and the balance, where they pushed every number and action down.
-function buildLedgerIdeasHTML(c, events, todayMs) {
-  return (events || []).filter(e => e.kind === "use-by" || e.kind === "holding").map(e => buildLeftoverStaysHTML(c, e, todayMs)).join("");
 }
 
 function renderActiveContractDetails(contracts, yearPointsByContract) {
@@ -2560,7 +2565,6 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
         <button type="button" class="danger" data-delete="${c.id}">Delete</button>
       </div>
     </div>
-    <a class="contract-costs-link" href="trips.html?costs=${encodeURIComponent(c.id)}">My actual costs &rarr;</a>
 
     <div class="ledger-year-tabs">
       ${rows.map(r => `<button type="button" class="ledger-year-tab${r.year === activeLedgerYearTab ? " selected" : ""}" data-select-year="${r.year}">${r.year === uyYear ? "Current Year" : "Plan Ahead"} (${r.year})<small class="ledger-year-range">${useYearRangeLabel(c.use_year, r.year)}</small></button>`).join("")}
@@ -2587,8 +2591,16 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
         </div>
         <div class="point-bucket-summary">${[['Current',row.points_remaining],['Banked',row.points_banked],['Borrowed',row.points_borrowed],['Holding',row.points_holding]].map(([label,n])=>`<div><span>${label}</span><strong>${n}</strong></div>`).join('')}</div>
         ${c.is_active ? `<a class="ledger-primary-btn" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${row.year}">Use these points &rarr;</a>` : ""}
-        ${buildLedgerIdeasHTML(c, events, todayMs)}
-        <div class="point-ledger-actions"><button type="button" data-point-action="bank">Record banking <span>${isBankingWindowOpen(c.use_year, row.year, todayInEastern()) ? `Move current points to ${row.year+1}` : `Deadline passed ${formatDeadlineDate(window.DVCDates.deadlineForCycle(c.use_year, row.year))}`} &rarr;</span></button><button type="button" data-point-action="borrow">Record borrowing <span>Bring current points from ${row.year+1} &rarr;</span></button><button type="button" data-point-action="adjust">Adjust balance <span>Correct what is left in ${row.year} &rarr;</span></button><button type="button" data-reconcile="${row.year}">Reconcile with Disney <span${row.last_checked_against_disney_at ? ' class="checked"' : ""}>${row.last_checked_against_disney_at ? `Checked against Disney ${formatDeadlineDate(Date.parse(row.last_checked_against_disney_at))}` : "Not checked against Disney yet"} &rarr;</span></button></div>
+        <div class="ledger-secondary">
+          <button type="button" class="ledger-secondary-btn" data-toggle-adjust aria-expanded="false" aria-controls="adjust-options-${row.year}">Adjust balance</button>
+          <button type="button" class="ledger-secondary-btn" data-reconcile="${row.year}">Reconcile with Disney</button>
+        </div>
+        <div class="point-ledger-actions adjust-options" id="adjust-options-${row.year}" hidden>
+          <button type="button" data-point-action="bank">Record banking <span>${isBankingWindowOpen(c.use_year, row.year, todayInEastern()) ? `Move current points to ${row.year+1}` : `Deadline passed ${formatDeadlineDate(window.DVCDates.deadlineForCycle(c.use_year, row.year))}`}</span></button>
+          <button type="button" data-point-action="borrow">Record borrowing <span>Bring current points from ${row.year+1}</span></button>
+          <button type="button" data-point-action="adjust">Correct balance <span>Change what's left in ${row.year}</span></button>
+        </div>
+        <div class="reconcile-status-line${row.last_checked_against_disney_at ? " checked" : ""}">${row.last_checked_against_disney_at ? `Checked against Disney ${formatDeadlineDate(Date.parse(row.last_checked_against_disney_at))}` : "Not checked against Disney yet"}</div>
         ${borrowCheck && !borrowCheck.valid
           ? `<div class="ledger-validation-note">⚠ ${row.points_borrowed.toLocaleString()} pts borrowed exceeds next year's full ${borrowCheck.maxAllowed.toLocaleString()}-pt allotment on this contract -- double-check this against your real Member Services balance.</div>`
           : ""}
@@ -2782,6 +2794,7 @@ function openForm(contract) {
   document.getElementById("f-points").value = contract?.points_per_year || "";
   document.querySelectorAll(".points-preset-chip").forEach(chip => chip.classList.toggle("selected", chip.dataset.points == contract?.points_per_year));
   document.getElementById("f-price").value = contract?.purchase_price || "";
+  document.getElementById("f-interest").value = contract?.financing_interest_paid ?? "";
   // Editing an existing contract shows its real acquisition year; a brand
   // new one defaults to the current year, since most owners entering this
   // for the first time are doing so at (or right after) purchase.
@@ -2834,14 +2847,17 @@ function openBalanceSetup(contractId, selectedYear, adjusting = false, explicitY
     const total = row?.balance_confirmed_at ? ['points_remaining','points_banked','points_borrowed','points_holding'].reduce((sum,k) => sum+(row[k]||0),0) : '';
     const confirmed = !!row?.balance_confirmed_at;
     const extra = confirmed && (row.points_banked || row.points_borrowed || row.points_holding);
+    // A use year that hasn't started, with no balance yet, almost always
+    // still has its full allotment: suggest it, and save it if left blank.
+    const suggested = !confirmed && year > current ? c.points_per_year : "";
     const start = formatDeadlineDate(dateOnlyUTC(year, USE_YEAR_START_MONTH[c.use_year], 1));
     const end = formatDeadlineDate(useYearExpiration(c.use_year,year));
-    return `<section class="balance-year-card" data-balance-year="${year}" data-before-total="${total}" data-saved-buckets='${confirmed ? JSON.stringify({points_remaining:row.points_remaining,points_banked:row.points_banked||0,points_borrowed:row.points_borrowed||0,points_holding:row.points_holding||0}) : ''}'>
+    return `<section class="balance-year-card" data-balance-year="${year}" data-before-total="${total}" data-default-total="${suggested}" data-saved-buckets='${confirmed ? JSON.stringify({points_remaining:row.points_remaining,points_banked:row.points_banked||0,points_borrowed:row.points_borrowed||0,points_holding:row.points_holding||0}) : ''}'>
       <div class="balance-year-heading"><div><strong>${year === current ? 'This use year' : year === current+1 ? 'Next use year' : year+' use year'}</strong><span>${start} &ndash; ${end}</span></div><button type="button" class="balance-skip" onclick="skipBalanceYear(${year})">${confirmed ? 'Leave as is' : 'Skip'}</button></div>
-      <label class="balance-total" for="balance-total-${year}"><input id="balance-total-${year}" type="number" min="0" step="1" inputmode="numeric" data-balance-total oninput="updateBalanceCorrectionPreview(this)" value="${total}" placeholder="&mdash;" aria-describedby="balance-hint-${year}"><span>points left</span></label>
-      ${adjusting ? `<p class="balance-correction-preview" aria-live="polite">${total} &rarr; ${total} points left</p>` : ""}<div class="balance-card-shortcuts"><button type="button" onclick="fillBalanceAllotment(${year})">Use full ${c.points_per_year}</button><span class="balance-card-status" role="status">${confirmed ? "Saved" : "Not added"}</span></div>
+      <label class="balance-total" for="balance-total-${year}"><input id="balance-total-${year}" type="number" min="0" step="1" inputmode="numeric" data-balance-total oninput="this.closest('[data-balance-year]').dataset.skipped='';updateBalanceCorrectionPreview(this)" value="${total}" placeholder="${suggested === "" ? "&mdash;" : suggested}" aria-describedby="balance-hint-${year}"><span>points left</span></label>
+      ${adjusting ? `<p class="balance-correction-preview" aria-live="polite">${total} &rarr; ${total} points left</p>` : ""}<div class="balance-card-shortcuts"><span class="balance-card-status" role="status">${confirmed ? "Saved" : suggested !== "" ? `Saves ${suggested} unless you change it` : "Not added"}</span></div>
       <p class="balance-saved-value balance-card-hint">Last confirmed balance: ${confirmed ? total+" points" : "not added"}</p>
-      <p class="balance-card-hint" id="balance-hint-${year}">${year === current+1 ? 'Already borrowed from this year? Enter what remains.' : 'Include all points you still have available. Zero is fine.'}</p>
+      ${year > current ? "" : `<p class="balance-card-hint" id="balance-hint-${year}">Include all points you still have available. Zero is fine.</p>`}
       <details class="balance-source-details" ${extra ? 'open' : ''}><summary>Point details (optional)</summary><p>These are part of the total above. Include only points you still have, not ones already spent.</p>
         ${[['points_banked','Banked into this year'],['points_borrowed','Borrowed into this year'],['points_holding','In holding']].map(([key,label]) => `<label>${label}<input type="number" min="0" step="1" inputmode="numeric" data-balance-bucket="${key}" oninput="updateBalanceCorrectionPreview(this)" value="${confirmed ? row[key]||0 : 0}"></label>`).join('')}
       </details>
@@ -2865,7 +2881,10 @@ function updateBalanceCorrectionPreview(input) {
 }
 function parseBalanceCard(card) {
   const parts = Object.fromEntries([...card.querySelectorAll('[data-balance-bucket]')].map(input => [input.dataset.balanceBucket,input.value]));
-  return window.DVCBalances.fromTotal(card.querySelector('[data-balance-total]').value, parts);
+  const typed = card.querySelector('[data-balance-total]').value;
+  // Blank on a suggested year means the suggested allotment, unless skipped.
+  const total = typed === '' && card.dataset.defaultTotal && card.dataset.skipped !== 'true' ? card.dataset.defaultTotal : typed;
+  return window.DVCBalances.fromTotal(total, parts);
 }
 function refreshBalanceSaveActions() {
   const dirty = [...document.querySelectorAll('[data-balance-year]')].some(card => card.dataset.unsaved === 'true');
@@ -2875,16 +2894,10 @@ function refreshBalanceSaveActions() {
 function skipBalanceYear(year) {
   const card = document.querySelector(`[data-balance-year="${year}"]`);
   card.querySelector('[data-balance-total]').value = '';
+  card.dataset.skipped = 'true';
   card.querySelectorAll('[data-balance-bucket]').forEach(input => input.value=0);
   card.querySelector('details').open = false;
   card.querySelector('.balance-card-status').textContent = 'Left unchanged';
-  updateBalanceCorrectionPreview(card.querySelector('[data-balance-total]'));
-}
-function fillBalanceAllotment(year) {
-  const card = document.querySelector(`[data-balance-year="${year}"]`);
-  card.querySelector('[data-balance-total]').value = balanceSetupContract.points_per_year;
-  card.querySelectorAll('[data-balance-bucket]').forEach(input => input.value=0);
-  card.querySelector('.balance-card-status').textContent = 'Full allotment';
   updateBalanceCorrectionPreview(card.querySelector('[data-balance-total]'));
 }
 async function closeBalanceSetup() {
@@ -2960,6 +2973,7 @@ function validateContractStep(step) {
   const points = document.getElementById('f-points');
   const price = document.getElementById('f-price');
   const year = document.getElementById('f-acquisition-year');
+  const interest = document.getElementById('f-interest');
   if (step === 1 && !document.querySelector('.resort-chip.selected')) {
     message = 'Choose your home resort to continue.'; field = document.getElementById('resort-chip-search');
   } else if (step === 2 && !useYearChosen) {
@@ -2968,6 +2982,8 @@ function validateContractStep(step) {
     message = 'Enter a positive whole number of points per year.'; field = points;
   } else if (step === 3 && price.value && (!Number.isFinite(Number(price.value)) || Number(price.value) < 0)) {
     message = 'Enter a purchase price of zero or more, or leave it blank.'; field = price;
+  } else if (step === 3 && interest.value && (!Number.isFinite(Number(interest.value)) || Number(interest.value) < 0)) {
+    message = 'Enter interest paid of zero or more, or leave it blank.'; field = interest;
   } else if (step === 3 && year.value && (!Number.isInteger(Number(year.value)) || Number(year.value) < 1991 || Number(year.value) > new Date().getFullYear())) {
     message = 'Enter an acquisition year from 1991 to this year, or leave it blank.'; field = year;
   }
@@ -3001,6 +3017,7 @@ async function saveForm() {
     points_per_year: points,
     purchase_type: getSelectedPurchaseType(),
     purchase_price: document.getElementById("f-price").value ? parseFloat(document.getElementById("f-price").value) : null,
+    financing_interest_paid: document.getElementById("f-interest").value ? Math.round(parseFloat(document.getElementById("f-interest").value) * 100) / 100 : null,
     purchase_date: acquisitionYearToPurchaseDate(document.getElementById("f-acquisition-year")),
     blue_card_override: getSelectedBlueCardOverride(),
   };
