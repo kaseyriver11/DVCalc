@@ -1,3 +1,8 @@
 .DS_Store
 __pycache__/
 supabase/.temp/
+
+# Source PDFs for the extraction scripts -- regenerate with
+# scripts/download_historical_pdfs.sh / scripts/fetch_pdf_urls.sh --download.
+# Not tracked: nothing in the app loads them, and GitHub Pages would serve them publicly.
+pdfs/

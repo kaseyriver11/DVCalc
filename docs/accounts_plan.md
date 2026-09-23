@@ -1,5 +1,8 @@
 # DVC Accounts, Contracts & Personalization
 
+**Current state (2026-09-22):** Phases 1-5 below are all shipped and live on
+dvccompanion.com. The status notes that follow are the original build log.
+
 **Status:** Phase 1 (auth foundation) done and verified 2026-09-03 — real
 Google sign-in via Supabase project `dvcalc_start`, tested end to end
 locally: clicking "Sign in with Google" redirects through Google's real
@@ -278,4 +281,4 @@ All done as of 2026-09-03:
 5. ✅ `SUPABASE_URL`/`SUPABASE_ANON_KEY` (publishable key) filled into `auth.js`.
 6. ✅ Tested end to end locally — real Google sign-in, session persists, header shows signed-in state, sign-out works.
 
-**Remaining before production use:** add the live GitHub Pages URL to Supabase's Redirect URLs allow-list (Authentication → URL Configuration) — without it, sign-in will work locally but fail once deployed.
+**Production redirect URL — verify after the domain move:** the live URL has to be on Supabase's Redirect URLs allow-list (Authentication → URL Configuration), or Google sign-in falls back to the Site URL. This was set up for `dvcalc.app`; confirm `https://dvccompanion.com/**` is listed (and the Site URL points there) now that the app has moved.

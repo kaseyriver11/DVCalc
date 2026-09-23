@@ -2,7 +2,9 @@
 
 **Status:** 15 of 17 DVC resorts built (`scripts/build_live_cash_rates.py`, output in
 `data/cash_prices_live.json`, one entry per app resort id): all 12 WDW resorts, plus Vero Beach,
-Hilton Head, and Disneyland Hotel Villas. Not yet wired into the app or scheduled. Grand
+Hilton Head, and Disneyland Hotel Villas. **Scheduled and wired into the app since 2026-09-06** —
+the nightly GitHub Actions run rebuilds it and every cash price goes through
+`getCashRateWithFallback()` (see `docs/nightly_pipeline_plan.md` "Phase 2"/"Phase 3"). Grand
 Californian and Aulani are NOT covered -- see "Non-WDW resorts" below. Written 2026-08-30 after
 live exploration of `disneyworld.disney.go.com`, updated same day after finding the real pricing
 API and again after the Copper Creek pilot, updated again after finding the
@@ -394,7 +396,8 @@ this is a very light daily job — plausibly seconds, not minutes.
    suites; Aulani: no live pricing API found at all yet).
 4. **Phase 3 — wire it in:** GitHub Actions schedule (see "Why this still can't run 'in' the
    static site" below) and surface the data in the app's Cost Comparison card (average + honestly
-   -labeled last-checked, per the agreed design). Not started.
+   -labeled last-checked, per the agreed design). **Done 2026-09-06** — see
+   `docs/nightly_pipeline_plan.md` "Phase 3".
 
 ## Open risks to keep in mind
 

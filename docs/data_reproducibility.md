@@ -132,7 +132,7 @@ Last audited: 2026-03-08
 
 **2026/2027 overlap:** The historical extraction also generates 2026/2027 entries for all resorts, duplicating the `data.js` entries for those years. `data_historical.js` therefore ends with a `dedupeResorts()` IIFE that keeps the first entry per `(id, year)` — `data.js` loads first, so its entries win (they include cash rates) and the resort dropdowns list each resort once. The footer is emitted by `extract_all_historical.py`, so regenerating the file preserves it.
 
-**Legacy script:** `scripts/extract_historical.py` is the original AKV-only extraction script. It still works but is superseded by `extract_all_historical.py`.
+**Source PDFs are not tracked in git** (`pdfs/` is gitignored as of 2026-09-22 — nothing in the app loads them, and GitHub Pages would otherwise serve them publicly). Recreate them with `scripts/download_historical_pdfs.sh` and `scripts/fetch_pdf_urls.sh --download` before re-running extraction. The original AKV-only `extract_historical.py` was removed the same day; `extract_all_historical.py` replaced it.
 
 **Risk:** Low. PDFs are archived on Field Guide. Download and extraction are fully automated with validation (period count and column count reported per resort-year).
 

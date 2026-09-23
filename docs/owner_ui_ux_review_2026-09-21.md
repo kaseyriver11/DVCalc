@@ -1,7 +1,7 @@
 # DVC Companion: Owner UI/UX Review
 
 Review date: September 21, 2026  
-Status: Review complete. UX-01 through UX-14 implemented and verified locally. The owner confirmed applying migration 022 in Supabase; migration 023 is pending. All 14 original findings are resolved locally; pending database and production verification remain noted below. The summary below supersedes historical recommendations where the owner clarified the intended behavior.
+Status: Review complete. UX-01 through UX-14 implemented and verified locally. All migrations through 023 are applied in Supabase (confirmed September 22 with `db/check_migrations.sql`). All 14 original findings are resolved locally; the database handoff below is complete; the changes shipped to production on September 22. The summary below supersedes historical recommendations where the owner clarified the intended behavior.
 
 ## Changes completed: #1–#14
 
@@ -40,7 +40,7 @@ Updated September 22, 2026. This is the handoff summary for a fresh session.
 - **228 automated tests currently pass** across the workspace, including the owner-flow regression tests and tests added by concurrent work. UX-11 adds seven focused itinerary-editing/persistence tests; UX-12 adds six logged-usage tests.
 - Local mobile testing used isolated synthetic owner data at 390px and 360px. For #5, verified new-contract handoff, 0/100 balances, skipping, full-allotment entry, optional bucket math, invalid totals, unknown Home state, and partial-save failure/retry without repeating the successful year. The 360px sheet has no horizontal overflow and keeps Save/Later visible.
 - The user confirmed running **[migration 019](../db/migrations/019_validate_trip_funding.sql)** for trip funding.
-- **Run [migration 020](../db/migrations/020_confirm_point_balances.sql) before using the new balance flow with Supabase.** It adds `balance_confirmed_at`, trusts existing saved rows, and leaves newly created unknown rows unconfirmed. The backfill runs only when the column is first introduced. The timestamp means owner-entered, not verified against Disney. The migration is also included in `db/schema.sql`.
+- **[Migration 020](../db/migrations/020_confirm_point_balances.sql) is applied** (September 22) — it had been missed at first, which surfaced as a `balance_confirmed_at` schema-cache error on save. It adds `balance_confirmed_at`, trusts existing saved rows, and leaves newly created unknown rows unconfirmed. The backfill runs only when the column is first introduced. The timestamp means owner-entered, not verified against Disney. The migration is also included in `db/schema.sql`.
 - The owner confirmed applying **[migration 022](../db/migrations/022_record_point_movements.sql)** in Supabase on September 22. It requires migration 020. No migration was executed by this session; real authenticated movement saves and production deployment have not been verified. The attempted temporary local PostgreSQL test-engine download was interrupted, so the database function has not been runtime-tested here. No commit or deployment was performed for this handoff.
 - Earlier #2/#3 log entries describe estimated allotments for missing rows; **#5 supersedes that behavior with unknown balances**. The original findings below remain historical evidence.
 
@@ -111,13 +111,13 @@ The IDs below are stable references for addressing findings one at a time. Check
 - [x] UX-02 — Use the stay's applicable use-year balance.
 - [x] UX-03 — Restrict funding calculations to eligible contracts and points.
 - [x] UX-04 — Include holding points in deadline prioritization.
-- [x] UX-05 — Ask for available balances when adding existing contracts (migration 020 pending).
+- [x] UX-05 — Ask for available balances when adding existing contracts (migration 020 applied).
 - [x] UX-06 — Provide explicit banking, borrowing, and adjustment flows (migration 022 applied by owner; live saves not verified).
 - [x] UX-07 — Unify ownership-value calculations and assumptions.
 - [x] UX-08 — Represent push-notification readiness truthfully.
 - [x] UX-09 — Preserve the stay when leaving standalone resort comparison.
 - [x] UX-10 — Make failed ledger saves recoverable and unambiguous.
-- [x] UX-11 — Distinguish editing an itinerary from saving a copy (migration 023 pending).
+- [x] UX-11 — Distinguish editing an itinerary from saving a copy (migration 023 applied).
 - [x] UX-12 — Separate logged usage from inferred consumption.
 - [x] UX-13 — Prioritize ownership management in navigation and Home.
 - [x] UX-14 — Improve mobile contract-form navigation and validation.
