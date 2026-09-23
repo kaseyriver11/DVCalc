@@ -1850,7 +1850,7 @@ function buildReminderOfferHTML(profile, contracts) {
   return `
     <div class="reminder-offer" id="reminder-offer">
       <span class="reminder-offer-icon" aria-hidden="true">🔔</span>
-      <div class="reminder-offer-text"><strong>Get an email before a deadline</strong><span>We'll email you ${profile?.reminder_lead_days || 14} days before a banking deadline so points don't expire unnoticed.</span></div>
+      <div class="reminder-offer-text"><strong>Get an email before a deadline</strong><span>We'll email you ${profile?.reminder_lead_days || 14} days before a banking deadline when you've recorded current points you could bank.</span></div>
       <div class="reminder-offer-actions"><button type="button" class="save-btn" id="reminder-offer-on">Turn on</button><button type="button" class="reminder-offer-dismiss" id="reminder-offer-dismiss">Not now</button></div>
     </div>`;
 }
@@ -1965,7 +1965,7 @@ async function renderSignedIn() {
         <div class="notif-settings-row">
           <div>
             <div class="notif-settings-label">Email Reminders</div>
-            <div class="notif-settings-desc">A longer-lead-time backstop, sent to your account email.</div>
+            <div class="notif-settings-desc">Before each banking deadline, sent to your account email.</div>
           </div>
           <label class="notif-toggle"><input type="checkbox" id="n-email-enabled" aria-label="Email reminders" ${profile?.reminder_opt_in ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
         </div>

@@ -115,6 +115,32 @@ curl -X POST https://afqhmtqwjtjkjahepqxv.supabase.co/functions/v1/send-banking-
   -H "Authorization: Bearer <your service role key, from Supabase dashboard Settings > API>"
 ```
 
+**Dry run first (added 2026-09-23).** Add `?dry_run=1` to compute every
+decision without sending mail, claiming `reminder_log` rows, or writing the
+`reminder_run_log` heartbeat. It returns `planned: [{contract, action, deadline}]`,
+where `action` is `bank` (a confirmed positive current balance), or `check`
+(no confirmed balance for the current use year). A confirmed zero, and
+banked/borrowed/Holding-only balances, plan nothing:
+
+```
+curl -X POST "https://afqhmtqwjtjkjahepqxv.supabase.co/functions/v1/send-banking-reminders?dry_run=1" \
+  -H "Authorization: Bearer <your service role key>"
+```
+
+What each email says (rules and copy in `supabase/functions/_shared/banking-reminder.js`):
+- **bank** — subject "Banking deadline in N days: X current points on {contract}".
+  Names the recorded amount as "points you recorded as current", the banking
+  deadline, that Disney confirms eligibility and does the banking, and that
+  unbanked points are *not* lost then — they stay usable until the use year's
+  last day (stated separately). Never "banking/borrowing", never "forfeited".
+- **check** — subject "Check your {contract} points before the {date} banking
+  deadline". No point amount or eligibility claim; asks the owner to check
+  Disney's site and add the balance.
+
+`reminder_type` is `banking_deadline` or `banking_balance_check` (each sent at
+most once per contract per deadline). Rows under the old
+`banking_borrowing_deadline` type still block a repeat for that deadline.
+
 It returns `{"sent": N, "skipped": N, "errors": [...]}`. To actually see a
 send happen, you'll need at least one opted-in profile with an active
 contract whose use year's deadline falls within its `reminder_lead_days` —
