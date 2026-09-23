@@ -23,6 +23,12 @@
 // run. Owners reminded under the legacy "banking_borrowing_deadline" type
 // aren't reminded again for that deadline.
 //
+// The same nightly run also sends the opt-in use-year expiration and
+// Holding reminders (Prompt 3, ../_shared/point-reminder-run.js), each with
+// its own profile setting, lead time, reminder_log type and unsubscribe
+// link. They run separately, so a failure there (e.g. migration 026 not
+// applied yet) is recorded in the heartbeat without stopping banking emails.
+//
 // Deployment: see docs/phase5_deployment.md. Needs SUPABASE_URL,
 // SUPABASE_SERVICE_ROLE_KEY and RESEND_API_KEY secrets and the daily
 // pg_cron job. Call with ?dry_run=1 (or set the DRY_RUN=true secret) to
@@ -33,6 +39,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { normalizeBaseUrl } from "../_shared/base_url.ts";
 import { todayInEastern } from "../_shared/banking-reminder.js";
 import { runBankingReminders } from "../_shared/banking-reminder-run.js";
+import { runPointReminders } from "../_shared/point-reminder-run.js";
 
 // Mirrors auth.js: set false to email every opted-in owner regardless of
 // membership. past_due still counts (Stripe is retrying the card).
@@ -62,7 +69,7 @@ Deno.serve(async (req) => {
       if (subError) throw new Error(`subscriptions query failed: ${subError.message}`);
       memberIds = new Set((subs ?? []).map((s) => s.user_id));
     }
-    result = await runBankingReminders({
+    const options = {
       supabase,
       today: todayInEastern(),
       appBaseUrl: normalizeBaseUrl(Deno.env.get("APP_BASE_URL")),
@@ -77,10 +84,21 @@ Deno.serve(async (req) => {
         });
         return resp.ok ? { ok: true } : { ok: false, error: await resp.text() };
       },
-    });
+    };
+    for (const [name, run] of [["banking", runBankingReminders], ["expiration/holding", runPointReminders]] as const) {
+      try {
+        const r = await run(options);
+        result.sent += r.sent;
+        result.skipped += r.skipped;
+        result.errors.push(...r.errors);
+        result.planned.push(...r.planned);
+      } catch (err) {
+        // A crash still reaches the heartbeat below, so the watchdog can tell
+        // a broken run from a cron job that stopped firing.
+        result.errors.push(`unhandled ${name} error: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
   } catch (err) {
-    // A crash still reaches the heartbeat below, so the watchdog can tell a
-    // broken run from a cron job that stopped firing.
     result.errors.push(`unhandled error: ${err instanceof Error ? err.message : String(err)}`);
   }
 

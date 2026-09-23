@@ -19,28 +19,28 @@
   // event: DVCPointAttention.earliest() -- null when there are no active
   // contracts. name: the contract's display label (already HTML-escaped).
   // tiers: dvc-dates.js urgencyTier/expirationTier. formatDate: ms -> text.
-  // Returns { tone, title, detail, note, action } or null.
-  function attentionCard(event, { name, tiers, formatDate }) {
+  // describe: DVCPointAttention.describe, so Home and My Contracts word an
+  // action identically. total: how many point actions exist in all.
+  // Returns { tone, title, detail, note, action, more } or null. Home shows
+  // only this one item; `more` links to the full list on My Contracts.
+  function attentionCard(event, { name, tiers, formatDate, describe, total = 1 }) {
     if (!event) return null;
-    if (event.kind === "unconfirmed") {
-      return { tone: "warning", title: `Add a balance for ${name}`, detail: `${event.year} use year`, note: null,
-        action: { label: "Add balance", href: ledgerHref(event.contract, event.year) } };
+    if (event.kind === "accounted") {
+      // Every active contract's current balance is recorded and nothing is
+      // due. Only reachable when no balance is unknown, since an
+      // unconfirmed contract is itself an event.
+      return { tone: "calm", title: "Nothing needs attention", detail: "Every current balance is recorded.", note: null,
+        action: { label: "View contracts", href: "account.html" }, more: null };
     }
-    if (event.kind === "bankable") {
-      return { tone: tiers.urgency(event.deadline.daysUntil), title: `Bank ${event.points.toLocaleString()} points by ${formatDate(event.deadline.ms)}`,
-        detail: name, note: null, action: { label: "Review banking", href: ledgerHref(event.contract, event.year) } };
-    }
-    if (event.kind === "use-by") {
-      return { tone: tiers.expiration(event.daysUntil), title: `Use ${event.points.toLocaleString()} points by ${formatDate(event.expiresMs)}`,
-        detail: name,
-        note: event.holding ? `Includes ${event.holding.toLocaleString()} holding points, which only book stays within 60 days of check-in.` : null,
-        action: { label: "Review points", href: ledgerHref(event.contract, event.year) } };
-    }
-    // "accounted": every active contract's current balance is recorded and
-    // nothing is due. Only reachable when no balance is unknown, since an
-    // unconfirmed contract is itself an event.
-    return { tone: "calm", title: "Nothing needs attention", detail: "Every current balance is recorded.", note: null,
-      action: { label: "View contracts", href: "account.html" } };
+    const copy = describe(event, formatDate);
+    const tone = event.kind === "unconfirmed" ? "warning"
+      : event.kind === "bankable" ? tiers.urgency(event.deadline.daysUntil)
+      : tiers.expiration(event.daysUntil);
+    const label = { unconfirmed: "Check balance", bankable: "Review banking" }[event.kind] || "Review points";
+    return { tone, title: copy.title, detail: `${name} &middot; ${event.year} use year`,
+      note: event.kind === "holding" ? "Book no more than 60 days before check-in." : null,
+      action: { label, href: ledgerHref(event.contract, event.year) },
+      more: { label: total > 1 ? `View all ${total} point actions` : "View all point actions", href: "account.html#point-actions" } };
   }
 
   // active: active contracts. rowsByContract: { contractId: ledger rows }.

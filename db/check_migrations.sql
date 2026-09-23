@@ -26,7 +26,8 @@ with checks(migration, kind, tbl, name) as (values
   ('022', 'fn', null, 'record_point_movement'),
   ('023', 'col', 'itineraries', 'booking_contract_id'),
   ('024', 'fn', null, 'save_trip_booking'),
-  ('025', 'fn', null, 'reconcile_points')
+  ('025', 'fn', null, 'reconcile_points'),
+  ('026', 'col', 'profiles', 'holding_reminder_lead_days')
 )
 select
   migration,

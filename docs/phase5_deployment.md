@@ -141,6 +141,29 @@ What each email says (rules and copy in `supabase/functions/_shared/banking-remi
 most once per contract per deadline). Rows under the old
 `banking_borrowing_deadline` type still block a repeat for that deadline.
 
+**Use-year expiration and Holding emails (added 2026-09-23, migration 026).**
+The same function also runs a second, separate loop
+(`supabase/functions/_shared/point-reminder-run.js`, rules/copy in
+`point-reminders.js`) for owners who turned on "Use-Year Expiration Emails"
+or "Holding Point Emails" in Notification Settings. Each has its own lead time
+(days before the use year ends), and the dry run plans them as:
+- **expiration** — subject "Use N points on {contract} before {use-year end}".
+  Counts banked + borrowed, plus current once the banking deadline has passed
+  (while banking is open, current points belong to the banking email above,
+  never both). No banking suggestion.
+- **expirationCheck** — no confirmed balance: "Check your {contract} points
+  before the use year ends on {date}", with no numbers.
+- **holding** — subject "N Holding points on {contract} expire {date}"; says
+  they can't be banked and must be booked no more than 60 days before
+  check-in. Nothing is sent for Holding when the balance is unknown.
+
+`reminder_type` is `use_year_expiration`, `use_year_expiration_check` or
+`holding_expiration`, once per contract per use-year end. A failure in this
+loop (for example, migration 026 not run yet) is recorded in the heartbeat
+without stopping the banking emails. Each email's unsubscribe link carries
+`&type=expiration` or `&type=holding`, so **redeploy `unsubscribe-reminders`
+too**; a link without `type` still means banking reminders.
+
 It returns `{"sent": N, "skipped": N, "errors": [...]}`. To actually see a
 send happen, you'll need at least one opted-in profile with an active
 contract whose use year's deadline falls within its `reminder_lead_days` —

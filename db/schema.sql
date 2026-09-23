@@ -33,6 +33,12 @@ create table if not exists profiles (
   dues_growth_rate numeric(5,4) not null default 0.04,
   value_growth_rate numeric(5,4) not null default 0.05,
   opportunity_cost_rate numeric(5,4) not null default 0.00,
+  -- Opt-in use-year expiration and Holding reminder emails, separate from
+  -- the banking reminder above -- see db/migrations/026.
+  expiration_reminder_opt_in boolean not null default false,
+  expiration_reminder_lead_days int not null default 45 check (expiration_reminder_lead_days between 1 and 240),
+  holding_reminder_opt_in boolean not null default false,
+  holding_reminder_lead_days int not null default 60 check (holding_reminder_lead_days between 1 and 240),
   created_at timestamptz not null default now()
 );
 

@@ -944,112 +944,8 @@ body {
   margin-bottom: 10px;
 }
 
-/* The single most urgent fact on the page, across every active contract --
-   sits above everything else, since it's the answer to "do I need to act on
-   something right now," not a setting. */
-.deadline-countdown {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-.deadline-countdown-icon { font-size: 1.4rem; flex-shrink: 0; }
-.deadline-countdown-label {
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  opacity: 0.75;
-}
-.deadline-countdown-detail { font-size: 0.86rem; margin-top: 2px; }
-
-.deadline-countdown.calm { background: var(--color-primary-tint-bg); color: var(--color-primary); }
-.deadline-countdown.warning { background: #fff3e0; color: #a3401f; }
-.deadline-countdown.danger { background: var(--color-danger-bg); color: var(--color-danger); }
-.deadline-countdown.danger .deadline-countdown-detail strong { color: inherit; }
-
-/* ---- "Your Contracts" title row: the bell/gear icon that opens
-   Notification Settings sits in its corner rather than its own row above
-   the page -- a standalone row left dead space between the deadline
-   banner and the contracts card since it had nothing else to share the
-   row with. Replaces the old always-visible checkbox row, which read as a
-   leftover web form rather than something native-app-like. */
-.section-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.section-title-row h2 { margin-bottom: 0; }
-.notif-settings-btn {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border-light);
-  background: white;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-.notif-settings-btn:hover { border-color: var(--color-primary); }
-
-/* ---- Membership card: lives above "Your Contracts" as its own small
-   section, same grouping idea as the notif-settings gear -- an
-   account-level setting, not a contract. See docs/subscriptions_plan.md
-   Phase 4. */
-.membership-card {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  padding: 16px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-.membership-card-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: #999; font-weight: 700; margin-bottom: 2px; }
-.membership-card-status { font-size: 0.95rem; font-weight: 700; color: #333; }
-.membership-card-status.is-active { color: var(--color-primary); }
-.membership-card-status.is-warning { color: #a3401f; }
-.membership-card-detail { font-size: 0.8rem; color: #777; margin-top: 2px; }
-/* Task 10 pricing-anchor line -- a touch bolder/colored than the plain
-   detail line above it, since this one's carrying the actual persuasion
-   (price framing), not just a feature description. */
-.membership-card-anchor { font-size: 0.78rem; color: var(--color-primary); font-weight: 600; margin-top: 4px; }
-.membership-card-btn {
-  flex-shrink: 0;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 9px 18px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.membership-card-btn:hover { background: var(--color-primary-active); }
-.membership-card-btn:disabled { opacity: 0.6; cursor: default; }
-.membership-card-btn.secondary { background: #f7f5fa; color: var(--color-primary); border: 1px solid #ddd; }
-.membership-card-btn.secondary:hover { background: var(--color-primary-tint-bg); }
-.membership-card-msg { flex-basis: 100%; font-size: 0.78rem; color: var(--color-danger); }
-.membership-checkout-banner {
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  margin-bottom: 14px;
-}
-.membership-checkout-banner.success { background: var(--color-primary-tint-bg); color: var(--color-primary); }
 .membership-checkout-banner.cancelled { background: #f0f0f0; color: #666; }
 
-/* ---- Notification Center: a short dismissible list of other active
-   contracts' notable statuses, below whichever one is already the lead
-   .deadline-countdown banner above. ---- */
 .reminder-offer {
   display: flex;
   align-items: center;
@@ -1067,44 +963,34 @@ body {
 .reminder-offer-actions { display: flex; gap: 8px; align-items: center; }
 .reminder-offer-actions .save-btn { width: auto; margin: 0; padding: 8px 16px; }
 .reminder-offer-dismiss { border: 0; background: none; color: var(--color-text-muted); font: inherit; font-size: 0.8rem; cursor: pointer; }
-.notification-center {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.notification-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-}
-.notification-item.calm { background: var(--color-primary-tint-bg); color: var(--color-primary); }
-.notification-item.warning { background: #fff3e0; color: #a3401f; }
-.notification-item.danger { background: var(--color-danger-bg); color: var(--color-danger); }
-.notification-item-icon { flex-shrink: 0; }
-.notification-item-text { flex: 1; min-width: 0; }
-.notification-item-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.notification-item-cal {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: inherit;
-  text-decoration: underline;
-  white-space: nowrap;
-}
-.notification-item-dismiss {
-  background: none;
-  border: none;
-  color: inherit;
-  opacity: 0.6;
-  font-size: 1.1rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0 2px;
-}
-.notification-item-dismiss:hover { opacity: 1; }
+/* ---- Point actions (Prompt 3): every active contract's current-cycle
+   actions, grouped by contract, most urgent first. Tone follows
+   dvc-dates.js's urgency scale (calm/warning/danger). ---- */
+.point-actions { margin: 0 0 16px; padding: 14px 16px; border: 1px solid var(--color-border-light); border-radius: 14px; background: var(--color-bg-card); }
+.point-actions:focus { outline: none; }
+/* Clear the sticky site header when jumped to (Home link, View balance). */
+.point-actions, #active-contract-details { scroll-margin-top: 64px; }
+.point-actions-head h2 { font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 8px; }
+.point-actions-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--color-primary); color: #fff; font-size: .75rem; }
+.point-actions-sub { margin: 4px 0 10px; font-size: .78rem; color: var(--color-text-muted); }
+.point-action-group { padding: 10px 0 4px; border-top: 1px solid var(--color-border-light); }
+.point-action-contract { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-bottom: 8px; font-size: .9rem; min-width: 0; }
+.point-action-contract strong { overflow-wrap: anywhere; }
+.point-action-contract span { font-size: .76rem; color: var(--color-text-muted); }
+.point-action { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; border-left: 4px solid var(--pa-accent); background: var(--pa-bg); }
+.point-action.calm { --pa-accent: var(--color-primary); --pa-bg: var(--color-primary-tint-bg); }
+.point-action.warning { --pa-accent: #e65100; --pa-bg: #fff3e0; }
+.point-action.danger { --pa-accent: var(--color-danger); --pa-bg: var(--color-danger-bg); }
+.point-action-title { font-size: .95rem; font-weight: 700; color: var(--color-text); }
+.point-action-when { font-size: .78rem; font-weight: 700; color: var(--pa-accent); margin-top: 2px; }
+.point-action-why { margin: 6px 0 0; font-size: .82rem; color: var(--color-text); }
+.point-action-fresh { margin-top: 4px; font-size: .74rem; color: var(--color-text-muted); }
+.point-action-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; }
+.point-action-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .84rem; font-weight: 600; color: var(--color-primary); }
+.point-action-link.primary { font-weight: 700; }
+.point-action-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.point-action-clear { padding: 10px 12px; border-radius: 10px; background: var(--color-good-bg); color: var(--color-good); font-size: .86rem; font-weight: 600; }
+.point-action-clear.small { background: none; padding: 4px 0 0; color: var(--color-text-muted); font-weight: 400; font-size: .78rem; }
 
 /* ---- Notification Settings modal ---- */
 .notif-settings-row {
@@ -1583,6 +1469,7 @@ function buildLedgerRows(contract, yearPointsByContract, today) {
 // Point history for the per-use-year activity view (Prompt 2): point
 // moves, booking deduction receipts (including reversed ones) and
 // owner reconciliations. Set by renderSignedIn().
+let pointActionsJumped = false;
 let pointActivity = { movements: [], reconciliations: [], deductionHistory: [], incomplete: false };
 function buildActivityHTML(contractId, year) {
   const events = DVCReconcile.activity({
@@ -1771,137 +1658,85 @@ function buildCheckoutReturnBannerHTML() {
   return "";
 }
 
-function buildDeadlineCountdownHTML(earliest) {
-  if (!earliest) return "";
-  if (earliest.kind === 'unconfirmed') return `<div class="deadline-countdown calm"><div class="deadline-countdown-text"><div class="deadline-countdown-label">Add your points balance</div><div class="deadline-countdown-detail">${window.DVCPointAttention.label(earliest.contract, resortName(earliest.contract.home_resort_id))}: annual points describe what you own. Add what is left to see available points and reminders.</div></div></div>`;
+// ---- Point actions (Prompt 3, 2026-09-23) ----
+// One grouped list of every active contract's current-cycle point actions
+// (DVCPointAttention.groups() -- the same events Home picks its single most
+// urgent item from, so the two can't disagree). One item per at-risk
+// bucket group, and each recorded point counts in exactly one item: bank or
+// use current points, use points that can no longer be banked, use Holding
+// points, or check an unknown balance. Nothing here banks, books or
+// transfers anything; every action is a link to the balance or the planner.
+function pointActionTone(event) {
+  if (event.kind === "unconfirmed") return "calm";
+  return event.kind === "bankable" ? urgencyTier(event.deadline.daysUntil) : expirationTier(event.daysUntil);
+}
 
-  if (earliest.kind === "accounted") {
-    return `
-    <div class="deadline-countdown calm">
-      <span class="deadline-countdown-icon">✅</span>
-      <div class="deadline-countdown-text">
-        <div class="deadline-countdown-label">Ledger Status</div>
-        <div class="deadline-countdown-detail">All points are accounted for -- nothing currently needs banking or borrowing.</div>
-      </div>
-    </div>
-  `;
-  }
+function pointActionFreshness(event) {
+  const f = event.freshness;
+  if (!f) return "";
+  const day = at => formatDeadlineDate(Date.parse(at));
+  if (f.checkedAt) return `Checked against Disney on ${day(f.checkedAt)}`;
+  return f.recordedAt ? `Recorded here ${day(f.recordedAt)} &middot; not checked against Disney yet` : "Not checked against Disney yet";
+}
 
-  if (earliest.kind === "use-by") {
-    // Color follows the unified urgency scale (proximity to actual
-    // forfeiture) -- the 🔒 icon is the separate "banking specifically
-    // is closed" signal, independent of how urgent that color reads.
-    const { contract, expiresMs, daysUntil } = earliest;
-    return `
-    <div class="deadline-countdown ${expirationTier(daysUntil)}">
-      <span class="deadline-countdown-icon">🔒</span>
-      <div class="deadline-countdown-text">
-        <div class="deadline-countdown-label">Use-Year Expiration</div>
-        <div class="deadline-countdown-detail">
-          <strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${earliest.points} pts (${earliest.buckets}) must be used by
-          <strong>${formatDeadlineWithCountdown(expiresMs, daysUntil)}</strong>
-        </div>
-      </div>
-    </div>
-  `;
-  }
+function pointActionLinks(event) {
+  const c = event.contract;
+  const ledger = `account.html?contract=${encodeURIComponent(c.id)}&year=${event.year}`;
+  const open = (label, primary) => `<a class="point-action-link${primary ? " primary" : ""}" href="${ledger}" data-open-ledger="${c.id}" data-open-year="${event.year}">${label}</a>`;
+  if (event.kind === "unconfirmed") return open("Add or check balance", true);
+  const dateMs = event.kind === "bankable" ? event.deadline.ms : event.expiresMs;
+  const links = [open(event.kind === "bankable" ? "View balance" : "View balance and stay ideas", true)];
+  links.push(`<a class="point-action-link" href="${googleCalendarLink(c, dateMs, event.kind)}" target="_blank" rel="noopener">+ Calendar</a>`);
+  return links.join("");
+}
 
-  // kind === "bankable"
-  const { contract, deadline } = earliest;
+function buildPointActionsHTML(contracts, yearPointsByContract, today) {
+  const groups = window.DVCPointAttention.groups(contracts, yearPointsByContract, today);
+  if (!groups.length) return "";
+  const withEvents = groups.filter(g => g.events.length);
+  const clear = groups.filter(g => !g.events.length);
+  const name = c => window.DVCPointAttention.label(c, resortName(c.home_resort_id));
+  const total = withEvents.reduce((n, g) => n + g.events.length, 0);
   return `
-    <div class="deadline-countdown ${urgencyTier(deadline.daysUntil)}">
-      <span class="deadline-countdown-icon">⏳</span>
-      <div class="deadline-countdown-text">
-        <div class="deadline-countdown-label">Your Earliest Deadline</div>
-        <div class="deadline-countdown-detail">
-          <strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${earliest.points} current pts; bank by
-          <strong>${formatDeadlineWithCountdown(deadline.ms, deadline.daysUntil)}</strong>
-        </div>
+    <section class="point-actions" id="point-actions" aria-labelledby="point-actions-title" tabindex="-1">
+      <div class="point-actions-head">
+        <h2 id="point-actions-title">Point actions${total ? ` <span class="point-actions-count">${total}</span>` : ""}</h2>
+        <p class="point-actions-sub">From the balances recorded here. Disney's member site shows the official balance, and banking or booking happens there.</p>
       </div>
-    </div>
-  `;
-}
-
-// ---- Notification Center ----
-// A short list of OTHER active contracts' notable statuses -- whichever one
-// is already the lead banner above (buildDeadlineCountdownHTML) is excluded
-// so the same fact isn't shown twice. Fully "accounted" contracts never
-// appear here; there's nothing to act on. Each item can be dismissed for
-// its current use-year cycle (localStorage, this browser only -- a fresh
-// cycle naturally gets a new id, so dismissing one deadline can't
-// accidentally suppress a future one for the same contract).
-const DISMISSED_NOTIFS_KEY = "dvc_dismissed_notifications";
-
-function getDismissedNotificationIds() {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(DISMISSED_NOTIFS_KEY) || "[]"));
-  } catch {
-    return new Set();
-  }
-}
-
-function dismissNotification(id) {
-  const ids = getDismissedNotificationIds();
-  ids.add(id);
-  try {
-    localStorage.setItem(DISMISSED_NOTIFS_KEY, JSON.stringify([...ids]));
-  } catch {
-    // Private browsing / storage disabled -- dismissal just won't persist
-    // across a reload, not worth surfacing an error for.
-  }
+      ${withEvents.length ? withEvents.map(({ contract, events }) => `
+        <div class="point-action-group">
+          <div class="point-action-contract"><strong>${name(contract)}</strong><span>${events[0].year} use year &middot; ${useYearRangeLabel(contract.use_year, events[0].year)}</span></div>
+          ${events.map(event => {
+            const copy = window.DVCPointAttention.describe(event, formatDeadlineDate);
+            const fresh = pointActionFreshness(event);
+            return `
+            <article class="point-action ${pointActionTone(event)}">
+              <div class="point-action-title">${copy.title}</div>
+              ${copy.date ? `<div class="point-action-when">${copy.date.daysUntil === 0 ? "Today" : `${copy.date.daysUntil} day${copy.date.daysUntil === 1 ? "" : "s"} left`}</div>` : ""}
+              <p class="point-action-why">${copy.why}</p>
+              ${fresh ? `<div class="point-action-fresh">${fresh}</div>` : ""}
+              <div class="point-action-links">${pointActionLinks(event)}</div>
+            </article>`;
+          }).join("")}
+        </div>`).join("") : `<div class="point-action-clear">Nothing needs action. Every current balance is recorded.</div>`}
+      ${withEvents.length && clear.length ? `<div class="point-action-clear small">No action needed: ${clear.map(g => name(g.contract)).join(", ")}</div>` : ""}
+    </section>`;
 }
 
 // Google Calendar's "render" web-intent URL -- opens a pre-filled event
 // creation screen in a new tab. No .ics download to double-tap on mobile,
-// no backend involved.
-function googleCalendarLink(contract, dateMs, isBankable) {
+// no backend involved. kind: a DVCPointAttention event kind.
+function googleCalendarLink(contract, dateMs, kind) {
   const ymd = new Date(dateMs).toISOString().slice(0, 10).replace(/-/g, "");
   const nextDay = new Date(dateMs + 86400000).toISOString().slice(0, 10).replace(/-/g, "");
-  const title = isBankable
-    ? `Banking deadline -- ${resortName(contract.home_resort_id)} DVC points`
-    : `Use-year expiration -- ${resortName(contract.home_resort_id)} DVC points`;
-  const details = isBankable
-    ? "Current points must be banked by this date to move to the following use year. Added via DVC Companion."
-    : "Remaining points for this use year must be used by this date. Added via DVC Companion.";
+  const resort = resortName(contract.home_resort_id);
+  const [title, details] = kind === "bankable"
+    ? [`Banking deadline -- ${resort} DVC points`, "Last day to bank current points into the next use year with Disney. Unbanked points stay usable until the use year ends. Added via DVC Companion."]
+    : kind === "holding"
+    ? [`Holding points expire -- ${resort} DVC points`, "Holding points expire when this use year ends. Book no more than 60 days before check-in. Added via DVC Companion."]
+    : [`Use-year expiration -- ${resort} DVC points`, "Points left in this use year expire after this date. Added via DVC Companion."];
   const params = new URLSearchParams({ action: "TEMPLATE", text: title, dates: `${ymd}/${nextDay}`, details });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-function buildNotificationCenterHTML(contracts, yearPointsByContract, today, leadContractId) {
-  const dismissed = getDismissedNotificationIds();
-  const items = contracts
-    .filter(c => c.is_active)
-    .flatMap(c => window.DVCPointAttention.eventsForContract(c, yearPointsByContract, today).map(status => ({ contract: c, status })))
-    .filter(({contract, status}) => contract.id !== leadContractId || status.kind !== evaluateContractDeadlineStatus(contract, yearPointsByContract, today).kind)
-    .sort((a,b) => (a.status.deadline?.ms ?? a.status.expiresMs ?? Infinity) - (b.status.deadline?.ms ?? b.status.expiresMs ?? Infinity))
-    .filter(({ status }) => status.kind !== "accounted")
-    .map(({ contract, status }) => ({ contract, status, id: `${contract.id}:${status.kind}:${currentUYYear(contract.use_year, today)}:${status.buckets}` }))
-    .filter(({ id }) => !dismissed.has(id));
-
-  if (items.length === 0) return "";
-
-  return `
-    <div class="notification-center" id="notification-center-list">
-      ${items.map(({ contract, status, id }) => {
-        if (status.kind === "unconfirmed") return `<div class="notification-item calm"><div class="notification-item-text"><strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; balance not added. <a href="account.html?contract=${encodeURIComponent(contract.id)}">Add points left</a></div></div>`;
-        const isBankable = status.kind === "bankable";
-        const dateMs = isBankable ? status.deadline.ms : status.expiresMs;
-        const daysUntil = isBankable ? status.deadline.daysUntil : status.daysUntil;
-        const text = isBankable
-          ? `${status.points} current pts; bank by ${formatDeadlineWithCountdown(dateMs, daysUntil)}`
-          : `${status.points} pts (${status.buckets}) expire ${formatDeadlineWithCountdown(dateMs, daysUntil)}`;
-        return `
-        <div class="notification-item ${isBankable ? urgencyTier(daysUntil) : expirationTier(daysUntil)}" data-notif-id="${id}">
-          <span class="notification-item-icon">${isBankable ? "⏳" : "🔒"}</span>
-          <div class="notification-item-text"><strong>${window.DVCPointAttention.label(contract, resortName(contract.home_resort_id))}</strong> &mdash; ${text}</div>
-          <div class="notification-item-actions">
-            <a class="notification-item-cal" href="${googleCalendarLink(contract, dateMs, isBankable)}" target="_blank" rel="noopener">+ Calendar</a>
-            <button type="button" class="notification-item-dismiss" data-dismiss="${id}" aria-label="Dismiss">&times;</button>
-          </div>
-        </div>`;
-      }).join("")}
-    </div>
-  `;
 }
 
 // "Dec 2025 – Nov 2026". DVC labels a use year by its deposit year, which
@@ -2001,7 +1836,6 @@ async function renderSignedIn() {
   const today = todayInEastern();
   currentProfile = profile;
   currentSubscription = subscription;
-  const earliestDeadline = computeEarliestDeadline(contracts, yearPointsByContract, today);
   // A global opt-out for the in-app channel (Notification Settings) hides
   // both the hero banner and the Notification Center list below it -- email
   // stays independent and keeps working either way.
@@ -2013,10 +1847,7 @@ async function renderSignedIn() {
     ${reconcileHTML()}
     ${buildCheckoutReturnBannerHTML()}
     ${buildMembershipCardHTML(subscription, contracts)}
-<div id="point-attention">
-    ${inAppEnabled ? buildDeadlineCountdownHTML(earliestDeadline) : ""}
-    ${inAppEnabled ? buildNotificationCenterHTML(contracts, yearPointsByContract, today, earliestDeadline?.contract?.id) : ""}
-    </div>
+    ${inAppEnabled ? buildPointActionsHTML(contracts, yearPointsByContract, today) : ""}
     ${buildReminderOfferHTML(profile, contracts)}
 
     <div class="modal-overlay" id="notif-settings-modal">
@@ -2028,7 +1859,7 @@ async function renderSignedIn() {
         <div class="notif-settings-row">
           <div>
             <div class="notif-settings-label">In-App Banners</div>
-            <div class="notif-settings-desc">Show the earliest-deadline banner and Notification Center when you open the app.</div>
+            <div class="notif-settings-desc">Show point actions (banking, expiring and Holding points) on My Contracts.</div>
           </div>
           <label class="notif-toggle"><input type="checkbox" id="n-inapp-enabled" aria-label="In-app banners" ${profile?.in_app_notifications_enabled !== false ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
         </div>
@@ -2042,8 +1873,8 @@ async function renderSignedIn() {
         </div>
         <div class="notif-settings-row">
           <div>
-            <div class="notif-settings-label">Email Reminders</div>
-            <div class="notif-settings-desc">Before each banking deadline, sent to your account email.</div>
+            <div class="notif-settings-label">Banking Deadline Emails</div>
+            <div class="notif-settings-desc">Before each banking deadline, when you've recorded current points you could bank. Sent to your account email.</div>
           </div>
           <label class="notif-toggle"><input type="checkbox" id="n-email-enabled" aria-label="Email reminders" ${profile?.reminder_opt_in ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
         </div>
@@ -2051,6 +1882,7 @@ async function renderSignedIn() {
           <label for="n-lead-days">Email lead time</label>
           <div class="notif-lead-input"><input type="number" id="n-lead-days" min="1" max="240" value="${profile?.reminder_lead_days ?? 14}"> days before a deadline</div>
         </div>
+        ${pointReminderSettingsHTML(profile)}
         <div class="notif-settings-status" id="notif-settings-status" role="status" aria-live="polite"></div>
         <div class="studio-nav">
           <button type="button" class="cancel-btn" id="notif-settings-cancel">Close</button>
@@ -2063,7 +1895,7 @@ async function renderSignedIn() {
       <div class="section-title-row">
         <h2>Your Contracts</h2>
         <button type="button" class="notif-settings-btn" id="notif-settings-btn" aria-label="Notification settings" title="Notification settings">
-          ${profile?.reminder_opt_in || inAppEnabled ? "🔔" : "🔕"}
+          ${profile?.reminder_opt_in || profile?.expiration_reminder_opt_in || profile?.holding_reminder_opt_in || inAppEnabled ? "🔔" : "🔕"}
         </button>
       </div>
       <div class="section-sub">Own more than one? Add each separately -- DVC Companion will combine what they unlock together.</div>
@@ -2259,14 +2091,24 @@ async function renderSignedIn() {
   document.getElementById("membership-action-btn").addEventListener("click", handleMembershipAction);
   wireReminderOffer();
   handleCheckoutReturn();
+  // Home's "View all point actions" link: the list renders after load, so
+  // the browser's own anchor jump has already missed it. Once per visit.
+  if (location.hash === "#point-actions" && !pointActionsJumped) {
+    pointActionsJumped = true;
+    const section = document.getElementById("point-actions");
+    if (section) { section.scrollIntoView({ block: "start" }); section.focus({ preventScroll: true }); }
+  }
 
-  // Notification Center dismiss buttons -- delegated since the list
-  // re-renders on every page load and each item's own lifetime is short.
-  document.getElementById("point-attention")?.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-dismiss]");
-    if (!btn) return;
-    dismissNotification(btn.dataset.dismiss);
-    btn.closest(".notification-item").remove();
+  // Point actions: "View balance" brings that contract and use year to the
+  // front in place (the href still works as a plain link).
+  document.getElementById("point-actions")?.addEventListener("click", (e) => {
+    const link = e.target.closest("[data-open-ledger]");
+    if (!link) return;
+    e.preventDefault();
+    activeWalletCardId = link.dataset.openLedger;
+    activeLedgerYearTab = Number(link.dataset.openYear);
+    renderContractList(contracts, resorts, yearPointsByContract);
+    document.getElementById("active-contract-details")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   // Wallet deck: clicking a card's face brings it to the front. The ledger
@@ -2565,13 +2407,14 @@ function applyDeckPeekSpacing() {
 // the search walks every resort/room/night in the window.
 const leftoverStaysCache = new Map();
 function findLeftoverStays(c, status, todayMs) {
-  const key = [c.id, status.points, status.holding, status.expiresMs, todayMs].join("|");
+  const holdingOnly = status.kind === "holding";
+  const key = [c.id, status.kind, status.points, status.expiresMs, todayMs].join("|");
   if (leftoverStaysCache.has(key)) return leftoverStaysCache.get(key);
   const D = window.DVCDates, L = window.DVCLeftoverPoints, DAY = 86400000;
   const iso = ms => new Date(ms).toISOString().slice(0, 10);
   const allIds = [...new Set(RESORTS.map(r => r.id))];
   const access = window.DVCAuth.getUserResortAccess([c], allIds);
-  const holdingCap = status.holding > 0 ? iso(todayMs + window.DVCLedger.HOLDING_BOOKING_WINDOW_DAYS * DAY) : "9999-12-31";
+  const holdingCap = holdingOnly ? iso(todayMs + window.DVCLedger.HOLDING_BOOKING_WINDOW_DAYS * DAY) : "9999-12-31";
   const capFor = id => access.homeResortIds.has(id) ? D.monthsFromDate(11) : access.sevenMoResortIds.has(id) ? D.monthsFromDate(7) : null;
   const resorts = allIds.map(id => {
     const cap = capFor(id);
@@ -2615,25 +2458,22 @@ function buildLeftoverStaysHTML(c, status, todayMs) {
     const odds = window.DVCLeftoverPoints.oddsLabel(s.availability, s.nights);
     return `<a class="leftover-stay" href="${href}"><span class="leftover-stay-head"><span class="leftover-stay-name">${shorthandResortName(s.resortId, chart.name)}</span><span class="leftover-stay-odds ${odds.toLowerCase()}">${odds} odds</span></span><span class="leftover-stay-detail">${room} &middot; ${s.nights} night${s.nights === 1 ? "" : "s"} &middot; ${s.pointsUsed} pts &middot; from ${fmt(s.checkIn)} &rarr;</span></a>`;
   }).join("");
-  return `<div class="leftover-stays"><div class="leftover-stays-title">Most likely to have short-notice openings${status.holding > 0 ? " within 60 days" : ""}</div><div class="leftover-stays-list">${items}</div><div class="leftover-stays-note">Based on past availability this close in. Odds drop as dates get closer, so book soon.</div></div>`;
+  return `<div class="leftover-stays"><div class="leftover-stays-title">Most likely to have short-notice openings${status.kind === "holding" ? " within 60 days" : ""}</div><div class="leftover-stays-list">${items}</div><div class="leftover-stays-note">Based on past availability this close in. Odds drop as dates get closer, so book soon.</div></div>`;
 }
 
-function buildLedgerAttentionHTML(c, row, status, todayMs) {
+// events: this row's DVCPointAttention events when it's the current cycle
+// of an active contract, else null (a Plan Ahead row just shows its dates).
+// Same one-line-per-bucket split as the Point actions list above.
+function buildLedgerAttentionHTML(c, row, events, todayMs) {
   if (!row.balance_confirmed_at) return `<div class="ledger-deadline-warning muted">Balance not added. Your ${c.points_per_year} annual points are not an available balance.</div>`;
-  const holdingStatus = row.points_holding > 0 ? window.DVCLedger.holdingExpiration(row.expiresMs, todayMs) : null;
-  return `        ${status?.kind === "bankable"
-          ? `<div class="ledger-deadline-warning ${urgencyTier(status.deadline.daysUntil)}">⏳ Bank current points by ${formatDeadlineWithCountdown(status.deadline.ms, status.deadline.daysUntil)}</div>`
-          : status?.kind === "use-by"
-          ? `<div class="ledger-deadline-warning ${expirationTier(status.daysUntil)}">🔒 ${status.points} pts (${status.buckets}) expire ${formatDeadlineWithCountdown(status.expiresMs, status.daysUntil)}${status.holding ? ". Holding points: book within 60 days of check-in." : ""}</div>${buildLeftoverStaysHTML(c, status, todayMs)}`
-          : status?.kind === "accounted"
-          ? `<div class="ledger-deadline-warning muted">✅ All points accounted for this year</div>`
-          : `<div class="ledger-deadline-warning muted">For use between ${formatDeadlineDate(dateOnlyUTC(row.year, USE_YEAR_START_MONTH[c.use_year], 1))} and ${formatDeadlineDate(row.expiresMs)}</div>`}
-        ${row.points_holding > 0 && status?.kind !== "use-by"
-          ? holdingStatus
-            ? `<div class="ledger-deadline-warning${holdingStatus.daysUntil <= 14 ? "" : " muted"}">🅿️ ${row.points_holding} holding pts expire ${formatDeadlineDate(holdingStatus.ms)} (${holdingStatus.daysUntil}d). Book within 60 days of check-in.</div>`
-            : `<div class="ledger-deadline-warning">🅿️ ${row.points_holding.toLocaleString()} pts in Holding &mdash; use before this use year ends; book within 60 days of check-in</div>`
-          : ""}
-`;
+  if (!events) return `<div class="ledger-deadline-warning muted">For use between ${formatDeadlineDate(dateOnlyUTC(row.year, USE_YEAR_START_MONTH[c.use_year], 1))} and ${formatDeadlineDate(row.expiresMs)}</div>`;
+  if (!events.length) return `<div class="ledger-deadline-warning muted">✅ All points accounted for this year</div>`;
+  return events.map(e => {
+    if (e.kind === "bankable") return `<div class="ledger-deadline-warning ${urgencyTier(e.deadline.daysUntil)}">⏳ Bank or use ${e.points} current pts by ${formatDeadlineWithCountdown(e.deadline.ms, e.deadline.daysUntil)}</div>`;
+    if (e.kind === "use-by") return `<div class="ledger-deadline-warning ${expirationTier(e.daysUntil)}">🔒 ${e.points} pts (${e.buckets}) can't be banked; use by ${formatDeadlineWithCountdown(e.expiresMs, e.daysUntil)}</div>${buildLeftoverStaysHTML(c, e, todayMs)}`;
+    if (e.kind === "holding") return `<div class="ledger-deadline-warning ${expirationTier(e.daysUntil)}">🅿️ ${e.points} Holding pts: use by ${formatDeadlineWithCountdown(e.expiresMs, e.daysUntil)}; book no more than 60 days before check-in</div>${buildLeftoverStaysHTML(c, e, todayMs)}`;
+    return "";
+  }).join("");
 }
 
 function renderActiveContractDetails(contracts, yearPointsByContract) {
@@ -2676,10 +2516,8 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
   // active right now -- a "Plan Ahead" row gets its own expiration date
   // instead of a fabricated deadline.
   const status = isCurrentTab && c.is_active ? evaluateContractDeadlineStatus(c, yearPointsByContract, today) : null;
+  const events = isCurrentTab && c.is_active ? window.DVCPointAttention.eventsForContract(c, yearPointsByContract, today) : null;
   const todayMs = dateOnlyUTC(today.year, today.month, today.day);
-  const holdingStatus = row.points_holding > 0 && window.DVCLedger
-    ? window.DVCLedger.holdingExpiration(row.expiresMs, todayMs)
-    : null;
 
   el.innerHTML = `
     <div class="wallet-details-header">
@@ -2709,7 +2547,7 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
           </div>
           ${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}
         </div>
-        <div class="ledger-attention">${buildLedgerAttentionHTML(c, row, status, todayMs)}</div>
+        <div class="ledger-attention">${buildLedgerAttentionHTML(c, row, events, todayMs)}</div>
         <div class="reconcile-row">
           <span class="reconcile-status${row.last_checked_against_disney_at ? " checked" : ""}">${row.last_checked_against_disney_at ? `Checked against Disney on ${formatDeadlineDate(Date.parse(row.last_checked_against_disney_at))}` : "Not checked against Disney yet"}</span>
           <button type="button" class="reconcile-btn" data-reconcile="${row.year}">Reconcile with Disney</button>
@@ -3228,6 +3066,30 @@ function startCheckoutSuccessPoll(attempt = 0) {
   }, 1500);
 }
 
+// Use-year expiration and Holding emails (Prompt 3, migration 026): separate
+// opt-ins from the banking email, each with its own lead time. Offered only
+// once the profile has those columns, so saving can't fail on a database
+// that hasn't been updated yet.
+const POINT_REMINDER_SETTINGS = [
+  { key: "expiration", short: "expiration email", label: "Use-Year Expiration Emails", desc: "Before a use year ends, when you've recorded points that can no longer be banked (banked, borrowed, or current past the banking deadline).", unit: "days before the use year ends", fallback: 45 },
+  { key: "holding", short: "Holding email", label: "Holding Point Emails", desc: "Before a use year ends, when you've recorded Holding points. They can only book stays no more than 60 days before check-in.", unit: "days before the use year ends", fallback: 60 },
+];
+function pointReminderSettingsHTML(profile) {
+  if (!profile || !("expiration_reminder_opt_in" in profile)) return "";
+  return POINT_REMINDER_SETTINGS.map(({ key, label, desc, unit, fallback }) => `
+        <div class="notif-settings-row">
+          <div>
+            <div class="notif-settings-label">${label}</div>
+            <div class="notif-settings-desc">${desc}</div>
+          </div>
+          <label class="notif-toggle"><input type="checkbox" id="n-${key}-enabled" aria-label="${label}" ${profile[`${key}_reminder_opt_in`] ? "checked" : ""}><span class="notif-toggle-slider"></span></label>
+        </div>
+        <div class="notif-settings-row notif-lead-row">
+          <label for="n-${key}-lead">Lead time</label>
+          <div class="notif-lead-input"><input type="number" id="n-${key}-lead" min="1" max="240" value="${profile[`${key}_reminder_lead_days`] ?? fallback}"> ${unit}</div>
+        </div>`).join("");
+}
+
 function openNotifSettings() {
   document.getElementById("notif-settings-status").textContent = "";
   const browserStatus = document.getElementById('push-browser-status');
@@ -3266,6 +3128,20 @@ async function saveNotificationSettings() {
     reminder_lead_days: leadDays,
     in_app_notifications_enabled: document.getElementById("n-inapp-enabled").checked,
   };
+  for (const { key, short } of POINT_REMINDER_SETTINGS) {
+    const toggle = document.getElementById(`n-${key}-enabled`);
+    if (!toggle) continue; // migration 026 not applied: these settings aren't offered
+    const lead = Number(document.getElementById(`n-${key}-lead`).value);
+    if (!Number.isInteger(lead) || lead < 1 || lead > 240) {
+      statusEl.textContent = `Choose a lead time from 1 to 240 days for ${short}s.`;
+      statusEl.classList.add('error');
+      notificationSettingsSaving = false;
+      saveBtn.disabled = false;
+      return;
+    }
+    patch[`${key}_reminder_opt_in`] = toggle.checked;
+    patch[`${key}_reminder_lead_days`] = lead;
+  }
   const controls = [...document.querySelectorAll('#notif-settings-modal input, #notif-settings-modal button')];
   controls.forEach(control => control.disabled = true);
 

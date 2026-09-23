@@ -129,6 +129,8 @@ function renderAttentionCard(contracts, yearPointsByContract) {
     name: event?.contract ? contractName(event.contract) : "",
     tiers: { urgency: urgencyTier, expiration: expirationTier },
     formatDate: formatDeadlineDate,
+    describe: window.DVCPointAttention.describe,
+    total: window.DVCPointAttention.timeline(contracts, yearPointsByContract, today).length,
   });
   if (!card) {
     container.innerHTML = "";
@@ -142,7 +144,10 @@ function renderAttentionCard(contracts, yearPointsByContract) {
         ${card.detail ? `<div class="attention-detail">${card.detail}</div>` : ""}
         ${card.note ? `<div class="attention-note">${card.note}</div>` : ""}
       </div>
-      <a class="attention-action" href="${card.action.href}">${card.action.label} &rarr;</a>
+      <div class="attention-links">
+        <a class="attention-action" href="${card.action.href}">${card.action.label} &rarr;</a>
+        ${card.more ? `<a class="attention-more" href="${card.more.href}">${card.more.label}</a>` : ""}
+      </div>
     </section>
   `;
 }
