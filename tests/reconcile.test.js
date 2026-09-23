@@ -15,8 +15,10 @@ test('an unknown balance has no recorded buckets -- never zero, never the allotm
   assert.deepEqual(R.recordedBuckets(row({ points_remaining: 0, points_banked: 0 })), { points_remaining: 0, points_banked: 0, points_borrowed: 0, points_holding: 0 });
 });
 
-test('entries must be whole, nonnegative numbers; blank is not zero', () => {
-  assert.ok(R.parseEntry(entry({ points_holding: '' })).error);
+test('entries must be whole, nonnegative numbers; blank counts as 0 once anything is typed', () => {
+  assert.equal(R.parseEntry(entry({ points_holding: '' })).values.points_holding, 0);
+  assert.ok(R.parseEntry({ points_remaining: '', points_banked: ' ', points_borrowed: '', points_holding: '' }).error); // nothing typed
+  assert.deepEqual(R.parseEntry({ points_remaining: '200' }).values, { points_remaining: 200, points_banked: 0, points_borrowed: 0, points_holding: 0 });
   assert.ok(R.parseEntry(entry({ points_banked: '-1' })).error);
   assert.ok(R.parseEntry(entry({ points_remaining: '12.5' })).error);
   assert.deepEqual(R.parseEntry(entry()).values, { points_remaining: 120, points_banked: 20, points_borrowed: 0, points_holding: 0 });
@@ -47,6 +49,7 @@ test('entering Disney amounts for an unknown balance is a change, not a match', 
   assert.equal(diff.unknownBefore, true);
   assert.equal(diff.totalBefore, null);
   assert.equal(diff.totalDelta, null);
+  assert.equal(R.saveProblem(diff, null), null); // a first balance isn't a correction: no reason needed
 });
 
 test('a saved zero that matches Disney is a real match', () => {
@@ -93,7 +96,7 @@ test('a total change reads as before -> after', () => {
 
 test('a first-time balance from Disney reads as set, not corrected', () => {
   const [e] = R.activity({ year: 2026, reconciliations: [{ use_year_label: 2026, matched: false, reason: 'other', before: null, after: { points_remaining: 150, points_banked: 0, points_borrowed: 0, points_holding: 0 }, created_at: '2026-09-01T00:00:00Z' }] });
-  assert.equal(e.text, 'Balance set from Disney: 150 points (Other)');
+  assert.equal(e.text, 'Balance set from Disney: 150 points');
   assert.equal(e.delta, null);
 });
 

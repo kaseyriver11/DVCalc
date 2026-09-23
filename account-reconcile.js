@@ -22,6 +22,7 @@ function reconcileHTML() {
       <textarea id="reconcile-notes" rows="2" maxlength="500"></textarea>
     </fieldset>
     <p class="reconcile-error" id="reconcile-error" role="alert" hidden></p>
+    <p class="reconcile-save-hint" id="reconcile-save-hint" aria-live="polite"></p>
     <div class="balance-setup-actions"><button type="button" class="save-btn" id="reconcile-save" onclick="saveReconcile()">Save</button><button type="button" class="cancel-btn" id="reconcile-cancel" onclick="closeReconcile()">Cancel</button></div>
   </section></div>`;
 }
@@ -83,11 +84,13 @@ function renderReconcile() {
   const save = document.getElementById("reconcile-save");
   const reasonBox = document.getElementById("reconcile-reason");
   document.getElementById("reconcile-cancel").textContent = reconcile.payload ? "Close for now" : "Cancel";
+  const hint = document.getElementById("reconcile-save-hint");
   if (parsed.error) {
-    diffEl.innerHTML = `<p class="balance-card-hint">${parsed.error}</p>`;
+    diffEl.innerHTML = "";
     reasonBox.hidden = true;
     save.disabled = true;
     save.textContent = reconcile.payload ? "Retry this save" : "Save";
+    hint.textContent = parsed.error;
     return;
   }
   const diff = DVCReconcile.difference(reconcile.recorded, parsed.values);
@@ -100,10 +103,12 @@ function renderReconcile() {
         ${diff.rows.filter(r => diff.unknownBefore || r.delta).map(r => `<div class="reconcile-diff-row"><span>${r.label}</span><span>${r.before == null ? "&mdash;" : r.before.toLocaleString()} &rarr; <strong>${r.after.toLocaleString()}</strong>${r.delta ? ` <em class="${r.delta > 0 ? "up" : "down"}">${sign(r.delta)}</em>` : ""}</span></div>`).join("")}
         <div class="reconcile-diff-row total"><span>Total</span><span>${diff.totalBefore == null ? "&mdash;" : diff.totalBefore.toLocaleString()} &rarr; <strong>${diff.totalAfter.toLocaleString()}</strong>${diff.totalDelta ? ` <em class="${diff.totalDelta > 0 ? "up" : "down"}">${sign(diff.totalDelta)}</em>` : ""}</span></div>
       </div>`;
-  reasonBox.hidden = diff.matched;
+  reasonBox.hidden = diff.matched || diff.unknownBefore;
   const reason = document.querySelector('input[name="reconcile-reason"]:checked')?.value;
-  save.disabled = !!DVCReconcile.saveProblem(diff, reason);
-  save.textContent = reconcile.payload ? "Retry this save" : diff.matched ? "Mark as checked" : "Save correction";
+  const problem = DVCReconcile.saveProblem(diff, reason);
+  save.disabled = !!problem;
+  hint.textContent = problem || "";
+  save.textContent = reconcile.payload ? "Retry this save" : diff.matched ? "Mark as checked" : diff.unknownBefore ? "Save balance" : "Save correction";
 }
 
 async function saveReconcile() {
@@ -118,7 +123,8 @@ async function saveReconcile() {
   if (DVCReconcile.saveProblem(diff, reason)) return;
   r.payload ||= {
     p_id: crypto.randomUUID(), p_contract: r.contract.id, p_year: r.year, p_expected: r.expected,
-    p_after: parsed.values, p_reason: diff.matched ? null : reason, p_notes: document.getElementById("reconcile-notes").value.trim() || null,
+    p_after: parsed.values, p_reason: diff.matched ? null : diff.unknownBefore ? reason || "other" : reason,
+    p_notes: document.getElementById("reconcile-notes").value.trim() || (diff.unknownBefore ? "First balance entered from Disney" : null),
   };
   try {
     // Keep the retry key before sending; a lost response must not create a second correction.

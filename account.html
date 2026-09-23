@@ -1240,6 +1240,9 @@ body {
 .reconcile-notes-label { display: block; font-size: .8rem; margin: 10px 0 4px; color: var(--color-text-muted); }
 #reconcile-notes { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 10px; }
 .reconcile-error { color: var(--color-danger); font-size: .85rem; }
+.reconcile-save-hint { font-size: .82rem; color: #8a4b00; margin: 8px 0 0; }
+.reconcile-save-hint:empty { display: none; }
+#reconcile-modal .save-btn:disabled { opacity: .45; cursor: not-allowed; }
 .ledger-activity { margin: 8px 0 0; }
 .ledger-activity > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: .85rem; font-weight: 600; color: var(--color-primary); }
 .ledger-activity-list { list-style: none; margin: 0; padding: 0; }
@@ -1252,6 +1255,16 @@ body {
 .ledger-activity-note.warn { color: #8a6d00; }
 .point-ledger-actions button {text-align:left;padding:14px 16px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);color:var(--color-text);font:inherit;font-weight:600;}
 .point-ledger-actions span {display:block;font-size:.76rem;font-weight:400;margin-top:4px;color:var(--color-text-muted);}
+.point-ledger-actions span.checked {color:var(--color-good);font-weight:600;}
+.point-ledger-actions button {min-height:56px;width:100%;cursor:pointer;}
+.point-ledger-actions button:focus-visible {outline:3px solid var(--color-primary);outline-offset:2px;}
+/* The one primary action in a ledger row: Add points left (no balance)
+   or Use these points (a recorded balance). Everything else is a
+   .point-ledger-actions card, so buttons don't come in four sizes. */
+.ledger-primary-btn {display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin:14px 0 0;padding:0 16px;border:0;border-radius:12px;background:var(--color-primary);color:#fff;font:inherit;font-size:.95rem;font-weight:700;text-decoration:none;cursor:pointer;box-sizing:border-box;}
+.ledger-primary-btn:hover {background:var(--color-primary-active);}
+.ledger-primary-btn:focus-visible {outline:3px solid var(--color-primary);outline-offset:2px;}
+.ledger-primary-num.empty {font-size:1.25rem;}
 .point-move-card {margin-top:12px;padding:14px;}
 .point-move-numbers {font-size:1.8rem;font-weight:700;}
 .point-move-numbers small {font-size:.75rem;font-weight:400;}
@@ -2473,15 +2486,22 @@ function buildLeftoverStaysHTML(c, status, todayMs) {
 // of an active contract, else null (a Plan Ahead row just shows its dates).
 // Same one-line-per-bucket split as the Point actions list above.
 function buildLedgerAttentionHTML(c, row, events, todayMs) {
-  if (!row.balance_confirmed_at) return `<div class="ledger-deadline-warning muted">Balance not added. Your ${c.points_per_year} annual points are not an available balance.</div>`;
+  if (!row.balance_confirmed_at) return `<div class="ledger-deadline-warning muted">Check Disney's member site and add what's left. Your ${c.points_per_year} annual points aren't a balance.</div>`;
   if (!events) return `<div class="ledger-deadline-warning muted">For use between ${formatDeadlineDate(dateOnlyUTC(row.year, USE_YEAR_START_MONTH[c.use_year], 1))} and ${formatDeadlineDate(row.expiresMs)}</div>`;
   if (!events.length) return `<div class="ledger-deadline-warning muted">✅ All points accounted for this year</div>`;
   return events.map(e => {
     if (e.kind === "bankable") return `<div class="ledger-deadline-warning ${urgencyTier(e.deadline.daysUntil)}">⏳ Bank or use ${e.points} current pts by ${formatDeadlineWithCountdown(e.deadline.ms, e.deadline.daysUntil)}</div>`;
-    if (e.kind === "use-by") return `<div class="ledger-deadline-warning ${expirationTier(e.daysUntil)}">🔒 ${e.points} pts (${e.buckets}) can't be banked; use by ${formatDeadlineWithCountdown(e.expiresMs, e.daysUntil)}</div>${buildLeftoverStaysHTML(c, e, todayMs)}`;
-    if (e.kind === "holding") return `<div class="ledger-deadline-warning ${expirationTier(e.daysUntil)}">🅿️ ${e.points} Holding pts: use by ${formatDeadlineWithCountdown(e.expiresMs, e.daysUntil)}; book no more than 60 days before check-in</div>${buildLeftoverStaysHTML(c, e, todayMs)}`;
+    if (e.kind === "use-by") return `<div class="ledger-deadline-warning ${expirationTier(e.daysUntil)}">🔒 ${e.points} pts (${e.buckets}) can't be banked; use by ${formatDeadlineWithCountdown(e.expiresMs, e.daysUntil)}</div>`;
+    if (e.kind === "holding") return `<div class="ledger-deadline-warning ${expirationTier(e.daysUntil)}">🅿️ ${e.points} Holding pts: use by ${formatDeadlineWithCountdown(e.expiresMs, e.daysUntil)}; book no more than 60 days before check-in</div>`;
     return "";
   }).join("");
+}
+
+// Short-notice stay ideas for points that can only be used now, shown right
+// under "Use these points" (which has the full search) rather than between
+// the warning and the balance, where they pushed every number and action down.
+function buildLedgerIdeasHTML(c, events, todayMs) {
+  return (events || []).filter(e => e.kind === "use-by" || e.kind === "holding").map(e => buildLeftoverStaysHTML(c, e, todayMs)).join("");
 }
 
 function renderActiveContractDetails(contracts, yearPointsByContract) {
@@ -2540,7 +2560,7 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
         <button type="button" class="danger" data-delete="${c.id}">Delete</button>
       </div>
     </div>
-    <a class="contract-costs-link" href="trips.html?costs=${encodeURIComponent(c.id)}">My actual costs (dues, closing, interest) &rarr;</a>
+    <a class="contract-costs-link" href="trips.html?costs=${encodeURIComponent(c.id)}">My actual costs &rarr;</a>
 
     <div class="ledger-year-tabs">
       ${rows.map(r => `<button type="button" class="ledger-year-tab${r.year === activeLedgerYearTab ? " selected" : ""}" data-select-year="${r.year}">${r.year === uyYear ? "Current Year" : "Plan Ahead"} (${r.year})<small class="ledger-year-range">${useYearRangeLabel(c.use_year, r.year)}</small></button>`).join("")}
@@ -2551,19 +2571,13 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
       <div class="ledger-row ledger-current" data-year="${row.year}" data-contract-id="${c.id}">
         <div class="ledger-primary-stat">
           <div>
-            <div class="ledger-primary-num">${row.balance_confirmed_at ? total.toLocaleString() : "&mdash;"}</div>
-            <div class="ledger-primary-label">${row.year} Use Year &middot; ${row.balance_confirmed_at ? "Points Available" : "Balance not added"}</div>
+            <div class="ledger-primary-num${row.balance_confirmed_at ? "" : " empty"}">${row.balance_confirmed_at ? total.toLocaleString() : "No balance yet"}</div>
+            <div class="ledger-primary-label">${row.year} Use Year${row.balance_confirmed_at ? " &middot; Points Available" : ""}</div>
           </div>
           ${row.removable ? `<button type="button" class="ledger-remove-year" data-contract-id="${c.id}" data-remove-year="${row.year}" title="Remove this year">&times;</button>` : ""}
         </div>
         <div class="ledger-attention">${buildLedgerAttentionHTML(c, row, events, todayMs)}</div>
-        <div class="reconcile-row">
-          <span class="reconcile-status${row.last_checked_against_disney_at ? " checked" : ""}">${row.last_checked_against_disney_at ? `Checked against Disney on ${formatDeadlineDate(Date.parse(row.last_checked_against_disney_at))}` : "Not checked against Disney yet"}</span>
-          <button type="button" class="reconcile-btn" data-reconcile="${row.year}">Reconcile with Disney</button>
-        </div>
-        ${c.is_active ? `<a class="use-points-btn" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${row.year}">Use these points &rarr;</a>` : ""}
-        ${buildActivityHTML(c.id, row.year)}
-        ${!row.balance_confirmed_at ? `<button type="button" class="save-btn" data-setup-balance="${row.year}">Add points left</button>` : ""}
+        ${!row.balance_confirmed_at ? `<button type="button" class="ledger-primary-btn" data-setup-balance="${row.year}">Add points left</button>` : ""}
         <div ${row.balance_confirmed_at ? "" : "hidden"}>
         <div class="ledger-bar">
           <div class="ledger-bar-seg ledger-seg-banked" style="flex-grow:${row.points_banked}"></div>
@@ -2572,11 +2586,14 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
           <div class="ledger-bar-seg ledger-seg-holding" style="flex-grow:${row.points_holding}"></div>
         </div>
         <div class="point-bucket-summary">${[['Current',row.points_remaining],['Banked',row.points_banked],['Borrowed',row.points_borrowed],['Holding',row.points_holding]].map(([label,n])=>`<div><span>${label}</span><strong>${n}</strong></div>`).join('')}</div>
-        <div class="point-ledger-actions"><button type="button" data-point-action="bank">Record banking <span>${isBankingWindowOpen(c.use_year, row.year, todayInEastern()) ? `Move current points to ${row.year+1}` : `Deadline passed ${formatDeadlineDate(window.DVCDates.deadlineForCycle(c.use_year, row.year))}`} &rarr;</span></button><button type="button" data-point-action="borrow">Record borrowing <span>Bring current points from ${row.year+1} &rarr;</span></button><button type="button" data-point-action="adjust">Adjust balance <span>Correct what is left in ${row.year} &rarr;</span></button></div>
+        ${c.is_active ? `<a class="ledger-primary-btn" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${row.year}">Use these points &rarr;</a>` : ""}
+        ${buildLedgerIdeasHTML(c, events, todayMs)}
+        <div class="point-ledger-actions"><button type="button" data-point-action="bank">Record banking <span>${isBankingWindowOpen(c.use_year, row.year, todayInEastern()) ? `Move current points to ${row.year+1}` : `Deadline passed ${formatDeadlineDate(window.DVCDates.deadlineForCycle(c.use_year, row.year))}`} &rarr;</span></button><button type="button" data-point-action="borrow">Record borrowing <span>Bring current points from ${row.year+1} &rarr;</span></button><button type="button" data-point-action="adjust">Adjust balance <span>Correct what is left in ${row.year} &rarr;</span></button><button type="button" data-reconcile="${row.year}">Reconcile with Disney <span${row.last_checked_against_disney_at ? ' class="checked"' : ""}>${row.last_checked_against_disney_at ? `Checked against Disney ${formatDeadlineDate(Date.parse(row.last_checked_against_disney_at))}` : "Not checked against Disney yet"} &rarr;</span></button></div>
         ${borrowCheck && !borrowCheck.valid
           ? `<div class="ledger-validation-note">⚠ ${row.points_borrowed.toLocaleString()} pts borrowed exceeds next year's full ${borrowCheck.maxAllowed.toLocaleString()}-pt allotment on this contract -- double-check this against your real Member Services balance.</div>`
           : ""}
       </div>
+        ${buildActivityHTML(c.id, row.year)}
     </div>
     </div>
     <div class="ledger-footer">

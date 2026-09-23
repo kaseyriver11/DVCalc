@@ -25,12 +25,14 @@
     return Object.fromEntries(BUCKETS.map(([k]) => [k, Math.max(0, Number(row[k]) || 0)]));
   }
 
-  // Raw input strings -> whole nonnegative numbers. Empty is an error, not 0.
+  // Raw input strings -> whole nonnegative numbers. Nothing typed at all is
+  // an error; once any bucket has a number, a blank bucket means 0 (the
+  // preview shows every bucket, so a 0 is never hidden).
   function parseEntry(values) {
     const out = {};
+    if (BUCKETS.every(([k]) => String(values[k] ?? "").trim() === "")) return { error: "Enter the points Disney shows for this use year." };
     for (const [k, label] of BUCKETS) {
-      const raw = String(values[k] ?? "").trim();
-      if (raw === "") return { error: `Enter the ${label.toLowerCase()} points you see in Disney (0 if none).` };
+      const raw = String(values[k] ?? "").trim() || "0";
       const n = Number(raw);
       if (!Number.isSafeInteger(n) || n < 0) return { error: `${label} points must be a whole number, zero or more.` };
       out[k] = n;
@@ -51,9 +53,10 @@
     return { rows, totalBefore: total(recorded), totalAfter: total(entered), totalDelta: recorded ? total(entered) - total(recorded) : null, matched, unknownBefore: !recorded };
   }
 
-  // What Save needs: a reason unless the numbers match.
+  // What Save needs: a reason when a recorded balance changes. A first
+  // balance (nothing recorded before) isn't a correction, so it needs none.
   function saveProblem(diff, reason) {
-    if (!diff.matched && !REASONS.some(([k]) => k === reason)) return "Choose why the balance changed.";
+    if (!diff.matched && !diff.unknownBefore && !REASONS.some(([k]) => k === reason)) return "Choose why the balance changed.";
     return null;
   }
 
@@ -88,8 +91,8 @@
       events.push(r.matched
         ? { at: r.created_at, source: "owner", text: "Checked against Disney: matched", delta: 0 }
         : { at: r.created_at, source: "owner", notes: r.notes || null, delta: before == null ? null : after - before,
-            text: (before == null ? `Balance set from Disney: ${after} points`
-              : before === after ? `Corrected the bucket split to match Disney (${after} points)`
+            text: before == null ? `Balance set from Disney: ${after} points`
+              : (before === after ? `Corrected the bucket split to match Disney (${after} points)`
               : `Corrected to match Disney: ${before} → ${after} points`) + (why ? ` (${why})` : "") });
     }
     return events.sort((a, b) => String(b.at).localeCompare(String(a.at)));
