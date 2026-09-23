@@ -990,6 +990,8 @@ body {
 .point-action-link.primary { font-weight: 700; }
 .use-points-btn { display: flex; align-items: center; justify-content: center; min-height: 48px; margin: 8px 0 4px; border-radius: 12px; background: var(--color-primary); color: #fff; font-weight: 700; font-size: .92rem; text-decoration: none; }
 .use-points-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.contract-costs-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .84rem; font-weight: 600; color: var(--color-primary); }
+.contract-costs-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-clear { padding: 10px 12px; border-radius: 10px; background: var(--color-good-bg); color: var(--color-good); font-size: .86rem; font-weight: 600; }
 .point-action-clear.small { background: none; padding: 4px 0 0; color: var(--color-text-muted); font-weight: 400; font-size: .78rem; }
@@ -2538,6 +2540,7 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
         <button type="button" class="danger" data-delete="${c.id}">Delete</button>
       </div>
     </div>
+    <a class="contract-costs-link" href="trips.html?costs=${encodeURIComponent(c.id)}">My actual costs (dues, closing, interest) &rarr;</a>
 
     <div class="ledger-year-tabs">
       ${rows.map(r => `<button type="button" class="ledger-year-tab${r.year === activeLedgerYearTab ? " selected" : ""}" data-select-year="${r.year}">${r.year === uyYear ? "Current Year" : "Plan Ahead"} (${r.year})<small class="ledger-year-range">${useYearRangeLabel(c.use_year, r.year)}</small></button>`).join("")}

@@ -838,6 +838,20 @@ async function readOptionalTable(table) {
 }
 const getWaitlists = () => readOptionalTable("waitlists");
 const getBookingCancellations = () => readOptionalTable("booking_cancellations");
+// Owner-entered actual dues, closing costs and financing interest
+// (migration 028). { rows, missing } like the waitlist reads.
+const getOwnershipCosts = () => readOptionalTable("ownership_costs");
+// entries: [{ kind, year, amount }] for ONE contract; amount null removes
+// that actual. All-or-nothing, and safe to retry.
+async function saveOwnershipCosts(contractId, entries) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  const { data, error } = await supabase.rpc("save_ownership_costs", { p_contract: contractId, p_entries: entries });
+  if (error && /save_ownership_costs/.test(error.message)) {
+    return { error: "Actual costs can't be saved until db/migrations/028_ownership_costs.sql is run in Supabase." };
+  }
+  return { data, error: error?.message };
+}
 
 const WAITLIST_FIELDS = ["resort_id", "room_type_id", "check_in", "check_out", "requested_on", "backup_trip_id", "notes", "remind_days_before"];
 // Add (isNew, with a client id kept until success -- a retried add finds
@@ -1468,6 +1482,8 @@ window.DVCAuth = {
   getBookingCancellations,
   saveWaitlist,
   setWaitlistStatus,
+  getOwnershipCosts,
+  saveOwnershipCosts,
   deleteContractYearPoints,
   getUserBadges,
   upsertUserBadge,

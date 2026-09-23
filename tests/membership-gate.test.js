@@ -7,7 +7,7 @@ const fnSource = name => auth.match(new RegExp('(?:async )?function ' + name + '
 
 const READS = ['getContracts', 'getContractYearPoints', 'getUserBadges', 'getTrips', 'getItineraries', 'getTripDeductions'];
 const WRITES = ['addContract', 'updateContract', 'upsertContractYearPoints', 'recordPointMovement', 'upsertUserBadge',
-  'incrementBadgeEvent', 'addTrip', 'updateTrip', 'addItinerary', 'updateItinerary', 'saveTripBooking', 'deleteTripBooking', 'reconcilePoints', 'saveWaitlist', 'setWaitlistStatus'];
+  'incrementBadgeEvent', 'addTrip', 'updateTrip', 'addItinerary', 'updateItinerary', 'saveTripBooking', 'deleteTripBooking', 'reconcilePoints', 'saveWaitlist', 'setWaitlistStatus', 'saveOwnershipCosts'];
 
 function context(member) {
   let queried = false;

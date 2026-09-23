@@ -210,13 +210,14 @@ function renderContractsWidget(contracts, yearPointsByContract) {
 // ---- Membership Value preview ---------------------------------------------
 // Just the payback figure; the model, its assumptions and the projection
 // live on Membership Value (trips.html).
-function renderHouseMoneyWidget(contracts, trips, settings) {
+function renderHouseMoneyWidget(contracts, trips, settings, actuals) {
   const container = document.getElementById("home-house-money");
   if (contracts.length === 0) {
     container.innerHTML = `<p class="value-note">Add a contract to see what your membership has paid back.</p>`;
     return;
   }
-  const stats = computeHouseMoneyStats(contracts, trips, settings);
+  // Same owner-entered actual costs Membership Value uses, so the two agree.
+  const stats = computeHouseMoneyStats(contracts, trips, settings, actuals);
   const needsReview = trips.filter(t => !window.DVCTripFunding.summary(t, contracts).valid).length;
   const review = needsReview ? `<p class="value-note">${needsReview === 1 ? "1 stay needs" : needsReview + " stays need"} point sources reviewed. <a href="bookings.html#needs-review">Review</a></p>` : "";
   if (stats.velocitySource === "none" && !stats.estimatedHouseMoneyDate) {
@@ -266,11 +267,12 @@ function renderNonMember() {
 
 async function renderSignedIn() {
   if (!(await window.DVCAuth.hasMembership())) return renderNonMember();
-  const [contracts, trips, yearPoints, settings] = await Promise.all([
+  const [contracts, trips, yearPoints, settings, costs] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
     window.DVCAuth.getContractYearPoints(),
     window.DVCAuth.getUserSettings(),
+    window.DVCAuth.getOwnershipCosts?.() ?? { rows: [] },
   ]);
   const yearPointsByContract = {};
   for (const row of yearPoints) {
@@ -292,7 +294,7 @@ async function renderSignedIn() {
     renderContractsWidget(contracts, yearPointsByContract);
   }
   if (contractsFailed || failed("trips")) document.getElementById("home-house-money").innerHTML = loadErrorHTML("your membership value");
-  else renderHouseMoneyWidget(contracts, trips, settings);
+  else renderHouseMoneyWidget(contracts, trips, settings, window.DVCActualCosts.index(costs.rows));
 }
 
 function loadErrorHTML(what) {
