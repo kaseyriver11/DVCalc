@@ -40,16 +40,16 @@ test('missing balances are never zero or the annual allotment', () => {
   const render = setup();
   const one = render([contract('a'), contract('b')], { a: [row(2025, { points_remaining: 400 })] });
   assert.match(one, /portfolio-total">400</);
-  assert.match(one, /1 balance needed/);
+  assert.match(one, /1 current balance needed/);
   assert.doesNotMatch(one, /200 pts/);
   const none = render([contract('a')], {});
-  assert.match(none, /Balances needed/);
+  assert.match(none, /Current balances needed/);
   assert.doesNotMatch(none, /portfolio-total">0</);
 });
 
 test('unconfirmed rows count as missing, and names are escaped', () => {
   const html = setup()([contract('a&b', { nickname: '<img src=x>' })], { 'a&b': [{ use_year_label: 2025, points_remaining: 200 }] });
-  assert.match(html, /Balances needed/);
+  assert.match(html, /Current balances needed/);
   assert.doesNotMatch(html, /<img/);
   assert.match(html, /&lt;img src=x&gt;/);
   assert.match(html, /contract=a%26b/);
@@ -78,4 +78,36 @@ test('Home grid tracks and cards can shrink below their content on phones', () =
   assert.match(css, /\.dashboard-grid \{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/);
   assert.match(css, /\.dashboard-grid \{ grid-template-columns: minmax\(0, 1fr\); \}/);
   assert.match(css, /\.widget-card \{\s*min-width: 0;/);
+});
+
+test('the badge counts current use years only, never missing next-year balances', () => {
+  const render = setup();
+  // a: current known, next missing; b: current missing; c: current known, next missing
+  const html = render([contract('a'), contract('b'), contract('c')], { a: [row(2025, { points_remaining: 10 })], c: [row(2025, { points_remaining: 5 })] });
+  assert.match(html, /1 current balance needed/);
+  assert.equal((html.match(/Add balance/g) || []).length, 4); // b now + next, a next, c next
+  const two = render([contract('a'), contract('b'), contract('c')], { a: [row(2025, { points_remaining: 10 })] });
+  assert.match(two, /2 current balances needed/);
+});
+
+test('zero contracts: adding one is the only primary action; inactive-only is not treated as new', () => {
+  const render = setup();
+  const empty = render([], {});
+  assert.match(empty, /class="home-primary-btn">\+ Add your first contract/);
+  const inactive = render([contract('a', { is_active: false })], {});
+  assert.doesNotMatch(inactive, /Add your first contract/);
+  assert.match(inactive, /None of your contracts are active/);
+});
+
+test('zero contracts: Membership Value asks for a contract, not a booking', () => {
+  const container = { innerHTML: '' };
+  const c = vm.createContext({ document: { getElementById: () => container }, computeHouseMoneyStats: () => { throw new Error('no stats for an empty account'); } });
+  vm.runInContext(fn('renderHouseMoneyWidget'), c);
+  c.renderHouseMoneyWidget([], [], {});
+  assert.match(container.innerHTML, /Add a contract to see what your membership has paid back\./);
+  assert.doesNotMatch(container.innerHTML, /Record/);
+});
+
+test('Home hides the action row only for a successful empty read, not a failed one', () => {
+  assert.ok(source.includes('if (!contractsFailed && contracts.length === 0) document.getElementById("home-actions").innerHTML = "";\n  else renderActions(true);'));
 });

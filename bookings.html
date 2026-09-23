@@ -788,7 +788,6 @@ a.add-btn { display: inline-flex; align-items: center; }
 .stay-year > summary { display: flex; justify-content: space-between; align-items: center; min-height: 48px; cursor: pointer; font-weight: 700; font-size: .95rem; }
 .stay-year > summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; border-radius: 6px; }
 .stay-year-count { font-size: .8rem; font-weight: 500; color: var(--color-text-muted); }
-.stay-empty .add-btn { margin-top: 12px; }
 </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -1173,19 +1172,20 @@ const yearOpenState = new Map();
 function stayNeedsReview(t) {
   return !window.DVCTripFunding.summary(t, contracts).valid;
 }
+const STAY_VALUE_LABEL = { upcoming: "booked", "in-progress": "stay value", completed: "value" };
 function stayRowHTML(t, today, justLogged) {
   const v = tripCashValue(t, contracts);
   const attribution = window.DVCTripFunding.summary(t, contracts);
   const nights = nightsBetween(t.check_in, t.check_out);
   const resort = RESORTS.find(r => r.id === t.resort_id);
   const roomType = resort?.roomTypes.find(rt => rt.id === t.room_type_id);
-  const upcoming = window.DVCStayGroups.isUpcoming(t, today);
+  const phase = window.DVCStayGroups.phase(t, today);
   const receipts = receiptsFor(t.id);
   const deducted = receipts.reduce((sum, d) => sum + window.DVCTripDeduct.receiptTotal(d), 0);
   const open = expandedStayIds.has(t.id);
   const status = !attribution.valid
     ? `<span class="stay-row-status review">Review point sources</span>`
-    : v ? `<span class="stay-row-status">${fmt(v.cash)} ${upcoming ? "booked" : "value"}</span>` : "";
+    : v ? `<span class="stay-row-status">${fmt(v.cash)} ${STAY_VALUE_LABEL[phase]}</span>` : "";
   const funding = t.points_source_breakdown;
   const outside = funding?.version === 2 ? [["Disney one-time points", funding.one_time], ["Transferred or rented points", funding.transferred], ["Other outside points", funding.other]].filter(([, n]) => n > 0) : [];
   const cashTotal = t.custom_cash_value != null ? Number(t.custom_cash_value) : v?.totalCash ?? null;
@@ -1223,7 +1223,7 @@ function stayRowHTML(t, today, justLogged) {
 function renderStayList() {
   const list = document.getElementById("stay-list");
   if (trips.length === 0) {
-    list.innerHTML = `<div class="section stay-empty"><h2>No bookings recorded yet</h2><p class="section-sub">Record a booking and it will show up here, with its points and value.</p><button type="button" class="add-btn js-add-trip">+ Record a booking</button></div>`;
+    list.innerHTML = `<div class="section stay-empty"><h2>No bookings recorded yet</h2><p class="section-sub">Record a booking and it will show up here, with its points and value.</p></div>`;
     return;
   }
   const justLogged = justLoggedTripId;
@@ -1237,6 +1237,10 @@ function renderStayList() {
         <h2 id="needs-review-title">Needs review</h2>
         <p class="section-sub">These stays' point sources don't add up yet, so they aren't counted in membership value.</p>
         <div class="stay-rows">${rows(groups.needsReview)}</div>
+      </section>` : "",
+    groups.inProgress.length ? `<section class="section stay-group" id="in-progress" aria-labelledby="in-progress-title">
+        <h2 id="in-progress-title">In progress</h2>
+        <div class="stay-rows">${rows(groups.inProgress)}</div>
       </section>` : "",
     `<section class="section stay-group" id="upcoming" aria-labelledby="upcoming-title">
         <h2 id="upcoming-title">Upcoming</h2>

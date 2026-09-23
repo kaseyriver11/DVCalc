@@ -387,7 +387,10 @@ body {
    "Adjust assumptions" toggle, but with real range sliders (this app's
    first -- contractvalue.html's own advanced panel is plain number inputs)
    since these are meant to be dragged for live sensitivity, not typed. */
-.assumptions-section { padding: 14px 24px; }
+.assumptions-inline { margin-top: 14px; border-top: 1px solid var(--color-border-light); padding-top: 4px; }
+.assumptions-inline .assumptions-toggle { min-height: 44px; }
+.assumptions-result { padding: 10px 12px; border-radius: 10px; background: var(--color-primary-tint-bg); font-size: .88rem; color: var(--color-text); }
+.chart-assumptions { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border-light); }
 .assumptions-toggle {
   display: block;
   width: 100%;
@@ -981,8 +984,14 @@ a.add-btn { display: inline-flex; align-items: center; }
   .chart-legend-item { font-size: 0.7rem; gap: 4px; }
   .chart-legend-swatch { width: 12px; }
 }
+.payback-stats { display: flex; flex-direction: column; }
+.payback-stat { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 0; border-top: 1px solid var(--color-border-light); }
+.payback-stat:first-child { border-top: none; padding-top: 0; }
+.payback-stat-label { font-size: .88rem; color: var(--color-text); line-height: 1.4; min-width: 0; }
+.payback-stat-value { flex-shrink: 0; font-size: 1.05rem; font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+.payback-stat-value small { font-size: .75rem; font-weight: 600; color: var(--color-text-muted); }
+.usage-evidence-title { font-size: .9rem; font-weight: 700; color: var(--color-text); margin: 0; }
 .usage-evidence { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 12px; font-size: .78rem; color: var(--color-text-muted); }
-.usage-evidence summary { cursor: pointer; color: var(--color-primary); font-weight: 600; }
 .usage-evidence p { margin: 10px 0 0; line-height: 1.5; }
 </style>
   <script>
@@ -1675,7 +1684,6 @@ function buildGaugeHTML(stats) {
         ${breakdownTrigger}
         ${showBreakdown ? buildPaybackBreakdownHTML(stats, dateLabel) : ""}
         <p class="chart-horizon-note">${fmt(stats.lifetimeValue)} logged stay value from owned-contract points. The projection uses $${stats.settings.point_value_baseline}/point, ${(stats.settings.value_growth_rate * 100).toFixed(1)}% value growth and ${(stats.settings.dues_growth_rate * 100).toFixed(1)}% dues growth. Missing purchase details use estimates.</p>
-        <p class="chart-horizon-note" id="value-settings-status" role="status">${settingsSaveNote}</p>
       </div>
     </div>
   `;
@@ -1685,28 +1693,21 @@ function buildStatTilesHTML(stats) {
   const duesMultiplier = stats.lifetimeValue / Math.max(1, stats.totalDuesPaid);
   const last12mo = computeLast12MonthSavings(trips);
   const usage = window.DVCTripFunding.loggedUsage(trips, contracts);
+  // Full-width label/value rows (not three tiny tiles) inside "More payback
+  // details"; the logged-usage explanation is plain content below them.
   return `
-    <div class="dopamine-tiles">
-      <div class="dopamine-tile">
-        <div class="dopamine-tile-value">$${duesMultiplier.toFixed(2)} <span class="dopamine-tile-unit">/ $1</span></div>
-        <div class="dopamine-tile-label">Deluxe room value extracted for every $1.00 paid in dues</div>
-      </div>
-      <div class="dopamine-tile">
-        <div class="dopamine-tile-value">${fmt(last12mo)}</div>
-        <div class="dopamine-tile-label">Extracted in the past 12 months</div>
-      </div>
-      <div class="dopamine-tile">
-        <div class="dopamine-tile-value">${usage.ownedPoints.toLocaleString()} <span class="dopamine-tile-unit">pts</span></div>
-        <div class="dopamine-tile-label">Owned points in logged stays</div>
-      </div>
+    <div class="payback-stats">
+      <div class="payback-stat"><span class="payback-stat-label">Deluxe room value extracted for every $1.00 paid in dues</span><span class="payback-stat-value">$${duesMultiplier.toFixed(2)} <small>/ $1</small></span></div>
+      <div class="payback-stat"><span class="payback-stat-label">Extracted in the past 12 months</span><span class="payback-stat-value">${fmt(last12mo)}</span></div>
+      <div class="payback-stat"><span class="payback-stat-label">Owned points in logged stays</span><span class="payback-stat-value">${usage.ownedPoints.toLocaleString()} <small>pts</small></span></div>
     </div>
-    <details class="usage-evidence">
-      <summary>What counts as logged usage?</summary>
+    <div class="usage-evidence">
+      <h3 class="usage-evidence-title">What counts as logged usage?</h3>
       <p>${usage.attributedStays} logged stay${usage.attributedStays === 1 ? '' : 's'} with complete point sources. ${usage.outsidePoints.toLocaleString()} outside points are excluded from the owned-point total.</p>
-      ${usage.needsReview ? `<p>${usage.needsReview} stay${usage.needsReview === 1 ? '' : 's'} excluded until you <a href="#trip-list">review the point sources</a>.</p>` : ''}
-      <p>This counts points assigned to recorded bookings, including upcoming stays. Saved itineraries do not count.</p>
+      ${usage.needsReview ? `<p>${usage.needsReview} stay${usage.needsReview === 1 ? '' : 's'} excluded until you <a href="bookings.html#needs-review">review the point sources</a>.</p>` : ''}
+      <p>This counts points assigned to recorded bookings, including upcoming stays and stays in progress. Saved itineraries do not count.</p>
       <p>Available balances and banking, borrowing, or balance corrections are separate in <a href="account.html">My Contracts</a>. They do not add logged usage. These records cannot establish how many points expired or remain unreconciled.</p>
-    </details>
+    </div>
   `;
 }
 
@@ -1827,21 +1828,37 @@ function assumptionSliderRow(field, label, value, min, max, step, presets) {
   `;
 }
 
-function buildAssumptionsPanelHTML(settings) {
+// Sits inside the House Money card, directly under the payback result, and
+// holds only the three sliders that move the projected House Money date --
+// the paid-off percent and remaining amount are actuals and never move.
+// The fourth, Opportunity Cost, only changes the chart's Alt. Fund line, so
+// it lives inside the chart's own disclosure (buildChartDisclosureHTML).
+// The live result line means a slider always shows its effect right here,
+// wherever the page is scrolled.
+function buildAssumptionsPanelHTML(settings, stats) {
   return `
-    <div class="section assumptions-section" id="model-assumptions">
-      <button type="button" class="assumptions-toggle" id="assumptions-toggle" aria-expanded="${assumptionsOpen}">
-        &#9881; ${assumptionsOpen ? "Hide" : "Adjust"} Model Assumptions &amp; Sensitivity ${assumptionsOpen ? "&#9652;" : "&#9662;"}
+    <div class="assumptions-inline" id="model-assumptions">
+      <button type="button" class="assumptions-toggle" id="assumptions-toggle" aria-expanded="${assumptionsOpen}" aria-controls="assumptions-panel">
+        &#9881; ${assumptionsOpen ? "Hide" : "Adjust"} projection assumptions ${assumptionsOpen ? "&#9652;" : "&#9662;"}
       </button>
       <div class="assumptions-panel${assumptionsOpen ? " open" : ""}" id="assumptions-panel">
+        <div class="assumptions-result" id="assumptions-result" aria-live="polite">${assumptionsResultHTML(stats)}</div>
         ${assumptionSliderRow("point_value_baseline", "Vacation Value Baseline ($/point)", settings.point_value_baseline, 15, 50, 1, POINT_VALUE_PRESETS)}
         ${assumptionSliderRow("dues_growth_rate", "Annual Dues Inflation", settings.dues_growth_rate, 0.02, 0.08, 0.001)}
         ${assumptionSliderRow("value_growth_rate", "Deluxe Hotel Inflation", settings.value_growth_rate, 0.02, 0.08, 0.001)}
-        ${assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate", settings.opportunity_cost_rate, 0, 0.10, 0.005, OPPORTUNITY_COST_PRESETS)}
-        <div class="assumptions-save-status" id="assumptions-save-status"></div>
+        <div class="assumptions-save-status" id="assumptions-save-status" role="status">${settingsSaveNote}</div>
       </div>
     </div>
   `;
+}
+
+// The one visible number these sliders move, restated inside the panel.
+function assumptionsResultHTML(stats) {
+  if (stats.paybackPct >= 100) return `You're living on House Money &mdash; these only change the chart's projection.`;
+  const date = stats.estimatedHouseMoneyDate?.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  return date
+    ? `Estimated House Money: <strong>${date}</strong>`
+    : `Not enough to project a House Money date yet.`;
 }
 
 // Slider drags use direct DOM writes (readout text, then a targeted
@@ -1862,10 +1879,16 @@ function handleAssumptionChange(field, value) {
   scheduleSettingsSave();
 }
 
+
 function refreshHouseMoneyOutputs() {
   const stats = computeHouseMoneyStats(contracts, trips, userSettings);
   const body = document.getElementById("house-money-body");
-  if (body) body.innerHTML = `${buildGaugeHTML(stats)}${buildStatTilesHTML(stats)}`;
+  if (body) body.innerHTML = buildGaugeHTML(stats);
+  const result = document.getElementById("assumptions-result");
+  if (result) result.innerHTML = assumptionsResultHTML(stats);
+  // Refreshed in place, so an open "More payback details" stays open.
+  const details = document.getElementById("payback-details-body");
+  if (details) details.innerHTML = buildStatTilesHTML(stats);
   const chartBody = document.getElementById("house-money-chart-body");
   if (chartBody) {
     chartBody.innerHTML = buildHouseMoneyChartHTML(stats);
@@ -1931,14 +1954,14 @@ function attachAssumptionsListeners() {
     assumptionsOpen = !assumptionsOpen;
     document.getElementById("assumptions-panel")?.classList.toggle("open", assumptionsOpen);
     e.currentTarget.setAttribute("aria-expanded", String(assumptionsOpen));
-    e.currentTarget.innerHTML = `&#9881; ${assumptionsOpen ? "Hide" : "Adjust"} Model Assumptions &amp; Sensitivity ${assumptionsOpen ? "&#9652;" : "&#9662;"}`;
+    e.currentTarget.innerHTML = `&#9881; ${assumptionsOpen ? "Hide" : "Adjust"} projection assumptions ${assumptionsOpen ? "&#9652;" : "&#9662;"}`;
   });
-  const panel = document.getElementById("assumptions-panel");
-  if (!panel) return;
-  panel.querySelectorAll(".assumption-slider").forEach(input => {
+  // Sliders live in two places: the projection panel and the chart's own
+  // Opportunity Cost control.
+  document.querySelectorAll("#assumptions-panel .assumption-slider, #chart-assumptions .assumption-slider").forEach(input => {
     input.addEventListener("input", () => handleAssumptionChange(input.dataset.field, parseFloat(input.value)));
   });
-  panel.querySelectorAll(".assumption-chip").forEach(btn => {
+  document.querySelectorAll("#assumptions-panel .assumption-chip, #chart-assumptions .assumption-chip").forEach(btn => {
     btn.addEventListener("click", () => {
       const field = btn.dataset.field;
       const value = parseFloat(btn.dataset.value);
@@ -1991,18 +2014,20 @@ async function renderSignedIn() {
       <a class="add-btn" href="bookings.html#record-booking">+ Record a booking</a>
       <a class="page-actions-link" href="bookings.html">All stays &rarr;</a>
     </div>
-    ${needsReview.length ? `<div class="save-warning">${needsReview.length === 1 ? "1 stay needs" : needsReview.length + " stays need"} its point sources confirmed and is excluded from membership value until reviewed. <a href="bookings.html#needs-review">Review point sources</a></div>` : ""}
+    ${needsReview.length ? `<div class="save-warning">${needsReview.length === 1 ? "1 stay has incomplete point sources and is" : needsReview.length + " stays have incomplete point sources and are"} excluded from membership value until reviewed. <a href="bookings.html#needs-review">Review point sources</a></div>` : ""}
     <div class="section">
       <h2>Your House Money Payback</h2>
       <div class="section-sub">What your membership has cost so far vs. the Deluxe hotel value of the stays you've booked</div>
       <div id="house-money-body">
         ${buildGaugeHTML(stats)}
-        ${buildStatTilesHTML(stats)}
       </div>
+      ${buildAssumptionsPanelHTML(userSettings, stats)}
+      <details class="disclosure" id="payback-details">
+        <summary>More payback details</summary>
+        <div id="payback-details-body">${buildStatTilesHTML(stats)}</div>
+      </details>
       ${buildChartDisclosureHTML(stats)}
     </div>
-
-    ${buildAssumptionsPanelHTML(userSettings)}
 
     ${buildStaysPreviewHTML()}
 
@@ -2038,19 +2063,23 @@ async function renderSignedIn() {
 function buildChartDisclosureHTML(stats) {
   const chart = buildHouseMoneyChartHTML(stats);
   if (!chart) return "";
-  return `<details class="disclosure" id="chart-disclosure"><summary>Cost vs. value over time</summary><div id="house-money-chart-body">${chart}</div></details>`;
+  return `<details class="disclosure" id="chart-disclosure"><summary>Cost vs. value over time</summary>
+      <div id="house-money-chart-body">${chart}</div>
+      <div class="chart-assumptions" id="chart-assumptions">${assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate", userSettings.opportunity_cost_rate, 0, 0.10, 0.005, OPPORTUNITY_COST_PRESETS)}</div>
+    </details>`;
 }
 
 // Booking management lives on bookings.html; this is its preview: at most
 // the next upcoming booking and the most recent completed stay, whatever
 // the history length (dvc-stay-groups.js stayPreview()).
-function stayPreviewLineHTML(trip, label) {
+const STAY_PREVIEW_LABEL = { "in-progress": "Current stay", upcoming: "Next up", completed: "Last stay" };
+const STAY_PREVIEW_VALUE = { "in-progress": " stay value", upcoming: " booked", completed: "" };
+function stayPreviewLineHTML({ kind, trip }) {
   const v = tripCashValue(trip, contracts);
-  const upcoming = window.DVCStayGroups.isUpcoming(trip, localToday());
   return `<a class="stay-preview-line" href="bookings.html">
-      <span class="stay-preview-label">${label}</span>
+      <span class="stay-preview-label">${STAY_PREVIEW_LABEL[kind]}</span>
       <span class="stay-preview-main"><strong>${shorthandResortName(trip.resort_id, resortName(trip.resort_id))}</strong><span>${formatTripDateRange(trip.check_in, trip.check_out)} &middot; ${trip.points_used.toLocaleString()} pts</span></span>
-      <span class="stay-preview-value">${v ? fmt(v.cash) + (upcoming ? " booked" : "") : ""}</span>
+      <span class="stay-preview-value">${v ? fmt(v.cash) + STAY_PREVIEW_VALUE[kind] : ""}</span>
     </a>`;
 }
 function buildStaysPreviewHTML() {
@@ -2058,11 +2087,13 @@ function buildStaysPreviewHTML() {
     return `<div class="section"><h2>Bookings &amp; Stays</h2><p class="empty-note">No bookings recorded yet.</p><a class="add-btn" href="bookings.html#record-booking">+ Record a booking</a></div>`;
   }
   const p = window.DVCStayGroups.stayPreview(trips, { today: localToday(), needsReview: t => !window.DVCTripFunding.summary(t, contracts).valid });
-  const lines = [p.nextUpcoming && stayPreviewLineHTML(p.nextUpcoming, "Next up"), p.lastCompleted && stayPreviewLineHTML(p.lastCompleted, "Last stay")].filter(Boolean).join("");
+  const lines = p.lines.map(stayPreviewLineHTML).join("");
+  const counts = [p.inProgressCount && `${p.inProgressCount} in progress`, `${p.upcomingCount} upcoming`, `${p.completedCount} completed`].filter(Boolean).join(" &middot; ");
+  const n = p.needsReviewCount;
   return `<div class="section">
       <div class="section-header-row"><h2>Bookings &amp; Stays</h2><a class="page-actions-link" href="bookings.html">View all stays &rarr;</a></div>
-      <div class="section-sub">${p.upcomingCount} upcoming &middot; ${p.completedCount} completed</div>
-      ${lines || `<p class="empty-note">Both of your stays need their point sources reviewed. <a href="bookings.html#needs-review">Review them</a></p>`}
+      <div class="section-sub">${counts}</div>
+      ${lines || `<p class="empty-note">${n === 1 ? "Your 1 stay needs its" : `All ${n} of your stays need their`} point sources reviewed. <a href="bookings.html#needs-review">Review them</a></p>`}
     </div>`;
 }
 

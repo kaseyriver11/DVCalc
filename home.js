@@ -155,11 +155,22 @@ const HOME_CONTRACT_ROWS = 3;
 function renderContractsWidget(contracts, yearPointsByContract) {
   const container = document.getElementById("home-contracts-summary");
   const active = contracts.filter(c => c.is_active);
-  if (active.length === 0) {
+  if (contracts.length === 0) {
+    // A brand-new owner: adding a contract is the one first step, so it's
+    // the page's only primary action (renderActions hides the row below).
     container.innerHTML = `
       <div class="widget-empty-welcome">
         <p>No contracts added yet. Add one to see its points and deadlines here.</p>
-        <a href="account.html" class="widget-empty-cta">+ Add your first contract</a>
+        <a href="account.html" class="home-primary-btn">+ Add your first contract</a>
+      </div>
+    `;
+    return;
+  }
+  if (active.length === 0) {
+    container.innerHTML = `
+      <div class="widget-empty-welcome">
+        <p>None of your contracts are active.</p>
+        <a href="account.html" class="widget-empty-cta">Manage contracts</a>
       </div>
     `;
     return;
@@ -174,9 +185,9 @@ function renderContractsWidget(contracts, yearPointsByContract) {
   container.innerHTML = `
     <div class="portfolio-headline">
       ${summary.allMissing
-        ? `<span class="portfolio-total needed">Balances needed</span>`
+        ? `<span class="portfolio-total needed">Current balances needed</span>`
         : `<span class="portfolio-total">${summary.total.toLocaleString()}</span><span class="portfolio-label">Recorded points left</span>`}
-      ${summary.missing && !summary.allMissing ? `<span class="portfolio-missing">${summary.missing} balance${summary.missing === 1 ? "" : "s"} needed</span>` : ""}
+      ${summary.missing && !summary.allMissing ? `<span class="portfolio-missing">${summary.missing} current balance${summary.missing === 1 ? "" : "s"} needed</span>` : ""}
     </div>
     <ul class="portfolio-rows">
       ${summary.rows.map(row => `<li><a class="portfolio-row" href="${row.href}">
@@ -196,6 +207,10 @@ function renderContractsWidget(contracts, yearPointsByContract) {
 // live on Membership Value (trips.html).
 function renderHouseMoneyWidget(contracts, trips, settings) {
   const container = document.getElementById("home-house-money");
+  if (contracts.length === 0) {
+    container.innerHTML = `<p class="value-note">Add a contract to see what your membership has paid back.</p>`;
+    return;
+  }
   const stats = computeHouseMoneyStats(contracts, trips, settings);
   const needsReview = trips.filter(t => !window.DVCTripFunding.summary(t, contracts).valid).length;
   const review = needsReview ? `<p class="value-note">${needsReview === 1 ? "1 stay needs" : needsReview + " stays need"} point sources reviewed. <a href="bookings.html#needs-review">Review</a></p>` : "";
@@ -205,7 +220,7 @@ function renderHouseMoneyWidget(contracts, trips, settings) {
   }
   container.innerHTML = `
     <div class="value-preview"><span class="value-pct">${stats.paybackPct}%</span><span class="value-pct-label">paid back</span></div>
-    <p class="value-note">Based on the booked value of your upcoming and completed stays.</p>
+    <p class="value-note">Based on the booked value of your recorded bookings and stays.</p>
     ${review}
     <a href="trips.html" class="widget-link-inline">View membership value &rarr;</a>
   `;
@@ -256,11 +271,14 @@ async function renderSignedIn() {
   for (const row of yearPoints) {
     (yearPointsByContract[row.contract_id] ||= []).push(row);
   }
-  renderActions(true);
   // A failed read is not an empty account: show Retry, never onboarding
   // or an "all clear" (UX2-05).
   const failed = (...names) => window.DVCAuth.readFailed(...names);
   const contractsFailed = failed("contracts", "contract_year_points");
+  // Zero contracts (a successful, empty read) is contract first: no
+  // booking or planning row competing with "+ Add your first contract".
+  if (!contractsFailed && contracts.length === 0) document.getElementById("home-actions").innerHTML = "";
+  else renderActions(true);
   if (contractsFailed) {
     document.getElementById("home-attention").innerHTML = "";
     document.getElementById("home-contracts-summary").innerHTML = loadErrorHTML("your contracts");
