@@ -15,84 +15,84 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 516.4,
               "lastChecked": 514.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 709.5,
               "lastChecked": 652.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 736.0,
               "lastChecked": 720.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 993.5,
               "lastChecked": 981.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneR": {
             "sunThu": {
               "average": 895.6,
               "lastChecked": 870.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1225.0,
               "lastChecked": 1122.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "oneSV": {
             "sunThu": {
-              "average": 1092.1,
+              "average": 1093.22,
               "lastChecked": 1074.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 55
             },
             "friSat": {
-              "average": 1416.75,
+              "average": 1419.36,
               "lastChecked": 1366.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 22
             }
           },
           "twoR": {
             "sunThu": {
               "average": 1345.6,
               "lastChecked": 1308.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2120.5,
               "lastChecked": 1743.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
             "sunThu": {
               "average": 1524.2,
               "lastChecked": 1481.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2496.5,
               "lastChecked": 2174.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           }
         }
@@ -106,112 +106,112 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 512.0,
               "lastChecked": 516.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 556.0,
               "lastChecked": 556.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "dsR": {
             "sunThu": {
               "average": 564.0,
               "lastChecked": 594.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 618.5,
               "lastChecked": 639.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 731.6,
               "lastChecked": 758.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 847.0,
               "lastChecked": 847.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneV": {
             "sunThu": {
               "average": 863.0,
               "lastChecked": 863.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 945.0,
               "lastChecked": 945.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "oneR": {
             "sunThu": {
               "average": 918.9,
               "lastChecked": 929.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1008.5,
               "lastChecked": 1019.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1126.3,
               "lastChecked": 1136.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1232.0,
               "lastChecked": 1242.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "twoR": {
             "sunThu": {
               "average": 1434.8,
               "lastChecked": 1434.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1639.0,
               "lastChecked": 1639.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
             "sunThu": {
               "average": 1700.8,
               "lastChecked": 1700.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1941.0,
               "lastChecked": 1941.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           }
         }
@@ -225,112 +225,112 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 512.0,
               "lastChecked": 516.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 556.0,
               "lastChecked": 556.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "dsR": {
             "sunThu": {
               "average": 564.0,
               "lastChecked": 594.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 618.5,
               "lastChecked": 639.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 731.6,
               "lastChecked": 758.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 847.0,
               "lastChecked": 847.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneV": {
             "sunThu": {
               "average": 863.0,
               "lastChecked": 863.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 945.0,
               "lastChecked": 945.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "oneR": {
             "sunThu": {
               "average": 918.9,
               "lastChecked": 929.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1008.5,
               "lastChecked": 1019.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1126.3,
               "lastChecked": 1136.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1232.0,
               "lastChecked": 1242.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "twoR": {
             "sunThu": {
               "average": 1434.8,
               "lastChecked": 1434.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1639.0,
               "lastChecked": 1639.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
             "sunThu": {
               "average": 1700.8,
               "lastChecked": 1700.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1941.0,
               "lastChecked": 1941.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           }
         }
@@ -363,72 +363,72 @@ const CASH_PRICES_LIVE = {
         "roomTypes": {
           "dsR": {
             "sunThu": {
-              "average": 569.3,
-              "lastChecked": 672.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "average": 567.47,
+              "lastChecked": 629.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 55
             },
             "friSat": {
-              "average": 650.5,
-              "lastChecked": 672.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "average": 648.55,
+              "lastChecked": 629.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 22
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 779.6,
               "lastChecked": 897.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 897.0,
               "lastChecked": 897.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneR": {
             "sunThu": {
               "average": 940.2,
               "lastChecked": 1053.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1053.0,
               "lastChecked": 1053.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1158.4,
               "lastChecked": 1296.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1296.0,
               "lastChecked": 1296.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoR": {
             "sunThu": {
               "average": 1458.0,
               "lastChecked": 1740.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1740.0,
               "lastChecked": 1740.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
@@ -456,84 +456,84 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 537.0,
               "lastChecked": 558.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 562.5,
               "lastChecked": 579.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 726.0,
               "lastChecked": 726.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 781.0,
               "lastChecked": 781.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneR": {
             "sunThu": {
               "average": 847.5,
               "lastChecked": 859.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 891.5,
               "lastChecked": 916.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1029.0,
               "lastChecked": 1052.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1082.0,
               "lastChecked": 1122.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "twoR": {
             "sunThu": {
               "average": 1564.0,
               "lastChecked": 1564.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1664.0,
               "lastChecked": 1664.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
             "sunThu": {
               "average": 1797.0,
               "lastChecked": 1797.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 1909.0,
               "lastChecked": 1909.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           }
         }
@@ -547,28 +547,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 595.0,
               "lastChecked": 595.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             },
             "friSat": {
               "average": 656.0,
               "lastChecked": 656.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 834.0,
               "lastChecked": 834.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             },
             "friSat": {
               "average": 987.0,
               "lastChecked": 987.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "oneSV": {
@@ -589,14 +589,14 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1551.0,
               "lastChecked": 1551.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             },
             "friSat": {
               "average": 1754.0,
               "lastChecked": 1754.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "twoSV": {
@@ -612,6 +612,20 @@ const CASH_PRICES_LIVE = {
               "lastCheckedAt": "2026-09-06T12:28:09+00:00",
               "sampleCount": 5
             }
+          },
+          "oneR": {
+            "sunThu": {
+              "average": 994.0,
+              "lastChecked": 994.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 2
+            },
+            "friSat": {
+              "average": 1129.0,
+              "lastChecked": 1129.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 1
+            }
           }
         }
       },
@@ -624,84 +638,84 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 621.9,
               "lastChecked": 600.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 696.0,
               "lastChecked": 738.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 808.4,
               "lastChecked": 749.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 908.0,
               "lastChecked": 908.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneR": {
             "sunThu": {
               "average": 1024.1,
               "lastChecked": 940.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1185.0,
               "lastChecked": 1195.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1277.2,
               "lastChecked": 1159.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1483.0,
               "lastChecked": 1492.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "twoR": {
             "sunThu": {
               "average": 1698.6,
               "lastChecked": 1483.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2004.0,
               "lastChecked": 2004.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
             "sunThu": {
               "average": 2029.8,
               "lastChecked": 1760.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2394.0,
               "lastChecked": 2394.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           }
         }
@@ -729,84 +743,84 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 693.6,
               "lastChecked": 691.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 696.0,
               "lastChecked": 738.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 966.0,
               "lastChecked": 842.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 908.0,
               "lastChecked": 908.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneR": {
             "sunThu": {
               "average": 1234.3,
               "lastChecked": 1098.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1185.0,
               "lastChecked": 1195.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1497.8,
               "lastChecked": 1373.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1483.0,
               "lastChecked": 1492.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "twoR": {
             "sunThu": {
               "average": 2016.6,
               "lastChecked": 1843.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2004.0,
               "lastChecked": 2004.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
             "sunThu": {
               "average": 2411.6,
               "lastChecked": 2210.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2394.0,
               "lastChecked": 2394.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "oneV": {
@@ -869,98 +883,98 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 655.0,
               "lastChecked": 655.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 655.0,
               "lastChecked": 655.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 2
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 4
             }
           },
           "dsR": {
             "sunThu": {
               "average": 704.0,
               "lastChecked": 753.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 704.0,
               "lastChecked": 753.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 997.0,
               "lastChecked": 997.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 997.0,
               "lastChecked": 997.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneR": {
             "sunThu": {
               "average": 1271.0,
               "lastChecked": 1281.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1271.0,
               "lastChecked": 1281.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1531.5,
               "lastChecked": 1541.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 1531.5,
               "lastChecked": 1541.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "twoR": {
             "sunThu": {
               "average": 2060.0,
               "lastChecked": 2060.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2060.0,
               "lastChecked": 2060.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           },
           "twoSV": {
             "sunThu": {
               "average": 2462.0,
               "lastChecked": 2462.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 25
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 30
             },
             "friSat": {
               "average": 2462.0,
               "lastChecked": 2462.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 12
             }
           }
         }
@@ -974,56 +988,56 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 870.5,
               "lastChecked": 920.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 50
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 60
             },
             "friSat": {
               "average": 870.5,
               "lastChecked": 920.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 24
             }
           },
           "dsSV": {
             "sunThu": {
               "average": 1091.0,
               "lastChecked": 1091.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 30
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 35
             },
             "friSat": {
               "average": 1091.0,
               "lastChecked": 1091.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 12
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 14
             }
           },
           "oneR": {
             "sunThu": {
               "average": 1372.0,
               "lastChecked": 1372.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 1372.0,
               "lastChecked": 1372.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 2
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 4
             }
           },
           "oneSV": {
             "sunThu": {
               "average": 1489.0,
               "lastChecked": 1489.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 1489.0,
               "lastChecked": 1489.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 2
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 4
             }
           },
           "twoR": {
@@ -1055,70 +1069,70 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 759.8,
               "lastChecked": 739.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1015.0,
               "lastChecked": 983.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsP": {
             "sunThu": {
               "average": 888.8,
               "lastChecked": 872.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1153.5,
               "lastChecked": 1179.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneP": {
             "sunThu": {
               "average": 1110.6,
               "lastChecked": 1081.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1585.0,
               "lastChecked": 1581.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoP": {
             "sunThu": {
               "average": 1625.4,
               "lastChecked": 1579.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 2559.5,
               "lastChecked": 2381.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 996.2,
               "lastChecked": 973.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 15
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 20
             },
             "friSat": {
               "average": 1296.0,
               "lastChecked": 1306.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 6
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 8
             }
           }
         }
@@ -1132,98 +1146,98 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 813.8,
               "lastChecked": 813.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 881.0,
               "lastChecked": 881.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsP": {
             "sunThu": {
               "average": 870.8,
               "lastChecked": 882.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 918.0,
               "lastChecked": 918.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 988.6,
               "lastChecked": 1011.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1078.0,
               "lastChecked": 1078.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneR": {
             "sunThu": {
               "average": 1133.0,
               "lastChecked": 1133.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1226.0,
               "lastChecked": 1226.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneP": {
             "sunThu": {
               "average": 1175.2,
               "lastChecked": 1176.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1277.0,
               "lastChecked": 1277.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoP": {
             "sunThu": {
               "average": 1919.2,
               "lastChecked": 1920.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 2082.0,
               "lastChecked": 2082.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoTP": {
             "sunThu": {
               "average": 2081.2,
               "lastChecked": 2082.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 2262.0,
               "lastChecked": 2262.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           }
         }
@@ -1237,112 +1251,126 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 813.8,
               "lastChecked": 813.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 881.0,
               "lastChecked": 881.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsP": {
             "sunThu": {
               "average": 870.8,
               "lastChecked": 882.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 918.0,
               "lastChecked": 918.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 988.6,
               "lastChecked": 1011.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1078.0,
               "lastChecked": 1078.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneR": {
             "sunThu": {
               "average": 1133.0,
               "lastChecked": 1133.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1226.0,
               "lastChecked": 1226.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneP": {
             "sunThu": {
               "average": 1175.2,
               "lastChecked": 1176.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1277.0,
               "lastChecked": 1277.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneTP": {
             "sunThu": {
               "average": 1296.0,
               "lastChecked": 1296.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1408.0,
               "lastChecked": 1408.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoP": {
             "sunThu": {
               "average": 1919.2,
               "lastChecked": 1920.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 2082.0,
               "lastChecked": 2082.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoTP": {
             "sunThu": {
               "average": 2081.2,
               "lastChecked": 2082.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 2262.0,
               "lastChecked": 2262.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
+            }
+          },
+          "twoR": {
+            "sunThu": {
+              "average": 1753.2,
+              "lastChecked": 1754.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 5
+            },
+            "friSat": {
+              "average": 1904.0,
+              "lastChecked": 1904.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 2
             }
           }
         }
@@ -1356,42 +1384,42 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 908.6,
               "lastChecked": 965.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 965.0,
               "lastChecked": 965.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 1029.4,
               "lastChecked": 1137.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1137.0,
               "lastChecked": 1137.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneP": {
             "sunThu": {
               "average": 1193.2,
               "lastChecked": 1395.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1395.0,
               "lastChecked": 1395.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoP": {
@@ -1407,6 +1435,20 @@ const CASH_PRICES_LIVE = {
               "lastCheckedAt": "2026-09-06T12:28:09+00:00",
               "sampleCount": 8
             }
+          },
+          "dsR": {
+            "sunThu": {
+              "average": 819.6,
+              "lastChecked": 962.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 5
+            },
+            "friSat": {
+              "average": 962.0,
+              "lastChecked": 962.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 2
+            }
           }
         }
       },
@@ -1419,98 +1461,98 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 744.0,
               "lastChecked": 744.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 752.0,
               "lastChecked": 752.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsP": {
             "sunThu": {
               "average": 881.0,
               "lastChecked": 881.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 889.0,
               "lastChecked": 889.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 972.0,
               "lastChecked": 972.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 978.0,
               "lastChecked": 978.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneR": {
             "sunThu": {
               "average": 1068.0,
               "lastChecked": 1068.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1075.0,
               "lastChecked": 1075.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneP": {
             "sunThu": {
               "average": 1100.0,
               "lastChecked": 1100.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1106.0,
               "lastChecked": 1106.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneTP": {
             "sunThu": {
               "average": 1236.0,
               "lastChecked": 1236.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1246.0,
               "lastChecked": 1246.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoP": {
             "sunThu": {
               "average": 1908.0,
               "lastChecked": 1908.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1923.0,
               "lastChecked": 1923.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoTP": {
@@ -1538,28 +1580,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 967.0,
               "lastChecked": 967.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 1141.0,
               "lastChecked": 1141.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 5
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 1053.0,
               "lastChecked": 1053.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 1264.0,
               "lastChecked": 1264.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 5
             }
           },
           "oneR": {
@@ -1580,14 +1622,14 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1263.0,
               "lastChecked": 1263.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 1530.0,
               "lastChecked": 1530.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 5
             }
           },
           "dsR": {
@@ -1615,28 +1657,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 920.2,
               "lastChecked": 839.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1100.0,
               "lastChecked": 1100.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsP": {
             "sunThu": {
               "average": 944.4,
               "lastChecked": 889.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1099.0,
               "lastChecked": 1099.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneR": {
@@ -1657,14 +1699,14 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1318.6,
               "lastChecked": 1213.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1564.0,
               "lastChecked": 1564.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           }
         }
@@ -1678,56 +1720,56 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1059.6,
               "lastChecked": 974.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1100.0,
               "lastChecked": 1100.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsP": {
             "sunThu": {
               "average": 1072.2,
               "lastChecked": 973.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1099.0,
               "lastChecked": 1099.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 1145.4,
               "lastChecked": 1047.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1173.0,
               "lastChecked": 1173.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneP": {
             "sunThu": {
               "average": 1557.0,
               "lastChecked": 1389.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1564.0,
               "lastChecked": 1564.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneTP": {
@@ -1748,28 +1790,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 2795.0,
               "lastChecked": 2487.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 2812.0,
               "lastChecked": 2812.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoTP": {
             "sunThu": {
               "average": 3058.6,
               "lastChecked": 2729.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 3074.0,
               "lastChecked": 3074.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           }
         }
@@ -1783,42 +1825,42 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1081.0,
               "lastChecked": 1081.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1081.0,
               "lastChecked": 1081.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsP": {
             "sunThu": {
               "average": 1097.0,
               "lastChecked": 1097.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1097.0,
               "lastChecked": 1097.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "dsTP": {
             "sunThu": {
               "average": 1170.0,
               "lastChecked": 1170.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1170.0,
               "lastChecked": 1170.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneR": {
@@ -1839,42 +1881,42 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1599.0,
               "lastChecked": 1599.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1599.0,
               "lastChecked": 1599.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "oneTP": {
             "sunThu": {
               "average": 1795.0,
               "lastChecked": 1795.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1795.0,
               "lastChecked": 1795.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           },
           "twoP": {
             "sunThu": {
               "average": 2872.0,
               "lastChecked": 2872.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 2872.0,
               "lastChecked": 2872.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           }
         }
@@ -1888,14 +1930,14 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1217.0,
               "lastChecked": 1217.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 20
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 25
             },
             "friSat": {
               "average": 1217.0,
               "lastChecked": 1217.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 8
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             }
           }
         }
@@ -1913,28 +1955,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 663.2,
               "lastChecked": 656.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 944.5,
               "lastChecked": 912.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "oneBedroom": {
             "sunThu": {
               "average": 933.8,
               "lastChecked": 909.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 1292.5,
               "lastChecked": 1221.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 2
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 4
             }
           }
         }
@@ -1948,14 +1990,14 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 728.0,
               "lastChecked": 732.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 743.0,
               "lastChecked": 743.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "oneBedroom": {
@@ -1983,28 +2025,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 728.0,
               "lastChecked": 732.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 743.0,
               "lastChecked": 743.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "oneBedroom": {
             "sunThu": {
               "average": 959.0,
               "lastChecked": 959.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 998.0,
               "lastChecked": 998.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           }
         }
@@ -2018,28 +2060,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 716.0,
               "lastChecked": 812.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 5
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 10
             },
             "friSat": {
               "average": 812.0,
               "lastChecked": 812.0,
-              "lastCheckedAt": "2026-08-31T01:46:34+00:00",
-              "sampleCount": 2
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 4
             }
           },
           "oneBedroom": {
             "sunThu": {
               "average": 989.6,
               "lastChecked": 1112.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 1112.0,
               "lastChecked": 1112.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           }
         }
@@ -2053,28 +2095,49 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 713.0,
               "lastChecked": 713.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 718.0,
               "lastChecked": 718.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "oneBedroom": {
             "sunThu": {
               "average": 895.0,
               "lastChecked": 895.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 905.0,
               "lastChecked": 905.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
+            }
+          }
+        }
+      },
+      {
+        "rangeStart": "2026-11-28",
+        "rangeEnd": "2026-11-30",
+        "yearUsed": 2026,
+        "roomTypes": {
+          "deluxeStudio": {
+            "sunThu": {
+              "average": 793.0,
+              "lastChecked": 793.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 2
+            },
+            "friSat": {
+              "average": 883.0,
+              "lastChecked": 883.0,
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 1
             }
           }
         }
@@ -2088,14 +2151,14 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1107.0,
               "lastChecked": 1015.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 1281.0,
               "lastChecked": 1281.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           }
         }
@@ -2109,28 +2172,28 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 867.6,
               "lastChecked": 798.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 888.0,
               "lastChecked": 888.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "oneBedroom": {
             "sunThu": {
               "average": 1283.2,
               "lastChecked": 1168.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 1281.0,
               "lastChecked": 1281.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           }
         }
@@ -2144,14 +2207,14 @@ const CASH_PRICES_LIVE = {
             "sunThu": {
               "average": 1033.0,
               "lastChecked": 1033.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 10
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 15
             },
             "friSat": {
               "average": 1033.0,
               "lastChecked": 1033.0,
-              "lastCheckedAt": "2026-09-06T12:28:09+00:00",
-              "sampleCount": 4
+              "lastCheckedAt": "2026-09-24T13:53:17+00:00",
+              "sampleCount": 6
             }
           },
           "oneBedroom": {
