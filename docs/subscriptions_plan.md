@@ -66,7 +66,10 @@ besides the owner.
 - Suggest a Stay's "resorts I can book" personalized scope
 - Trip logging (saved itineraries and itinerary comparison moved to free
   2026-09-24: they plan on public chart data, like the calendar)
-- Trophy Case / badges, including the House Money payback badge
+- Trophy Case / badges, including the House Money payback badge -- except
+  13 free badges (2026-09-24, `FREE_BADGE_IDS` in auth.js) earned from the
+  calendar, saved itineraries and the free tools; the Trophy Room is open
+  to everyone and shows the rest locked as Active Member badges
 
 Pitch: *"The planning tools are free forever. Pay to connect your own
 contracts and points to them."*

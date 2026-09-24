@@ -974,6 +974,7 @@ function renderResults() {
 
 function runSearch() {
   const { points, year, months, category, partySize, minNights, maxNights, scope } = wizardData;
+  window.DVCTrack?.track("stay-finder");
 
   // "Resorts I can book" narrows the search itself; every card also gets
   // its own home/7-month/restricted badge from the same userResortAccess

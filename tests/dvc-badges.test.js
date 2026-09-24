@@ -378,3 +378,53 @@ test("7-Month Sniper needs an away stay the contract can actually reach", () => 
     window.DVCAuth.getUserResortAccess = saved.access;
   }
 });
+
+// ---- Free badges (2026-09-24) ----
+const FREE_IDS = new Set([...fs.readFileSync(path.join(ROOT, "auth.js"), "utf8")
+  .match(/const FREE_BADGE_IDS = new Set\(\[([^]*?)\]\)/)[1].matchAll(/"([a-z-]+)"/g)].map(m => m[1]));
+const everyBadge = (itins = [], stored = []) => [
+  ...window.DVCBadges.evaluateUserBadges([], [], itins, { paybackPct: 0 }, null, []),
+  ...window.DVCBadges.evaluateEventBadges(stored),
+];
+
+test("free badges: 13, and every id on auth.js's list is a real badge", () => {
+  assert.equal(FREE_IDS.size, 13);
+  const ids = new Set(everyBadge().map(b => b.id));
+  for (const id of FREE_IDS) assert.ok(ids.has(id), id);
+});
+
+test("free badges: none of them needs a contract, trip or member-only data", () => {
+  const itins = [
+    { created_at: "2026-01-01T00:00:00Z", segments: [{ resortId: "saratogaSprings", checkIn: "2026-12-01" }, { resortId: "oldKeyWest", checkIn: "2026-12-04" }] },
+  ];
+  const stored = [...FREE_IDS].map(id => ({ badge_id: id, event_count: 50 }));
+  const unlocked = new Set(everyBadge(itins, stored).filter(b => b.unlocked).map(b => b.id));
+  for (const id of ["savant", "daydreamer", "early-bird", "stay-finder", "resort-matchmaker", "trend-watcher", "deed-detective", "re-checker", "night-owl"]) {
+    assert.ok(unlocked.has(id), id);
+  }
+});
+
+test("Early Bird: needs check-in 10+ months after the save date", () => {
+  const badge = created => everyBadge([{ created_at: created, segments: [{ resortId: "boulderRidge", checkIn: "2027-08-01" }] }]).find(b => b.id === "early-bird");
+  assert.equal(badge("2026-10-01T12:00:00Z").unlocked, true);  // exactly 10 months
+  assert.equal(badge("2026-10-02T12:00:00Z").unlocked, false);
+  assert.equal(everyBadge([{ segments: [{ resortId: "boulderRidge", checkIn: "2030-01-01" }] }]).find(b => b.id === "early-bird").unlocked, false);
+});
+
+test("Resort Collector counts distinct resorts across itineraries", () => {
+  const itins = ["saratogaSprings", "oldKeyWest", "saratogaSprings", "boulderRidge"].map(resortId => ({ segments: [{ resortId, checkIn: "2027-01-01" }] }));
+  const b = everyBadge(itins).find(b => b.id === "resort-collector");
+  assert.equal(b.value, 3);
+  assert.equal(b.tierNumber, 1);
+});
+
+test("markMemberOnly: non-members see every non-free badge locked and labeled", () => {
+  const badges = everyBadge([], [{ badge_id: "night-owl", event_count: 3 }]);
+  const marked = window.DVCBadges.markMemberOnly(badges, FREE_IDS, false);
+  for (const b of marked) {
+    if (FREE_IDS.has(b.id)) assert.ok(!b.memberOnly, b.id);
+    else { assert.equal(b.memberOnly, true, b.id); assert.equal(b.unlocked, false, b.id); assert.equal(window.DVCBadges.badgeTierText(b), "Active Member"); }
+  }
+  assert.ok(marked.find(b => b.id === "night-owl").unlocked);
+  assert.equal(window.DVCBadges.markMemberOnly(badges, FREE_IDS, true), badges);
+});

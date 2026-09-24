@@ -2658,13 +2658,24 @@ checkInInput.addEventListener("change", (e) => {
     checkOutInput.value = state.checkOut;
   }
   checkOutInput.min = state.checkIn || "";
+  trackMatchmaker();
   render();
 });
 
 checkOutInput.addEventListener("change", (e) => {
   state.checkOut = e.target.value || null;
+  trackMatchmaker();
   render();
 });
+
+// Resort Matchmaker: the owner's own dates, not the defaults the page
+// opens on. Once per visit.
+let matchmakerTracked = false;
+function trackMatchmaker() {
+  if (matchmakerTracked) return;
+  matchmakerTracked = true;
+  window.DVCTrack?.track("resort-matchmaker");
+}
 
 categoryPills.addEventListener("click", (e) => {
   const pill = e.target.closest(".category-pill");

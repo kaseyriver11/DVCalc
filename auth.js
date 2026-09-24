@@ -910,14 +910,25 @@ async function deleteContractYearPoints(id) {
   return { error: error?.message };
 }
 
+// Badges anyone can earn: built only from the calendar, saved itineraries
+// and the free tools (docs/subscriptions_plan.md "Tier split"). Every
+// other badge needs Active Member. dvc-badges.js defines them all;
+// tests/free-badges.test.js checks each id here exists there.
+const FREE_BADGE_IDS = new Set([
+  "savant", "re-checker", "split-stay-scientist", "just-one-more-night", "resourceful-explorer", "night-owl",
+  "daydreamer", "resort-collector", "early-bird", "stay-finder", "resort-matchmaker", "trend-watcher", "deed-detective",
+]);
+
+// Non-members get only their free badges' rows.
 async function getUserBadges() {
-  if (!configured || !currentSession || !(await hasMembership())) return [];
+  if (!configured || !currentSession) return [];
+  const member = await hasMembership();
   const { data, error } = await supabase.from("user_badges").select("*");
   if (error) {
     console.error("[DVCAuth] getUserBadges failed:", error.message);
     return [];
   }
-  return data;
+  return member ? data : data.filter(row => FREE_BADGE_IDS.has(row.badge_id));
 }
 
 // patch: { badge_id, tier, event_count } -- upsert (not insert/update)
@@ -929,7 +940,7 @@ async function getUserBadges() {
 // high-water-mark rule itself, it just writes what it's given.
 async function upsertUserBadge(patch) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  if (!FREE_BADGE_IDS.has(patch.badge_id) && !(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { data, error } = await supabase
     .from("user_badges")
     .upsert({ ...patch, user_id: currentSession.user.id }, { onConflict: "user_id,badge_id" })
@@ -963,7 +974,7 @@ async function getBadgeRarityStats() {
 // Silently no-ops when signed out/unconfigured, same as upsertUserBadge.
 async function incrementBadgeEvent(badgeId) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
+  if (!FREE_BADGE_IDS.has(badgeId) && !(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { error } = await supabase.rpc("increment_badge_event", { p_badge_id: badgeId });
   if (error) console.error("[DVCAuth] incrementBadgeEvent failed:", error.message);
   return { error: error?.message };
@@ -1648,6 +1659,7 @@ window.DVCAuth = {
   MEMBERSHIP_PLAN,
   membershipTermsLine,
   ownedResortChoice: readOwnedResortChoice,
+  FREE_BADGE_IDS,
   subscribeToMembership,
   manageMembership,
   getTrips,

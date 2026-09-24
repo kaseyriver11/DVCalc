@@ -2036,6 +2036,7 @@ function attachWizardListeners() {
     wizardStep = 5;
     renderWizard();
     renderMatches();
+    window.DVCTrack?.track("deed-detective");
     document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
   });
 }

@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const auth = fs.readFileSync(require.resolve('../auth.js'), 'utf8');
 const fnSource = name => auth.match(new RegExp('(?:async )?function ' + name + '\\([^]*?\\n\\}'))[0];
 
-const READS = ['getContracts', 'getContractYearPoints', 'getUserBadges', 'getTrips', 'getTripDeductions'];
+const READS = ['getContracts', 'getContractYearPoints', 'getTrips', 'getTripDeductions'];
 const WRITES = ['addContract', 'updateContract', 'upsertContractYearPoints', 'recordPointMovement', 'upsertUserBadge',
   'incrementBadgeEvent', 'addTrip', 'updateTrip', 'saveTripBooking', 'deleteTripBooking', 'reconcilePoints'];
 
@@ -15,7 +15,7 @@ function context(member) {
   const ctx = vm.createContext({
     configured: true, currentSession: { user: { id: 'u' } }, console,
     supabase: { from: () => chain, rpc: () => { queried = true; return {}; } },
-    hasMembership: async () => member, MEMBERSHIP_REQUIRED_ERROR: 'members only',
+    hasMembership: async () => member, MEMBERSHIP_REQUIRED_ERROR: 'members only', FREE_BADGE_IDS: new Set(['night-owl']),
   });
   return { ctx, wasQueried: () => queried };
 }
@@ -74,5 +74,20 @@ test('saved itineraries are free: no membership check on read or write', async (
   }
   for (const page of ['itineraries.html', 'itinerarycompare.html']) {
     assert.doesNotMatch(fs.readFileSync(require.resolve('../' + page), 'utf8'), /renderMembershipGate/, page);
+  }
+});
+
+test('free badges: non-members can record them, but not member badges', async () => {
+  for (const [id, allowed] of [['night-owl', true], ['house-money', false]]) {
+    const done = { data: {}, error: null };
+    const chain = { upsert: () => chain, select: () => chain, single: async () => done };
+    const ctx = vm.createContext({
+      configured: true, currentSession: { user: { id: 'u' } }, console,
+      supabase: { from: () => chain, rpc: async () => done },
+      hasMembership: async () => false, MEMBERSHIP_REQUIRED_ERROR: 'members only', FREE_BADGE_IDS: new Set(['night-owl']),
+    });
+    vm.runInContext(fnSource('incrementBadgeEvent') + fnSource('upsertUserBadge'), ctx);
+    assert.equal((await ctx.incrementBadgeEvent(id)).error === 'members only', !allowed, id);
+    assert.equal((await ctx.upsertUserBadge({ badge_id: id, tier: 1 })).error === 'members only', !allowed, id);
   }
 });

@@ -308,14 +308,10 @@ const { computeHouseMoneyStats } = window.DVCOwnerValue.create(tripCashValue);
 // it's now banking-aware (credits contract_year_points' banked/remaining
 // balances, not just logged trips), same formula trips.html now shares.
 
+// Open to everyone: non-members earn the free badges (calendar, saved
+// itineraries, free tools) and see the rest locked as Active Member badges.
 async function renderSignedIn() {
-  if (!(await window.DVCAuth.hasMembership())) {
-    window.DVCAuth.renderMembershipGate(pageContent, {
-      title: "Unlock the Trophy Room",
-      body: "Earn badges for how you plan, book and use your DVC points.",
-    });
-    return;
-  }
+  const isMember = await window.DVCAuth.hasMembership();
   const [contracts, trips, itineraries, userBadges, rarityStats, contractYearPoints, settings] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
@@ -342,16 +338,23 @@ async function renderSignedIn() {
   // earned -- omitted from the grid, the category counts, AND the mastery
   // score denominator so their existence isn't given away by a "30" that
   // never quite adds up to what's visibly on screen (2026-09-19).
-  currentBadges = allBadges.filter(b => !b.hidden || b.unlocked);
+  const free = window.DVCAuth.FREE_BADGE_IDS;
+  currentBadges = window.DVCBadges.markMemberOnly(allBadges.filter(b => !b.hidden || b.unlocked), free, isMember);
 
   const unlockedCount = currentBadges.filter(b => b.unlocked).length;
   const totalCount = currentBadges.length;
   const mastery = window.DVCBadges.computeMasteryScore(currentBadges);
 
   const grouped = window.DVCBadges.groupBadgesByCategory(currentBadges);
-  const categorySections = Object.keys(window.DVCBadges.BADGE_CATEGORY_LABELS).map(catKey => {
+  // A non-member sees the categories they can earn in first.
+  const freeCount = key => (grouped[key] || []).filter(b => !b.memberOnly).length;
+  const catKeys = Object.keys(window.DVCBadges.BADGE_CATEGORY_LABELS);
+  const orderedKeys = isMember ? catKeys : [...catKeys].sort((a, b) => freeCount(b) - freeCount(a));
+  const categorySections = orderedKeys.map(catKey => {
     const label = window.DVCBadges.BADGE_CATEGORY_LABELS[catKey];
-    const catBadges = window.DVCBadges.sortBadgesForDisplay(grouped[catKey] || []);
+    // Free badges first for a non-member, so what they can earn leads.
+    const sorted = window.DVCBadges.sortBadgesForDisplay(grouped[catKey] || []);
+    const catBadges = [...sorted.filter(b => !b.memberOnly), ...sorted.filter(b => b.memberOnly)];
     const catUnlocked = catBadges.filter(b => b.unlocked).length;
     const body = catBadges.length > 0
       ? `<div class="trophy-case-row">${window.DVCBadges.buildTrophyCaseHTML(catBadges)}</div>`
@@ -365,14 +368,26 @@ async function renderSignedIn() {
     `;
   }).join("");
 
+  const freeBadges = currentBadges.filter(b => free.has(b.id));
+  const upsell = isMember ? "" : `
+    <div id="trophy-upsell"></div>`;
+
   pageContent.innerHTML = `
+    ${upsell}
     <div class="collection-summary">
       <h2>Mastery Score: ${mastery.earned} / ${mastery.max} Tiers</h2>
-      <div class="collection-sub">${unlockedCount} of ${totalCount} Pins Unlocked &middot; ${mastery.pct}% Mastery Complete</div>
+      <div class="collection-sub">${unlockedCount} of ${totalCount} Pins Unlocked &middot; ${mastery.pct}% Mastery Complete${isMember ? "" : ` &middot; ${freeBadges.filter(b => b.unlocked).length} of ${freeBadges.length} free pins earned`}</div>
       <div class="collection-progress-track"><div class="collection-progress-fill" style="width:${mastery.pct}%"></div></div>
     </div>
     ${categorySections}
   `;
+
+  if (!isMember) {
+    window.DVCAuth.renderMembershipGate(document.getElementById("trophy-upsell"), {
+      title: "Earn every pin",
+      body: `${freeBadges.length} pins are free to earn by planning on the calendar and the free tools. The rest come from your own contracts, bookings and stays with Active Member.`,
+    });
+  }
 
   pageContent.querySelectorAll(".trophy-case-row").forEach(row => {
     row.addEventListener("click", (e) => {

@@ -495,6 +495,8 @@ function addCombo() {
     resortId: state.resortId,
     roomTypeId: state.roomTypeId,
   });
+  // A pin plus the live selection puts 2+ combos on the chart.
+  window.DVCTrack?.track("trend-watcher");
   render();
 }
 

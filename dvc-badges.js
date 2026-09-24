@@ -414,6 +414,9 @@ const STICKY_BADGE_IDS = new Set([
   "use-year-alchemist",
   // 2026-09-19 additions
   "festival-hopper", "marathon-stay", "beach-bum", "points-whale",
+  // 2026-09-24 free badges built from saved itineraries: deleting an
+  // itinerary shouldn't un-earn them.
+  "daydreamer", "resort-collector", "early-bird",
   // Every resort now has a Resort Loyalty badge (Fort Wilderness Cabins'
   // is a special/binary one instead of tiered -- see
   // evaluateResortLoyaltyBadges() above -- but it's still sticky the same
@@ -922,8 +925,59 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
   return [
     houseMoney, addOnitis, pointsWhale, pointArchitect, marathonStay, pointsSteward, sniper, savant, villaRoyalty, grandVilla, odyssey, duesOptimizer, waitlistWhisperer, homebody,
     welcomeHome, lifer, blueCard, resaleRanger, bankShot, useYearAlchemist, timeTraveler, uniqueStays, holidayChaser, festivalHopper, bicoastal, beachBum, coastToCoast, leapDayLounger, pointPurist,
+    ...evaluateItineraryBadges(itineraries),
     ...evaluateResortLoyaltyBadges(trips),
   ];
+}
+
+// Free badges built only from saved itineraries (2026-09-24), so anyone
+// planning on the calendar can earn them without a contract.
+function itineraryResortIds(itineraries) {
+  return new Set((itineraries || []).flatMap(itin => (itin.segments || []).map(s => s.resortId)).filter(Boolean));
+}
+
+// Check-in at least 10 months after the day it was saved. Rows without a
+// created_at (never saved yet) can't qualify.
+function isEarlyBirdItinerary(itin) {
+  const firstCheckIn = (itin.segments || []).map(s => s.checkIn).filter(Boolean).sort()[0];
+  if (!firstCheckIn || !itin.created_at) return false;
+  const cutoff = new Date(itin.created_at);
+  cutoff.setMonth(cutoff.getMonth() + 10);
+  return firstCheckIn >= cutoff.toISOString().slice(0, 10);
+}
+
+function evaluateItineraryBadges(itineraries) {
+  const list = itineraries || [];
+  const allResorts = new Set(RESORTS.map(r => r.id)).size;
+  const daydreamer = evaluateTieredBadge({
+    id: "daydreamer", icon: "💭", name: "Daydreamer", category: "planning",
+    value: list.length,
+    tiers: [
+      { threshold: 1, label: "First Dream" },
+      { threshold: 5, label: "Dream Board" },
+      { threshold: 15, label: "Master Planner" },
+    ],
+    valueLabel: v => `${v} itinerar${v === 1 ? "y" : "ies"} saved`,
+    detail: "Save stays from the calendar with Save Itinerary.",
+  });
+  const resortCollector = evaluateTieredBadge({
+    id: "resort-collector", icon: "🧭", name: "Resort Collector", category: "exploration",
+    value: itineraryResortIds(list).size,
+    tiers: [
+      { threshold: 3, label: "Window Shopper" },
+      { threshold: 8, label: "Collector" },
+      { threshold: allResorts, label: "Completionist" },
+    ],
+    valueLabel: v => `${v} resort${v === 1 ? "" : "s"} in saved itineraries`,
+    detail: "Count of different resorts across your saved itineraries.",
+  });
+  const earlyBird = evaluateSpecialBadge({
+    id: "early-bird", icon: "🐦", name: "Early Bird", category: "planning",
+    unlocked: list.some(isEarlyBirdItinerary),
+    requirement: "Save an itinerary 10+ months before check-in",
+    detail: "Save an itinerary whose check-in is at least 10 months after the day you saved it.",
+  });
+  return [daydreamer, resortCollector, earlyBird];
 }
 
 // The 6 badges tracked purely server-side via incrementBadgeEvent()
@@ -1009,12 +1063,54 @@ function evaluateEventBadges(storedBadges) {
       { threshold: 25, label: "Never Sleeps" },
     ],
     valueLabel: v => `${v} late-night action${v === 1 ? "" : "s"}`,
-    detail: "Planning actions logged between midnight and 4am -- clicking a source link, extending a trip, reloading an itinerary, or comparing itineraries.",
+    detail: "Planning actions logged between midnight and 4am, like searching for a stay, extending a trip or comparing itineraries.",
   });
-  return [resourcefulExplorer, justOneMoreNight, reChecker, splitStayScientist, elevenMonthSniper, nightOwl];
+  // Free-tool badges (2026-09-24), one per free planning page.
+  const stayFinder = evaluateTieredBadge({
+    id: "stay-finder", icon: "🔎", name: "Stay Finder", category: "planning",
+    value: eventCountFor(storedBadges, "stay-finder"),
+    tiers: [
+      { threshold: 1, label: "First Search" },
+      { threshold: 5, label: "Budget Hunter" },
+      { threshold: 20, label: "Points Maximizer" },
+    ],
+    valueLabel: v => `${v} search${v === 1 ? "" : "es"} run`,
+    detail: "Run a search on Suggest a Stay.",
+  });
+  const resortMatchmaker = evaluateSpecialBadge({
+    id: "resort-matchmaker", icon: "⚖️", name: "Resort Matchmaker", category: "planning",
+    unlocked: eventCountFor(storedBadges, "resort-matchmaker") >= 1,
+    requirement: "Compare resorts for your dates",
+    detail: "Pick dates on Compare Resorts to see every resort's points for them side by side.",
+  });
+  const trendWatcher = evaluateSpecialBadge({
+    id: "trend-watcher", icon: "📈", name: "Trend Watcher", category: "exploration",
+    unlocked: eventCountFor(storedBadges, "trend-watcher") >= 1,
+    requirement: "Compare 2+ rooms on the Year-over-Year chart",
+    detail: "Pin 2 or more resort and room combos on the Year-over-Year chart.",
+  });
+  const deedDetective = evaluateSpecialBadge({
+    id: "deed-detective", icon: "📜", name: "Deed Detective", category: "financial",
+    unlocked: eventCountFor(storedBadges, "deed-detective") >= 1,
+    requirement: "Get your results from Contract Value",
+    detail: "Finish the Contract Value questions to see which resorts give the most value for the money.",
+  });
+  return [resourcefulExplorer, justOneMoreNight, reChecker, splitStayScientist, elevenMonthSniper, nightOwl,
+    stayFinder, resortMatchmaker, trendWatcher, deedDetective];
+}
+
+// For a non-member, every badge outside the free list shows locked and
+// labeled Active Member, whatever their stored or live data says.
+function markMemberOnly(badges, freeIds, isMember) {
+  if (isMember) return badges;
+  return badges.map(b => freeIds.has(b.id) ? b : {
+    ...b, memberOnly: true, unlocked: false, tierClass: "locked", tierLabel: "Locked", tierNumber: 0,
+    next: b.kind === "tiered" ? b.tiers[0] : b.next,
+  });
 }
 
 function badgeTierText(b) {
+  if (b.memberOnly) return "Active Member";
   if (b.kind === "special") return b.unlocked ? "Unlocked" : "Locked";
   return b.unlocked ? `Tier ${b.tierNumber}: ${b.tierLabel}` : "Locked";
 }
@@ -1213,6 +1309,7 @@ function openBadgeModal(badgeId, badges) {
     <div class="badge-modal-icon-wrap ${b.tierClass}"><div class="badge-icon-wrap${b.image ? " has-art" : ""}"${modalIconStyle}>${modalIconInner}</div></div>
     <div class="badge-modal-status">${badgeTierText(b)}</div>
     ${b.detail ? `<div class="badge-modal-detail">${b.detail}</div>` : ""}
+    ${b.memberOnly ? `<div class="badge-modal-next-step">Earned with Active Member, from your own contracts, bookings and stays.</div>` : ""}
     ${b.rarityText ? `<div class="badge-modal-rarity">${b.rarityText}</div>` : ""}
     ${b.kind === "tiered" ? badgeProgressHTML(b) : ""}
     ${nextStepHTML}
@@ -1226,6 +1323,7 @@ function closeBadgeModal() {
 }
 
 window.DVCBadges = {
+  markMemberOnly,
   evaluateUserBadges,
   evaluateEventBadges,
   computePointEfficiency,
