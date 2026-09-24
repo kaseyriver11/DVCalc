@@ -31,7 +31,7 @@ test('optional financial entries validate before saving', () => {
 // UX2-04: editing a contract must not rewrite a known purchase date.
 function purchaseDate(yearValue, storedDate) {
   const c = vm.createContext({});
-  vm.runInContext(source.match(/let editingPurchaseDate = null;\nfunction acquisitionYearToPurchaseDate\([^]*?\n\}/)[0].replace(/\r/g, '') + `\neditingPurchaseDate = ${JSON.stringify(storedDate)};`, c);
+  vm.runInContext(source.match(/let editingPurchaseDate = null;\r?\nfunction acquisitionYearToPurchaseDate\([^]*?\r?\n\}/)[0].replace(/\r/g, '') + `\neditingPurchaseDate = ${JSON.stringify(storedDate)};`, c);
   return c.acquisitionYearToPurchaseDate({ value: yearValue });
 }
 test('an unchanged acquisition year keeps the stored full purchase date', () => {
