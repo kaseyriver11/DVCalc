@@ -1059,10 +1059,10 @@ async function getSubscription() {
 // ---- Active Member gate (docs/subscriptions_plan.md "Tier split") ----
 // Planning tools on public data stay free; anything built on the owner's
 // own portfolio -- contracts, the points ledger, trips, itineraries,
-// badges -- needs an active membership. Flip this to false to open every
-// owner feature to any signed-in user (e.g. until live-mode Stripe is set
-// up, since nobody can pay before then).
-const MEMBERSHIP_GATE_ENABLED = false;
+// badges -- needs an active membership. On since live-mode Stripe went in
+// (2026-09-24). Flip this to false to open every owner feature to any
+// signed-in user; keep send-banking-reminders' copy in step.
+const MEMBERSHIP_GATE_ENABLED = true;
 // past_due still counts: Stripe retries a failed card for a while before
 // canceling, and one declined charge shouldn't lock an owner out of their
 // own ledger mid-retry (subscriptions_plan.md Phase 7).

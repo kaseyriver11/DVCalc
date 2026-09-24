@@ -24,8 +24,9 @@ test('pre-sign-in terms say free while the gate is off, and the real terms once 
   assert.match(paid, /until you cancel/);
 });
 
-test('the gate ships off, and plan terms come from one place', () => {
-  assert.match(auth, /const MEMBERSHIP_GATE_ENABLED = false;/);
+test('the gate is on in the app and the reminder emails alike, and plan terms come from one place', () => {
+  assert.match(auth, /const MEMBERSHIP_GATE_ENABLED = true;/);
+  assert.match(read('supabase/functions/send-banking-reminders/index.ts'), /const MEMBERSHIP_GATE_ENABLED = true;/);
   assert.doesNotMatch(auth.replace(/const MEMBERSHIP_PLAN = [^\n]*/, ''), /\$\d|7-day/);
   assert.doesNotMatch(account, /\$25\b/);
 });

@@ -44,7 +44,7 @@ import { runPointReminders } from "../_shared/point-reminder-run.js";
 
 // Mirrors auth.js: set false to email every opted-in owner regardless of
 // membership. past_due still counts (Stripe is retrying the card).
-const MEMBERSHIP_GATE_ENABLED = false;
+const MEMBERSHIP_GATE_ENABLED = true;
 const MEMBER_STATUSES = ["active", "trialing", "past_due"];
 
 Deno.serve(async (req) => {

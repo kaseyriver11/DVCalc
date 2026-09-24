@@ -1719,6 +1719,12 @@ function membershipCardState(sub, contracts) {
       action: "upgrade",
     };
   }
+  // Complimentary: granted by hand (docs/subscriptions_plan.md), with a
+  // "comp:" placeholder in place of a Stripe customer -- there's no billing
+  // to manage, so no button.
+  if (String(sub.stripe_customer_id || "").startsWith("comp:")) {
+    return { statusClass: "is-active", statusText: "Active Member", detail: "Complimentary membership.", buttonText: "", buttonClass: "", action: "" };
+  }
   if (status === "past_due" || status === "unpaid") {
     return {
       statusClass: "is-warning",
@@ -1778,7 +1784,7 @@ function buildMembershipCardHTML(sub, contracts) {
         ${s.detail ? `<div class="membership-card-detail">${s.detail}</div>` : ""}
         ${s.anchorText ? `<div class="membership-card-anchor">${s.anchorText}</div>` : ""}
       </div>
-      <button type="button" class="membership-card-btn ${s.buttonClass}" id="membership-action-btn" data-action="${s.action}">${s.buttonText}</button>
+      ${s.action ? `<button type="button" class="membership-card-btn ${s.buttonClass}" id="membership-action-btn" data-action="${s.action}">${s.buttonText}</button>` : ""}
       <div class="membership-card-msg" id="membership-action-msg" style="display:none;"></div>
     </div>
   `;

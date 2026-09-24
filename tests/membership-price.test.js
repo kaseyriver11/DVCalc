@@ -52,3 +52,14 @@ test('a known resort names it by shorthand; an unknown one asks where they own',
   assert.match(any, /data-membership-own>Where do you own\?</);
   assert.match(membershipDuesHTML('notAResort'), /Where do you own\?/);
 });
+
+test('a complimentary membership shows as active with no billing button', () => {
+  const account = read('account.html');
+  const ctx = vm.createContext({});
+  vm.runInContext(account.match(/function membershipCardState\([^]*?\n\}/)[0], ctx);
+  const comp = ctx.membershipCardState({ status: 'active', stripe_customer_id: 'comp:abc' }, []);
+  assert.equal(comp.statusText, 'Active Member');
+  assert.equal(comp.action, '');
+  const paid = ctx.membershipCardState({ status: 'active', stripe_customer_id: 'cus_123' }, []);
+  assert.equal(paid.action, 'manage');
+});
