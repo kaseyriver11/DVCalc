@@ -29,5 +29,10 @@ jobs:
           git config user.name "dvcalc-bot"
           git config user.email "actions@github.com"
           git add data/.watchdog_state.json data/cash_prices_live.json data/cash_prices_live_summary.js
-          git diff --staged --quiet || git commit -m "Update nightly watchdog state and live pricing [skip ci]"
-          git diff --staged --quiet || git push
+          # One conditional for both: a second `git diff --staged --quiet`
+          # after the commit always sees an empty index, so a separate
+          # guarded push line never ran and state was never persisted.
+          if ! git diff --staged --quiet; then
+            git commit -m "Update nightly watchdog state and live pricing [skip ci]"
+            git push
+          fi
