@@ -659,42 +659,19 @@ function roomTypeIcon(name) {
   return "\u{1F6CF}️";
 }
 
-// Strips the " - View Category" suffix for the compact chip label -- the
-// full name (with view) still shows in the picker trigger and the native
-// <select>'s own options, just not repeated on every chip in a 2-column grid.
-function roomTypeShortName(name) {
-  return name.split(" - ")[0];
-}
-
 function renderRoomTypeAccordion() {
   const resort = getResort();
   if (!resort) return;
   const current = resort.roomTypes.find(rt => rt.id === state.roomTypeId);
   const triggerLabel = document.getElementById("room-type-picker-trigger-label");
   if (triggerLabel && current) {
-    triggerLabel.textContent = `${roomTypeIcon(current.name)} ${current.name} (sleeps ${current.sleeps})`;
+    triggerLabel.textContent = current.name;
   }
   const grid = document.getElementById("room-type-grid");
   if (!grid) return;
-  // The short label (stripping " - View Category") is only unambiguous
-  // when a resort has just ONE room type of that shape -- fine for a
-  // resort like Copper Creek (5 room types, 5 distinct short names), but
-  // Animal Kingdom Villas has 4 differently-priced "Deluxe Studio"
-  // variants (Value/Resort View/Savanna View/Club Concierge) that all
-  // shortened to the same "Deluxe Studio" label with no way to tell them
-  // apart in the grid -- a user flagged this exact case (2026-09-20).
-  // Counting how many room types collapse to each short name and falling
-  // back to the FULL name whenever more than one does keeps the clean
-  // short label for the common case while restoring the distinguishing
-  // detail exactly where it's actually needed.
-  const shortNameCounts = {};
-  resort.roomTypes.forEach(rt => {
-    const short = roomTypeShortName(rt.name);
-    shortNameCounts[short] = (shortNameCounts[short] || 0) + 1;
-  });
+  // Full room names on every tile, same as Record a Booking (2026-09-23 alignment).
   grid.innerHTML = resort.roomTypes.map(rt => {
-    const short = roomTypeShortName(rt.name);
-    const label = shortNameCounts[short] > 1 ? rt.name : short;
+    const label = rt.name;
     return `
     <button type="button" class="room-type-chip${rt.id === state.roomTypeId ? " selected" : ""}" onclick="pickRoomType('${rt.id}')">
       <span class="room-type-icon">${roomTypeIcon(rt.name)}</span>
@@ -1667,7 +1644,7 @@ function buildCrossYearDrawHTML(contract, resort, dates) {
     const draw = computeSmartDraw(group.row, points);
     const available = group.row.remaining + group.row.banked + group.row.borrowed + group.row.holding;
     return `<div class="smart-draw-guardrail ${draw.shortfall ? 'warning' : 'ok'}"><strong>${stayYearLabel(contract, group.row)}</strong><br>${group.dates.length} night(s): ${points} pts needed / ${available} available. ${draw.shortfall ? 'Short by ' + draw.shortfall + ' pts in this use year.' : (available - points) + ' pts projected left in this use year.'}</div>`;
-  }).join('') + '<div class="smart-draw-footer">Each night uses its applicable cycle. Balances are not combined or moved between years. Review banking or borrowing in My Contracts if needed.</div><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record This Booking &rarr;</button></div>';
+  }).join('') + '<div class="smart-draw-footer">Each night uses its applicable cycle. Balances are not combined or moved between years. Review banking or borrowing in My Contracts if needed.</div><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button></div>';
 }
 
 function getAvailablePoints(c) {
@@ -2807,7 +2784,7 @@ function buildCancelOutcomeHTML(contract, currentRow, draws, checkInStr) {
 }
 
 function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
-  if (!currentRow.recorded) return `<div class="smart-draw-card"><div class="smart-draw-title">Balance not confirmed</div><p>Confirm ${contract.use_year} ${currentRow.year} points before assessing this stay. Your annual allotment is not a confirmed available balance.</p><a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Review balance</a><div class="smart-draw-actions"><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record This Booking &rarr;</button></div></div>`;
+  if (!currentRow.recorded) return `<div class="smart-draw-card"><div class="smart-draw-title">Balance not confirmed</div><p>Confirm ${contract.use_year} ${currentRow.year} points before assessing this stay. Your annual allotment is not a confirmed available balance.</p><a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Review balance</a><div class="smart-draw-actions"><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button></div></div>`;
   const { draws, after, shortfall } = smartDrawEffectiveDraws(currentRow, pointsNeeded);
 
   const barHTML = `
@@ -2895,10 +2872,10 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
       ${guardrails.join("")}
       ${manualHTML}
       <div class="smart-draw-actions">
-        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record This Booking &rarr;</button>
+        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button>
         <button type="button" class="smart-draw-manual-toggle" onclick="toggleSmartDrawManual(${pointsNeeded})">${smartDrawManualOpen ? "Use recommended split" : "Adjust manually"}</button>
       </div>
-      <div class="smart-draw-footer">Planning preview only. Record This Booking opens a prefilled form where you can save the stay and take its points out of your balances.</div>
+      <div class="smart-draw-footer">Planning preview only. Record this booking opens a prefilled form where you can save the stay and take its points out of your balances.</div>
     </div>
   `;
 }
@@ -3113,10 +3090,10 @@ function buildMultiContractSplitHTML(resort, stayDates) {
       ${contracts.some(c => !getStayYearRow(c).recorded) && totalAllocated < pointsNeeded ? `<div class="smart-draw-guardrail warning">${totalAllocated} / ${pointsNeeded} pts allocated from confirmed balances. Confirm the remaining contract balances before judging this stay.</div>` : buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded)}
       <div class="multi-split-rows">${rowsHTML}</div>
       <div class="smart-draw-actions">
-        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record This Booking &rarr;</button>
+        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button>
         <button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">&larr; Use one contract</button>
       </div>
-      <div class="smart-draw-footer">Planning preview only. Record This Booking opens a prefilled form with this split, where you can save the stay and take its points out of your balances.</div>
+      <div class="smart-draw-footer">Planning preview only. Record this booking opens a prefilled form with this split, where you can save the stay and take its points out of your balances.</div>
     </div>
   `;
 }

@@ -981,3 +981,19 @@
 }
 .badge-modal-next-step strong { color: var(--color-primary); }
 .badge-modal-next-step.maxed { color: var(--color-good); background: var(--color-good-bg); font-weight: 600; }
+
+/* ---- Date fields (2026-09-23 visual alignment) ----
+   Every native date input gets the same height, border, radius, padding and
+   calendar icon (class "dvc-date"), and its label the same sentence-case
+   field-label style ("dvc-field-label"). The date itself stays native: the
+   device decides how it's written (mm/dd/yyyy, dd/mm/yyyy, ...). */
+.dvc-field-label { display: block; font-size: .8rem; font-weight: 600; color: var(--color-text); letter-spacing: 0; text-transform: none; margin-bottom: 4px; }
+input.dvc-date[type="date"] {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; margin: 0;
+  padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 10px;
+  background: var(--color-bg-card); color: var(--color-text);
+  font: inherit; font-size: 16px; line-height: 1.2;
+}
+input.dvc-date[type="date"]:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.15); }
+input.dvc-date[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .6; }
+input.dvc-date[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }

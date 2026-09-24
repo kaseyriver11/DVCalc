@@ -104,11 +104,9 @@ body {
 }
 
 .control-group label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #666;
-  letter-spacing: 0.5px;
+  color: var(--color-text);
 }
 
 .control-group input,
@@ -136,41 +134,15 @@ body {
    -- still two native <input type="date">, just restyled to sit flush
    inside the shared pill instead of each having its own separate boxed
    chrome. */
-.date-range-group {
-  flex-direction: row;
-  gap: 0;
-  background: linear-gradient(135deg, #f7f5fa, #efe8f7);
-  border: 1px solid #e0d5f0;
-  border-radius: 12px;
-  padding: 2px;
-  box-shadow: 0 1px 3px rgba(74, 20, 140, 0.08);
-}
-.date-range-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px 14px;
-  flex: 1;
-}
-.date-range-field:first-child { border-right: 1px solid #ddd0ea; }
-.date-range-field label {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: 0.4px;
-}
-.date-range-field input[type="date"] {
-  border: none;
-  background: transparent;
-  padding: 2px 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #333;
-  cursor: pointer;
-}
-.date-range-field input[type="date"]:focus { outline: none; box-shadow: none; }
-.date-range-field input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+/* 2026-09-23: the connected pill gave way to the app's one date-field
+   style (tokens.css .dvc-date / .dvc-field-label) -- two standard fields
+   side by side, the same as Record a Booking and Use These Points. */
+.date-range-group { flex-direction: row; gap: 10px; }
+/* Guardrail #12: a stretched control group is capped at its container, or a
+   native date input's intrinsic width widens the page on a 320px phone. */
+.controls > .control-group { min-width: 0; max-width: 100%; }
+.date-range-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.date-range-field .dvc-field-label { margin-bottom: 4px; }
 
 /* ---- WDW-only toggle, restyled as a chip button ---- (moved out of the
    settings-bar below and into the top trip controls, per direct request:
@@ -905,8 +877,13 @@ body {
    repeat(4, 1fr) forces all 4 category buttons onto one row at any width. */
 .category-pills {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
+}
+/* Four pills don't fit a 320px phone: two rows of two instead of widening the page. */
+@media (max-width: 360px) {
+  .category-pills { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .date-range-group { flex-direction: column; }
 }
 
 .category-pill {
@@ -1273,16 +1250,16 @@ body {
   <div class="controls">
     <div class="control-group date-range-group">
       <div class="date-range-field">
-        <label for="check-in">Check-in</label>
-        <input type="date" id="check-in">
+        <label class="dvc-field-label" for="check-in">Check-in</label>
+        <input type="date" class="dvc-date" id="check-in">
       </div>
       <div class="date-range-field">
-        <label for="check-out">Check-out</label>
-        <input type="date" id="check-out">
+        <label class="dvc-field-label" for="check-out">Check-out</label>
+        <input type="date" class="dvc-date" id="check-out">
       </div>
     </div>
     <div class="control-group">
-      <label>Room Category</label>
+      <label>Room category</label>
       <div class="category-pills" id="category-pills">
         <button class="category-pill active" data-cat="studio">Studio</button>
         <button class="category-pill" data-cat="one">1-Bedroom</button>
@@ -1473,6 +1450,17 @@ const checkInInput = document.getElementById("check-in");
 const checkOutInput = document.getElementById("check-out");
 const categoryPills = document.getElementById("category-pills");
 const staySummary = document.getElementById("stay-summary");
+// Same range shortening as dvc-dates.js formatDateRange() (this page is
+// self-contained): "Oct 23–28, 2026", "Oct 30 – Nov 2, 2026",
+// "Dec 28, 2026 – Jan 2, 2027".
+function formatStayRange(startIso, endIso) {
+  const [ay, am, ad] = startIso.split("-").map(Number);
+  const [by, bm, bd] = endIso.split("-").map(Number);
+  const mon = (y, m) => new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+  if (ay !== by) return `${mon(ay, am)} ${ad}, ${ay} – ${mon(by, bm)} ${bd}, ${by}`;
+  if (am === bm) return `${mon(ay, am)} ${ad}–${bd}, ${by}`;
+  return `${mon(ay, am)} ${ad} – ${mon(by, bm)} ${bd}, ${by}`;
+}
 const resultsContainer = document.getElementById("results");
 const rentalSlider = document.getElementById("rental-rate");
 const rentalLabel = document.getElementById("rental-rate-val");
@@ -2205,10 +2193,7 @@ function render() {
   }
 
   const nights = stayDates.length;
-  const ciDate = new Date(state.checkIn + "T12:00:00");
-  const coDate = new Date(state.checkOut + "T12:00:00");
-  const fmt = d => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  staySummary.innerHTML = `${fmt(ciDate)} — ${fmt(coDate)}, ${coDate.getFullYear()} &middot; <strong>${nights} night${nights !== 1 ? "s" : ""}</strong>`;
+  staySummary.innerHTML = `${formatStayRange(state.checkIn, state.checkOut)} &middot; <strong>${nights} night${nights !== 1 ? "s" : ""}</strong>`;
 
   // Determine which year's data to use
   const year = getYearForDates(state.checkIn);

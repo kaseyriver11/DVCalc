@@ -1035,7 +1035,7 @@ function renderItinResortSheetList(filter) {
     ...matches.filter(r => !saved.has(r.id)),
   ];
   const allRowHTML = !query
-    ? `<button type="button" class="resort-pick-row${!filterResortId ? " selected" : ""}" onclick="pickItinResort('')"><span>All Resorts</span></button>`
+    ? `<button type="button" class="resort-pick-row${!filterResortId ? " selected" : ""}" onclick="pickItinResort('')"><span class="resort-pick-swatch" style="background:#bbb"></span><span>All resorts</span></button>`
     : "";
   const rowsHTML = options.length === 0
     ? (query ? `<div class="sheet-empty">No resorts match "${escapeHTML(filter)}".</div>` : "")
@@ -1521,14 +1521,14 @@ async function renderSignedIn() {
       <div class="section-sub">Saved from the calendar's "Save Itinerary" button. Loading one brings it back into the calendar exactly as saved.</div>
       <div class="itin-toolbar">
         <div class="itin-field-group">
-          <label>Resort</label>
+          <label>Stay resort</label>
           <button type="button" class="picker-trigger" id="itin-resort-trigger" onclick="openItinResortSheet()">
             <span class="picker-trigger-value" id="itin-resort-trigger-label"></span>
             <span class="custom-select-arrow"></span>
           </button>
         </div>
         <div class="itin-field-group">
-          <label>Room Type</label>
+          <label>Room type</label>
           <button type="button" class="picker-trigger" id="itin-roomtype-trigger" onclick="toggleItinRoomTypeGrid()">
             <span class="picker-trigger-value" id="itin-roomtype-trigger-label"></span>
             <span class="custom-select-arrow"></span>
@@ -1560,7 +1560,7 @@ async function renderSignedIn() {
         <div class="sheet-handle"></div>
         <div class="resort-sheet-hero" id="itin-resort-sheet-hero" hidden></div>
         <div class="modal-header">
-          <h3>Filter by Resort</h3>
+          <h3>Choose a stay resort</h3>
           <button class="modal-close" onclick="closeItinResortSheet()" aria-label="Close">&times;</button>
         </div>
         <input type="text" id="itin-resort-sheet-search" class="sheet-search" placeholder="Search resorts&hellip;" autocomplete="off">

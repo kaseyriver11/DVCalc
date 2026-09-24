@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My DVC Contracts</title>
+  <title>My Contracts</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="images/icons/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
@@ -263,7 +263,10 @@ body {
 /* A soft radial glow sitting behind the resort name, like illuminated
    signage -- a negative-z-index layer on the name's own wrapper rather
    than a shared ancestor, so it doesn't bleed into the badge column. */
-.wallet-card-top-left { position: relative; }
+/* flex: 1 + min-width: 0 so the name column gives up width to the pills
+   on the right (and truncates) instead of pushing them off the card --
+   Mobile Responsiveness Guardrail #12. */
+.wallet-card-top-left { position: relative; flex: 1; min-width: 0; }
 .wallet-card-top-left::before {
   content: "";
   position: absolute;
@@ -705,68 +708,13 @@ body {
 
 .studio-step-label {
   display: block;
-  font-size: 0.7rem;
-  text-transform: uppercase;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #888;
-  letter-spacing: 0.4px;
+  color: var(--color-text);
   margin-bottom: 6px;
 }
 
-.resort-chip-search {
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 8px;
-  padding: 9px 12px;
-  border: 1px solid var(--color-border-light);
-  border-radius: 10px;
-  font: inherit;
-  font-size: 0.85rem;
-}
-.resort-chip-empty { font-size: 0.8rem; color: var(--color-text-muted); }
-.resort-chip[hidden] { display: none; }
-.resort-chip-grid {
-  display: grid;
-  /* minmax(0, 1fr), not a bare 1fr -- grid tracks default to a content-based
-     minimum size, so a long resort name ("The Villas at Disney's Grand
-     Floridian Resort & Spa") would otherwise refuse to shrink and force
-     the whole grid (and modal) wider than the viewport on a narrow phone. */
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  max-height: 280px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-.resort-chip {
-  border: 2px solid transparent;
-  border-radius: 10px;
-  padding: 10px 12px;
-  color: white;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  opacity: 0.55;
-  overflow-wrap: break-word;
-  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
-}
-.resort-chip:hover { opacity: 0.8; transform: scale(1.02); }
-/* A single crisp white ring + soft primary-color glow, not the old
-   inset-white-plus-outset-purple double ring (looked like two stacked
-   boxes in live mobile testing). The purple ring is INSET, not an outward
-   box-shadow spread -- .resort-chip-grid's overflow-y:auto forces
-   overflow-x to also compute as non-visible (a CSS Overflow Module
-   interop rule, same one noted on index.html's .calendar-grid-scroll),
-   so an outward-spreading ring on a chip flush against the grid's left/
-   right edge got clipped there, looking cut off on both sides on mobile's
-   single-column layout. Inset never needs room outside the chip's own
-   box, so it can't be clipped regardless of container padding. */
-.resort-chip.selected {
-  opacity: 1;
-  border-color: #ffffff;
-  box-shadow: inset 0 0 0 3px var(--color-primary), 0 4px 12px rgba(0,0,0,0.15);
-  transform: translateY(-2px);
-}
+
 
 /* Round Use Year buttons, studio-only -- the base .use-year-chip pill
    styling (also unused anywhere else) stays the fallback shape. */
@@ -845,12 +793,11 @@ body {
    failure mode a number input or the custom-select's min-width can trigger. */
 .form-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
+/* Field labels are sentence case; uppercase is reserved for section headings. */
 .form-field label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #888;
-  letter-spacing: 0.4px;
+  color: var(--color-text);
 }
 
 .form-field input, .form-field select {
@@ -1146,7 +1093,6 @@ body {
 .delete-account-btn:disabled { opacity: 0.6; cursor: default; }
 
 @media (max-width: 560px) {
-  .resort-chip-grid { grid-template-columns: 1fr; }
 }
 
 /* Fluid Card Studio layout on phones -- the modal's own steps are already
@@ -1187,14 +1133,14 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 190px;
+    max-width: 100%;
   }
   .wallet-card-nickname {
     font-size: 0.68rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 190px;
+    max-width: 100%;
   }
   .wallet-card-points-num { font-size: 1.5rem; }
   /* Tighter peek (55px of a 168px card, same ~1/3 proportion the desktop
@@ -1348,6 +1294,16 @@ body {
 #contract-modal .studio-nav > .cancel-btn { font-size: .8rem; }
 #contract-modal .studio-stepper-pill { font-size: .7rem; padding: 8px; }
 #contract-modal .form-error { margin: 6px 0; }
+/* Home resort step: the list takes all the room between the search field
+   and the sticky footer, and shrinks (still scrollable) when the keyboard
+   opens, instead of a short fixed-height box over empty space. */
+#contract-modal .studio-wizard-track { height: 100%; }
+#contract-modal .studio-step-pane[data-step-panel="1"]:not([hidden]) { height: 100%; display: flex; flex-direction: column; }
+#contract-modal .studio-step-pane[data-step-panel="1"] .studio-panel { flex: 1; min-height: 0; margin-bottom: 0; gap: 0; }
+#contract-modal .home-resort-list { flex: 1; min-height: 88px; padding: 2px 2px 8px; }
+/* Keyboard open on a small phone: the summary card gives its space to the list. */
+@media (max-height: 560px) { #contract-modal .studio-summary { display: none; } }
+@media (max-height: 440px) { #contract-modal .studio-stepper { display: none; } #contract-modal .modal-header { margin-bottom: 4px; } }
 </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -1403,7 +1359,7 @@ body {
   </nav>
 
   <div class="header">
-    <h1>My DVC Contracts</h1>
+    <h1>My Contracts</h1>
     <div class="subtitle">Manage your contracts to unlock personalized booking windows</div>
   </div>
 
@@ -1429,6 +1385,7 @@ body {
   <script src="dvc-reconcile.js"></script>
   <script src="account-reconcile.js"></script>
   <script src="dvc-ui.js"></script>
+  <script src="dvc-pickers.js"></script>
   <script>
 const { currentUYYear, todayInEastern, nextDeadlineForUseYear, isBankingWindowOpen, formatDeadlineDate, useYearExpiration, dateOnlyUTC, USE_YEAR_START_MONTH, urgencyTier, expirationTier, formatDeadlineWithCountdown } = window.DVCDates;
 const { initCustomSelect } = window.DVCUI;
@@ -1491,8 +1448,15 @@ const RESORT_ABBREVIATIONS = {
   grandFloridian: "vgf", oldKeyWest: "okw", polynesianVillas: "pvb poly", rivieraResort: "rr riv", saratogaSprings: "ssr",
   aulani: "aul hawaii ko olina", hiltonHead: "hhi", veroBeach: "vb", disneylandHotel: "vdh dlh", grandCalifornian: "vgc",
 };
-function resortChipsInPickerOrder(resorts) {
-  return [...resorts].sort((a, b) => shorthandResortName(a.id, a.name).localeCompare(shorthandResortName(b.id, b.name)));
+// Add Contract's home-resort step: the shared picker rows (dvc-pickers.js,
+// the calendar's resort sheet design) listed inline, full names A-Z, with
+// search matching full names, shorthand and common abbreviations.
+let homeResortPick = null;
+function renderHomeResortList() {
+  const list = document.getElementById("home-resort-list");
+  if (!list) return;
+  const resorts = uniqueResorts().map(r => ({ ...r, search: resortChipSearchText(r) }));
+  list.innerHTML = window.DVCPickers.rowsHTML({ resorts, selected: homeResortPick, query: document.getElementById("resort-chip-search").value });
 }
 function resortChipSearchText(r) {
   return `${r.name} ${shorthandResortName(r.id, r.name)} ${RESORT_ABBREVIATIONS[r.id] || ""}`.toLowerCase().replace(/"/g, "");
@@ -1984,18 +1948,18 @@ async function renderSignedIn() {
       </div>
       <div class="section-sub">Own more than one? Add each separately -- DVC Companion will combine what they unlock together.</div>
       <div class="contract-list" id="contract-list"></div>
-      <button type="button" class="add-btn" id="show-add-form">+ Add Contract</button>
+      <button type="button" class="add-btn" id="show-add-form">+ Add contract</button>
       <div class="modal-overlay" id="contract-modal">
         <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="contract-modal-title">
           <div class="modal-header">
-            <h3 id="contract-modal-title">Add Contract</h3>
+            <h3 id="contract-modal-title">Add contract</h3>
             <button type="button" class="modal-close" id="contract-modal-close" aria-label="Close">&times;</button>
           </div>
           <div class="studio-summary" id="modal-card-preview"></div>
 
           <div class="studio-stepper" id="studio-stepper">
-            <button type="button" class="studio-stepper-pill" data-step-dot="1">1. Resort</button>
-            <button type="button" class="studio-stepper-pill" data-step-dot="2">2. Points &amp; Use Year</button>
+            <button type="button" class="studio-stepper-pill" data-step-dot="1">1. Home resort</button>
+            <button type="button" class="studio-stepper-pill" data-step-dot="2">2. Points &amp; use year</button>
             <button type="button" class="studio-stepper-pill" data-step-dot="3">3. Details</button>
           </div>
           <div class="form-error" id="form-error" role="alert" style="display:none;"></div>
@@ -2004,12 +1968,9 @@ async function renderSignedIn() {
             <div class="studio-wizard-track" id="studio-wizard-track">
               <div class="studio-step-pane" data-step-panel="1">
                 <div class="studio-panel">
-                  <label class="studio-step-label" for="resort-chip-search">Pick Your Home Resort</label>
-                  <input type="search" id="resort-chip-search" class="resort-chip-search" placeholder="Search, e.g. Riviera or SSR" autocomplete="off">
-                  <div class="resort-chip-grid" id="resort-chip-grid">
-                    ${resortChipsInPickerOrder(resorts).map(r => `<button type="button" class="resort-chip" data-resort="${r.id}" data-search="${resortChipSearchText(r)}" title="${r.name}" style="background:${walletCardGradient(r.id)}">${shorthandResortName(r.id, r.name)}</button>`).join("")}
-                  </div>
-                  <p class="resort-chip-empty" id="resort-chip-empty" hidden>No resort matches that search.</p>
+                  <label class="studio-step-label" for="resort-chip-search">Home resort</label>
+                  <input type="search" id="resort-chip-search" class="dvcp-search" placeholder="Search, e.g. Riviera or SSR" aria-label="Search resorts" autocomplete="off">
+                  <div class="dvcp-list home-resort-list" id="home-resort-list" role="group" aria-label="Home resort"></div>
                   <select id="f-resort" class="native-select">
                     ${resorts.map(r => `<option value="${r.id}">${r.name}</option>`).join("")}
                   </select>
@@ -2019,14 +1980,14 @@ async function renderSignedIn() {
               <div class="studio-step-pane" data-step-panel="2">
                 <div class="studio-panel">
                   <div class="form-field">
-                    <label>Use Year</label>
+                    <label>Use year</label>
                     <div class="use-year-chips round" id="f-useyear-chips">
                       ${USE_YEARS.map(y => `<button type="button" class="use-year-chip" data-year="${y}">${y}</button>`).join("")}
                     </div>
                     <div class="use-year-deadline" id="f-useyear-deadline"></div>
                   </div>
                   <div class="form-field">
-                    <label for="f-points">Points per Year</label>
+                    <label for="f-points">Points per year</label>
                     <div class="points-preset-chips" id="f-points-presets">
                       ${[50, 100, 150, 200, 250].map(n => `<button type="button" class="points-preset-chip" data-points="${n}">${n}</button>`).join("")}
                     </div>
@@ -2038,7 +1999,7 @@ async function renderSignedIn() {
               <div class="studio-step-pane" data-step-panel="3">
                 <div class="studio-panel">
                   <div class="form-field">
-                    <label>Purchase Type</label>
+                    <label>Purchase type</label>
                     <div class="purchase-type-toggle">
                       <button type="button" id="f-type-direct" class="selected">Direct</button>
                       <button type="button" id="f-type-resale">Resale</button>
@@ -2049,7 +2010,7 @@ async function renderSignedIn() {
                     <input type="text" id="f-nickname" placeholder="e.g. Mom's contract">
                   </div>
                   <div class="form-field">
-                    <label for="f-price">Purchase Price (optional)</label>
+                    <label for="f-price">Purchase price (optional)</label>
                     <input type="number" id="f-price" min="0" step="1" placeholder="Total $ paid, incl. closing">
                   </div>
                   <div class="form-field">
@@ -2058,12 +2019,12 @@ async function renderSignedIn() {
                     <div class="field-hint">Only if you financed. Interest only: the purchase price already covers the loan amount.</div>
                   </div>
                   <div class="form-field">
-                    <label for="f-acquisition-year">Acquisition Year (optional)</label>
+                    <label for="f-acquisition-year">Acquisition year (optional)</label>
                     <input type="number" id="f-acquisition-year" min="1991" max="${new Date().getFullYear()}" step="1" placeholder="e.g. ${new Date().getFullYear()}">
                   </div>
                   <div class="studio-perks-note">Entering your buy-in price and acquisition year unlocks lifetime cost-of-ownership tracking.</div>
                   <div class="form-field">
-                    <label>Blue Card Status</label>
+                    <label>Blue Card status</label>
                     <div class="field-hint">Membership Extras for direct buyers above a points minimum. Auto-Detect is right for most owners.</div>
                     <div class="purchase-type-toggle" id="f-bluecard-toggle">
                       <button type="button" id="f-bluecard-auto" class="selected" data-override="">Auto-Detect</button>
@@ -2081,8 +2042,8 @@ async function renderSignedIn() {
             <button type="button" class="cancel-btn" id="cancel-contract">Cancel</button>
             <div class="studio-nav-right">
               <button type="button" class="ghost-btn" id="studio-back">&lt; Back</button>
-              <button type="button" class="save-btn" id="studio-next">Next: Financials &rarr;</button>
-              <button type="button" class="save-btn" id="save-contract" style="display:none;">Save Deed to Vault</button>
+              <button type="button" class="save-btn" id="studio-next">Continue to points</button>
+              <button type="button" class="save-btn" id="save-contract" style="display:none;">Save contract</button>
             </div>
           </div>
         </div>
@@ -2124,24 +2085,14 @@ async function renderSignedIn() {
     updateModalCardPreview();
   });
   // Selection updates the summary; Continue is the only forward action.
-  document.getElementById("resort-chip-search").addEventListener("input", (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    let shown = 0;
-    document.querySelectorAll(".resort-chip").forEach(chip => {
-      const match = !q || chip.dataset.search.includes(q);
-      chip.hidden = !match;
-      if (match) shown++;
-    });
-    document.getElementById("resort-chip-empty").hidden = shown > 0;
-  });
-  document.getElementById("resort-chip-grid").addEventListener("click", (e) => {
-    const chip = e.target.closest(".resort-chip");
-    if (!chip) return;
-    document.querySelectorAll(".resort-chip").forEach(c => c.classList.remove("selected"));
-    chip.classList.add("selected");
-    document.getElementById("f-resort").value = chip.dataset.resort;
+  document.getElementById("resort-chip-search").addEventListener("input", renderHomeResortList);
+  document.getElementById("home-resort-list").addEventListener("click", (e) => {
+    const row = e.target.closest("[data-dvcp-resort]");
+    if (!row) return;
+    homeResortPick = row.dataset.dvcpResort;
+    document.getElementById("f-resort").value = homeResortPick;
+    renderHomeResortList();
     updateModalCardPreview();
-
   });
   document.getElementById("f-useyear-chips").addEventListener("click", (e) => {
     const btn = e.target.closest(".use-year-chip");
@@ -2382,9 +2333,9 @@ function renderContractList(contracts, resorts, yearPointsByContract) {
     list.className = "contract-list";
     list.innerHTML = `
       <div class="empty-vault-hero" id="empty-vault-hero">
-        <div class="empty-vault-hero-title">Your Digital Vault is Waiting</div>
+        <div class="empty-vault-hero-title">Add your first contract</div>
         <div class="empty-vault-hero-sub">Add your first contract to unlock personalized 11-month booking windows and track your road to House Money.</div>
-        <button type="button" class="add-btn" id="hero-create-btn">Issue Your First Deed &rarr;</button>
+        <button type="button" class="add-btn" id="hero-create-btn">Add contract</button>
       </div>
     `;
     document.getElementById("hero-create-btn").addEventListener("click", () => openForm(null));
@@ -2778,12 +2729,9 @@ function openForm(contract) {
   // for the (hidden-on-step-1) preview, but no chip claims to be chosen.
   const resortId = contract?.home_resort_id || uniqueResorts()[0].id;
   document.getElementById("f-resort").value = resortId;
-  document.querySelectorAll(".resort-chip").forEach(chip => {
-    chip.classList.toggle("selected", !!contract && chip.dataset.resort === resortId);
-    chip.hidden = false;
-  });
+  homeResortPick = contract ? resortId : null;
   document.getElementById("resort-chip-search").value = "";
-  document.getElementById("resort-chip-empty").hidden = true;
+  renderHomeResortList();
   setUseYear(contract?.use_year || USE_YEARS[0]);
   if (!contract) {
     document.querySelectorAll(".use-year-chip").forEach(chip => chip.classList.remove("selected"));
@@ -2802,8 +2750,8 @@ function openForm(contract) {
     : new Date().getFullYear();
   setPurchaseType(contract?.purchase_type || "direct");
   setBlueCardOverride(contract?.blue_card_override ?? null);
-  document.getElementById("contract-modal-title").textContent = contract ? "Edit Contract" : "Add Contract";
-  document.getElementById("save-contract").textContent = contract ? "Save Changes" : "Save Contract";
+  document.getElementById("contract-modal-title").textContent = contract ? "Edit contract" : "Add contract";
+  document.getElementById("save-contract").textContent = contract ? "Save changes" : "Save contract";
   updateModalCardPreview();
   // A brand-new contract walks the guided onboarding from Step 1; editing
   // an existing one skips straight to Step 3 (its most-likely-to-be-tweaked
@@ -2972,7 +2920,7 @@ function validateContractStep(step) {
   const price = document.getElementById('f-price');
   const year = document.getElementById('f-acquisition-year');
   const interest = document.getElementById('f-interest');
-  if (step === 1 && !document.querySelector('.resort-chip.selected')) {
+  if (step === 1 && !document.querySelector('#home-resort-list .dvcp-row.selected')) {
     message = 'Choose your home resort to continue.'; field = document.getElementById('resort-chip-search');
   } else if (step === 2 && !useYearChosen) {
     message = 'Choose the use year on your contract.'; field = document.querySelector('.use-year-chip');

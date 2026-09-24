@@ -103,8 +103,22 @@
   // time-of-day meaning. Without pinning the format to UTC, toLocaleDateString
   // re-renders it in the *viewer's* local timezone, which silently shows one
   // day earlier for anyone west of UTC (i.e. the entire US).
+  // One display format for dates outside inputs: "Sep 23, 2026".
   function formatDeadlineDate(ms) {
-    return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  }
+  function formatShortDate(isoDate) {
+    return formatDeadlineDate(Date.parse(isoDate + "T00:00:00Z"));
+  }
+  // A stay's dates, shortened the same way everywhere:
+  // "Oct 3–6, 2026", "Oct 30 – Nov 2, 2026", "Dec 28, 2026 – Jan 2, 2027".
+  function formatDateRange(startIso, endIso) {
+    const [ay, am, ad] = startIso.split("-").map(Number);
+    const [by, bm, bd] = endIso.split("-").map(Number);
+    const mon = (y, m) => new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+    if (ay !== by) return `${formatShortDate(startIso)} – ${formatShortDate(endIso)}`;
+    if (am === bm) return `${mon(ay, am)} ${ad}–${bd}, ${by}`;
+    return `${mon(ay, am)} ${ad} – ${mon(by, bm)} ${bd}, ${by}`;
   }
 
   // The last date a use year's points -- remaining, banked-in, or borrowed-in,
@@ -199,6 +213,8 @@
     deadlineForCycle,
     isBankingWindowOpen,
     formatDeadlineDate,
+    formatShortDate,
+    formatDateRange,
     useYearExpiration,
     urgencyTier,
     expirationTier,

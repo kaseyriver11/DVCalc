@@ -52,8 +52,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 
 .controls { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 24px; background: white; border-bottom: 1px solid #e0e0e0; align-items: flex-end; justify-content: center; }
-.control-group { display: flex; flex-direction: column; gap: 3px; }
-.control-group label { font-size: 0.65rem; text-transform: uppercase; font-weight: 600; color: #666; letter-spacing: 0.5px; }
+.control-group { display: flex; flex-direction: column; gap: 4px; width: 300px; max-width: 100%; }
+.control-group label { font-size: 0.8rem; font-weight: 600; color: #555; }
 .control-group select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; background: white; cursor: pointer; min-width: 200px; max-width: 360px; }
 .control-group select:focus { outline: none; border-color: #4a148c; box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15); }
 
@@ -272,6 +272,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 @media (max-width: 800px) {
   .controls { flex-direction: column; align-items: stretch; }
   .control-group select { min-width: unset; width: 100%; }
+  .control-group { width: 100%; }
   .add-combo-btn { width: 100%; }
 }
   </style>
@@ -330,13 +331,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   </div>
 
   <div class="controls">
+    <!-- The selects stay the page's source of truth (hidden); the visible
+         controls are the shared resort sheet and room tiles (dvc-pickers.js). -->
     <div class="control-group">
-      <label for="resort-select">Resort</label>
-      <select id="resort-select"></select>
+      <label for="yoy-resort-trigger">Stay resort</label>
+      <select id="resort-select" hidden aria-hidden="true" tabindex="-1"></select>
+      <button type="button" class="dvcp-trigger" id="yoy-resort-trigger" aria-haspopup="dialog"><span class="dvcp-trigger-value" id="yoy-resort-label"></span><span class="dvcp-arrow" aria-hidden="true"></span></button>
     </div>
     <div class="control-group">
-      <label for="room-select">Room Type</label>
-      <select id="room-select"></select>
+      <label for="yoy-room-trigger">Room type</label>
+      <select id="room-select" hidden aria-hidden="true" tabindex="-1"></select>
+      <button type="button" class="dvcp-trigger" id="yoy-room-trigger" aria-controls="yoy-room-tiles" aria-expanded="false"><span class="dvcp-trigger-value" id="yoy-room-label"></span><span class="dvcp-arrow" aria-hidden="true"></span></button>
+      <div class="dvcp-rooms" id="yoy-room-tiles"></div>
     </div>
     <button class="add-combo-btn" id="add-combo">+ Compare</button>
   </div>
@@ -358,6 +364,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   <script src="dvc-track.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
+  <script src="data/resort_images.js"></script>
+  <script src="dvc-pickers.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
   <script>
 // ---- Constants ----
@@ -838,22 +846,57 @@ function populateRoomTypes() {
   roomSelect.value = state.roomTypeId;
 }
 
+// ---- Visible pickers (shared resort sheet + room tiles) ----
+const resortTrigger = document.getElementById("yoy-resort-trigger");
+const roomTrigger = document.getElementById("yoy-room-trigger");
+const roomTiles = document.getElementById("yoy-room-tiles");
+function syncPickers() {
+  document.getElementById("yoy-resort-label").textContent = resortSelect.selectedOptions[0]?.textContent || "Choose a resort";
+  window.DVCPickers.applyArt(resortTrigger, state.resortId);
+  const rooms = window.DVCPickers.roomTypes(state.resortId);
+  document.getElementById("yoy-room-label").textContent = rooms.find(rt => rt.id === state.roomTypeId)?.name || "Choose a room type";
+  roomTiles.innerHTML = window.DVCPickers.roomTilesHTML(rooms, state.roomTypeId);
+  roomTrigger.setAttribute("aria-expanded", String(roomTiles.classList.contains("open")));
+}
+resortTrigger.addEventListener("click", () => window.DVCPickers.open({
+  title: "Choose a stay resort",
+  selected: state.resortId,
+  returnFocus: resortTrigger,
+  onPick: id => {
+    if (id === resortSelect.value) return;
+    resortSelect.value = id;
+    resortSelect.dispatchEvent(new Event("change"));
+  },
+}));
+roomTrigger.addEventListener("click", () => { roomTiles.classList.toggle("open"); syncPickers(); });
+roomTiles.addEventListener("click", e => {
+  const tile = e.target.closest("[data-dvcp-room]");
+  if (!tile) return;
+  roomSelect.value = tile.dataset.dvcpRoom;
+  roomTiles.classList.remove("open");
+  roomSelect.dispatchEvent(new Event("change"));
+  roomTrigger.focus();
+});
+
 // ---- Events ----
 resortSelect.addEventListener("change", (e) => {
   state.resortId = e.target.value;
   state.selectedWeek = null;
   populateRoomTypes();
+  syncPickers();
   render();
 });
 
 roomSelect.addEventListener("change", (e) => {
   state.roomTypeId = e.target.value;
+  syncPickers();
   render();
 });
 
 // ---- Init ----
 populateResorts();
 populateRoomTypes();
+syncPickers();
 render();
   </script>
 </body>

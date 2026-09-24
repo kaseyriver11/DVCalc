@@ -116,7 +116,7 @@
     </button>
     <div class="controls-groups" id="controls-groups">
       <div class="control-group">
-        <label>Resort</label>
+        <label>Stay resort</label>
         <!-- resort-search/-dropdown/-select-wrapper stay in the DOM (hidden) --
              app.js's selectResort()/populateResorts() still read/write them as
              the source of truth; #resort-picker-trigger + #resort-sheet below
@@ -131,7 +131,7 @@
         </button>
       </div>
       <div class="control-group">
-        <label for="room-select">Room Type</label>
+        <label for="room-select">Room type</label>
         <select id="room-select" class="native-select"></select>
         <button type="button" class="picker-trigger" id="room-type-picker-trigger" onclick="toggleRoomTypeAccordion()">
           <span class="picker-trigger-value" id="room-type-picker-trigger-label"></span>
@@ -140,7 +140,7 @@
         <div class="room-type-grid" id="room-type-grid"></div>
       </div>
       <div class="control-group" id="booking-as-control">
-        <label for="contract-select">Booking As</label>
+        <label for="contract-select">Booking as</label>
         <select id="contract-select" class="native-select"></select>
         <button type="button" class="picker-trigger" id="booking-as-picker-trigger" onclick="openBookingAsSheet()">
           <span class="picker-trigger-value" id="booking-as-picker-trigger-label"></span>
@@ -148,7 +148,7 @@
         </button>
       </div>
       <div class="control-group" id="itinerary-load-control">
-        <label id="itinerary-load-label">Load Trip</label>
+        <label id="itinerary-load-label">Load trip</label>
         <button type="button" class="picker-trigger" id="itinerary-load-picker-trigger" onclick="openItineraryLoadSheet()" aria-labelledby="itinerary-load-label">
           <span class="picker-trigger-value">Load a saved itinerary&hellip;</span>
           <span class="custom-select-arrow"></span>
@@ -162,7 +162,7 @@
       <div class="sheet-handle"></div>
       <div class="resort-sheet-hero" id="resort-sheet-hero" hidden></div>
       <div class="modal-header">
-        <h3>Choose a Resort</h3>
+        <h3>Choose a stay resort</h3>
         <button class="modal-close" onclick="closeResortSheet()" aria-label="Close">&times;</button>
       </div>
       <input type="text" id="resort-sheet-search" class="sheet-search" placeholder="Search resorts..." autocomplete="off">
@@ -174,7 +174,7 @@
     <div class="modal-box sheet">
       <div class="sheet-handle"></div>
       <div class="modal-header">
-        <h3>Booking As</h3>
+        <h3>Booking as</h3>
         <button class="modal-close" onclick="closeBookingAsSheet()" aria-label="Close">&times;</button>
       </div>
       <div class="sheet-list" id="booking-as-sheet-list"></div>

@@ -174,15 +174,16 @@ function resortArtCardStyle(resortId) {
   return `background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), url('${image}'); background-size: cover; background-position: center;`;
 }
 
+// Same shortening as dvc-dates.js formatDateRange(): "Oct 3–6, 2026",
+// "Oct 30 – Nov 2, 2026", "Dec 28, 2026 – Jan 2, 2027" (both years shown
+// when they differ -- "Dec 28 – Jan 2, 2027" hid the start year).
 function formatTripDateRange(checkIn, checkOut) {
-  const ci = new Date(checkIn + "T12:00:00");
-  const co = new Date(checkOut + "T12:00:00");
-  const ciMonth = ci.toLocaleDateString(undefined, { month: "short" });
-  const coMonth = co.toLocaleDateString(undefined, { month: "short" });
-  if (ciMonth === coMonth && ci.getFullYear() === co.getFullYear()) {
-    return `${ciMonth} ${ci.getDate()}–${co.getDate()}, ${co.getFullYear()}`;
-  }
-  return `${ciMonth} ${ci.getDate()} – ${coMonth} ${co.getDate()}, ${co.getFullYear()}`;
+  const [ay, am, ad] = checkIn.split("-").map(Number);
+  const [by, bm, bd] = checkOut.split("-").map(Number);
+  const mon = (y, m) => new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+  if (ay !== by) return `${mon(ay, am)} ${ad}, ${ay} – ${mon(by, bm)} ${bd}, ${by}`;
+  if (am === bm) return `${mon(ay, am)} ${ad}–${bd}, ${by}`;
+  return `${mon(ay, am)} ${ad} – ${mon(by, bm)} ${bd}, ${by}`;
 }
 
 // Today as "YYYY-MM-DD" in the visitor's own calendar.

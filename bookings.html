@@ -377,12 +377,12 @@ body {
    truncating inside it, forcing a horizontal scrollbar. */
 .form-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
+/* Field labels are sentence case; uppercase is reserved for section
+   headings (.form-group-label). */
 .form-field label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #888;
-  letter-spacing: 0.4px;
+  color: var(--color-text);
 }
 
 .form-field input, .form-field select, .form-field textarea {
@@ -711,7 +711,7 @@ body {
    clobbering any other inline style, same reasoning as the source. */
 .room-type-grid {
   display: none;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 8px;
 }
@@ -740,7 +740,7 @@ body {
 }
 
 .room-type-icon { font-size: 1.3rem; line-height: 1; }
-.room-type-name { font-size: 0.76rem; font-weight: 600; color: var(--color-text); text-align: center; }
+.room-type-name { font-size: 0.76rem; font-weight: 600; color: var(--color-text); text-align: center; overflow-wrap: anywhere; }
 .room-type-sleeps { font-size: 0.66rem; color: var(--color-text-muted); }
 /* The resort sheet sits above the open trip form. */
 #trip-resort-sheet { z-index: 210; }
@@ -1028,8 +1028,8 @@ async function renderSignedIn() {
     <div class="modal-overlay sheet-overlay" id="trip-resort-sheet">
       <div class="modal-box sheet" role="dialog" aria-modal="true" aria-labelledby="trip-resort-title">
         <div class="sheet-handle"></div>
-        <div class="modal-header"><h3 id="trip-resort-title">Choose a Resort</h3><button type="button" class="modal-close" id="trip-resort-close" aria-label="Close resort picker">&times;</button></div>
         <div class="resort-sheet-hero" id="trip-resort-hero" hidden></div>
+        <div class="modal-header"><h3 id="trip-resort-title">Choose a stay resort</h3><button type="button" class="modal-close" id="trip-resort-close" aria-label="Close">&times;</button></div>
         <input type="search" class="sheet-search" id="trip-resort-search" placeholder="Search resorts" aria-label="Search resorts">
         <div class="sheet-list" id="trip-resort-list"></div>
       </div>
@@ -1037,7 +1037,7 @@ async function renderSignedIn() {
     <div class="modal-overlay" id="trip-modal">
       <div class="modal-box trip-modal-box">
         <div class="modal-header">
-          <h3 id="trip-modal-title">Log a Trip</h3>
+          <h3 id="trip-modal-title">Record a booking</h3>
           <button type="button" class="modal-close" id="trip-modal-close" aria-label="Close">&times;</button>
         </div>
         <div class="form-error" id="form-error" style="display:none;"></div>
@@ -1045,12 +1045,12 @@ async function renderSignedIn() {
         <div class="form-group">
           <div class="form-group-label">Where You Stayed</div>
           <div class="form-field">
-            <label for="trip-resort-trigger">Resort</label>
+            <label for="trip-resort-trigger">Stay resort</label>
             <select id="f-resort" hidden aria-hidden="true" tabindex="-1"></select>
             <button type="button" class="picker-trigger" id="trip-resort-trigger" aria-haspopup="dialog" aria-controls="trip-resort-sheet" aria-expanded="false"><span class="picker-trigger-value" id="trip-resort-label"></span><span class="custom-select-arrow" aria-hidden="true"></span></button>
           </div>
           <div class="form-field">
-            <label for="trip-room-trigger">Room Type</label>
+            <label for="trip-room-trigger">Room type</label>
             <select id="f-room" hidden aria-hidden="true" tabindex="-1"></select>
             <button type="button" class="picker-trigger" id="trip-room-trigger" aria-controls="trip-room-grid" aria-expanded="false"><span class="picker-trigger-value" id="trip-room-label"></span><span class="custom-select-arrow" aria-hidden="true"></span></button>
             <div class="room-type-grid" id="trip-room-grid"></div>
@@ -1062,11 +1062,11 @@ async function renderSignedIn() {
           <div class="form-row-2">
             <div class="form-field">
               <label for="f-checkin">Check-in</label>
-              <input type="date" id="f-checkin">
+              <input type="date" class="dvc-date" id="f-checkin">
             </div>
             <div class="form-field">
               <label for="f-checkout">Check-out</label>
-              <input type="date" id="f-checkout">
+              <input type="date" class="dvc-date" id="f-checkout">
             </div>
           </div>
         </div>
@@ -1074,7 +1074,7 @@ async function renderSignedIn() {
         <div class="form-group">
           <div class="form-group-label">The Numbers</div>
           <div class="insight-field">
-            <label for="f-points">Points Used</label>
+            <label for="f-points">Points used</label>
             <div class="insight-value-row">
               <input type="number" id="f-points" min="1" step="1" inputmode="numeric" class="insight-input" aria-describedby="points-hint">
               <span class="insight-unit" aria-hidden="true">pts</span>
@@ -1085,7 +1085,7 @@ async function renderSignedIn() {
 
 
           <div class="insight-field">
-            <label for="f-cash-value">Cash Value</label>
+            <label for="f-cash-value">Cash value</label>
             <div class="insight-value-row">
               <span class="insight-unit" aria-hidden="true">$</span>
               <input type="number" id="f-cash-value" min="0" step="1" inputmode="decimal" placeholder="Total for the stay" class="insight-input" aria-describedby="cash-hint">
@@ -1122,7 +1122,7 @@ async function renderSignedIn() {
             </div>
             <div class="form-field">
               <label for="f-checked-on">Last checked in Disney</label>
-              <input type="date" id="f-checked-on">
+              <input type="date" class="dvc-date" id="f-checked-on">
             </div>
           </div>
           <small class="funding-help">For your records. DVC Companion can't see Disney's system, so these aren't a verification.</small>
@@ -1133,7 +1133,7 @@ async function renderSignedIn() {
         </div>
 
         <div class="form-actions">
-          <button type="button" class="save-btn" id="save-trip">Save Trip</button>
+          <button type="button" class="save-btn" id="save-trip">Save booking</button>
           <button type="button" class="cancel-btn" id="cancel-trip">Cancel</button>
         </div>
       </div>
@@ -1938,10 +1938,10 @@ function syncCheckoutMin() {
 // A new stay that hasn't happened yet (or has no dates yet) is a booking,
 // not a memory; the title follows check-in as it's entered.
 function updateTripFormTitle() {
-  const checkIn = document.getElementById("f-checkin").value;
-  const upcoming = !checkIn || checkIn >= localToday();
-  document.getElementById("trip-modal-title").textContent = editingTripId ? "Edit Trip" : upcoming ? "Record a Booking" : "Log a Trip";
-  if (!tripSaveInFlight) document.getElementById("save-trip").textContent = editingTripId ? "Save Changes" : upcoming ? "Save Booking" : "Save Trip";
+  // One name per action (2026-09-23): the entry button, this title and the
+  // save button all say "booking", for a past stay or an upcoming one.
+  document.getElementById("trip-modal-title").textContent = editingTripId ? "Edit booking" : "Record a booking";
+  if (!tripSaveInFlight) document.getElementById("save-trip").textContent = editingTripId ? "Save changes" : "Save booking";
 }
 
 function closeTripForm() {

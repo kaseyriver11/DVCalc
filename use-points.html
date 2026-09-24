@@ -82,13 +82,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .q { margin-top: 14px; }
 .q:first-of-type { margin-top: 4px; }
 .q-label { display: block; font-size: .82rem; font-weight: 700; margin-bottom: 6px; }
-.month-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
-.month-chips .chip { flex: 0 0 auto; }
-.date-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 7rem); gap: 10px; margin-top: 10px; }
+.date-row { display: grid; grid-template-columns: minmax(0, 1fr) 5rem; gap: 10px; margin-top: 10px; }
 .date-row label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; font-weight: 600; min-width: 0; }
 .date-row input { font: inherit; font-size: 1rem; min-height: 44px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 10px; min-width: 0; width: 100%; }
 .custom-select { margin-top: 2px; }
-.select-stack { display: grid; gap: 10px; }
+.select-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 
 /* Results */
 .results-head { margin: 18px 0 8px; }
@@ -119,26 +117,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .empty { background: white; border-radius: 14px; padding: 18px 16px; text-align: center; color: var(--color-text-muted); font-size: .9rem; }
 .footnote { font-size: .76rem; color: var(--color-text-muted); margin-top: 14px; }
 .searching { text-align: center; padding: 20px; color: var(--color-text-muted); }
-/* ---- Resort picker: the calendar's trigger + bottom sheet (ported from
-   styles.css / bookings.html, same markup and look) ---- */
-.picker-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; font-size: 0.9rem; background: var(--color-bg-card); background-size: cover; background-position: center; color: var(--color-text); cursor: pointer; text-align: left; }
-.picker-trigger:hover { border-color: #b39ddb; }
-.picker-trigger:focus-visible, .resort-pick-row:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
-.picker-trigger.has-art { border-color: rgba(255, 255, 255, 0.6); }
-.picker-trigger.has-art .picker-trigger-value { font-weight: 700; text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75), 0 0 1px rgba(255, 255, 255, 0.75); }
-.picker-trigger-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.sheet-overlay.open { align-items: flex-end; }
-.modal-box.sheet { max-width: 100%; width: 100%; max-height: 85vh; border-radius: 16px 16px 0 0; margin: 0; padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); animation: sheet-slide-up 0.22s ease-out; }
-@keyframes sheet-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.sheet-handle { width: 36px; height: 4px; background: var(--color-border); border-radius: var(--radius-pill); margin: 4px auto 12px; }
-.resort-sheet-hero { height: 120px; border-radius: 12px; background-size: cover; background-position: center; margin-bottom: 10px; }
-.sheet-search { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; font-size: 16px; margin-bottom: 10px; }
-.sheet-list { overflow-y: auto; max-height: 50vh; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 8px; }
-.sheet-empty { padding: 20px 4px; text-align: center; color: var(--color-text-faint); font-size: 0.85rem; }
-.resort-pick-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 12px 10px; border: 1px solid var(--color-border-light); border-radius: var(--radius-sm); background: white; text-align: left; white-space: normal; font: inherit; font-size: 0.88rem; cursor: pointer; }
-.resort-pick-row:hover, .resort-pick-row:active { background-color: var(--color-primary-tint-bg); }
-.resort-pick-row.selected { border-color: var(--color-primary); background-color: var(--color-primary-tint-bg); font-weight: 600; }
-.resort-pick-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
   </style>
   <script type="module" src="auth.js"></script>
   <script src="nav.js"></script>
@@ -187,20 +165,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     <div class="gate"><p>Loading&hellip;</p></div>
   </main>
 
-  <div class="modal-overlay sheet-overlay" id="up-resort-sheet">
-    <div class="modal-box sheet" role="dialog" aria-modal="true" aria-labelledby="up-resort-title">
-      <div class="sheet-handle"></div>
-      <div class="modal-header"><h3 id="up-resort-title">Choose a Resort</h3><button type="button" class="modal-close" id="up-resort-close" aria-label="Close resort picker">&times;</button></div>
-      <div class="resort-sheet-hero" id="up-resort-hero" hidden></div>
-      <input type="search" class="sheet-search" id="up-resort-search" placeholder="Search resorts" aria-label="Search resorts">
-      <div class="sheet-list" id="up-resort-list"></div>
-    </div>
-  </div>
-
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/resort_shorthand.js"></script>
   <script src="data/resort_images.js"></script>
+  <script src="dvc-pickers.js"></script>
   <script src="data/availability_data.js"></script>
   <script src="dvc-dates.js"></script>
   <script src="dvc-leftover-points.js"></script>
@@ -242,7 +211,7 @@ const contractName = c => c.nickname || resortName(c.home_resort_id);
 const rowFor = (c, year) => rows.find(r => r.contract_id === c.id && Number(r.use_year_label) === year) || null;
 const partsOf = s => ({ year: +s.slice(0, 4), month: +s.slice(5, 7), day: +s.slice(8, 10) });
 const fmtMs = ms => D.formatDeadlineDate(ms);
-const fmtDay = s => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const fmtDay = s => D.formatShortDate(s); // "Sep 23, 2026"
 const fmtMonth = m => new Date(m + "-01T00:00:00Z").toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
 const roomName = (resortId, roomTypeId) => chartFor(resortId, today.year)?.roomTypes.find(rt => rt.id === roomTypeId)?.name || roomTypeId;
 
@@ -352,31 +321,28 @@ function budgetHTML(c, b) {
     </section>`;
 }
 
-function selectHTML(id, label, options, value) {
-  return `<label class="q-label" for="${id}">${label}</label><div class="custom-select"><select id="${id}" class="native-select">${options.map(([v, t]) => `<option value="${esc(v)}" ${v === value ? "selected" : ""}>${esc(t)}</option>`).join("")}</select><button type="button" class="custom-select-trigger"><span class="custom-select-value"></span><span class="custom-select-arrow"></span></button><div class="custom-select-dropdown"></div></div>`;
-}
-
 function questionsHTML(c, b) {
   const monthList = U.months(b, today, D);
   const chip = (attr, val, text, on) => `<button type="button" class="chip" ${attr}="${esc(val)}" aria-pressed="${on}">${text}</button>`;
   const resorts = eligible(c, { forSearch: false }).filter(r => !state.wdwOnly || state.when === "dates" || !["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"].includes(r.resortId));
-  const resortTrigger = label => `<label class="q-label" for="q-resort-trigger">${label}</label><button type="button" class="picker-trigger" id="q-resort-trigger" aria-haspopup="dialog" aria-controls="up-resort-sheet" aria-expanded="false"><span class="picker-trigger-value">${esc(state.resortId ? shortName(state.resortId) : state.when === "dates" ? "Choose a resort" : "Any resort this contract can book")}</span><span class="custom-select-arrow" aria-hidden="true"></span></button>`;
-  const roomOptions = state.resortId ? [["", "Choose a room"], ...(chartFor(state.resortId, today.year)?.roomTypes || []).map(rt => [rt.id, rt.name])] : null;
+  const resortTrigger = label => `<label class="q-label" for="q-resort-trigger">${label}</label>${window.DVCPickers.triggerHTML({ id: "q-resort-trigger", label, value: state.resortId ? resortName(state.resortId) : state.when === "dates" ? "Choose a resort" : "Any resort this contract can book" })}`;
+  const rooms = state.resortId ? window.DVCPickers.roomTypes(state.resortId) : null;
+  const roomPicker = rooms ? `<div><label class="q-label" for="q-room-trigger">Room type</label>${window.DVCPickers.triggerHTML({ id: "q-room-trigger", label: "Room type", value: rooms.find(rt => rt.id === state.roomTypeId)?.name || "Choose a room type" })}<div class="dvcp-rooms${state.roomsOpen ? " open" : ""}" id="q-room-tiles">${window.DVCPickers.roomTilesHTML(rooms, state.roomTypeId)}</div></div>` : "";
   const dates = state.when === "dates";
   return `<section class="card" aria-labelledby="q-title">
       <h2 id="q-title">What would work for you?</h2>
       <div class="q"><span class="q-label">When</span>
-        <div class="month-chips" role="group" aria-label="When">${chip("data-when", "any", "Any time", state.when === "any")}${monthList.map(m => chip("data-when", m, fmtMonth(m), state.when === m)).join("")}${chip("data-when", "dates", "Specific dates", dates)}</div>
+        <div class="chips" role="group" aria-label="When">${chip("data-when", "any", "Any time", state.when === "any")}${monthList.map(m => chip("data-when", m, fmtMonth(m), state.when === m)).join("")}${chip("data-when", "dates", "Specific dates", dates)}</div>
       </div>
       ${dates ? `<div class="q select-stack">
-          ${resortTrigger("Resort")}
-          ${roomOptions ? selectHTML("q-room", "Room", roomOptions, state.roomTypeId) : ""}
-          <div class="date-row"><label>Check-in<input type="date" id="q-checkin" min="${iso(todayMs + DAY)}" value="${esc(state.checkIn)}"></label><label>Nights<input type="number" id="q-nights" min="1" max="14" step="1" inputmode="numeric" value="${esc(state.nights)}"></label></div>
+          ${resortTrigger("Stay resort")}
+          ${roomPicker}
+          <div class="date-row"><label>Check-in<input type="date" class="dvc-date" id="q-checkin" min="${iso(todayMs + DAY)}" value="${esc(state.checkIn)}"></label><label>Nights<input type="number" id="q-nights" min="1" max="14" step="1" inputmode="numeric" value="${esc(state.nights)}"></label></div>
         </div>` : `
       <div class="q"><span class="q-label">Party size</span><div class="chips" role="group" aria-label="Party size">${[[0, "Any"], [2, "2+"], [4, "4+"], [5, "5+"], [8, "8+"], [12, "12"]].map(([v, t]) => chip("data-party", v, t, state.partySize === v)).join("")}</div></div>
       <div class="q"><span class="q-label">Room size</span><div class="chips" role="group" aria-label="Room size">${chip("data-size", "", "Any", !state.size)}${U.SIZES.map(([v, t]) => chip("data-size", v, t, state.size === v)).join("")}</div></div>
       <div class="q"><span class="q-label">Where</span><div class="chips" role="group" aria-label="Where">${chip("data-wdw", "1", "Walt Disney World", state.wdwOnly)}${chip("data-wdw", "0", "Anywhere", !state.wdwOnly)}</div></div>
-      <div class="q select-stack">${resortTrigger("Resort (optional)")}</div>`}
+      <div class="q select-stack">${resortTrigger("Stay resort (optional)")}</div>`}
       <button type="button" class="primary-btn" id="q-go" ${state.searching ? "disabled" : ""}>${state.searching ? "Looking…" : dates ? "Check this stay" : "Show stay ideas"}</button>
       ${state.error ? `<p class="small" role="alert" style="color:var(--color-danger);margin-top:8px;">${esc(state.error)}</p>` : ""}
     </section>`;
@@ -413,7 +379,7 @@ function resultHTML(r, b, c) {
   return `<article class="result">
       <div class="result-top"><div class="result-name">${esc(shortName(r.resortId))}</div><span class="pill ${r.outlook}">${OUTLOOK_TEXT[r.outlook]}</span></div>
       <div class="result-room">${esc(roomName(r.resortId, r.roomTypeId))} &middot; ${r.nights} night${r.nights === 1 ? "" : "s"}</div>
-      <div class="result-dates">${fmtDay(r.checkIn)} &rarr; ${fmtDay(r.checkOut)}</div>
+      <div class="result-dates">${D.formatDateRange(r.checkIn, r.checkOut)}</div>
       <ul class="result-facts">
         <li><span aria-hidden="true">${f.shortfall ? "✕" : "✓"}</span><div><strong>${fitsLabel}</strong>${fits}</div></li>
         <li><span aria-hidden="true">📈</span><div><strong>Historical availability outlook</strong>${OUTLOOK_TEXT[r.outlook]} ${r.outlook === "unknown" ? "for this room and season" : `for this room at about ${windowWord(r.checkIn)}`}. Past patterns only; not a room that's open now.</div></li>
@@ -454,7 +420,7 @@ function renderPage() {
     ${b.state === "ok" && !b.expired ? questionsHTML(c, b) + resultsHTML(c, b) : ""}`;
   pageContent.querySelectorAll("select.native-select").forEach(el => window.DVCUI.initCustomSelect(el));
   const trigger = document.getElementById("q-resort-trigger");
-  if (trigger) applyResortArt(trigger, state.resortId ? getResortImage(state.resortId) : null);
+  if (trigger) window.DVCPickers.applyArt(trigger, state.resortId);
 }
 
 pageContent.addEventListener("click", e => {
@@ -465,7 +431,9 @@ pageContent.addEventListener("click", e => {
   else if (t.dataset.party != null) state.partySize = Number(t.dataset.party);
   else if (t.dataset.size != null) state.size = t.dataset.size;
   else if (t.dataset.wdw) { state.wdwOnly = t.dataset.wdw === "1"; if (state.wdwOnly && ["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"].includes(state.resortId)) state.resortId = ""; }
-  else if (t.id === "q-resort-trigger") { openResortSheet(); return; }
+  else if (t.id === "q-resort-trigger") { openResortSheet(t); return; }
+  else if (t.id === "q-room-trigger") state.roomsOpen = !state.roomsOpen;
+  else if (t.dataset.dvcpRoom) { state.roomTypeId = t.dataset.dvcpRoom; state.roomsOpen = false; }
   else if (t.id === "q-go") {
     state.searching = true;
     renderPage();
@@ -479,71 +447,31 @@ pageContent.addEventListener("click", e => {
   } else return;
   renderPage();
 });
-// ---- Resort sheet (same picker as the calendar's Resort control) ----
-const RESORT_SWATCHES = ["#4a148c", "#1b5e3a", "#0d47a1", "#7a1734", "#8d5524", "#37474f"];
-function resortSwatch(id) { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return RESORT_SWATCHES[h % RESORT_SWATCHES.length]; }
-function applyResortArt(el, image) {
-  el.style.backgroundImage = image ? `linear-gradient(rgba(236, 225, 247, 0.82), rgba(236, 225, 247, 0.82)), url('${image}')` : "";
-  el.classList.toggle("has-art", !!image);
-}
+// ---- Resort and room type: the shared pickers (dvc-pickers.js) ----
 // Only resorts this contract can book (and WDW only, when that's chosen).
 function pickableResorts() {
   const c = currentContract();
   const nonWdw = ["aulani", "hiltonHead", "veroBeach", "disneylandHotel", "grandCalifornian"];
   return eligible(c, { forSearch: false }).filter(r => !state.wdwOnly || state.when === "dates" || !nonWdw.includes(r.resortId))
-    .map(r => ({ id: r.resortId, name: shortName(r.resortId), full: resortName(r.resortId) })).sort((a, b) => a.name.localeCompare(b.name));
+    .map(r => ({ id: r.resortId, name: resortName(r.resortId) })).sort((a, b) => a.name.localeCompare(b.name));
 }
-function renderResortSheet() {
-  const q = document.getElementById("up-resort-search").value.trim().toLowerCase();
-  const rows = pickableResorts().filter(r => !q || r.name.toLowerCase().includes(q) || r.full.toLowerCase().includes(q));
-  const any = state.when !== "dates" && !q ? `<button type="button" class="resort-pick-row${!state.resortId ? " selected" : ""}" data-pick-resort="" aria-pressed="${!state.resortId}"><span class="resort-pick-swatch" style="background:#bbb"></span><span>Any resort this contract can book</span></button>` : "";
-  document.getElementById("up-resort-list").innerHTML = any + (rows.length
-    ? rows.map(r => `<button type="button" class="resort-pick-row${r.id === state.resortId ? " selected" : ""}" data-pick-resort="${esc(r.id)}" aria-pressed="${r.id === state.resortId}"><span class="resort-pick-swatch" style="background:${resortSwatch(r.id)}"></span><span>${esc(r.full)}</span></button>`).join("")
-    : `<div class="sheet-empty" role="status">No resorts match your search.</div>`);
-}
-function openResortSheet() {
-  document.getElementById("up-resort-search").value = "";
-  renderResortSheet();
-  const hero = document.getElementById("up-resort-hero");
-  const art = state.resortId ? getResortImage(state.resortId) : null;
-  hero.hidden = !art;
-  hero.style.backgroundImage = art ? `url('${art}')` : "";
-  document.getElementById("up-resort-sheet").classList.add("open");
-  document.getElementById("q-resort-trigger")?.setAttribute("aria-expanded", "true");
-  document.getElementById("up-resort-close").focus();
-}
-function closeResortSheet() {
-  document.getElementById("up-resort-sheet").classList.remove("open");
-  const trigger = document.getElementById("q-resort-trigger");
-  trigger?.setAttribute("aria-expanded", "false");
-  trigger?.focus();
-}
-(function wireResortSheet() {
-  const sheet = document.getElementById("up-resort-sheet");
-  document.getElementById("up-resort-close").addEventListener("click", closeResortSheet);
-  document.getElementById("up-resort-search").addEventListener("input", renderResortSheet);
-  sheet.addEventListener("click", e => {
-    if (e.target === sheet) return closeResortSheet();
-    const row = e.target.closest("[data-pick-resort]");
-    if (!row) return;
-    if (state.resortId !== row.dataset.pickResort) { state.resortId = row.dataset.pickResort; state.roomTypeId = ""; }
-    sheet.classList.remove("open");
-    renderPage();
-    document.getElementById("q-resort-trigger")?.focus();
+function openResortSheet(trigger) {
+  window.DVCPickers.open({
+    title: "Choose a stay resort",
+    resorts: pickableResorts(),
+    selected: state.resortId,
+    anyLabel: state.when === "dates" ? null : "Any resort this contract can book",
+    returnFocus: trigger,
+    onPick: id => {
+      if (state.resortId !== id) { state.resortId = id; state.roomTypeId = ""; state.roomsOpen = !!id && state.when === "dates"; }
+      renderPage();
+      document.getElementById("q-resort-trigger")?.focus();
+    },
   });
-  sheet.addEventListener("keydown", e => {
-    if (e.key === "Escape") { e.preventDefault(); closeResortSheet(); }
-    if (e.key === "Tab") {
-      const items = [...sheet.querySelectorAll("button, input")].filter(el => !el.disabled);
-      if (e.shiftKey && document.activeElement === items[0]) { e.preventDefault(); items.at(-1).focus(); }
-      else if (!e.shiftKey && document.activeElement === items.at(-1)) { e.preventDefault(); items[0].focus(); }
-    }
-  });
-})();
+}
 
 pageContent.addEventListener("change", e => {
-  if (e.target.id === "q-room") state.roomTypeId = e.target.value;
-  else if (e.target.id === "q-checkin") state.checkIn = e.target.value;
+  if (e.target.id === "q-checkin") state.checkIn = e.target.value;
   else if (e.target.id === "q-nights") state.nights = e.target.value;
 });
 pageContent.addEventListener("input", e => {

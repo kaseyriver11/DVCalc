@@ -544,7 +544,7 @@ function evaluateUserBadges(contracts, trips, itineraries, stats, pointEfficienc
       { threshold: 30, label: "Grand Strategist" },
     ],
     valueLabel: v => `${v} trip${v === 1 ? "" : "s"} logged`,
-    detail: "Counts every trip you've logged in Trip History -- click \"Log a Trip\" to add one.",
+    detail: "Counts every trip you've logged in Trip History -- use \"Record a booking\" in Bookings & Stays to add one.",
   });
 
   function nightsForTrip(t) {
