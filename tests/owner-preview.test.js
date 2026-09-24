@@ -70,15 +70,16 @@ test('both gates use the one shared renderer, with one trial or sign-in action',
 });
 
 test('without the preview option the gate is unchanged', () => {
-  const ctx = vm.createContext({ window: { DVCOwnerPreview: P }, injectEmailCodeStyles() {}, MEMBERSHIP_PLAN: { price: 49.99, trialDays: 7 } });
+  const ctx = vm.createContext({ window: { DVCOwnerPreview: P }, injectEmailCodeStyles() {}, MEMBERSHIP_PLAN: { price: 25, trialDays: 7 },
+    membershipDuesHTML: () => '', readOwnedResortChoice: () => null, ownedResortForPricing: async () => null });
   vm.runInContext(auth.match(/function renderMembershipGate\([^]*?\n\}/)[0], ctx);
-  const plain = { innerHTML: '' }, withPreview = { innerHTML: '' };
+  const plain = { innerHTML: '', querySelector: () => null }, withPreview = { innerHTML: '', querySelector: () => null };
   ctx.renderMembershipGate(plain, { title: 'T', body: 'B' });
   ctx.renderMembershipGate(withPreview, { title: 'T', body: 'B', preview: true });
   assert.doesNotMatch(plain.innerHTML, /dvcop/);
   assert.match(withPreview.innerHTML, /dvcop-badge">Example/);
   assert.match(withPreview.innerHTML, /Start 7-day free trial/);
-  assert.match(withPreview.innerHTML, /Then \$49\.99\/yr/); // price unchanged
+  assert.match(withPreview.innerHTML, /\$25<\/strong>\/yr after a 7-day free trial/); // price unchanged
 });
 
 test('the example says the owner confirmed its balances, not that the app checked Disney', () => {

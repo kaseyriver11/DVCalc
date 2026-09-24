@@ -72,7 +72,8 @@ contracts and points to them."*
 
 ### Price, refunds, entity — decided 2026-09-18
 
-- **Price/interval: Annual only, $49.99/yr, with a 7-day free trial.**
+- **Price/interval: Annual only, $25/yr founding rate, with a 7-day free
+  trial.** (Was $49.99 until 2026-09-24 -- see "Price revisited" below.)
   Deliberately no monthly option — DVC planning is bursty (one intense
   sprint around your booking window, plus periodic deadline checks the
   rest of the year), and the paid tier's flagship feature (automated
@@ -88,6 +89,44 @@ contracts and points to them."*
 - **Business entity: sole proprietor**, using the owner's own SSN and bank
   account for Stripe's payout verification (Phase 1, step 3) — no LLC
   formation needed to start.
+
+### Price revisited — decided 2026-09-24
+
+- **$25/yr, a founding rate locked in while the membership stays active.**
+  Competitors: DVC Toolkit $29.99/yr, My DVC Plan $69.99/yr -- but what
+  both mainly sell is availability alerts, which this app deliberately
+  doesn't have (nothing talks to Disney). The paid tier here is the
+  organizer (contracts, ledger, reminders, bookings); the strongest
+  planning tools are free. $49.99 sat next to My DVC Plan without its
+  headline feature. RevenueCat's 2026 median annual price is ~$35.
+- **Round $25, not $24.99:** the left-digit effect only matters when the
+  .99 changes the first digit; round prices read better for a considered
+  purchase, and it makes the dues comparison clean.
+- **Framed in the owner's own dues:** the gate says "Less than the dues on
+  3 Saratoga Springs points" (auth.js `membershipDuesHTML()`), using the
+  owner's first active contract or a "Where do you own?" pick on the gate,
+  which also preselects Add contract's home resort after checkout.
+- **Locked in = new Price for any increase:** Stripe keeps existing
+  subscribers on their Price, so raise the price by creating a new Price
+  and swapping `STRIPE_PRICE_ID`, never by editing subscriptions. A lapsed
+  member who rejoins pays the then-current price (terms.html says so).
+- **No lifetime plan for now.** The 50-subscriber validation target is about
+  renewals, costs recur (Supabase, email, yearly chart updates), and
+  lifetime caps what the most engaged owners pay. Revisit only as a capped
+  offer once there's renewal data.
+- **Promotion codes are on** (`allow_promotion_codes` in
+  create-checkout-session) so launch/community discounts need no deploy.
+- **Sales tax: Stripe Managed Payments (merchant of record)**, ~3.5% on top of
+  processing. Chosen for zero filing burden (incl. Canada/UK/EU owners), not
+  for NC itself -- NC generally doesn't tax SaaS. Needs: an eligible SaaS tax
+  code on the Product, API version 2025-03-31.basil+ in
+  create-checkout-session, and no tax/statement-descriptor/invoice params on
+  the session. Checkout reads "Sold through Link" and asks for a billing
+  address; Stripe may refund within 60 days or for cooling-off rules.
+  Verify in the test walkthrough that Manage Membership (Customer Portal)
+  can cancel a Managed Payments subscription.
+- **Sign in with Apple deferred** until 50+ paid subscriptions ($99/yr
+  Apple Developer fee).
 
 ### Still open
 
@@ -115,7 +154,8 @@ Checklist, split by who actually did/does each part:
    item left genuinely blocked on you (needs your own SSN/bank login).
 4. ~~Create a Product and Price.~~ **Done via the Stripe API** — Product
    `prod_VHfN2CGNzzFZX9` ("DVC Companion Membership"), Price
-   `price_1UH62o0R8PeF3sQT4ijp8aT6` ($49.99/yr, recurring). The 7-day
+   `price_1UH62o0R8PeF3sQT4ijp8aT6` ($49.99/yr, recurring -- superseded:
+   live mode needs a new $25/yr Price, see "Price revisited"). The 7-day
    trial isn't a property of the Price itself (Stripe applies trials at
    Checkout Session creation) — `create-checkout-session` passes
    `subscription_data.trial_period_days: 7` on every session it creates

@@ -52,7 +52,8 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (userError || !user || !user.email) return json({ error: "Not signed in" }, 401);
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20", httpClient: Stripe.createFetchHttpClient() });
+    // Managed Payments needs 2025-03-31.basil or later.
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-03-31.basil", httpClient: Stripe.createFetchHttpClient() });
 
     // Reuse an existing Stripe Customer if this user already has one on file
     // (e.g. a prior canceled membership) -- keeps their invoice history under
@@ -84,21 +85,19 @@ Deno.serve(async (req) => {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: { trial_period_days: 7 },
+      // Launch and community codes (e.g. a founding-member discount) are
+      // created in the Stripe Dashboard -- no deploy needed per code.
+      allow_promotion_codes: true,
       success_url: `${appBaseUrl}/account.html?checkout=success`,
       cancel_url: `${appBaseUrl}/account.html?checkout=cancelled`,
       metadata: { supabase_user_id: user.id },
-      // Stripe enables Managed Payments by default on new accounts, which
-      // requires every line item's underlying Product to carry an eligible
-      // digital-goods tax code (set in the Stripe Dashboard or via the
-      // Products API) -- without one, session creation fails with "Invalid
-      // line_items[0]: the product tax code is missing." STRIPE_PRICE_ID's
-      // Product has no tax code set, so this opts this session out of
-      // Managed Payments entirely (Stripe's own documented escape hatch)
-      // rather than requiring a Dashboard change before checkout works at
-      // all. If a tax code is later set on the Product (this membership is
-      // plausibly SaaS, txcd_10103001/10103000), this line can come out to
-      // let Stripe act as merchant of record again.
-      managed_payments: { enabled: false },
+      // Stripe is the merchant of record (docs/subscriptions_plan.md "Sales
+      // tax"): it calculates, collects and files sales tax/VAT/GST, and
+      // handles disputes. STRIPE_PRICE_ID's Product must carry an eligible
+      // SaaS tax code, or session creation fails with "the product tax code
+      // is missing." Managed Payments controls tax, statement descriptors
+      // and receipts itself, so none of those parameters may be set here.
+      managed_payments: { enabled: true },
     });
 
     return json({ url: session.url });

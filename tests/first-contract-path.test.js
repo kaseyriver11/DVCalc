@@ -12,7 +12,7 @@ const fn = (src, name) => src.match(new RegExp(`function ${name}\\([^]*?\\n\\}`)
 
 function termsLine(gateEnabled) {
   const ctx = vm.createContext({});
-  vm.runInContext(`const MEMBERSHIP_GATE_ENABLED = ${gateEnabled}; const MEMBERSHIP_PLAN = { price: 49.99, trialDays: 7 };` + fn(auth, 'membershipTermsLine'), ctx);
+  vm.runInContext(`const MEMBERSHIP_GATE_ENABLED = ${gateEnabled}; const MEMBERSHIP_PLAN = { price: 25, trialDays: 7 };` + fn(auth, 'membershipTermsLine'), ctx);
   return ctx.membershipTermsLine();
 }
 
@@ -20,14 +20,14 @@ test('pre-sign-in terms say free while the gate is off, and the real terms once 
   assert.equal(termsLine(false), 'Free to use. No payment or card needed.');
   const paid = termsLine(true);
   assert.match(paid, /7-day free trial/);
-  assert.match(paid, /\$49\.99\/yr/);
+  assert.match(paid, /\$25\/yr/);
   assert.match(paid, /until you cancel/);
 });
 
 test('the gate ships off, and plan terms come from one place', () => {
   assert.match(auth, /const MEMBERSHIP_GATE_ENABLED = false;/);
-  assert.doesNotMatch(auth.replace(/const MEMBERSHIP_PLAN = [^\n]*/, ''), /49\.99|7-day/);
-  assert.doesNotMatch(account, /49\.99/);
+  assert.doesNotMatch(auth.replace(/const MEMBERSHIP_PLAN = [^\n]*/, ''), /\$\d|7-day/);
+  assert.doesNotMatch(account, /\$25\b/);
 });
 
 test('My Contracts shows no upgrade card while contract tools are free', () => {

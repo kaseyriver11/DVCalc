@@ -52,14 +52,20 @@ async function upsertFromSubscription(supabase: SupabaseClient, sub: Stripe.Subs
       // one) -- sub.current_period_end is always undefined now, which
       // silently stored null and made the Membership card fall back to a
       // vaguer "trial in progress" message instead of a real renewal date.
-      current_period_end: sub.items?.data?.[0]?.current_period_end
-        ? new Date(sub.items.data[0].current_period_end * 1000).toISOString()
-        : null,
+      // The retrieve() below still uses this file's older pinned version,
+      // where the date is top-level, so read both places.
+      current_period_end: periodEnd(sub),
       cancel_at_period_end: Boolean(sub.cancel_at_period_end),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },
   );
+}
+
+// deno-lint-ignore no-explicit-any
+function periodEnd(sub: any): string | null {
+  const seconds = sub.items?.data?.[0]?.current_period_end ?? sub.current_period_end;
+  return seconds ? new Date(seconds * 1000).toISOString() : null;
 }
 
 Deno.serve(async (req) => {

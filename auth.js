@@ -522,6 +522,26 @@ function injectEmailCodeStyles() {
   color: var(--color-text-muted, #777);
 }
 .membership-gate-error { color: var(--color-danger, #b71c1c); }
+.membership-gate-price {
+  font-size: 0.9rem;
+  color: var(--color-text, #1f1f3a);
+}
+.membership-gate-price strong { font-size: 1.5rem; }
+.membership-gate-dues {
+  margin: 2px 0 14px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #777);
+}
+.membership-gate-own {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--color-primary, #5b2a86);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 /* .dvc-signin-cluster (flex column, align-items: center) is what actually
    centers every child here -- these three rules only size/style their own
@@ -1051,8 +1071,11 @@ const MEMBERSHIP_REQUIRED_ERROR = "This is part of Active Member. Start a free t
 // The one source for plan terms: the gate below, My Contracts' membership
 // card and the signed-out Home/My Contracts copy all read these, so the
 // price and trial can't disagree between screens. terms.html states the
-// price in prose and has to be updated by hand if it changes.
-const MEMBERSHIP_PLAN = { price: 49.99, trialDays: 7 };
+// price in prose and has to be updated by hand if it changes. The price is the
+// founding rate (docs/subscriptions_plan.md): Stripe keeps a subscriber on
+// the Price they signed up with, so a later increase only reaches new
+// members -- which is what makes "locked in" true.
+const MEMBERSHIP_PLAN = { price: 25, trialDays: 7 };
 
 // What a visitor should know about payment before signing in, matching
 // the gate as it actually ships: free while the gate is off, the real
@@ -1089,12 +1112,106 @@ function renderMembershipGate(container, { title, body, preview = false }) {
       <h3 class="membership-gate-title">${title}</h3>
       <p>${body}</p>
       ${example}
+      <div class="membership-gate-price"><strong>$${MEMBERSHIP_PLAN.price}</strong>/yr after a ${MEMBERSHIP_PLAN.trialDays}-day free trial</div>
+      <div class="membership-gate-dues" data-membership-dues>${membershipDuesHTML(readOwnedResortChoice())}</div>
       <button type="button" class="membership-gate-btn" data-membership-upgrade>Start ${MEMBERSHIP_PLAN.trialDays}-day free trial</button>
-      <div class="membership-gate-fine">Then $${MEMBERSHIP_PLAN.price}/yr. Cancel anytime.</div>
+      <div class="membership-gate-fine">Founding rate, locked in while you stay a member. Cancel anytime.</div>
       <div class="membership-gate-error" role="alert" hidden></div>
     </div>
   `;
+  // A saved contract outranks whatever was picked on this device.
+  ownedResortForPricing().then(id => {
+    const el = container.querySelector("[data-membership-dues]");
+    if (el && id) el.innerHTML = membershipDuesHTML(id);
+  }).catch(() => { /* keep the generic line */ });
 }
+
+// ---- Price in the owner's own dues ----
+// The gate states the yearly price as the dues on a few points at the resort the
+// owner actually owns at. That resort comes from their first active
+// contract when they have one (read directly: getContracts() returns []
+// for non-members, and this is the non-member's screen), otherwise from
+// "Where do you own?" on the gate, kept per device and also used to
+// preselect Add contract's home resort after checkout.
+const OWNED_RESORT_KEY = "dvc_owned_resort";
+
+function readOwnedResortChoice() {
+  try {
+    const id = localStorage.getItem(OWNED_RESORT_KEY);
+    return id && typeof DUES_PER_POINT === "object" && DUES_PER_POINT[id] ? id : null;
+  } catch (_) { return null; }
+}
+
+async function ownedResortForPricing() {
+  if (configured && currentSession) {
+    const { data, error } = await supabase
+      .from("contracts")
+      .select("home_resort_id")
+      .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (!error && data?.[0]?.home_resort_id) return data[0].home_resort_id;
+  }
+  return readOwnedResortChoice();
+}
+
+// Whole points, worded so it's never false: "Less than 3" only when it's
+// clearly under (2.72 at Saratoga Springs), "About 3" within a tenth of a
+// point (3.01 at Grand Floridian).
+function duesPointsPhrase(price, duesPerPoint) {
+  const points = price / duesPerPoint;
+  const near = Math.round(points);
+  const [lead, n] = Math.abs(points - near) < 0.1 ? ["About", near] : ["Less than", Math.ceil(points)];
+  return { lead, n, unit: n === 1 ? "point" : "points" };
+}
+
+function membershipDuesHTML(resortId) {
+  if (typeof DUES_PER_POINT !== "object") return "";
+  const price = MEMBERSHIP_PLAN.price;
+  const dues = resortId && DUES_PER_POINT[resortId];
+  if (dues) {
+    const { lead, n, unit } = duesPointsPhrase(price, dues);
+    return `${lead} the dues on ${n} ${ownedResortName(resortId)} ${unit}. <button type="button" class="membership-gate-own" data-membership-own>Change</button>`;
+  }
+  const counts = Object.values(DUES_PER_POINT).map(d => Math.round(price / d));
+  const lo = Math.min(...counts), hi = Math.max(...counts);
+  return `About the dues on ${lo === hi ? lo : `${lo}–${hi}`} points. <button type="button" class="membership-gate-own" data-membership-own>Where do you own?</button>`;
+}
+
+function ownedResortName(id) {
+  const full = typeof RESORTS !== "undefined" ? RESORTS.find(r => r.id === id)?.name : null;
+  return typeof shorthandResortName === "function" ? shorthandResortName(id, full || id) : (full || id);
+}
+
+// dvc-pickers.js is loaded on demand: most gated pages don't carry it.
+function loadResortPicker() {
+  if (window.DVCPickers) return Promise.resolve(window.DVCPickers);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "dvc-pickers.js";
+    s.onload = () => (window.DVCPickers ? resolve(window.DVCPickers) : reject(new Error("picker missing")));
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest?.("[data-membership-own]");
+  if (!btn) return;
+  let pickers;
+  try { pickers = await loadResortPicker(); } catch (_) { return; }
+  pickers.open({
+    title: "Where do you own?",
+    selected: readOwnedResortChoice(),
+    returnFocus: btn,
+    onPick: id => {
+      if (!id) return;
+      try { localStorage.setItem(OWNED_RESORT_KEY, id); } catch (_) {}
+      document.querySelectorAll("[data-membership-dues]").forEach(el => { el.innerHTML = membershipDuesHTML(id); });
+      document.querySelector("[data-membership-own]")?.focus();
+    },
+  });
+});
 
 document.addEventListener("click", async (e) => {
   const btn = e.target.closest?.("[data-membership-upgrade]");
@@ -1530,6 +1647,7 @@ window.DVCAuth = {
   MEMBERSHIP_GATE_ENABLED,
   MEMBERSHIP_PLAN,
   membershipTermsLine,
+  ownedResortChoice: readOwnedResortChoice,
   subscribeToMembership,
   manageMembership,
   getTrips,

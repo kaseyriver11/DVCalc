@@ -2991,9 +2991,11 @@ function openForm(contract) {
   document.getElementById("f-nickname").value = contract?.nickname || "";
   // A new contract starts with nothing picked -- f-resort still needs a value
   // for the (hidden-on-step-1) preview, but no chip claims to be chosen.
-  const resortId = contract?.home_resort_id || uniqueResorts()[0].id;
+  // ...unless the owner already told the membership gate where they own.
+  const ownedChoice = contract ? null : window.DVCAuth.ownedResortChoice?.();
+  const resortId = contract?.home_resort_id || ownedChoice || uniqueResorts()[0].id;
   document.getElementById("f-resort").value = resortId;
-  homeResortPick = contract ? resortId : null;
+  homeResortPick = contract || ownedChoice ? resortId : null;
   document.getElementById("resort-chip-search").value = "";
   renderHomeResortList();
   setUseYear(contract?.use_year || USE_YEARS[0]);
