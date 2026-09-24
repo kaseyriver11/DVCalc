@@ -57,15 +57,20 @@ test('both gates use the one shared renderer, with one trial or sign-in action',
   // Home (non-member) and My Contracts ask for it; the other gated pages don't.
   assert.match(home.match(/function renderNonMember\(\) \{[^]*?\n\}/)[0], /preview: true/);
   assert.match(account.match(/async function renderSignedIn\(\) \{[^]*?return;/)[0], /preview: true/);
-  // Signed-out Home: same renderer, then the one sign-in control.
+  // Signed-out Home: one primary action (add a first contract), placed
+  // before the same shared example, which drops its caption because the
+  // intro says it next to the action.
   const signedOut = home.match(/function dashboardSignInHTML\(\) \{[^]*?\n\}/)[0];
-  assert.match(signedOut, /window\.DVCOwnerPreview\.render\(\)/);
-  assert.doesNotMatch(signedOut, /<a |<button/);
+  assert.match(signedOut, /window\.DVCOwnerPreview\.render\(\{ caption: false \}\)/);
+  assert.equal((signedOut.match(/class="home-primary-btn"/g) || []).length, 1);
+  assert.ok(signedOut.indexOf('Add my first contract') < signedOut.indexOf('DVCOwnerPreview'));
+  assert.match(signedOut, /doesn't connect to your Disney account/);
+  assert.doesNotMatch(signedOut, /<button/);
   for (const page of ['home.html', 'account.html']) assert.match(read(page), /<script src="dvc-owner-preview\.js"><\/script>/);
 });
 
 test('without the preview option the gate is unchanged', () => {
-  const ctx = vm.createContext({ window: { DVCOwnerPreview: P }, injectEmailCodeStyles() {} });
+  const ctx = vm.createContext({ window: { DVCOwnerPreview: P }, injectEmailCodeStyles() {}, MEMBERSHIP_PLAN: { price: 49.99, trialDays: 7 } });
   vm.runInContext(auth.match(/function renderMembershipGate\([^]*?\n\}/)[0], ctx);
   const plain = { innerHTML: '' }, withPreview = { innerHTML: '' };
   ctx.renderMembershipGate(plain, { title: 'T', body: 'B' });
@@ -74,6 +79,11 @@ test('without the preview option the gate is unchanged', () => {
   assert.match(withPreview.innerHTML, /dvcop-badge">Example/);
   assert.match(withPreview.innerHTML, /Start 7-day free trial/);
   assert.match(withPreview.innerHTML, /Then \$49\.99\/yr/); // price unchanged
+});
+
+test('the example says the owner confirmed its balances, not that the app checked Disney', () => {
+  assert.match(P.EXAMPLE.checked, /^Owner confirmed these balances with Disney/);
+  assert.doesNotMatch(P.html({ caption: false }), /figcaption/);
 });
 
 test('no membership surface says owners "connect" their contracts', () => {

@@ -94,6 +94,24 @@ body {
 }
 
 .gate p { margin-bottom: 18px; font-size: 0.95rem; }
+/* Signed-out My Contracts: one prompt for new and returning owners, over
+   the Copper Creek art (data/resort_images.js) with the same purple wash
+   the wallet cards use, so white text stays readable. Both sign-in
+   buttons are white pills, so they need no change on the dark wash. */
+.gate-signin {
+  padding: 40px 24px 32px;
+  color: white;
+  background:
+    linear-gradient(160deg, rgba(26, 35, 126, 0.72), rgba(74, 20, 140, 0.84)),
+    url('images/resorts/copperCreek.png') center / cover no-repeat;
+  box-shadow: 0 6px 20px rgba(26, 35, 126, 0.25);
+}
+.gate-signin-title { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 8px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
+.gate-signin p { color: rgba(255, 255, 255, 0.92); }
+.gate-signin .dvc-emailcode-divider { color: rgba(255, 255, 255, 0.8); }
+.gate-signin .dvc-emailcode-divider::before, .gate-signin .dvc-emailcode-divider::after { background: rgba(255, 255, 255, 0.35); }
+.gate .gate-note { max-width: 420px; margin: 20px auto 0; font-size: 0.84rem; line-height: 1.45; color: rgba(255, 255, 255, 0.85); }
+@media (max-width: 480px) { .gate-signin { padding: 24px 16px; } }
 
 .big-signin-btn {
   background: var(--color-primary);
@@ -291,10 +309,10 @@ body {
 
 .wallet-card-top-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
 
-/* Compact points/UY readout, kept in the top peek band so it's visible
-   even while this card is collapsed under others in the deck -- the big
-   .wallet-card-points-num below is only visible once the card is active
-   or unstacked. */
+/* The card's one points/use-year readout, kept in the top peek band so
+   it's visible even while this card is collapsed under others in the deck
+   (the face used to repeat both below as a big "200 POINTS / YR" and an
+   "APR UY" pill). */
 .wallet-card-peek-stats { display: flex; gap: 5px; }
 .wallet-card-peek-pill {
   background: rgba(255,255,255,0.16);
@@ -303,19 +321,6 @@ body {
   font-size: 0.66rem;
   font-weight: 700;
   white-space: nowrap;
-}
-
-.wallet-card-points {
-  position: relative;
-  z-index: 1;
-}
-.wallet-card-points-num { font-size: 1.85rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
-.wallet-card-points-label {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  opacity: 0.75;
-  margin-top: 2px;
 }
 
 .wallet-card-bottom {
@@ -353,8 +358,19 @@ body {
   border-radius: 50%;
   font-size: 0.62rem;
   font-weight: 700;
+  line-height: 1;
   cursor: help;
 }
+/* An SVG star rather than the "★" glyph: the glyph's font metrics sit it
+   off-center in the circle. */
+.wallet-card-perk-dot svg { width: 10px; height: 10px; display: block; }
+/* The perk dot rides inside the purchase-type pill it describes (Blue Card
+   is a direct perk, the resale restriction a resale limit) rather than as
+   its own item, which wrapped onto a lone line once the Bank-by pill was
+   showing. */
+.wallet-card-pill-type { display: inline-flex; align-items: center; gap: 5px; }
+.wallet-card-pill-type .wallet-card-perk-dot { width: 14px; height: 14px; font-size: 0.55rem; }
+.wallet-card-pill-type .wallet-card-perk-dot svg { width: 8px; height: 8px; }
 .wallet-card-perk-dot.restricted { background: #f6e5db; color: #a3401f; }
 .wallet-card-perk-dot.blue-card { background: var(--color-info-bg); color: var(--color-info); }
 
@@ -400,6 +416,7 @@ body {
   padding: 20px;
   box-shadow: var(--shadow-card);
   margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .wallet-details-header {
@@ -676,7 +693,6 @@ body {
   transition: background 0.3s ease;
 }
 .modal-preview-card .wallet-card-name { font-size: 1rem; }
-.modal-preview-card .wallet-card-points-num { font-size: 1.5rem; }
 
 /* ---- Card Studio (3-step Add/Edit Contract modal) ---- */
 .studio-stepper {
@@ -1152,7 +1168,6 @@ body {
     text-overflow: ellipsis;
     max-width: 100%;
   }
-  .wallet-card-points-num { font-size: 1.5rem; }
   /* Tighter peek (55px of a 168px card, same ~1/3 proportion the desktop
      215px/70px peek uses) now that the header height above is reliable. */
   .wallet-deck .wallet-card:not(:first-child) {
@@ -1380,6 +1395,7 @@ body {
   </div>
 
   <script src="dvc-track.js"></script>
+  <script src="dvc-funnel.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
@@ -1555,15 +1571,74 @@ let justIssuedContractId = null; // brand-new contract's id, so its first render
 let currentProfile = null; // last-fetched profile row, kept for the Notification Settings modal to read/patch without a re-fetch
 let currentSubscription = null; // last-fetched subscriptions row, kept for the membership card's click handler to read without a re-fetch
 
+// ---- "Add my first contract" carried through sign-in ----
+// Home's CTA links here with ?start=add-contract. The intent is moved into
+// sessionStorage (and the param stripped) on load, so it survives the
+// Google redirect, the in-page email code, a refresh or a failed sign-in,
+// and is removed the moment it's acted on -- dismissing or finishing the
+// form can never bring it back. It expires after an hour so a sign-in much
+// later in the same tab doesn't pop a form nobody asked for.
+const ADD_CONTRACT_INTENT_KEY = "dvc_add_contract_intent";
+const ADD_CONTRACT_INTENT_TTL_MS = 60 * 60 * 1000;
+function captureAddContractIntent() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("start") !== "add-contract") return;
+  try { sessionStorage.setItem(ADD_CONTRACT_INTENT_KEY, JSON.stringify({ at: Date.now(), signinShown: false })); } catch (_) {}
+  params.delete("start");
+  const query = params.toString();
+  history.replaceState(null, "", location.pathname + (query ? "?" + query : "") + location.hash);
+}
+function readAddContractIntent() {
+  try {
+    const intent = JSON.parse(sessionStorage.getItem(ADD_CONTRACT_INTENT_KEY) || "null");
+    if (intent && Date.now() - intent.at < ADD_CONTRACT_INTENT_TTL_MS) return intent;
+    sessionStorage.removeItem(ADD_CONTRACT_INTENT_KEY);
+  } catch (_) {}
+  return null;
+}
+function writeAddContractIntent(intent) {
+  try {
+    if (intent) sessionStorage.setItem(ADD_CONTRACT_INTENT_KEY, JSON.stringify(intent));
+    else sessionStorage.removeItem(ADD_CONTRACT_INTENT_KEY);
+  } catch (_) {}
+}
+captureAddContractIntent();
+
+// Signed in with contracts loaded: act on the intent once. No contracts
+// opens the Add contract form (nothing is saved or advanced for them);
+// existing contracts just stay on screen with + Add contract in view.
+function consumeAddContractIntent(contracts) {
+  const intent = readAddContractIntent();
+  if (!intent) return;
+  writeAddContractIntent(null);
+  if (intent.signinShown) window.DVCFunnel?.event("signin-done");
+  if (contracts.length === 0) openForm(null);
+  else document.getElementById("show-add-form")?.scrollIntoView({ block: "center" });
+}
+
 function renderGate() {
+  const intent = readAddContractIntent();
   pageContent.innerHTML = `
-    <div class="gate">
-      <p>Sign in to save your DVC contracts and unlock personalized booking windows on the calendar.</p>
+    <div class="gate gate-signin">
+      <h2 class="gate-signin-title">DVC Companion: A DVC Contract Manager</h2>
+      <p>Sign in to see your contracts or add your first one.</p>
       <div id="gate-signin-slot"></div>
+      <p class="gate-note">You enter your balances from Disney. DVC Companion doesn't connect to your Disney account. ${window.DVCAuth.membershipTermsLine()}</p>
     </div>
   `;
   window.DVCAuth.renderSignInButton(document.getElementById("gate-signin-slot"), "big-signin-btn", "large");
+  // Only once auth.js has read the stored session: the null session it
+  // reports first would count every returning owner as a sign-in prompt.
+  if (intent && !intent.signinShown && window.DVCAuth.isSessionResolved()) {
+    writeAddContractIntent({ ...intent, signinShown: true });
+    window.DVCFunnel?.event("signin-shown");
+  }
 }
+// Email sign-in opened from the contract path (Google's button lives in
+// Google's own iframe, so its click can't be seen here).
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#gate-signin-slot .dvc-emailcode-trigger") && readAddContractIntent()) window.DVCFunnel?.event("signin-email");
+});
 
 function renderUnconfigured() {
   pageContent.innerHTML = `
@@ -1602,14 +1677,11 @@ function computeEarliestDeadline(contracts, yearPointsByContract, today) {
 // this function has to handle every status the webhook writes). No row at
 // all reads the same as "free" -- the user just hasn't started a checkout
 // yet, which is a normal state, not an error.
-// Task 10: dynamic pricing-anchor micro-copy for the Free/upsell state --
-// the actual "paywall" moment in this app (pre-signin renderGate() doesn't
-// mention price at all, so anchoring there would be premature; this card's
-// Free branch, with its existing hardcoded "$49.99/yr" button, is where a
-// visitor actually sees and weighs the price). MEMBERSHIP_PRICE is the
-// single source of truth for that number now, shared with the button text
-// below, instead of two independently-hardcoded copies that could drift.
-const MEMBERSHIP_PRICE = 49.99;
+// Pricing-anchor micro-copy for the Free/upsell state, shown only while the
+// membership gate is on (buildMembershipCardHTML()). The price comes from
+// auth.js's MEMBERSHIP_PLAN, read at render time -- this script can run
+// before auth.js's module has set window.DVCAuth.
+const membershipPrice = () => window.DVCAuth.MEMBERSHIP_PLAN.price;
 // Used only when the visitor has no contract yet to personalize against --
 // a well-known, moderate-cost WDW resort, not cherry-picked for the most
 // flattering number (every resort in DUES_PER_POINT is a real 2026 rate).
@@ -1620,7 +1692,7 @@ function pricingAnchorMicroCopy(contracts) {
   const resortId = anchorContract ? anchorContract.home_resort_id : DEFAULT_ANCHOR_RESORT_ID;
   const duesPerPoint = DUES_PER_POINT[resortId];
   if (!duesPerPoint) return ""; // no real dues data for this resort -- skip rather than show a wrong number
-  const equivalentPoints = MEMBERSHIP_PRICE / duesPerPoint;
+  const equivalentPoints = membershipPrice() / duesPerPoint;
   return `Less than the annual dues on ${equivalentPoints.toFixed(1)} points at ${resortName(resortId)} &mdash; cheaper than what one missed banking deadline can cost you.`;
 }
 
@@ -1634,7 +1706,7 @@ function membershipCardState(sub, contracts) {
       statusText: "Free",
       detail: "Upgrade to Active Member to record and manage your contracts, points ledger, and deadline reminders.",
       anchorText: pricingAnchorMicroCopy(contracts),
-      buttonText: `Upgrade -- $${MEMBERSHIP_PRICE}/yr`,
+      buttonText: `Upgrade -- $${membershipPrice()}/yr`,
       buttonClass: "",
       action: "upgrade",
     };
@@ -1686,6 +1758,10 @@ function membershipCardState(sub, contracts) {
 
 function buildMembershipCardHTML(sub, contracts) {
   const s = membershipCardState(sub, contracts);
+  // While the gate is off, contract tools are free for everyone: an
+  // "Upgrade to record and manage your contracts" card would be untrue.
+  // A real (test-mode) subscription still gets its Manage card.
+  if (s.action === "upgrade" && !window.DVCAuth.MEMBERSHIP_GATE_ENABLED) return "";
   return `
     <div class="membership-card">
       <div>
@@ -2127,6 +2203,7 @@ async function renderSignedIn() {
                 <div class="studio-panel">
                   <div class="form-field">
                     <label>Use year</label>
+                    <div class="field-hint">The month your points arrive each year. It's on your contract and on Disney's member site.</div>
                     <div class="use-year-chips round" id="f-useyear-chips">
                       ${USE_YEARS.map(y => `<button type="button" class="use-year-chip" data-year="${y}">${y}</button>`).join("")}
                     </div>
@@ -2213,7 +2290,11 @@ async function renderSignedIn() {
     if (e.target.id === "contract-modal") closeForm();
   });
   document.getElementById("save-contract").addEventListener("click", () => saveForm(contracts));
-  document.getElementById("studio-next").addEventListener("click", () => { if (validateContractStep(modalStep)) showStudioStep(modalStep + 1); });
+  document.getElementById("studio-next").addEventListener("click", () => {
+    if (!validateContractStep(modalStep)) return;
+    if (firstContractFlow) window.DVCFunnel?.event(`step-${modalStep}-done`);
+    showStudioStep(modalStep + 1);
+  });
   document.getElementById("studio-back").addEventListener("click", () => showStudioStep(modalStep - 1));
   // Editing can revisit earlier steps; advancing validates the visible step.
   document.getElementById("studio-stepper").addEventListener("click", (e) => {
@@ -2276,10 +2357,11 @@ async function renderSignedIn() {
   });
   document.getElementById("notif-settings-save").addEventListener("click", saveNotificationSettings);
 
-  document.getElementById("membership-action-btn").addEventListener("click", handleMembershipAction);
+  document.getElementById("membership-action-btn")?.addEventListener("click", handleMembershipAction);
   wireReminderSetup();
   bringReconcileForward();
   handleCheckoutReturn();
+  consumeAddContractIntent(contracts);
   // Home's "View all point actions" link: the list renders after load, so
   // the browser's own anchor jump has already missed it. Once per visit.
   if (location.hash === "#point-actions" && !pointActionsJumped) {
@@ -2424,7 +2506,9 @@ function perkPillTooltip(perks) {
 function buildPerkPillHTML(perks) {
   if (!perks || perks.badgeVariant === "neutral") return "";
   const cls = perks.badgeVariant === "info" ? "blue-card" : "restricted";
-  const icon = perks.badgeVariant === "info" ? "★" : "!";
+  const icon = perks.badgeVariant === "info"
+    ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.9 6.2 6.8.7-5.1 4.6 1.5 6.7L12 17.3l-6.1 3.4 1.5-6.7-5.1-4.6 6.8-.7z"/></svg>`
+    : "!";
   return `<span class="wallet-card-perk-dot ${cls} tooltip-anchor tooltip-align-left" role="img" aria-label="${perks.badgeText}">${icon}<div class="tooltip-card"><strong>${perks.badgeText}</strong><br>${perkPillTooltip(perks)}</div></span>`;
 }
 
@@ -2451,16 +2535,10 @@ function buildWalletCardFaceHTML({ resortId, nickname, pointsPerYear, useYear, p
         </div>
       </div>
     </div>
-    <div class="wallet-card-points">
-      <div class="wallet-card-points-num">${points}</div>
-      <div class="wallet-card-points-label">POINTS / YR</div>
-    </div>
     <div class="wallet-card-bottom">
       <div class="wallet-card-bottom-left">
-        <span class="wallet-card-pill">${useYear.toUpperCase()} UY</span>
-        <span class="wallet-card-pill">${purchaseType.toUpperCase()}</span>
+        <span class="wallet-card-pill wallet-card-pill-type">${purchaseType.toUpperCase()}${buildPerkPillHTML(perks)}</span>
         ${isActive ? "" : `<span class="wallet-card-pill">INACTIVE</span>`}
-        ${buildPerkPillHTML(perks)}
       </div>
       ${deadline ? `
       <div class="wallet-card-deadline-pill tooltip-anchor tooltip-align-right">
@@ -2867,8 +2945,14 @@ function updateStudioNextLabel() {
 }
 
 let useYearChosen = false;
+// True while adding the account's first contract: scopes the activation
+// events (dvc-funnel.js) and the post-save balance guidance to that path.
+let firstContractFlow = false;
+let balanceSetupAfterFirstContract = false;
 function openForm(contract) {
   editingId = contract ? contract.id : null;
+  firstContractFlow = !contract && balanceSetupContracts.length === 0;
+  if (firstContractFlow) window.DVCFunnel?.event("form-open");
   useYearChosen = !!contract;
   isEditingMode = !!contract;
   document.getElementById("studio-stepper").classList.toggle("jumpable", isEditingMode);
@@ -2927,7 +3011,7 @@ function balanceSetupHTML() {
     <p class="balance-setup-footnote">Your best current numbers are fine. Only saved balances affect guidance. Discarding edits does not undo completed saves.</p>
   </div></div>`;
 }
-function openBalanceSetup(contractId, selectedYear, adjusting = false, explicitYears = null) {
+function openBalanceSetup(contractId, selectedYear, adjusting = false, explicitYears = null, { justAdded = false } = {}) {
   balanceSetupContract = balanceSetupContracts.find(c => c.id === contractId);
   if (!balanceSetupContract) return;
   balanceSetupSaved = new Map();
@@ -2940,7 +3024,9 @@ function openBalanceSetup(contractId, selectedYear, adjusting = false, explicitY
   const first = selectedYear && selectedYear !== current ? selectedYear : current;
   const years = explicitYears || (adjusting || selectedYear && selectedYear !== current ? [first] : [current,current+1]);
   document.getElementById('balance-setup-title').textContent = adjusting ? 'Adjust balance' : 'What points do you have left?';
-  document.getElementById('balance-setup-intro').textContent = `${c.nickname || resortName(c.home_resort_id)} - ${c.points_per_year} points a year. ${adjusting ? 'Correct this year only. To move points between years, use Record banking or Record borrowing.' : 'Add what is left after stays, banking or borrowing.'}`;
+  document.getElementById('balance-setup-intro').textContent = justAdded
+    ? `Contract saved: ${c.nickname || resortName(c.home_resort_id)}, ${c.points_per_year} points a year. Each year starts at ${c.points_per_year}. Change it to match what Disney's member site shows if you've used, banked or borrowed points. Not sure of a year? Skip it: it stays unknown, not zero.`
+    : `${c.nickname || resortName(c.home_resort_id)} - ${c.points_per_year} points a year. ${adjusting ? 'Correct this year only. To move points between years, use Record banking or Record borrowing.' : 'Add what is left after stays, banking or borrowing.'}`;
   document.getElementById('balance-year-cards').innerHTML = years.map(year => {
     const row = (balanceSetupRows[c.id] || []).find(r => r.use_year_label === year);
     const total = row?.balance_confirmed_at ? ['points_remaining','points_banked','points_borrowed','points_holding'].reduce((sum,k) => sum+(row[k]||0),0) : '';
@@ -2948,7 +3034,9 @@ function openBalanceSetup(contractId, selectedYear, adjusting = false, explicitY
     const extra = confirmed && (row.points_banked || row.points_borrowed || row.points_holding);
     // A use year that hasn't started, with no balance yet, almost always
     // still has its full allotment: suggest it, and save it if left blank.
-    const suggested = !confirmed && year > current ? c.points_per_year : "";
+    // Right after adding a contract, the current year starts from the full
+    // allotment too; the owner lowers it if points are already used.
+    const suggested = !confirmed && (year > current || justAdded) ? c.points_per_year : "";
     const start = formatDeadlineDate(dateOnlyUTC(year, USE_YEAR_START_MONTH[c.use_year], 1));
     const end = formatDeadlineDate(useYearExpiration(c.use_year,year));
     return `<section class="balance-year-card" data-balance-year="${year}" data-before-total="${total}" data-default-total="${suggested}" data-saved-buckets='${confirmed ? JSON.stringify({points_remaining:row.points_remaining,points_banked:row.points_banked||0,points_borrowed:row.points_borrowed||0,points_holding:row.points_holding||0}) : ''}'>
@@ -3009,7 +3097,11 @@ async function closeBalanceSetup() {
     reminderSetupScroll = true;
   }
   balanceSetupSaved = new Map();
+  const afterFirst = balanceSetupAfterFirstContract;
+  balanceSetupAfterFirstContract = false;
+  if (afterFirst) window.DVCFunnel?.event(saved.length ? "balance-saved" : "balance-skipped");
   await renderSignedIn();
+  if (afterFirst) window.DVCFunnel?.event("dashboard-viewed");
 }
 async function saveBalanceSetup() {
   if (balanceSetupBusy) return;
@@ -3158,9 +3250,14 @@ async function saveForm() {
   // one never should, since it isn't newly issued.
   const added = !editingId;
   if (added) { justIssuedContractId = result.data.id; activeWalletCardId = result.data.id; activeLedgerYearTab = null; }
+  const wasFirst = added && firstContractFlow;
+  if (wasFirst) window.DVCFunnel?.event("contract-saved");
   closeForm();
   await renderSignedIn();
-  if (added) openBalanceSetup(result.data.id);
+  if (added) {
+    balanceSetupAfterFirstContract = wasFirst;
+    openBalanceSetup(result.data.id, undefined, false, null, { justAdded: true });
+  }
 }
 
 // Upgrade -> create-checkout-session, Manage -> create-portal-session --
@@ -3180,7 +3277,7 @@ async function handleMembershipAction() {
 
   if (result.error || !result.url) {
     btn.disabled = false;
-    btn.textContent = action === "manage" ? "Manage Membership" : "Upgrade -- $49.99/yr";
+    btn.textContent = action === "manage" ? "Manage Membership" : `Upgrade -- $${membershipPrice()}/yr`;
     msgEl.textContent = result.error || "Something went wrong -- try again.";
     msgEl.style.display = "block";
     return;

@@ -16,7 +16,7 @@ function setup(today = { year: 2026, month: 9, day: 22 }) {
   for (const f of ['dvc-dates.js', 'dvc-point-attention.js', 'dvc-home-summary.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
   c.window.DVCHomeSummary = c.window.DVCHomeSummary || require('../dvc-home-summary.js');
   vm.runInContext(`const { currentUYYear, dateOnlyUTC, formatDeadlineDate } = window.DVCDates; const todayInEastern = () => (${JSON.stringify(today)});
-    const HOME_CONTRACT_ROWS = 3;` + fn('resortName') + fn('contractName') + fn('renderContractsWidget'), c);
+    const HOME_CONTRACT_ROWS = 3; const ADD_CONTRACT_HREF = "account.html?start=add-contract";` + fn('resortName') + fn('contractName') + fn('renderContractsWidget'), c);
   return (contracts, rows) => { c.renderContractsWidget(contracts, rows); return container.innerHTML; };
 }
 const contract = (id, extra = {}) => ({ id, use_year: 'Dec', home_resort_id: 'ssr', nickname: null, points_per_year: 200, is_active: true, ...extra });
@@ -93,7 +93,8 @@ test('the badge counts current use years only, never missing next-year balances'
 test('zero contracts: adding one is the only primary action; inactive-only is not treated as new', () => {
   const render = setup();
   const empty = render([], {});
-  assert.match(empty, /class="home-primary-btn">\+ Add your first contract/);
+  // Carries the add-contract intent, so My Contracts opens the form.
+  assert.match(empty, /href="account\.html\?start=add-contract" class="home-primary-btn">\+ Add your first contract/);
   const inactive = render([contract('a', { is_active: false })], {});
   assert.doesNotMatch(inactive, /Add your first contract/);
   assert.match(inactive, /None of your contracts are active/);

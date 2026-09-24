@@ -17,7 +17,7 @@
       { name: "Riviera", detail: "100 pts a year · Jun use year", points: 150 },
     ],
     next: { title: "Bank or use 120 current points", detail: "Saratoga Springs · banking deadline in 24 days" },
-    checked: "Balances checked against Disney 6 days ago",
+    checked: "Owner confirmed these balances with Disney 6 days ago",
   };
 
   const CSS = `
@@ -44,7 +44,9 @@
 `;
 
   // The example, as markup. Pure (no DOM), so tests can check it.
-  function html() {
+  // caption: false drops the "doesn't connect to Disney" line, for a page
+  // that already says it right next to its own call to action.
+  function html({ caption = true } = {}) {
     const e = EXAMPLE;
     return `
     <figure class="dvcop" aria-label="Example owner dashboard with sample data, not your account">
@@ -61,7 +63,7 @@
           ${e.contracts.map(c => `<li class="dvcop-row"><span class="dvcop-row-body"><span class="dvcop-row-name">${c.name}</span><span class="dvcop-row-detail">${c.detail}</span></span><span class="dvcop-row-pts">${c.points} pts</span></li>`).join("")}
         </ul>
       </div>
-      <figcaption class="dvcop-caption">You enter your contracts and the balances Disney shows you, then check them against Disney. DVC Companion doesn't connect to your Disney account.</figcaption>
+      ${caption ? `<figcaption class="dvcop-caption">You enter your contracts and the balances Disney shows you, then check them against Disney. DVC Companion doesn't connect to your Disney account.</figcaption>` : ""}
     </figure>`;
   }
 
@@ -75,9 +77,9 @@
   }
 
   // Markup with its styles guaranteed to be on the page.
-  function render() {
+  function render(options) {
     injectStyles();
-    return html();
+    return html(options);
   }
 
   const api = { html, render, EXAMPLE };

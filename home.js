@@ -168,7 +168,7 @@ function renderContractsWidget(contracts, yearPointsByContract) {
     container.innerHTML = `
       <div class="widget-empty-welcome">
         <p>No contracts added yet. Add one to see its points and deadlines here.</p>
-        <a href="account.html" class="home-primary-btn">+ Add your first contract</a>
+        <a href="${ADD_CONTRACT_HREF}" class="home-primary-btn">+ Add your first contract</a>
       </div>
     `;
     return;
@@ -249,19 +249,32 @@ function renderActions(member) {
 }
 
 // ---- Signed-out / member / load states ------------------------------------
-// Signed out and non-members see one prompt with a labeled example of the
-// dashboard (dvc-owner-preview.js, shared with the membership gate) in
-// place of the widgets -- empty locked cards would show nothing.
+// Signed out: what the app does, one primary action (add a first contract,
+// which carries through sign-in on My Contracts -- ?start=add-contract),
+// the public calendar as the secondary path, then the labeled example
+// (dvc-owner-preview.js, shared with the membership gate). The CTA comes
+// before the example so a phone shows the promise and action unscrolled.
+// Non-members see the membership gate instead of the widgets -- empty
+// locked cards would show nothing.
+const ADD_CONTRACT_HREF = "account.html?start=add-contract";
 function dashboardSignInHTML() {
   return `
-  <div class="dashboard-signin-banner">
-    <h2 class="dashboard-signin-title">Record and manage your DVC contracts</h2>
-    <p class="dashboard-signin-body">Keep every contract's points, deadlines and stays together. Sign in to start.</p>
-    ${window.DVCOwnerPreview.render()}
-    <div class="dashboard-signin-slot"></div>
-  </div>
+  <section class="home-intro" aria-labelledby="home-intro-title">
+    <h1 class="home-intro-title" id="home-intro-title">Keep your DVC contracts, points and deadlines in one place</h1>
+    <p class="home-intro-body">Record your contracts and balances, see your upcoming banking and expiration dates, and plan stays with your own contract details.</p>
+    <div class="home-intro-actions">
+      <a href="${ADD_CONTRACT_HREF}" class="home-primary-btn" data-funnel="home-cta">Add my first contract</a>
+      <a href="index.html" class="home-secondary-link">Explore the points calendar &rarr;</a>
+    </div>
+    <p class="home-intro-note">You enter your balances from Disney. DVC Companion doesn't connect to your Disney account. ${window.DVCAuth.membershipTermsLine()}</p>
+    <p class="home-intro-returning">Already added your contracts? <a href="account.html">Sign in</a></p>
+  </section>
+  ${window.DVCOwnerPreview.render({ caption: false })}
 `;
 }
+document.addEventListener("click", (e) => {
+  if (e.target.closest('[data-funnel="home-cta"]')) window.DVCFunnel?.event("home-cta");
+});
 const UNCONFIGURED_HTML = `<div class="widget-empty">Accounts aren't set up on this deployment yet.</div>`;
 
 // The two widgets only make sense with an owner's own data behind them.
@@ -282,6 +295,7 @@ function renderNonMember() {
 }
 
 async function renderSignedIn() {
+  showHeader(true);
   if (!(await window.DVCAuth.hasMembership())) return renderNonMember();
   showDashboard(true);
   const [contracts, trips, yearPoints, settings] = await Promise.all([
@@ -322,12 +336,19 @@ document.addEventListener("click", (e) => {
 
 function renderSignedOut() {
   document.getElementById("home-attention").innerHTML = dashboardSignInHTML();
-  window.DVCAuth.renderSignInButton(document.querySelector(".dashboard-signin-slot"), "widget-signin-btn", "large");
+  showHeader(false);
   showDashboard(false);
-  renderActions(false);
+  document.getElementById("home-actions").innerHTML = "";
+}
+
+// The plain "Home" heading gives way to the intro's own headline when
+// signed out.
+function showHeader(show) {
+  document.querySelector(".page-header-row").hidden = !show;
 }
 
 function renderUnconfigured() {
+  showHeader(true);
   showDashboard(true);
   document.getElementById("home-attention").innerHTML = "";
   document.getElementById("home-contracts-summary").innerHTML = UNCONFIGURED_HTML;

@@ -182,20 +182,24 @@ body {
 button.widget-empty-cta { font-family: inherit; cursor: pointer; }
 .widget-load-error p { font-size: 0.86rem; color: #888; line-height: 1.5; margin-bottom: 10px; }
 
-/* One sign-in prompt for the whole dashboard (not a per-widget .gate like
-   trips.html/itineraries.html use), with the labeled example dashboard
-   (dvc-owner-preview.js). The widgets below are hidden while signed out. */
-.dashboard-signin-banner {
-  padding: 20px 16px;
-  border-radius: 10px;
-  margin-bottom: 18px;
-  text-align: center;
-  background: #f7f5fa;
-  border: 1px solid #ece1f7;
+/* Signed-out intro: headline, one-line benefit, "Add my first contract"
+   (primary) and the public calendar (secondary), then the labeled example
+   dashboard (dvc-owner-preview.js). The widgets below are hidden while
+   signed out. */
+.page-header-row[hidden] { display: none; }
+.home-intro { padding: 22px 20px; border-radius: 12px; margin-bottom: 8px; background: #f7f5fa; border: 1px solid #ece1f7; }
+.home-intro-title { font-size: 1.45rem; line-height: 1.25; font-weight: 800; color: #1a237e; max-width: 640px; }
+.home-intro-body { margin-top: 8px; max-width: 600px; font-size: 0.95rem; line-height: 1.5; color: #3d3a4d; }
+.home-intro-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 16px; }
+.home-intro-note { margin-top: 12px; max-width: 600px; font-size: 0.84rem; line-height: 1.45; color: #3d3a4d; }
+.home-intro-returning { margin-top: 6px; font-size: 0.84rem; color: #3d3a4d; }
+.home-intro-returning a { display: inline-flex; align-items: center; min-height: 44px; color: #4a148c; font-weight: 700; }
+.home-intro-returning a:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
+@media (max-width: 480px) {
+  .home-intro { padding: 18px 16px; }
+  .home-intro-title { font-size: 1.25rem; }
+  .home-intro-actions .home-primary-btn { width: 100%; justify-content: center; }
 }
-.dashboard-signin-title { font-size: 1.1rem; font-weight: 700; color: #1a237e; }
-.dashboard-signin-body { margin: 6px auto 0; max-width: 440px; font-size: 0.9rem; line-height: 1.45; color: #3d3a4d; }
-.dashboard-signin-banner .dvcop { margin-bottom: 16px; }
 .home-member-gate .gate {
   padding: 22px 20px;
   margin-bottom: 18px;
@@ -348,6 +352,7 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
   <script src="dvc-home-summary.js"></script>
   <script src="dvc-owner-preview.js"></script>
   <script src="dvc-track.js"></script>
+  <script src="dvc-funnel.js"></script>
   <script src="dvc-trip-funding.js"></script>
   <script src="dvc-owner-value.js"></script>
   <script src="home.js"></script>

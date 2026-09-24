@@ -27,6 +27,9 @@ if (!configured) {
 
 const listeners = [];
 let currentSession = null;
+// onAuthChange() calls back with null right away, before the stored
+// session has been read; this says whether a null session is real.
+let sessionResolved = false;
 
 function notify() {
   for (const cb of listeners) cb(currentSession);
@@ -36,6 +39,7 @@ async function init() {
   if (!configured) return;
   const { data } = await supabase.auth.getSession();
   currentSession = data.session;
+  sessionResolved = true;
   notify();
   supabase.auth.onAuthStateChange((_event, session) => {
     currentSession = session;
@@ -1038,6 +1042,19 @@ const MEMBERSHIP_GATE_ENABLED = false;
 // own ledger mid-retry (subscriptions_plan.md Phase 7).
 const MEMBER_STATUSES = new Set(["active", "trialing", "past_due"]);
 const MEMBERSHIP_REQUIRED_ERROR = "This is part of Active Member. Start a free trial on My Contracts to use it.";
+// The one source for plan terms: the gate below, My Contracts' membership
+// card and the signed-out Home/My Contracts copy all read these, so the
+// price and trial can't disagree between screens. terms.html states the
+// price in prose and has to be updated by hand if it changes.
+const MEMBERSHIP_PLAN = { price: 49.99, trialDays: 7 };
+
+// What a visitor should know about payment before signing in, matching
+// the gate as it actually ships: free while the gate is off, the real
+// trial and renewal terms once it's on.
+function membershipTermsLine() {
+  if (!MEMBERSHIP_GATE_ENABLED) return "Free to use. No payment or card needed.";
+  return `Contract tools are part of Active Member: a ${MEMBERSHIP_PLAN.trialDays}-day free trial, then $${MEMBERSHIP_PLAN.price}/yr, renewing yearly until you cancel.`;
+}
 let membershipCache = null;
 
 function isMemberStatus(status) {
@@ -1066,8 +1083,8 @@ function renderMembershipGate(container, { title, body, preview = false }) {
       <h3 class="membership-gate-title">${title}</h3>
       <p>${body}</p>
       ${example}
-      <button type="button" class="membership-gate-btn" data-membership-upgrade>Start 7-day free trial</button>
-      <div class="membership-gate-fine">Then $49.99/yr. Cancel anytime.</div>
+      <button type="button" class="membership-gate-btn" data-membership-upgrade>Start ${MEMBERSHIP_PLAN.trialDays}-day free trial</button>
+      <div class="membership-gate-fine">Then $${MEMBERSHIP_PLAN.price}/yr. Cancel anytime.</div>
       <div class="membership-gate-error" role="alert" hidden></div>
     </div>
   `;
@@ -1085,7 +1102,7 @@ document.addEventListener("click", async (e) => {
     return;
   }
   btn.disabled = false;
-  btn.textContent = "Start 7-day free trial";
+  btn.textContent = `Start ${MEMBERSHIP_PLAN.trialDays}-day free trial`;
   if (errorEl) {
     errorEl.textContent = "Couldn't open checkout: " + (result.error || "unknown error");
     errorEl.hidden = false;
@@ -1490,6 +1507,9 @@ window.DVCAuth = {
   hasMembership,
   renderMembershipGate,
   MEMBERSHIP_REQUIRED_ERROR,
+  MEMBERSHIP_GATE_ENABLED,
+  MEMBERSHIP_PLAN,
+  membershipTermsLine,
   subscribeToMembership,
   manageMembership,
   getTrips,
@@ -1506,4 +1526,5 @@ window.DVCAuth = {
   getUserResortAccess,
   evaluateContractPerks,
   isConfigured: () => configured,
+  isSessionResolved: () => sessionResolved,
 };
