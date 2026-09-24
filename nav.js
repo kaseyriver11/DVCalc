@@ -37,6 +37,22 @@ const NAV_OVERLAY_CSS = `
   }
   /* The desktop group dividers read as stray bars in the stacked list. */
   .site-nav-divider { display: none; }
+  /* Full-width rows at the 44px minimum tap height, and the current page
+     marked with a tinted row instead of the desktop underline, which is
+     easy to miss in a stacked list. */
+  .site-nav .site-nav-group { align-items: stretch; align-self: stretch; gap: 2px; }
+  .site-nav .site-nav-group-label { padding: 0 12px; margin-bottom: 2px; }
+  .site-nav .site-nav-links a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border-bottom: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .site-nav .site-nav-links a.active { background: #f3e8fd; color: #4a148c; }
+  .site-nav.open #account-control { display: flex; flex-direction: column; align-items: center; }
   body.site-nav-locked { overflow: hidden; }
 }`;
 

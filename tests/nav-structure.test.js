@@ -10,11 +10,11 @@ const fs = require('node:fs'), path = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
 const EXPECTED = [
-  ['Overview', [['home.html', 'Home'], ['badges.html', 'Achievements']]],
+  ['Overview', [['home.html', 'Home'], ['badges.html', 'Trophy Room']]],
   ['My Membership', [['account.html', 'My Contracts'], ['bookings.html', 'Bookings &amp; Stays'],
-                     ['trips.html', 'Membership Value']]],
+                     ['trips.html', 'Membership Value'], ['contractvalue.html', 'Contract Value']]],
   ['Plan a Stay', [['index.html', 'Calendar'], ['compare.html', 'Compare Resorts'],
-                   ['suggest.html', 'Suggest a Stay'], ['contractvalue.html', 'Contract Value']]],
+                   ['suggest.html', 'Suggest a Stay']]],
   ['My Itineraries', [['itineraries.html', 'Saved Itineraries'],
                       ['itinerarycompare.html', 'Compare Itineraries']]],
 ];
