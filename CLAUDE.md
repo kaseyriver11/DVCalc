@@ -19,10 +19,10 @@ Pages
 ├── home.html / home.js         # Home: "Next up" attention card, points portfolio, value preview
 ├── index.html / app.js         # Points calendar -- the original tool; Smart Draw, review mode, split stays
 ├── compare.html                # Cross-resort date comparison (self-contained)
-├── changes.html                # Year-over-year point changes (self-contained)
+├── changes.html                # Point Changes -- year-over-year chart, nav: Research (self-contained)
 ├── suggest.html                # Suggest a Stay -- points budget -> stays (self-contained)
 ├── pointsorcash.html           # Points or Cash -- spend points on a cruise/hotel/stay? rent points out?
-├── contractvalue.html          # Contract Value -- which resort to buy (self-contained)
+├── contractvalue.html          # Buying Guide (was "Contract Value") -- which resort to buy, nav: Research (self-contained)
 ├── account.html                # My Contracts -- contracts, points ledger, point moves
 ├── bookings.html               # Bookings & Stays -- record/edit/delete bookings, grouped stay history
 ├── trips.html                  # Membership Value -- House Money payback, stays preview

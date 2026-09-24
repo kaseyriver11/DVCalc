@@ -1086,14 +1086,14 @@ function evaluateEventBadges(storedBadges) {
   const trendWatcher = evaluateSpecialBadge({
     id: "trend-watcher", icon: "📈", name: "Trend Watcher", category: "exploration",
     unlocked: eventCountFor(storedBadges, "trend-watcher") >= 1,
-    requirement: "Compare 2+ rooms on the Year-over-Year chart",
-    detail: "Pin 2 or more resort and room combos on the Year-over-Year chart.",
+    requirement: "Compare 2+ rooms on Point Changes",
+    detail: "Pin 2 or more resort and room combos on the Point Changes chart.",
   });
   const deedDetective = evaluateSpecialBadge({
     id: "deed-detective", icon: "📜", name: "Deed Detective", category: "financial",
     unlocked: eventCountFor(storedBadges, "deed-detective") >= 1,
-    requirement: "Get your results from Contract Value",
-    detail: "Finish the Contract Value questions to see which resorts give the most value for the money.",
+    requirement: "Get your results from the Buying Guide",
+    detail: "Finish the Buying Guide questions to see which resorts give the most value for the money.",
   });
   return [resourcefulExplorer, justOneMoreNight, reChecker, splitStayScientist, elevenMonthSniper, nightOwl,
     stayFinder, resortMatchmaker, trendWatcher, deedDetective];
