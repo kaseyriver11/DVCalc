@@ -5,9 +5,9 @@ const vm = require('node:vm');
 const auth = fs.readFileSync(require.resolve('../auth.js'), 'utf8');
 const fnSource = name => auth.match(new RegExp('(?:async )?function ' + name + '\\([^]*?\\n\\}'))[0];
 
-const READS = ['getContracts', 'getContractYearPoints', 'getUserBadges', 'getTrips', 'getItineraries', 'getTripDeductions'];
+const READS = ['getContracts', 'getContractYearPoints', 'getUserBadges', 'getTrips', 'getTripDeductions'];
 const WRITES = ['addContract', 'updateContract', 'upsertContractYearPoints', 'recordPointMovement', 'upsertUserBadge',
-  'incrementBadgeEvent', 'addTrip', 'updateTrip', 'addItinerary', 'updateItinerary', 'saveTripBooking', 'deleteTripBooking', 'reconcilePoints'];
+  'incrementBadgeEvent', 'addTrip', 'updateTrip', 'saveTripBooking', 'deleteTripBooking', 'reconcilePoints'];
 
 function context(member) {
   let queried = false;
@@ -63,7 +63,16 @@ test('trialing and past_due still count as members; canceled does not', () => {
 });
 
 test('every owner page renders the membership gate', () => {
-  for (const file of ['account.html', 'bookings.html', 'trips.html', 'itineraries.html', 'itinerarycompare.html', 'badges.html', 'home.js']) {
+  for (const file of ['account.html', 'bookings.html', 'trips.html', 'badges.html', 'home.js']) {
     assert.match(fs.readFileSync(require.resolve('../' + file), 'utf8'), /hasMembership\(\)/, file);
+  }
+});
+
+test('saved itineraries are free: no membership check on read or write', async () => {
+  for (const name of ['getItineraries', 'addItinerary', 'updateItinerary']) {
+    assert.doesNotMatch(fnSource(name), /hasMembership/, name);
+  }
+  for (const page of ['itineraries.html', 'itinerarycompare.html']) {
+    assert.doesNotMatch(fs.readFileSync(require.resolve('../' + page), 'utf8'), /renderMembershipGate/, page);
   }
 });

@@ -1380,8 +1380,10 @@ async function deleteTrip(id) {
   return { error: error?.message };
 }
 
+// Saved itineraries are free (planning on public chart data, like the
+// calendar itself), so they skip the membership check.
 async function getItineraries() {
-  if (!configured || !currentSession || !(await hasMembership())) return [];
+  if (!configured || !currentSession) return [];
   const { data, error } = await supabase
     .from("itineraries")
     .select("*")
@@ -1398,7 +1400,6 @@ async function getItineraries() {
 // checkIn, checkOut }], user_id filled in here, same reasoning as addTrip().
 async function addItinerary(itinerary) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const table = supabase.from("itineraries");
   const row = { ...itinerary, user_id: currentSession.user.id };
   // The calendar keeps one random ID across retries of a new/copy save.
@@ -1411,7 +1412,6 @@ async function addItinerary(itinerary) {
 
 async function updateItinerary(id, itinerary) {
   if (!configured || !currentSession) return { error: "Not signed in" };
-  if (!(await hasMembership())) return { error: MEMBERSHIP_REQUIRED_ERROR };
   const { name, year, segments, booking_contract_id } = itinerary;
   const { data, error } = await supabase.from("itineraries")
     .update({ name, year, segments, booking_contract_id })

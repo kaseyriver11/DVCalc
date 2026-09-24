@@ -1496,13 +1496,6 @@ function wireCardEvents() {
 }
 
 async function renderSignedIn() {
-  if (!(await window.DVCAuth.hasMembership())) {
-    window.DVCAuth.renderMembershipGate(pageContent, {
-      title: "Save and revisit your planned stays",
-      body: "Save stays from the calendar, reload them later, and see which contract's points they'll use.",
-    });
-    return;
-  }
   itineraries = await window.DVCAuth.getItineraries();
 
   if (itineraries.length === 0) {

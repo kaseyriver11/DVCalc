@@ -64,7 +64,8 @@ besides the owner.
   eligibility + points-remaining warnings (a feature-level gate inside the
   otherwise-free calendar page, not a page-level gate)
 - Suggest a Stay's "resorts I can book" personalized scope
-- Trip logging, saved itineraries, itinerary comparison
+- Trip logging (saved itineraries and itinerary comparison moved to free
+  2026-09-24: they plan on public chart data, like the calendar)
 - Trophy Case / badges, including the House Money payback badge
 
 Pitch: *"The planning tools are free forever. Pay to connect your own

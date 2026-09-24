@@ -468,6 +468,7 @@ const selectedIds = [null, null, null];
 // ---- Contract-aware state (Home Priority / Availability Risk / Point
 // Feasibility rows) -- populated in renderSignedIn() alongside itineraries.
 let activeContracts = [];
+let isMember = true;
 let contractYearPoints = [];
 let resortAccess = { homeResortIds: new Set(), sevenMoResortIds: new Set() };
 
@@ -987,7 +988,9 @@ function buildCompareTableHTML(selected) {
 
   const noContractsNote = hasContracts
     ? ""
-    : `<div class="empty-note">Home Resort Priority and Point Feasibility need at least one active contract -- <a href="account.html">add one</a> to see them here.</div>`;
+    : isMember
+      ? `<div class="empty-note">Home Resort Priority and Point Feasibility need at least one active contract -- <a href="account.html">add one</a> to see them here.</div>`
+      : `<div class="empty-note">Home Resort Priority and Point Feasibility use your contracts, which are part of Active Member -- <a href="account.html">see My Contracts</a>.</div>`;
 
   // Stays ONE table at every width -- see the compact mobile ruleset in
   // <style> (table-layout:fixed + word-wrap, no horizontal scroll) for how
@@ -1067,13 +1070,9 @@ function renderComparison() {
 }
 
 async function renderSignedIn() {
-  if (!(await window.DVCAuth.hasMembership())) {
-    window.DVCAuth.renderMembershipGate(pageContent, {
-      title: "Compare your saved itineraries",
-      body: "Put up to three saved itineraries side by side, including booking windows and whether your points cover them.",
-    });
-    return;
-  }
+  // Free page: only the contract rows need Active Member (getContracts()
+  // returns [] for non-members), so the note below says why they're missing.
+  isMember = await window.DVCAuth.hasMembership();
   const [itins, contracts, cyp] = await Promise.all([
     window.DVCAuth.getItineraries(),
     window.DVCAuth.getContracts(),
