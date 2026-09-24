@@ -808,6 +808,12 @@ body {
    -- flex items have the same "content forces a wider box than intended"
    failure mode a number input or the custom-select's min-width can trigger. */
 .form-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+/* "Estimate from my loan" under the financing-interest field (dvc-financing.js). */
+.loan-estimate { margin-top: 6px; }
+.loan-estimate > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--color-primary); }
+.loan-estimate-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.loan-estimate-btn { margin-top: 10px; min-height: 44px; padding: 0 14px; border: 1px solid var(--color-primary); border-radius: 10px; background: #fff; color: var(--color-primary); font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+@media (max-width: 700px) { .loan-estimate-grid { grid-template-columns: 1fr; } }
 
 /* Field labels are sentence case; uppercase is reserved for section headings. */
 .form-field label {
@@ -1372,6 +1378,7 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
+        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -1402,6 +1409,7 @@ body {
   <script src="data/resort_images.js"></script>
   <script src="data/resort_shorthand.js"></script>
   <script src="dvc-dates.js"></script>
+  <script src="dvc-financing.js"></script>
   <script src="dvc-point-attention.js"></script>
   <script src="dvc-ledger.js"></script>
   <script src="dvc-compare-handoff.js"></script>
@@ -2240,6 +2248,17 @@ async function renderSignedIn() {
                     <label for="f-interest">Financing interest paid to date (optional)</label>
                     <input type="number" id="f-interest" min="0" step="1" inputmode="numeric" placeholder="Rough total is fine">
                     <div class="field-hint">Only if you financed. Interest only: the purchase price already covers the loan amount.</div>
+                    <details class="loan-estimate" id="loan-estimate">
+                      <summary>Estimate from my loan</summary>
+                      <div class="loan-estimate-grid">
+                        <div class="form-field"><label for="loan-amount">Amount borrowed ($)</label><input type="number" id="loan-amount" min="0" step="1" inputmode="numeric"></div>
+                        <div class="form-field"><label for="loan-apr">Interest rate (%)</label><input type="number" id="loan-apr" min="0" max="30" step="0.01" inputmode="decimal" placeholder="e.g. 12"></div>
+                        <div class="form-field"><label for="loan-term">Term (years)</label><input type="number" id="loan-term" min="1" max="30" step="1" inputmode="numeric" value="10"></div>
+                        <div class="form-field"><label class="dvc-field-label" for="loan-start">Loan start date</label><input type="date" class="dvc-date" id="loan-start"></div>
+                      </div>
+                      <button type="button" class="loan-estimate-btn" id="loan-estimate-fill">Fill in interest paid so far</button>
+                      <div class="field-hint" id="loan-estimate-result" role="status"></div>
+                    </details>
                   </div>
                   <div class="form-field">
                     <label for="f-acquisition-year">Acquisition year (optional)</label>
@@ -2355,6 +2374,7 @@ async function renderSignedIn() {
   // acquisition year -- refresh the live preview as soon as it's picked,
   // same as every other Step 3 field that feeds the card face.
   document.getElementById("f-acquisition-year").addEventListener("input", updateModalCardPreview);
+  attachLoanEstimateListeners();
   document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
   document.getElementById("download-data").addEventListener("click", handleDownloadData);
 
@@ -2985,6 +3005,7 @@ function openForm(contract) {
   document.querySelectorAll(".points-preset-chip").forEach(chip => chip.classList.toggle("selected", chip.dataset.points == contract?.points_per_year));
   document.getElementById("f-price").value = contract?.purchase_price || "";
   document.getElementById("f-interest").value = contract?.financing_interest_paid ?? "";
+  resetLoanEstimate();
   // Only an existing contract can have been sold.
   document.getElementById("f-sale-fields").hidden = !contract;
   document.getElementById("f-ended-on").value = contract?.ended_on || "";
@@ -3180,6 +3201,42 @@ document.addEventListener('keydown', e => {
     else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0].focus();}
   }
 });
+
+// "Estimate from my loan": fills the financing-interest field from the
+// loan's terms (dvc-financing.js). Only f-interest is saved; the loan
+// fields are a calculator and start blank each time the form opens.
+function resetLoanEstimate() {
+  document.getElementById("loan-estimate").open = false;
+  ["loan-amount", "loan-apr", "loan-start"].forEach(id => { document.getElementById(id).value = ""; });
+  document.getElementById("loan-term").value = 10;
+  document.getElementById("loan-estimate-result").textContent = "";
+}
+// Wired each time the contract form renders (renderSignedIn()).
+function attachLoanEstimateListeners() {
+  document.getElementById("loan-estimate").addEventListener("toggle", e => {
+    const amount = document.getElementById("loan-amount");
+    const price = parseFloat(document.getElementById("f-price").value);
+    // A 10% down payment is Disney's and most lenders' minimum.
+    if (e.target.open && !amount.value && price > 0) amount.value = Math.round(price * 0.9);
+  });
+  document.getElementById("loan-estimate-fill").addEventListener("click", () => {
+    const principal = parseFloat(document.getElementById("loan-amount").value);
+    const apr = parseFloat(document.getElementById("loan-apr").value);
+    const years = parseInt(document.getElementById("loan-term").value, 10);
+    const startDate = document.getElementById("loan-start").value;
+    const out = document.getElementById("loan-estimate-result");
+    if (!(principal > 0) || !(apr >= 0) || !(years > 0) || !startDate) {
+      out.textContent = "Enter the amount, rate, term and start date.";
+      return;
+    }
+    const F = window.DVCFinancing;
+    const months = years * 12;
+    const paid = F.interestPaidThrough({ principal, apr: apr / 100, months, startDate });
+    const made = Math.min(months, F.paymentsMadeBy(startDate, new Date()));
+    document.getElementById("f-interest").value = Math.round(paid);
+    out.textContent = `$${Math.round(paid).toLocaleString()} over ${made} of ${months} payments ($${Math.round(F.monthlyPayment(principal, apr / 100, months)).toLocaleString()}/mo). The loan's full interest is $${Math.round(F.totalInterest(principal, apr / 100, months)).toLocaleString()}.`;
+  });
+}
 
 function validateContractStep(step) {
   let message = '', field = null;

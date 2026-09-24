@@ -573,6 +573,8 @@ body {
 .exit-equity-tile-value { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); }
 .exit-equity-tile-label { font-size: 0.72rem; color: #888; margin-top: 4px; line-height: 1.35; }
 .exit-equity-tile-note { display: block; color: #aaa; }
+.keep-sell-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin: 10px 0 14px; }
+.keep-sell-note { font-size: 0.72rem; color: #888; margin-top: 8px; line-height: 1.4; }
 
 .exit-equity-status {
   margin-top: 14px;
@@ -986,6 +988,7 @@ a.add-btn { display: inline-flex; align-items: center; }
   .dopamine-tile-label { font-size: 0.62rem; }
 
   .exit-equity-tiles { grid-template-columns: 1fr; }
+  .keep-sell-controls { grid-template-columns: 1fr; }
 
   /* Extra margin on top of the "Alt. Fund" shortened label (above) --
      real-world testing at ~386px still wrapped the 3rd legend item even
@@ -1048,6 +1051,7 @@ a.add-btn { display: inline-flex; align-items: center; }
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
+        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -1081,6 +1085,7 @@ a.add-btn { display: inline-flex; align-items: center; }
   <script src="dvc-stay-value.js"></script>
   <script src="dvc-stay-groups.js"></script>
   <script src="dvc-owner-value.js"></script>
+  <script src="dvc-resale.js"></script>
   <script src="dvc-badges.js"></script>
   <script src="dvc-track.js"></script>
   <script>
@@ -1622,7 +1627,7 @@ function buildGaugeHTML(stats) {
                 : `${fmt(stats.remaining)} remaining to reach House Money`)}
         ${breakdownTrigger}
         ${showBreakdown ? buildPaybackBreakdownHTML(stats, dateLabel) : ""}
-        <p class="chart-horizon-note">${fmt(stats.lifetimeValue)} logged stay value from owned-contract points. The projection uses $${stats.settings.point_value_baseline}/point, ${(stats.settings.value_growth_rate * 100).toFixed(1)}% value growth and ${(stats.settings.dues_growth_rate * 100).toFixed(1)}% dues growth. Missing purchase details use estimates.</p>
+        <p class="chart-horizon-note">${fmt(stats.lifetimeValue)} logged stay value from owned-contract points. The projection values your points at $${stats.settings.point_value_baseline}/pt, ${(stats.settings.value_growth_rate * 100).toFixed(1)}% value growth and ${(stats.settings.dues_growth_rate * 100).toFixed(1)}% dues growth. Missing purchase details use estimates.</p>
       </div>
     </div>
   `;
@@ -1668,7 +1673,7 @@ function computeExitEquity(contracts, stats) {
   const currentAssetValueNet = activeContracts.reduce((sum, c) => {
     const rate = RESORT_INVESTMENT_DATA[c.home_resort_id]?.resalePricePerPoint || FALLBACK_PRICE_PER_POINT;
     return sum + c.points_per_year * rate;
-  }, 0) * 0.90; // net of a typical ~10% resale broker commission
+  }, 0) * (1 - window.DVCResale.BROKER_FEE); // net of the resale broker commission
   const netVacationOutlay = stats.totalOutlay - currentAssetValueNet;
   const achieved = stats.lifetimeValue >= netVacationOutlay;
   const remaining = Math.max(0, netVacationOutlay - stats.lifetimeValue);
@@ -1702,6 +1707,87 @@ function buildExitEquityHTML(equity) {
         : `<div class="exit-equity-status">${fmt(equity.remaining)} in vacation value remaining until Exit House Money</div>`}
     </div>
   `;
+}
+
+// ---- Keep or Sell ----
+// Exit Equity answers "what if I sold today"; this answers the question
+// owners actually ask: is keeping the contracts a few more years (then
+// selling) worth more than selling now? Math in dvc-resale.js
+// (tests/resale.test.js), in today's dollars, priced at the page's own
+// value per point, dues/hotel inflation and -- when it's on -- opportunity
+// cost as the discount rate. Years and usage are page-only (not saved).
+let keepSellYears = 10;
+let keepSellUsage = 1;
+const KEEP_SELL_FORMATTERS = {
+  keep_years: v => v + (v === 1 ? " year" : " years"),
+  keep_usage: v => Math.round(v * 100) + "% of points",
+};
+
+function computeKeepOrSell(contracts, settings) {
+  const year = new Date().getFullYear();
+  const active = contracts.filter(c => c.is_active);
+  return window.DVCResale.keepOrSell({
+    contracts: active.map(c => {
+      const inv = RESORT_INVESTMENT_DATA[c.home_resort_id] || {};
+      return {
+        points: c.points_per_year,
+        pricePerPoint: inv.resalePricePerPoint || FALLBACK_PRICE_PER_POINT,
+        yearsLeft: (inv.contractExpirationYear || year + 30) - year,
+        duesPerPoint: DUES_PER_POINT[c.home_resort_id] || 0,
+      };
+    }),
+    years: keepSellYears,
+    usage: keepSellUsage,
+    pointValue: settings.point_value_baseline,
+    duesGrowth: settings.dues_growth_rate,
+    valueGrowth: settings.value_growth_rate,
+    discountRate: settings.opportunity_cost_rate || 0,
+  });
+}
+
+function keepSellSummaryText(r) {
+  return r.verdict === "keep"
+    ? `Keeping is worth about ${fmt(r.advantage)} more than selling today`
+    : `Selling today comes out about ${fmt(-r.advantage)} ahead`;
+}
+
+function keepSellSliderRow(field, label, value, min, max, step) {
+  return `
+    <div class="assumption-row">
+      <div class="assumption-label-row">
+        <span class="assumption-label-text"><label for="ks-${field}">${label}</label></span>
+        <span class="assumption-value" id="ks-${field}-out">${KEEP_SELL_FORMATTERS[field](value)}</span>
+      </div>
+      <input type="range" id="ks-${field}" class="assumption-slider keep-sell-slider" data-field="${field}" min="${min}" max="${max}" step="${step}" value="${value}">
+    </div>`;
+}
+
+function buildKeepSellBodyHTML(r, settings) {
+  const years = r.heldYears;
+  const threshold = r.breakEvenUsage != null
+    ? ` Keeping wins as long as you use at least ${Math.ceil(r.breakEvenUsage * 100)}% of your points.`
+    : "";
+  return `
+    <div class="exit-equity-tiles">
+      <div class="exit-equity-tile">
+        <div class="exit-equity-tile-value">${fmt(r.sellNow)}</div>
+        <div class="exit-equity-tile-label">Sell today <span class="exit-equity-tile-note">(after broker and Disney fees)</span></div>
+      </div>
+      <div class="exit-equity-tile">
+        <div class="exit-equity-tile-value">${fmt(r.keep)}</div>
+        <div class="exit-equity-tile-label">Keep ${years} year${years === 1 ? "" : "s"}, then sell <span class="exit-equity-tile-note">(stays ${fmt(r.stayValue)} − dues ${fmt(r.dues)} + sale ${fmt(r.saleLater)})</span></div>
+      </div>
+    </div>
+    <div class="exit-equity-status${r.verdict === "keep" ? " achieved" : ""}">${keepSellSummaryText(r)}.${threshold}</div>
+    <p class="keep-sell-note">Points you use are valued at $${settings.point_value_baseline}/pt, what you value your points at; unused points count as nothing. In today's dollars${settings.opportunity_cost_rate > 0 ? `, discounted at ${(settings.opportunity_cost_rate * 100).toFixed(1)}%/yr` : ""}.</p>`;
+}
+
+function refreshKeepSell() {
+  const body = document.getElementById("keep-sell-body");
+  if (!body || !contracts.some(c => c.is_active)) return;
+  const r = computeKeepOrSell(contracts, userSettings);
+  body.innerHTML = buildKeepSellBodyHTML(r, userSettings);
+  document.getElementById("keep-sell-summary").textContent = keepSellSummaryText(r);
 }
 
 // ---- Model Assumptions & Sensitivity ----
@@ -1775,7 +1861,7 @@ function buildAssumptionsPanelHTML(settings, stats) {
       </button>
       <div class="assumptions-panel${assumptionsOpen ? " open" : ""}" id="assumptions-panel">
         <div class="assumptions-result" id="assumptions-result" aria-live="polite">${assumptionsResultHTML(stats)}</div>
-        <div class="assumption-row">${window.DVCPointValue.html({ id: "a-point_value_baseline", value: settings.point_value_baseline, hint: "Prices your future points in the projection." })}</div>
+        <div class="assumption-row">${window.DVCPointValue.html({ id: "a-point_value_baseline", value: settings.point_value_baseline, hint: "Prices your future points in the projection and Keep or Sell." })}</div>
         ${assumptionSliderRow("dues_growth_rate", "Annual Dues Inflation", settings.dues_growth_rate, 0.02, 0.08, 0.001)}
         ${assumptionSliderRow("value_growth_rate", "Deluxe Hotel Inflation", settings.value_growth_rate, 0.02, 0.08, 0.001)}
         <div class="assumptions-save-status" id="assumptions-save-status" role="status">${settingsSaveNote}</div>
@@ -1835,6 +1921,7 @@ function refreshHouseMoneyOutputs() {
     exitBody.innerHTML = buildExitEquityHTML(equity);
     document.getElementById("exit-equity-summary").textContent = exitEquitySummaryText(equity);
   }
+  refreshKeepSell();
 }
 
 // 500ms debounce, per the spec -- update the in-memory model and
@@ -1955,6 +2042,7 @@ async function renderSignedIn() {
   // dopamine stat tiles below use it directly.
   const stats = computeHouseMoneyStats(contracts, trips, userSettings);
   const exitEquity = computeExitEquity(contracts, stats);
+  const keepSell = computeKeepOrSell(contracts, userSettings);
   // ---- Cost of ownership: one card per active contract, from the same model ----
   const contractCostCards = stats.perContract.filter(b => b.contract.is_active).map(contractCostCardHTML).join("");
 
@@ -1992,6 +2080,20 @@ async function renderSignedIn() {
     </div>
 
     <div class="section">
+      <h2>Keep or Sell</h2>
+      ${activeContracts.length === 0 ? `<div class="empty-note">No active contracts yet -- <a href="account.html">add one</a>.</div>` : `
+      <details class="disclosure" id="keep-sell-disclosure">
+        <summary><span id="keep-sell-summary">${keepSellSummaryText(keepSell)}</span></summary>
+        <div class="section-sub">Keeping your contracts a few more years and then selling, compared with selling today</div>
+        <div class="keep-sell-controls">
+          ${keepSellSliderRow("keep_years", "Years you'd keep them", keepSellYears, 1, 30, 1)}
+          ${keepSellSliderRow("keep_usage", "Points you'll use each year", keepSellUsage, 0, 1, 0.05)}
+        </div>
+        <div id="keep-sell-body">${buildKeepSellBodyHTML(keepSell, userSettings)}</div>
+      </details>`}
+    </div>
+
+    <div class="section">
       <h2>Cost of Ownership</h2>
       ${activeContracts.length === 0 ? `<div class="empty-note">No active contracts yet -- <a href="account.html">add one</a>.</div>` : `
       <details class="disclosure">
@@ -2004,6 +2106,13 @@ async function renderSignedIn() {
 
   renderHouseMoneyChart(stats);
   attachAssumptionsListeners();
+  // Page-only sliders: readout and results update in place while dragging.
+  document.querySelectorAll(".keep-sell-slider").forEach(input => input.addEventListener("input", () => {
+    const value = parseFloat(input.value);
+    if (input.dataset.field === "keep_years") keepSellYears = value; else keepSellUsage = value;
+    document.getElementById(`ks-${input.dataset.field}-out`).textContent = KEEP_SELL_FORMATTERS[input.dataset.field](value);
+    refreshKeepSell();
+  }));
 }
 
 // The projection chart sits behind a closed disclosure so the payback

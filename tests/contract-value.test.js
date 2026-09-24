@@ -27,14 +27,16 @@ function extractConst(name) {
 function setup(wizard) {
   const context = vm.createContext({ window: {}, console, Math, Number, Object, Set });
   context.window = context;
+  context.DVCResale = require('../dvc-resale.js');
+  context.DVCFinancing = require('../dvc-financing.js');
   for (const f of ['data/data.js', 'data/data_historical.js', 'data/dues_historical.js', 'data/resort_investment.js']) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/^(const|let) /gm, 'var '), context);
   }
   const src = [
     extractConst('RESALE_BROKER_FEE'),
-    extractConst('RESALE_DECAY_YEARS'), extractConst('SPECIALTY_ROOM_PATTERN'),
+    extractConst('resaleValueFraction'), extractConst('SPECIALTY_ROOM_PATTERN'),
     'const CATEGORY_KEYWORDS = { studio: "studio", one: "one-bedroom", two: "two-bedroom", three: "three-bedroom" };',
-    extractFunction('resaleValueFraction'), extractFunction('getRoomTypesForCategory'),
+    extractFunction('getRoomTypesForCategory'),
     extractFunction('medianRoomPoints'), extractFunction('computeRow'),
     'var priceOverrides = {}; var currentRealYear = 2026;',
     'function isHomeOnlyResale() { return false; } function resortDisplayName(id) { return id; }',
@@ -44,7 +46,7 @@ function setup(wizard) {
   return context;
 }
 
-const INPUTS = { points: 150, closingCost: 1500, duesGrowth: 0.04, pointValue: 30, valueGrowth: 0.05, category: 'studio' };
+const INPUTS = { points: 150, closingCost: 1500, duesGrowth: 0.04, pointValue: 30, rentalRate: 20, valueGrowth: 0.05, category: 'studio' };
 function rows(ctx, desiredVacationYears) {
   return Object.keys(ctx.RESORT_INVESTMENT_DATA)
     .map(id => ctx.computeRow(id, { ...INPUTS, desiredVacationYears }))
@@ -97,4 +99,15 @@ test('Est. Nightly Cost uses standard rooms, not the first one listed', () => {
   assert.match(firstListed.name, /Bungalow/);
   const bungalowNight = poly.travelPeriods[0].rates.sunThu[firstListed.id];
   assert.ok(ctx.medianRoomPoints(poly, 'two') < bungalowNight);
+});
+
+test('financing adds the loan interest to the buy-in and raises Cost/Pt/Year', () => {
+  const ctx = setup({});
+  const cash = ctx.computeRow('saratogaSprings', { ...INPUTS, desiredVacationYears: 20 });
+  const loan = ctx.computeRow('saratogaSprings', { ...INPUTS, desiredVacationYears: 20, financed: true, downPct: 0.1, apr: 0.12, termYears: 10 });
+  assert.equal(cash.financingInterest, 0);
+  const borrowed = cash.pricePerPoint * INPUTS.points * 0.9;
+  assert.ok(Math.abs(loan.financingInterest - ctx.DVCFinancing.totalInterest(borrowed, 0.12, 120)) < 0.01);
+  assert.ok(loan.costPerPointYear > cash.costPerPointYear);
+  assert.ok(loan.lifetimeOutlay - cash.lifetimeOutlay > loan.financingInterest - 1);
 });

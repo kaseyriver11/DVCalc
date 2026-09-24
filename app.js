@@ -29,7 +29,7 @@ const state = {
   month: new Date().getMonth(), // 0-indexed, defaults to current month
   checkIn: null,  // "YYYY-MM-DD" or null
   checkOut: null,  // "YYYY-MM-DD" or null
-  rentalRate: window.DVCPointValue.DEFAULT,
+  rentalRate: window.DVCPointValue.RENTAL_DEFAULT,
   rentalEnabled: true, // always on — both cost-comparison tiles are always shown
   ownerEnabled: true,
   ownerResortId: "saratogaSprings",
@@ -3458,6 +3458,21 @@ function closeItineraryLoadSheet() {
   document.getElementById("itinerary-load-sheet").classList.remove("open");
 }
 
+// "Use or rent?": when a stay is worth less per point in cash than those
+// points would rent for, renting them out and paying cash comes out ahead.
+// Rules in dvc-rental.js; priced at the same rental slider as the tile.
+function buildUseOrRentHTML(cashValue, points) {
+  const r = window.DVCRental && window.DVCRental.useOrRent({ cashValue, points, rentalRate: state.rentalRate });
+  if (!r) return "";
+  const per = v => `$${v.toFixed(2)}/pt`;
+  const text = r.verdict === "use"
+    ? `<strong>Use your points.</strong> This stay is worth ${per(r.stayPerPoint)} in cash, more than the ${per(r.rentalRate)} renting them out would bring.`
+    : r.verdict === "rent"
+      ? `<strong>Consider renting these points out.</strong> This stay is worth ${per(r.stayPerPoint)} in cash; renting them at ${per(r.rentalRate)} and paying cash would leave you about $${Math.round(r.rentAdvantage).toLocaleString()} ahead.`
+      : `<strong>About even.</strong> This stay is worth ${per(r.stayPerPoint)} in cash, close to the ${per(r.rentalRate)} renting them out would bring.`;
+  return `<div class="use-or-rent ${r.verdict}"><p>${text}</p><a href="pointsorcash.html?points=${points}&cash=${Math.round(cashValue)}">Points or cash?</a></div>`;
+}
+
 function renderSummary() {
   const resort = getResort();
   const stayDates = getStayDates();
@@ -3636,6 +3651,8 @@ function renderSummary() {
   const showCustomRateInput = !inSplitMode && !resortHasCashData && !hasFallbackCash;
   const showDisneyTile = hasCashData || showCustomRateInput;
 
+  const useOrRentHTML = buildUseOrRentHTML(totalDisneyCash, totalPoints);
+
   const costComparisonHTML = `
     <div class="summary-card wide">
       <h3>Cost Comparison</h3>
@@ -3680,7 +3697,8 @@ function renderSummary() {
         </div>
         ` : ""}
       </div>
-      ${state.rentalEnabled ? `<div class="cost-point-value">${window.DVCPointValue.html({ id: "rental-rate", value: state.rentalRate, hint: "Prices the renting-points estimate." })}</div>` : ""}
+      ${useOrRentHTML}
+      ${state.rentalEnabled ? `<div class="cost-point-value">${window.DVCPointValue.html({ id: "rental-rate", kind: "rental", value: state.rentalRate, hint: "What renting these points from an owner would cost." })}</div>` : ""}
     </div>
   `;
 

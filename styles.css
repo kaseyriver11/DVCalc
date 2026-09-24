@@ -1858,6 +1858,26 @@ select, input, textarea, button {
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
+/* "Use or rent?" line under the Cost Comparison tiles (dvc-rental.js). */
+.use-or-rent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  background: var(--color-good-bg);
+  color: #2e4d32;
+}
+.use-or-rent p { margin: 0; flex: 1 1 240px; }
+.use-or-rent.rent { background: #fff6e0; color: #6b4a00; }
+.use-or-rent.close { background: #f4f1f8; color: #444; }
+.use-or-rent a { font-weight: 600; color: var(--color-primary); white-space: nowrap; }
+
 /* The shared $/pt editor (dvc-point-value.js) under the tiles. */
 .cost-point-value {
   margin-top: 14px;

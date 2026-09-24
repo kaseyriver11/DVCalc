@@ -259,6 +259,7 @@ function renderActions(member) {
 const ADD_CONTRACT_HREF = "account.html?start=add-contract";
 function dashboardSignInHTML() {
   return `
+  <div class="home-signed-out">
   <section class="home-intro" aria-labelledby="home-intro-title">
     <h1 class="home-intro-title" id="home-intro-title">Keep your DVC contracts, points and deadlines in one place</h1>
     <p class="home-intro-body">Record your contracts and balances, see your upcoming banking and expiration dates, and plan stays with your own contract details.</p>
@@ -270,6 +271,7 @@ function dashboardSignInHTML() {
     <p class="home-intro-returning">Already added your contracts? <a href="account.html">Sign in</a></p>
   </section>
   ${window.DVCOwnerPreview.render({ caption: false })}
+  </div>
 `;
 }
 document.addEventListener("click", (e) => {

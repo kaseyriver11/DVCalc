@@ -1230,6 +1230,7 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html" class="active">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
+        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -1404,7 +1405,7 @@ const state = {
   checkOut: null,
   category: "studio",
   wdwOnly: false,
-  rentalRate: window.DVCPointValue.DEFAULT,
+  rentalRate: window.DVCPointValue.RENTAL_DEFAULT,
   // Fallback hypothetical resort -- only used to compute Owner Cost when
   // the signed-in user has no active contracts (or isn't signed in) and
   // there's nothing real to draw dues from yet. See populateOwnerSelector().
@@ -2705,7 +2706,7 @@ document.getElementById("vibe-filter-row").addEventListener("click", (e) => {
 });
 
 // The editor sits outside the results, so the table can follow the drag.
-document.getElementById("rental-settings").innerHTML = window.DVCPointValue.html({ id: "rental-rate", value: state.rentalRate, hint: "Prices the Rental Cost column." });
+document.getElementById("rental-settings").innerHTML = window.DVCPointValue.html({ id: "rental-rate", kind: "rental", value: state.rentalRate, hint: "Prices the Rental Cost column." });
 window.DVCPointValue.attach("rental-rate", (value) => {
   state.rentalRate = value;
   render();

@@ -1460,7 +1460,21 @@ function renderAccountControl(session) {
     el.innerHTML = `<button type="button" class="account-btn" id="account-signout">${email} &middot; Sign out</button>`;
     document.getElementById("account-signout").addEventListener("click", signOut);
   } else {
-    renderSignInButton(el, "account-btn", "medium");
+    // One compact "Sign in" button; its panel holds the Google and email
+    // options. Both stacked in the bar made it three rows tall. The panel
+    // renders on first open, since Google's button measures itself and
+    // can't size inside a hidden element. Styles live in nav.js.
+    el.innerHTML = `<button type="button" class="account-btn" id="account-signin-toggle" aria-expanded="false" aria-controls="account-signin-panel">Sign in</button><div class="account-signin-panel" id="account-signin-panel" hidden></div>`;
+    const toggle = document.getElementById("account-signin-toggle");
+    const panel = document.getElementById("account-signin-panel");
+    const setOpen = open => {
+      panel.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      if (open && !panel.childElementCount) renderSignInButton(panel, "account-btn", "medium");
+    };
+    toggle.addEventListener("click", () => setOpen(panel.hidden));
+    document.addEventListener("click", e => { if (!panel.hidden && !el.contains(e.target) && !e.target.closest(".dvc-emailcode-overlay")) setOpen(false); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !panel.hidden) { setOpen(false); toggle.focus(); } });
   }
 }
 

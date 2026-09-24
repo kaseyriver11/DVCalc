@@ -1,32 +1,51 @@
-// The one $/point value editor. Every page that turns points into a dollar
-// estimate -- Calendar, Resort Comparison, Contract Value, Membership
-// Value -- renders this same control with the same default, range and
-// presets, so a point is worth the same thing everywhere unless the owner
-// changes it. Plain <script>, exposes window.DVCPointValue; its CSS injects
-// itself (dvcpv- classes) since two of those pages don't load tokens.css.
+// The $/point editors. Two different numbers, never mixed up:
+//   value  ($30) -- what the owner values their points at: roughly what a
+//                   point saves against Disney's cash price for a room. Prices owned points and stays
+//                   (Contract Value's Cash Ratio, Membership Value).
+//   rental ($20) -- what a point rents for between owners. Prices "rent
+//                   points instead" (the calendar's rental tile, Resort
+//                   Comparison's Rental Cost, Contract Value's breakeven
+//                   vs renting, and what an owner gets renting points out).
+// Every page renders the same control per kind with the same default,
+// range and presets. Plain <script>, exposes window.DVCPointValue; its CSS
+// injects itself (dvcpv- classes) since two of those pages don't load
+// tokens.css.
 //
 // Markup only: each page keeps its own state and decides what an edit
 // changes. attach() reports input while dragging (final = false) and on
 // release or a preset tap (final = true), so a page that re-renders the
 // editor itself can wait for final and not break the drag.
 (function () {
-  const DEFAULT = 30;
-  const MIN = 15;
-  const MAX = 50;
-  const STEP = 1;
-  const PRESETS = [
-    { value: 21, sub: "Point rental" },
-    { value: 30, sub: "Typical" },
-    { value: 35, sub: "Deluxe rack" },
-  ];
+  const KINDS = {
+    value: {
+      DEFAULT: 30, MIN: 15, MAX: 50, STEP: 1, label: "What you value your points at",
+      PRESETS: [
+        { value: 26, sub: "AP / promo" },
+        { value: 30, sub: "Typical" },
+        { value: 35, sub: "Deluxe rack" },
+      ],
+    },
+    rental: {
+      DEFAULT: 20, MIN: 15, MAX: 25, STEP: 1, label: "Rental price per point",
+      PRESETS: [
+        { value: 17, sub: "Low" },
+        { value: 20, sub: "Typical" },
+        { value: 23, sub: "High" },
+      ],
+    },
+  };
+  const kindOf = kind => KINDS[kind] || KINDS.value;
+  const { DEFAULT, MIN, MAX, STEP, PRESETS } = KINDS.value;
+  const RENTAL_DEFAULT = KINDS.rental.DEFAULT;
 
-  function clamp(v) {
+  function clamp(v, kind) {
+    const k = kindOf(kind);
     const n = Number(v);
-    if (!Number.isFinite(n)) return DEFAULT;
-    return Math.min(MAX, Math.max(MIN, Math.round(n / STEP) * STEP));
+    if (!Number.isFinite(n)) return k.DEFAULT;
+    return Math.min(k.MAX, Math.max(k.MIN, Math.round(n / k.STEP) * k.STEP));
   }
 
-  const format = v => `$${clamp(v)}/pt`;
+  const format = (v, kind) => `$${clamp(v, kind)}/pt`;
 
   const CSS = `
 .dvcpv { display: flex; flex-direction: column; gap: 6px; text-align: left; }
@@ -52,23 +71,24 @@
     document.head.appendChild(style);
   }
 
-  // id: unique per page (the slider's element id). hint: one short line on
-  // what this page uses the value for.
-  function html({ id, value, label = "Value per point", hint = "" }) {
+  // id: unique per page (the slider's element id). kind: "value" (default)
+  // or "rental". hint: one short line on what this page uses the value for.
+  function html({ id, value, kind = "value", label, hint = "" }) {
     injectCSS();
-    const v = clamp(value);
+    const k = kindOf(kind);
+    const v = clamp(value, kind);
     return `
-      <div class="dvcpv" data-dvcpv="${id}">
+      <div class="dvcpv" data-dvcpv="${id}" data-dvcpv-kind="${kind}">
         <div class="dvcpv-head">
-          <label class="dvcpv-label" for="${id}">${label}</label>
-          <span class="dvcpv-out" data-dvcpv-out>${format(v)}</span>
+          <label class="dvcpv-label" for="${id}">${label || k.label}</label>
+          <span class="dvcpv-out" data-dvcpv-out>${format(v, kind)}</span>
         </div>
         ${hint ? `<p class="dvcpv-hint">${hint}</p>` : ""}
         <div class="dvcpv-chips">
-          ${PRESETS.map(p => `<button type="button" class="dvcpv-chip${p.value === v ? " active" : ""}" data-dvcpv-value="${p.value}"><span class="dvcpv-chip-main">$${p.value}</span><span class="dvcpv-chip-sub">${p.sub}</span></button>`).join("")}
+          ${k.PRESETS.map(p => `<button type="button" class="dvcpv-chip${p.value === v ? " active" : ""}" data-dvcpv-value="${p.value}"><span class="dvcpv-chip-main">$${p.value}</span><span class="dvcpv-chip-sub">${p.sub}</span></button>`).join("")}
         </div>
-        <input type="range" class="dvcpv-slider" id="${id}" min="${MIN}" max="${MAX}" step="${STEP}" value="${v}">
-        <div class="dvcpv-range" aria-hidden="true"><span>$${MIN}</span><span>$${MAX}</span></div>
+        <input type="range" class="dvcpv-slider" id="${id}" min="${k.MIN}" max="${k.MAX}" step="${k.STEP}" value="${v}">
+        <div class="dvcpv-range" aria-hidden="true"><span>$${k.MIN}</span><span>$${k.MAX}</span></div>
       </div>`;
   }
 
@@ -78,21 +98,22 @@
     const root = (scope || document).querySelector(`[data-dvcpv="${id}"]`);
     if (!root || root.dataset.dvcpvWired) return;
     root.dataset.dvcpvWired = "1";
+    const kind = root.dataset.dvcpvKind;
     const slider = root.querySelector(".dvcpv-slider");
     const out = root.querySelector("[data-dvcpv-out]");
     const show = v => {
-      out.textContent = format(v);
+      out.textContent = format(v, kind);
       root.querySelectorAll(".dvcpv-chip").forEach(c => c.classList.toggle("active", Number(c.dataset.dvcpvValue) === v));
     };
-    slider.addEventListener("input", () => { const v = clamp(slider.value); show(v); onChange(v, false); });
-    slider.addEventListener("change", () => { const v = clamp(slider.value); show(v); onChange(v, true); });
+    slider.addEventListener("input", () => { const v = clamp(slider.value, kind); show(v); onChange(v, false); });
+    slider.addEventListener("change", () => { const v = clamp(slider.value, kind); show(v); onChange(v, true); });
     root.querySelectorAll(".dvcpv-chip").forEach(chip => chip.addEventListener("click", () => {
-      const v = clamp(chip.dataset.dvcpvValue);
+      const v = clamp(chip.dataset.dvcpvValue, kind);
       slider.value = v; show(v); onChange(v, true);
     }));
   }
 
-  const api = { DEFAULT, MIN, MAX, STEP, PRESETS, clamp, format, html, attach };
+  const api = { DEFAULT, MIN, MAX, STEP, PRESETS, RENTAL_DEFAULT, KINDS, clamp, format, html, attach };
   if (typeof window !== "undefined") window.DVCPointValue = api;
   if (typeof module !== "undefined") module.exports = api;
 })();

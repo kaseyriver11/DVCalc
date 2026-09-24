@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Points or Cash — DVC Companion</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="images/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#4a148c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DVC Companion">
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--color-bg-page); color: #333; min-height: 100vh; }
+.header { background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)); color: white; padding: 16px 24px; text-align: center; }
+.header h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 2px; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.8; }
+
+/* ---- Site nav (same as every page) ---- */
+.site-nav { background: white; border-bottom: 1px solid #e0e0e0; padding: 10px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.site-nav-brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; letter-spacing: 0.2px; flex-shrink: 0; }
+.site-nav-links { display: flex; align-items: center; gap: 16px; flex: 1; flex-wrap: wrap; }
+.site-nav-group { display: flex; align-items: center; gap: 12px; }
+.site-nav-group-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: 700; }
+.site-nav-divider { width: 1px; height: 16px; background: #e0e0e0; }
+.site-nav-links a { font-size: 0.82rem; color: #555; text-decoration: none; font-weight: 500; padding: 2px 0; border-bottom: 2px solid transparent; }
+.site-nav-links a:hover { color: var(--color-primary); }
+.site-nav-links a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
+.site-nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; padding: 6px; margin-left: auto; border: none; background: none; cursor: pointer; }
+.site-nav-toggle span { display: block; width: 100%; height: 2px; border-radius: 1px; background: var(--color-primary); }
+.account-btn, .account-link-btn { font: inherit; font-size: 0.78rem; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid #ddd; background: #f7f5fa; color: var(--color-primary); cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
+@media (max-width: 800px) {
+  .site-nav-toggle { display: flex; }
+  .site-nav-links { display: none; flex: 0 0 100%; width: 100%; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 4px; padding-top: 10px; border-top: 1px solid #eee; }
+  .site-nav-group { flex-direction: column; align-items: flex-start; gap: 6px; }
+  #account-control { display: none; width: 100%; margin-top: 10px; }
+  .site-nav.open .site-nav-links { display: flex; }
+  .site-nav.open #account-control { display: block; }
+  .header { padding: 10px 20px; }
+  .header h1 { font-size: 1.05rem; }
+  .header .subtitle { font-size: 0.7rem; }
+}
+
+.page { max-width: 640px; margin: 20px auto; padding: 0 16px 60px; }
+.gate { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 40px 24px; text-align: center; color: #666; }
+.gate p { margin-bottom: 16px; }
+.big-signin-btn { background: var(--color-primary); color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.back-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; font-weight: 600; color: var(--color-primary); text-decoration: none; }
+
+.card { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; margin-bottom: 14px; min-width: 0; }
+.card h2 { font-size: 1rem; color: var(--color-secondary); margin-bottom: 8px; }
+.muted { color: var(--color-text-muted); }
+.small { font-size: .8rem; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: 999px; background: #fff; font: inherit; font-size: .85rem; color: var(--color-text); cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-tint-bg); color: var(--color-primary); font-weight: 700; }
+.chip:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.card p.hint { font-size: .8rem; color: var(--color-text-muted); margin: 8px 0 0; line-height: 1.4; }
+.fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.fields.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.field { min-width: 0; }
+.field input { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 10px; font: inherit; font-size: .95rem; background: #fff; }
+.field input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15); }
+.result { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border-light); }
+.hero { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.hero strong { font-size: 1.9rem; line-height: 1; color: var(--color-secondary); }
+.hero span { font-size: .82rem; color: var(--color-text-muted); }
+.compare-rows { list-style: none; margin-top: 10px; display: grid; gap: 6px; }
+.compare-rows li { display: flex; justify-content: space-between; gap: 12px; font-size: .86rem; }
+.compare-rows li span:last-child { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.verdict { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: .85rem; line-height: 1.4; background: var(--color-good-bg); color: #2e4d32; }
+.verdict.rent { background: #fff6e0; color: #6b4a00; }
+.verdict.close { background: #f4f1f8; color: #444; }
+.eligibility { margin-top: 12px; font-size: .82rem; line-height: 1.4; display: grid; gap: 4px; }
+.eligibility .no { color: var(--color-danger); }
+.eligibility .yes { color: var(--color-good); }
+.dues-rows { list-style: none; margin-top: 10px; display: grid; gap: 8px; }
+.dues-rows li { font-size: .85rem; line-height: 1.35; }
+.dues-rows li strong { display: block; overflow-wrap: anywhere; }
+.prices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 8px; }
+.footnote { font-size: .76rem; color: var(--color-text-muted); margin-top: 12px; line-height: 1.4; }
+@media (max-width: 700px) {
+  .fields, .fields.two, .prices { grid-template-columns: 1fr; }
+}
+  </style>
+  <script type="module" src="auth.js"></script>
+  <script src="nav.js"></script>
+  <script src="dvc-point-value.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="home.html" class="site-nav-brand">DVC Companion</a>
+    <button type="button" class="site-nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="site-nav-links">
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Overview</span>
+        <a href="home.html">Home</a>
+        <a href="badges.html">Trophy Room</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Membership</span>
+        <a href="account.html">My Contracts</a>
+        <a href="bookings.html">Bookings &amp; Stays</a>
+        <a href="trips.html">Membership Value</a>
+        <a href="contractvalue.html">Contract Value</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">Plan a Stay</span>
+        <a href="index.html">Calendar</a>
+        <a href="compare.html">Compare Resorts</a>
+        <a href="suggest.html">Suggest a Stay</a>
+        <a href="pointsorcash.html" class="active">Points or Cash</a>
+      </span>
+      <span class="site-nav-divider"></span>
+      <span class="site-nav-group">
+        <span class="site-nav-group-label">My Itineraries</span>
+        <a href="itineraries.html">Saved Itineraries</a>
+        <a href="itinerarycompare.html">Compare Itineraries</a>
+      </span>
+    </div>
+    <span id="account-control"></span>
+  </nav>
+
+  <div class="header">
+    <h1>Points or Cash?</h1>
+    <div class="subtitle">What your points buy, and what renting them out brings in</div>
+  </div>
+
+  <main class="page">
+    <section class="card">
+      <h2>Spend points on this?</h2>
+      <div class="chips" role="group" aria-label="What you're booking" id="kind-chips">
+        <button type="button" class="chip" data-kind="dvc">DVC stay</button>
+        <button type="button" class="chip" data-kind="cruise">Cruise or Adventures</button>
+        <button type="button" class="chip" data-kind="hotel">Disney hotel</button>
+        <button type="button" class="chip" data-kind="other">Something else</button>
+      </div>
+      <p class="hint" id="kind-hint"></p>
+      <div class="fields">
+        <div class="field"><label class="dvc-field-label" for="f-cash">Cash price ($)</label><input id="f-cash" type="number" min="0" step="1" inputmode="decimal" placeholder="e.g. 4000"></div>
+        <div class="field"><label class="dvc-field-label" for="f-points">Points it costs</label><input id="f-points" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 150"></div>
+        <div class="field"><label class="dvc-field-label" for="f-fees">Cash fees on top ($)</label><input id="f-fees" type="number" min="0" step="1" inputmode="decimal" value="0"></div>
+      </div>
+      <div id="spend-result"></div>
+    </section>
+
+    <section class="card">
+      <h2>Renting points out</h2>
+      <div class="fields two">
+        <div class="field"><label class="dvc-field-label" for="f-rent-points">Points to rent</label><input id="f-rent-points" type="number" min="0" step="1" inputmode="numeric" value="100"></div>
+        <div class="field" id="dues-field"><label class="dvc-field-label" for="f-dues">Your annual dues ($)</label><input id="f-dues" type="number" min="0" step="1" inputmode="decimal" placeholder="e.g. 1500"></div>
+      </div>
+      <div id="rent-result"></div>
+      <p class="footnote">Brokers typically pay owners $18–23/pt and keep about $6/pt of what renters pay. Renting privately, you keep the whole price. Rental income is taxable.</p>
+    </section>
+
+    <section class="card">
+      <h2>Your prices</h2>
+      <div class="prices">
+        <div id="rental-editor"></div>
+        <div id="value-editor"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="data/data.js"></script>
+  <script src="dvc-rental.js"></script>
+  <script>
+// ---- Points or Cash? -----------------------------------------------------
+// Two questions owners work out by hand: is a points booking (a cruise, a
+// Disney hotel, a DVC stay) worth the points, and what does renting points
+// out bring in. Math in dvc-rental.js (tests/rental.test.js). Two prices,
+// never mixed: the $20 rental price (what points rent for) and the $30
+// value per point (points against Disney's cash price), both from
+// dvc-point-value.js. Nothing here saves; a signed-in owner's contracts
+// only add eligibility and real dues.
+const R = window.DVCRental, PV = window.DVCPointValue;
+const params = new URLSearchParams(location.search);
+const CRUISE_FEE = 95; // Disney's exchange fee per cruise booked with points
+const KIND_HINTS = {
+  dvc: "A DVC resort stay, priced at what Disney charges in cash. The calendar fills this in.",
+  cruise: "Disney Cruise Line or Adventures by Disney through Membership Extras. Points bookings add an exchange fee of about $95 per cruise.",
+  hotel: "A Disney hotel room booked with points through the Disney Collection.",
+  other: "Any booking where you know both the cash price and the point cost.",
+};
+const state = {
+  kind: KIND_HINTS[params.get("kind")] ? params.get("kind") : (params.has("points") ? "dvc" : "cruise"),
+  rentalRate: PV.RENTAL_DEFAULT,
+  pointValue: PV.DEFAULT,
+  contracts: [],
+};
+const $ = id => document.getElementById(id);
+const num = id => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+const money = v => "$" + Math.round(v).toLocaleString();
+const perPt = v => "$" + v.toFixed(2) + "/pt";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const resortName = id => RESORTS.find(r => r.id === id)?.name || id;
+const contractName = c => c.nickname || resortName(c.home_resort_id);
+const activeContracts = () => state.contracts.filter(c => c.is_active);
+
+if (params.has("cash")) $("f-cash").value = params.get("cash");
+if (params.has("points")) $("f-points").value = params.get("points");
+if (state.kind === "cruise") $("f-fees").value = CRUISE_FEE;
+
+function renderKind() {
+  document.querySelectorAll("#kind-chips .chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.kind === state.kind)));
+  $("kind-hint").textContent = KIND_HINTS[state.kind];
+}
+
+// Resale contracts bought on or after 2011-03-21 (and every home-only
+// resale contract) can't spend points outside DVC resorts. The rule is
+// auth.js's evaluateContractPerks(), the same one My Contracts' card
+// badges use.
+function eligibilityHTML() {
+  if (state.kind !== "cruise" && state.kind !== "hotel") return "";
+  const active = activeContracts();
+  if (!active.length || !window.DVCAuth) {
+    return `<div class="eligibility"><span>Direct contracts can book this with points. Resale contracts bought on or after March 21, 2011 can't.</span></div>`;
+  }
+  return `<div class="eligibility">${active.map(c => {
+    const ok = window.DVCAuth.evaluateContractPerks(c).resaleRestrictionType === "none";
+    return `<span class="${ok ? "yes" : "no"}">${ok ? "✓" : "✕"} ${esc(contractName(c))}: ${ok ? "can use points for this" : "resale points can't be used for this"}</span>`;
+  }).join("")}</div>`;
+}
+
+function renderSpend() {
+  const points = num("f-points");
+  const v = R.spendValue({ cashPrice: num("f-cash"), points, cashFees: num("f-fees") });
+  if (!v) { $("spend-result").innerHTML = eligibilityHTML(); return; }
+  const r = R.useOrRent({ cashValue: v.netValue, points, rentalRate: state.rentalRate });
+  const verdict = !r ? "" : r.verdict === "use"
+    ? `<strong>Worth spending points on.</strong> Each point gets ${perPt(v.perPoint)}, more than the ${perPt(state.rentalRate)} it would rent for.`
+    : r.verdict === "rent"
+      ? `<strong>Consider paying cash.</strong> Renting these points out at ${perPt(state.rentalRate)} and paying cash would leave you about ${money(r.rentAdvantage)} ahead.`
+      : `<strong>About even.</strong> Each point gets ${perPt(v.perPoint)}, close to the ${perPt(state.rentalRate)} it would rent for.`;
+  // Not a DVC stay: also compare with what the owner values their points
+  // at. For a DVC stay the cash price already says what those points get,
+  // so the line would restate itself.
+  const dvcLine = state.kind === "dvc" ? "" : v.perPoint < state.pointValue
+    ? ` That's less than the ${perPt(state.pointValue)} you value your points at.`
+    : ` That's more than the ${perPt(state.pointValue)} you value your points at.`;
+  $("spend-result").innerHTML = `
+    <div class="result">
+      <div class="hero"><strong>${perPt(v.perPoint)}</strong><span>what each point buys here</span></div>
+      <ul class="compare-rows">
+        <li><span>Cash price${num("f-fees") > 0 ? ", less fees" : ""}</span><span>${money(v.netValue)}</span></li>
+        <li><span>Renting ${points.toLocaleString()} pts out at ${perPt(state.rentalRate)}</span><span>${money(points * state.rentalRate)}</span></li>
+        ${state.kind === "dvc" ? "" : `<li><span>At what you value your points (${perPt(state.pointValue)})</span><span>${money(points * state.pointValue)}</span></li>`}
+      </ul>
+      ${r ? `<div class="verdict ${r.verdict}">${verdict}${dvcLine}</div>` : ""}
+      ${eligibilityHTML()}
+    </div>`;
+}
+
+function renderRent() {
+  const points = num("f-rent-points");
+  const active = activeContracts();
+  $("dues-field").style.display = active.length ? "none" : "";
+  let duesHTML;
+  if (active.length) {
+    duesHTML = `<ul class="dues-rows">${active.map(c => {
+      const dues = c.points_per_year * (DUES_PER_POINT[c.home_resort_id] || 0);
+      const need = R.pointsToCoverDues(dues, state.rentalRate);
+      return `<li><strong>${esc(contractName(c))}</strong>${money(dues)} dues a year: rent ${need.toLocaleString()} of its ${c.points_per_year.toLocaleString()} points to cover them.</li>`;
+    }).join("")}</ul>`;
+  } else {
+    const need = R.pointsToCoverDues(num("f-dues"), state.rentalRate);
+    duesHTML = need ? `<ul class="compare-rows"><li><span>Points to rent to cover your dues</span><span>${need.toLocaleString()} pts</span></li></ul>` : "";
+  }
+  $("rent-result").innerHTML = `
+    <div class="result">
+      <div class="hero"><strong>${money(points * state.rentalRate)}</strong><span>${points.toLocaleString()} pts at ${perPt(state.rentalRate)}</span></div>
+      ${duesHTML}
+    </div>`;
+}
+
+function renderAll() { renderKind(); renderSpend(); renderRent(); }
+
+function renderValueEditor() {
+  $("value-editor").innerHTML = PV.html({ id: "point-value", value: state.pointValue, hint: "Compared for cruises, hotels and other bookings, not DVC stays." });
+  PV.attach("point-value", v => { state.pointValue = v; renderSpend(); });
+}
+
+$("kind-chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip");
+  if (!b) return;
+  // The cruise fee fills in over an untouched fee field and clears again
+  // when switching away, unless the owner changed it.
+  if (b.dataset.kind === "cruise" && num("f-fees") === 0) $("f-fees").value = CRUISE_FEE;
+  if (state.kind === "cruise" && b.dataset.kind !== "cruise" && num("f-fees") === CRUISE_FEE) $("f-fees").value = 0;
+  state.kind = b.dataset.kind;
+  renderAll();
+});
+["f-cash", "f-points", "f-fees"].forEach(id => $(id).addEventListener("input", renderSpend));
+["f-rent-points", "f-dues"].forEach(id => $(id).addEventListener("input", renderRent));
+
+$("rental-editor").innerHTML = PV.html({ id: "rental-rate", kind: "rental", value: state.rentalRate, hint: "What another member pays to rent a point." });
+PV.attach("rental-rate", v => { state.rentalRate = v; renderSpend(); renderRent(); });
+renderValueEditor();
+renderAll();
+
+// Signed in: real contracts for eligibility and dues, and the owner's own
+// value per point. Signed out, the page works the same with typed numbers.
+(function waitForAuth(attempts) {
+  if (!window.DVCAuth) { if (attempts > 0) setTimeout(() => waitForAuth(attempts - 1), 50); return; }
+  window.DVCAuth.onAuthChange(async session => {
+    state.contracts = session ? await window.DVCAuth.getContracts() : [];
+    if (session) {
+      const settings = await window.DVCAuth.getUserSettings().catch(() => null);
+      if (settings && settings.point_value_baseline) {
+        state.pointValue = PV.clamp(settings.point_value_baseline);
+        renderValueEditor();
+      }
+    }
+    renderAll();
+  });
+})(40);
+  </script>
+</body>
+</html>

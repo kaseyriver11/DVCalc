@@ -58,6 +58,22 @@ Sourced 2026-09-22 from ~1,480 r/dvcmember posts (27 math-related RSS searches, 
 **8. Perk valuation** (Q6, lowest priority)
 - [ ] Optional user-entered $/yr for direct perks, default $0
 
+## Phase 4 — Spend, rent, keep or sell (added 2026-09-24)
+From a second community pass (DISboards, TouringPlans, DVCinfo, DVC Fan, broker calculators), filtered against this doc.
+
+**Two $/pt numbers, never mixed (fixed 2026-09-24):** the $30 **value per point** prices points against Disney's cash price (Cash Ratio, Membership Value). The $20 **rental price per point** prices renting (calendar rental tile, Resort Comparison's Rental Cost, Contract Value's Breakeven Horizon, renting points out). Both are kinds of `dvc-point-value.js`. Commit 3cb4c15 had moved every rental figure to $30 by mistake.
+
+- [x] **A. Use or rent?** — `dvc-rental.js` `useOrRent()`; a line under the calendar's Cost Comparison tiles. (Also covers #3 above once broker net lands in B.)
+- [x] **B. Points or Cash? page** (`pointsorcash.html`) — spend points on a cruise / Adventures by Disney / Disney Collection hotel or any cash booking: $/pt vs renting out vs value per point, with contract eligibility when signed in; renting points out: income at the $20 rental price (broker-payout note), points to cover each contract's dues. No after-tax estimate (one "rental income is taxable" note).
+- [x] **C. Keep or sell** — card beside Exit Equity on `trips.html`: net sale today vs remaining years' value (points × value/pt × usage − dues) + resale at the deed's end. Resale curve shared with Contract Value.
+- [x] **D. Financing** — `dvc-financing.js` (amortization); "Financed?" in Contract Value's Adjust assumptions; "Estimate from my loan" helper on Add/Edit Contract filling `financing_interest_paid`.
+
+**Considered and skipped:**
+- Transfer expiring points out at a market $/pt — DVC doesn't allow compensation for transfers (see Verified rules); pricing it would coach a rules violation.
+- Which use year for a second contract — a buying question; folded into the Contract Size Planner (#4).
+- Resale ROFR risk % — unverified, needs monthly upkeep. At most a no-number note on the Listing Evaluator (#5).
+- Tax-deductible share of dues, after-tax rental income — tax advice, per-resort upkeep, few users.
+
 ## Cross-cutting
 - 390px verification, empty + completed states (guardrail #6); forms 1-column (guardrail #1)
 - Tooltip copy 1–2 sentences

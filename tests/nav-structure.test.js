@@ -14,7 +14,7 @@ const EXPECTED = [
   ['My Membership', [['account.html', 'My Contracts'], ['bookings.html', 'Bookings &amp; Stays'],
                      ['trips.html', 'Membership Value'], ['contractvalue.html', 'Contract Value']]],
   ['Plan a Stay', [['index.html', 'Calendar'], ['compare.html', 'Compare Resorts'],
-                   ['suggest.html', 'Suggest a Stay']]],
+                   ['suggest.html', 'Suggest a Stay'], ['pointsorcash.html', 'Points or Cash']]],
   ['My Itineraries', [['itineraries.html', 'Saved Itineraries'],
                       ['itinerarycompare.html', 'Compare Itineraries']]],
 ];
@@ -22,7 +22,7 @@ const EXPECTED = [
 // destination itself, so it is the one page expected to have no active tab.
 const PAGES = ['account.html', 'badges.html', 'bookings.html', 'changes.html', 'compare.html', 'contractvalue.html',
                'home.html', 'index.html', 'itineraries.html', 'itinerarycompare.html',
-               'suggest.html', 'trips.html', 'use-points.html'];
+               'pointsorcash.html', 'suggest.html', 'trips.html', 'use-points.html'];
 const NO_ACTIVE_TAB = new Set(['changes.html', 'use-points.html']); // reached from My Contracts, not the nav
 
 function navOf(file) {

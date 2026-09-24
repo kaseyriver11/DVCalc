@@ -857,6 +857,8 @@ body {
   <script type="module" src="auth.js"></script>
   <script src="nav.js"></script>
   <script src="dvc-point-value.js"></script>
+  <script src="dvc-financing.js"></script>
+  <script src="dvc-resale.js"></script>
 </head>
 <body>
 
@@ -883,6 +885,7 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
+        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -963,21 +966,11 @@ function directPremiumCaptionHTML(r) {
   return `<span class="price-premium-note">Resale: &minus;$${premium.toFixed(0)}/pt${pct}</span>`;
 }
 
-// Typical resale broker commission, netted out of what a seller actually
-// walks away with -- same 10% trips.html's Exit Equity card already uses,
-// so the two pages' "if I sold" figures rest on the same assumption.
-const RESALE_BROKER_FEE = 0.10;
-
-// Share of a long deed's price a contract keeps with `yearsLeft` on it:
-// 1 - e^(-yearsLeft / 10). The 10-year constant is a least-squares fit of
-// RESORT_INVESTMENT_DATA's WDW resale prices against years left (2026
-// data), which level off rather than falling in a straight line -- 2042
-// deeds with 16 years left trade near deeds with 40+. Only ratios of this
-// are used, so a resort's own price level carries through.
-const RESALE_DECAY_YEARS = 10;
-function resaleValueFraction(yearsLeft) {
-  return yearsLeft > 0 ? 1 - Math.exp(-yearsLeft / RESALE_DECAY_YEARS) : 0;
-}
+// Resale broker commission and the price-vs-years-left curve come from
+// dvc-resale.js, shared with Membership Value's Keep or Sell and Exit
+// Equity, so every "if I sold" figure rests on the same assumptions.
+const RESALE_BROKER_FEE = window.DVCResale.BROKER_FEE;
+const resaleValueFraction = window.DVCResale.valueFraction;
 
 // Preset chips + readout formatters for the assumptions panel. The value
 // of a point has its own shared editor (dvc-point-value.js).
@@ -990,6 +983,9 @@ const ASSUMPTION_FORMATTERS = {
   closingCost: v => "$" + v.toLocaleString(),
   duesGrowth: v => v.toFixed(1) + "%/yr",
   valueGrowth: v => v.toFixed(1) + "%/yr",
+  downPct: v => v.toFixed(0) + "% down",
+  apr: v => v.toFixed(2).replace(/\.?0+$/, "") + "% APR",
+  termYears: v => v.toFixed(0) + (v === 1 ? " year" : " years"),
 };
 
 // Used ONLY when DVCAuth is unavailable (see isHomeOnlyResale) -- the live
@@ -1045,9 +1041,10 @@ const METRIC_TIPS = {
   pricePerPoint: purchaseType => `Current ${purchaseType} price per point. Editable -- enter a real listing price to recalculate.`,
   currentDuesPerPoint: "Today's annual dues per point.",
   costPerPointYear: "Buy-in (minus any resale credit) plus average dues, per point per year of your plan. Dues are in today's dollars, net of hotel inflation. Lower is better.",
+  financing: "Adds the loan's total interest to your buy-in. The price already includes what you borrow.",
   sellAtEnd: "Credits what the contract would sell for when your plan ends, net of ~10% broker fees. Based on how today's resale prices fall with years left on the deed.",
   nightlyRoomCost: "Cost/Pt/Year × points needed for a typical night in this room type. Your ownership cost per night -- not Disney's cash rate.",
-  yearsToBreakeven: "Years until the value of your points, less dues, covers your buy-in (less its resale value, if you sell at the end). \"Never\" means not within your plan.",
+  yearsToBreakeven: "Years until renting the same points (at the rental price), less dues, would have cost your buy-in. \"Never\" means owning doesn't beat renting within your plan.",
   lifetimeOutlay: "Total cost over your plan: buy-in plus all dues, minus the resale credit if you sell at the end.",
   valueGrowthScope: "How fast Deluxe room prices rise. Grows Cash Ratio's vacation value, and Cost/Pt/Year states dues net of it.",
   cashRatio: "Vacation Value ÷ Lifetime Outlay. Higher is better -- a 2.5x means $2.50 of rack-rate value per $1 spent owning.",
@@ -1095,7 +1092,12 @@ function computeRow(resortId, inputs) {
   const overrideKey = `${resortId}:${wizardData.purchaseType}`;
   const hasOverride = priceOverrides[overrideKey] != null;
   const pricePerPoint = hasOverride ? priceOverrides[overrideKey] : defaultPrice;
-  const initialCost = pricePerPoint * inputs.points + inputs.closingCost;
+  // Financed: the loan's total interest joins the buy-in (dvc-financing.js).
+  // Interest only -- the price already covers the principal.
+  const financingInterest = inputs.financed && window.DVCFinancing
+    ? window.DVCFinancing.totalInterest(pricePerPoint * inputs.points * (1 - inputs.downPct), inputs.apr, inputs.termYears * 12)
+    : 0;
+  const initialCost = pricePerPoint * inputs.points + inputs.closingCost + financingInterest;
 
   const yearsRemaining = inv.contractExpirationYear - currentRealYear;
   const vacationYears = Math.max(0, Math.min(inputs.desiredVacationYears, yearsRemaining));
@@ -1180,7 +1182,7 @@ function computeRow(resortId, inputs) {
     : 0;
 
   const capitalPerPointYear = vacationYears > 0
-    ? (pricePerPoint * inputs.points + inputs.closingCost - netResaleProceeds) / (inputs.points * vacationYears)
+    ? (initialCost - netResaleProceeds) / (inputs.points * vacationYears)
     : null;
   const costPerPointYear = capitalPerPointYear != null
     ? capitalPerPointYear + averageDuesPerPoint(vacationYears)
@@ -1207,8 +1209,11 @@ function computeRow(resortId, inputs) {
   // style metric above where lower is better.
   const cashRatio = lifetimeOutlay > 0 ? totalValue / lifetimeOutlay : 0;
 
-  // Years to breakeven: the first point in the buyer's plan where
-  // cumulative (value of the points at the page's $/pt - dues) covers the buy-in
+  // Years to breakeven vs renting: the first point in the buyer's plan
+  // where cumulative (renting the same points at the rental $/pt - dues)
+  // covers the buy-in. Priced at the rental rate, not the value per point:
+  // the alternative to owning is renting points from an owner, not paying
+  // Disney's cash price.
   // -- less, with "sell at end" on, what the contract would fetch if sold
   // that year -- interpolated within the year. null ("Never") if it doesn't
   // happen within the plan (capped at the deed).
@@ -1217,7 +1222,7 @@ function computeRow(resortId, inputs) {
   const netCostIfSoldAt = t => initialCost
     - (wizardData.sellAtEnd ? resaleValueAt(yearsRemaining - t) * inputs.points * (1 - RESALE_BROKER_FEE) : 0);
   for (let t = 1; t <= vacationYears; t++) {
-    const rentValueYear = inputs.pointValue * inputs.points * Math.pow(1 + inputs.valueGrowth, t - 1);
+    const rentValueYear = inputs.rentalRate * inputs.points * Math.pow(1 + inputs.valueGrowth, t - 1);
     const duesCostYear = currentDuesPerPoint * inputs.points * Math.pow(1 + inputs.duesGrowth, t - 1);
     const annualSavings = rentValueYear - duesCostYear;
     const prevGap = netCostIfSoldAt(t - 1) - cumulative;
@@ -1270,6 +1275,7 @@ function computeRow(resortId, inputs) {
       : 0,
     nightlyRoomCost,
     yearsToBreakeven,
+    financingInterest,
     lifetimeOutlay,
     cashRatio,
     directPremiumPerPoint,
@@ -1352,6 +1358,11 @@ function computeAllRows() {
     closingCost: wizardData.closingCost,
     duesGrowth: wizardData.duesGrowth / 100,
     pointValue: wizardData.pointValue,
+    rentalRate: wizardData.rentalRate,
+    financed: wizardData.financed,
+    downPct: wizardData.downPct / 100,
+    apr: wizardData.apr / 100,
+    termYears: wizardData.termYears,
     valueGrowth: wizardData.valueGrowth / 100,
     category: wizardData.category,
   };
@@ -1568,14 +1579,25 @@ function renderMatches() {
         ? `<span class="assumption-setting-note">Holding to expiry</span>`
         : `<button type="button" class="pill-switch${wizardData.sellAtEnd ? " on" : ""}" id="w-sell-at-end" role="switch" aria-checked="${wizardData.sellAtEnd}"><span class="pill-switch-knob"></span></button>`}
     </div>`;
+  const financeRowHTML = `
+    <div class="assumption-setting">
+      <span class="assumption-setting-label">Financed with a loan<span class="info-icon" data-tip="${METRIC_TIPS.financing}">?</span></span>
+      <button type="button" class="pill-switch${wizardData.financed ? " on" : ""}" id="w-financed" role="switch" aria-checked="${wizardData.financed}"><span class="pill-switch-knob"></span></button>
+    </div>
+    ${wizardData.financed ? `
+      ${settingRow("downPct", "Down payment", wizardData.downPct, { min: 0, max: 50, step: 5, format: ASSUMPTION_FORMATTERS.downPct })}
+      ${settingRow("apr", "Interest rate", wizardData.apr, { min: 0, max: 20, step: 0.25, format: ASSUMPTION_FORMATTERS.apr })}
+      ${settingRow("termYears", "Loan term", wizardData.termYears, { min: 1, max: 15, step: 1, format: ASSUMPTION_FORMATTERS.termYears })}` : ""}`;
   const advancedPanelHTML = `
     <div class="advanced-panel${showAdvanced ? " open" : ""}">
       ${sellRowHTML}
+      ${financeRowHTML}
       ${settingRow("closingCost", "Closing Cost", wizardData.closingCost, {
         min: 0, max: 3000, step: 50, format: ASSUMPTION_FORMATTERS.closingCost, presets: CLOSING_COST_PRESETS })}
       ${settingRow("duesGrowth", "Annual Dues Inflation", wizardData.duesGrowth, {
         min: 2, max: 8, step: 0.1, format: ASSUMPTION_FORMATTERS.duesGrowth, tip: METRIC_TIPS.duesGrowthScope })}
-      <div class="assumption-row">${window.DVCPointValue.html({ id: "a-pointValue", value: wizardData.pointValue, hint: "Prices Cash Ratio and Breakeven Horizon." })}</div>
+      <div class="assumption-row">${window.DVCPointValue.html({ id: "a-pointValue", value: wizardData.pointValue, hint: "Prices Cash Ratio." })}</div>
+      <div class="assumption-row">${window.DVCPointValue.html({ id: "a-rentalRate", kind: "rental", value: wizardData.rentalRate, hint: "Prices Breakeven Horizon: renting points instead of owning." })}</div>
       ${settingRow("valueGrowth", "Deluxe Hotel Inflation", wizardData.valueGrowth, {
         min: 2, max: 8, step: 0.1, format: ASSUMPTION_FORMATTERS.valueGrowth, tip: METRIC_TIPS.valueGrowthScope })}
     </div>
@@ -1685,6 +1707,8 @@ function renderMatches() {
 
   const sellSwitch = document.getElementById("w-sell-at-end");
   if (sellSwitch) sellSwitch.addEventListener("click", () => { wizardData.sellAtEnd = !wizardData.sellAtEnd; renderMatches(); });
+  const financeSwitch = document.getElementById("w-financed");
+  if (financeSwitch) financeSwitch.addEventListener("click", () => { wizardData.financed = !wizardData.financed; renderMatches(); });
 
   const viewAllToggle = document.getElementById("view-all-toggle");
   if (viewAllToggle) viewAllToggle.addEventListener("click", () => { showAllResorts = !showAllResorts; renderMatches(); });
@@ -1722,6 +1746,10 @@ function renderMatches() {
     wizardData.pointValue = value;
     if (final) renderMatches();
   });
+  window.DVCPointValue.attach("a-rentalRate", (value, final) => {
+    wizardData.rentalRate = value;
+    if (final) renderMatches();
+  });
 }
 
 // ---- Wizard state --------------------------------------------------------
@@ -1745,7 +1773,15 @@ const wizardData = {
   // this page shipped with historically (the version live on dvcalc.app,
   // before the move to dvccompanion.com).
   pointValue: window.DVCPointValue.DEFAULT,
+  // What renting points from an owner costs -- the "rent instead" side of
+  // Breakeven Horizon.
+  rentalRate: window.DVCPointValue.RENTAL_DEFAULT,
   valueGrowth: 5.0,
+  // Loan terms, used only while financed is on.
+  financed: false,
+  downPct: 10,
+  apr: 12,
+  termYears: 10,
 };
 
 // User-typed price overrides, e.g. "found a resale listing for less than

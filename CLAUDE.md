@@ -21,6 +21,7 @@ Pages
 ├── compare.html                # Cross-resort date comparison (self-contained)
 ├── changes.html                # Year-over-year point changes (self-contained)
 ├── suggest.html                # Suggest a Stay -- points budget -> stays (self-contained)
+├── pointsorcash.html           # Points or Cash -- spend points on a cruise/hotel/stay? rent points out?
 ├── contractvalue.html          # Contract Value -- which resort to buy (self-contained)
 ├── account.html                # My Contracts -- contracts, points ledger, point moves
 ├── bookings.html               # Bookings & Stays -- record/edit/delete bookings, grouped stay history
@@ -49,6 +50,10 @@ Shared scripts (window.DVC* globals)
 ├── dvc-plan-funding.js         # Allocate contract balances across a stay's nights
 ├── dvc-trip-funding.js / dvc-trip-deduct.js  # Trip point attribution / ledger deductions
 ├── dvc-owner-value.js          # Ownership value / House Money model
+├── dvc-point-value.js          # The two $/pt editors: value per point ($30) and rental price ($20)
+├── dvc-rental.js               # Use-or-rent verdict, spend value per point, points to cover dues
+├── dvc-resale.js               # Resale fees, price-vs-years-left curve, Keep or Sell
+├── dvc-financing.js            # Loan payment and interest math
 ├── dvc-compare-handoff.js      # URL handoff that opens the calendar on a given stay
 ├── dvc-badges.js / dvc-track.js  # Trophy Room logic / event-count tracking
 └── service-worker.js           # PWA service worker
@@ -71,7 +76,7 @@ pdfs/{resort}_archive/          # Source PDFs for the extract scripts -- NOT tra
 5. Color coding by travel periods (season)
 6. Check-in / check-out date selection
 7. Side-by-side layout: calendar left, cost breakdown right
-8. Value-per-point editor ($15-$50/point, default $30) -- one shared control (`dvc-point-value.js`) on Calendar, Resort Comparison, Contract Value and Membership Value
+8. Two $/pt editors (`dvc-point-value.js`), never mixed: **what you value your points at** ($30, $15-$50; code calls it the value per point, the editor's label says it in the owner's words) prices points against Disney's cash price; **rental price per point** ($20, $15-$25) prices renting points from or out to another member
 9. Owner mode (calculates cost based on annual dues per point)
 10. Summary: total points, rental value, Disney cash rate, savings %
 11. Nightly breakdown (expanded by default)
@@ -98,7 +103,7 @@ For detailed data documentation, reproducibility audit, and update instructions,
 | Historical points | DVC Field Guide point-archive PDFs | Run `scripts/download_historical_pdfs.sh`, then `scripts/extract_all_historical.py pdfs/` |
 | Cash rack rates | MouseSavers.com (WDW only) | Scrape rate tables, map to DVC periods, add as `cashRates` in `wdwPeriods()` |
 | Annual dues | dvcresalemarket.com | Update `DUES_PER_POINT` in `data.js` |
-| Value per point | One default for every estimate ($30) | `dvc-point-value.js` -- $15-$50 slider with presets on every page that prices points |
+| Value per point / rental price | $30 value per point, $20 rental price | `dvc-point-value.js` `KINDS` -- one editor per kind on every page that prices points |
 | Hotel construction/refurbishment | Disney Food Blog's DFB Disney World Calendar PDF | Re-read the latest PDF, update `data/resort_construction.js` |
 | Special events (festivals, hard-ticket parties, runDisney) | Disney Food Blog's DFB Disney World Calendar PDF | Re-read the latest PDF, update `data/disney_events.js` |
 
@@ -137,6 +142,16 @@ For detailed data documentation, reproducibility audit, and update instructions,
 - Stay Insights' three distribution bars (`buildDistributionHTML()`) color their "current stay" bar green-to-red (`distGoodBadColor()`, keyed off the same percentile the callout text already shows) for Crowd forecast and Points cost only — both are unambiguous "lower is better," so a calm/cheap stay reads as green at a glance instead of needing the percentile sentence to know if a low number is actually good. Cash price stays neutral purple deliberately: the Value Score right above these bars treats a *high* cash-per-point as the favorable direction (better rental value), so coloring raw cash red-for-expensive would visually contradict that
 - The "Find Alternatives" modal's "Also check other resorts" toggle (`state.altCrossResort`) reveals a second "WDW (Orlando) only" checkbox (`state.altWdwOnly`) that restricts cross-resort candidates to `NON_WDW_RESORT_IDS`-excluded resorts, same set and same filtering approach `compare.html`'s own WDW-only toggle uses. Only shown once cross-resort search is on — filtering by region is meaningless when the search is already scoped to a single resort
 - Every `tooltip-anchor` (crowd/value/distribution hovers, calendar day cells, trip rail chips, booking outlook dots) gets its `cursor: pointer` and `user-select: none` from the shared base rule in `styles.css`/`compare.html`, not per-element — a bare span/div with text or an emoji directly inside it (a crowd number, a 🎉, a value-score badge) otherwise falls back to the browser's default text-select (I-beam) cursor on the glyph itself even with a pointer-cursor ancestor, since `cursor: auto` resolves per-content rather than by inheritance. Keeping it on the base class is what makes every hover in the app look and feel the same instead of drifting element by element
+
+### Spend, rent, keep or sell (2026-09-24, `docs/dvc_math_todo.md` Phase 4)
+- **Nav group labels** (Overview, My Membership...) are purple, with a rule under each on the stacked mobile menu, so a heading never reads as a link -- set once in `nav.js`'s injected CSS, overriding every page's copied grey.
+- **Desktop nav fit (2026-09-24):** the full link row needs ~1,900px, so on narrower desktop windows it wrapped to two rows. `nav.js` now wraps each group's links in a `.site-nav-menu` and adds a `.site-nav-group-toggle`; `fitNav()` measures whether the full row fits (on load, resize, fonts ready, and when the account control renders) and only then leaves it, otherwise it sets `.site-nav.compact`, turning each group into a click-to-open dropdown ("Plan a Stay ▾"). No breakpoint to maintain -- adding a link just moves the switch point. Page markup is unchanged, so `tests/nav-structure.test.js` still reads the static HTML. Signed out, `auth.js` `renderAccountControl()` shows one "Sign in" button whose panel renders the Google + email options on first open (Google's button can't measure itself while hidden); before, both options stacked three rows tall in the bar. Signed-out Home puts the intro and the example dashboard side by side from 900px.
+- **Two $/pt numbers.** `dvc-point-value.js` has two kinds. `value` ($30) is what the owner values their points at (the editor is labeled "What you value your points at"; roughly what a point saves against Disney's cash price): Contract Value's Cash Ratio, Membership Value's projection, Points or Cash's "at your value per point." `rental` ($20, `RENTAL_DEFAULT`) is what a point rents for: the calendar's rental tile, Resort Comparison's Rental Cost, Contract Value's Breakeven Horizon (owning vs renting instead), and renting points out. Commit 3cb4c15 had priced every rental figure at $30 by mistake; `tests/point-value.test.js` now pins each rental surface to the rental kind.
+- **Use or rent?** (`dvc-rental.js` `useOrRent()`, `buildUseOrRentHTML()` in `app.js`): a line under the calendar's Cost Comparison tiles comparing the stay's cash $/pt with the rental price. Within $1/pt is "About even." Links to Points or Cash with the stay's points and cash filled in.
+- **Points or Cash** (`pointsorcash.html`, in the nav under Plan a Stay): spend points on a cruise/Adventures (fills a $95 exchange fee), a Disney Collection hotel, a DVC stay or anything with a cash price -> $/pt vs renting the points out (the verdict) and, for anything but a DVC stay, vs what the same points typically get on a DVC stay (the value per point -- for a DVC stay the cash price already is that, so it isn't shown), plus per-contract eligibility from `evaluateContractPerks()` (resale bought on/after 2011-03-21 can't). Renting points out: income at the rental price and points to cover each contract's dues (`DUES_PER_POINT`), or typed dues signed out. No after-tax estimate by design; one "rental income is taxable" note. Nothing saves.
+- **Keep or Sell** (`trips.html`, after Exit Equity; `dvc-resale.js` `keepOrSell()`): sell today (price x (1 - 10% broker) - $150 estoppel) vs keep N years then sell on the curve, in today's dollars, stays at the value per point x a usage share (unused points count as nothing), dues net of hotel inflation, discounted at opportunity cost when that's on. Keeping is linear in usage, so it states the usage share where keeping starts to win. Years and usage are page-only. `dvc-resale.js` also owns the resale curve and broker fee Contract Value uses.
+- **Financing** (`dvc-financing.js`): Contract Value's Adjust assumptions has "Financed with a loan" (down payment, APR, term; defaults 10%/12%/10 yrs), adding the loan's total interest to the buy-in. Add/Edit Contract's "Estimate from my loan" fills `financing_interest_paid` from amount, rate, term and start date (payments made so far); only the filled number is saved.
+- **Skipped on purpose:** pricing member-to-member transfers (DVC bans compensation for transfers), resale ROFR risk %, the tax-deductible share of dues. Reasons in `docs/dvc_math_todo.md`.
 
 ### Shared form vocabulary (2026-09-23)
 - **Resort and room pickers:** `dvc-pickers.js` (`window.DVCPickers`, self-injected `dvcp-` CSS) is the one resort bottom sheet (full names, search, ✓ selected row, same close button) and the one room-tile grid. Add Contract's home-resort list, Year-over-Year, and Use These Points use it; Calendar, Record a booking, and Saved Itineraries match it. Label the resort field "Home resort" or "Stay resort" and the room field "Room type". Resort Comparison's Studio/1-Bedroom chips are categories, not room types, and they stay.

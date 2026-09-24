@@ -9,6 +9,25 @@ const ROOT = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const PAGES = { 'index.html': 'app.js', 'compare.html': 'compare.html', 'contractvalue.html': 'contractvalue.html', 'trips.html': 'trips.html' };
 
+test('rental is its own $20 kind, separate from the $30 value per point', () => {
+  assert.equal(PV.RENTAL_DEFAULT, 20);
+  assert.equal(PV.clamp(99, 'rental'), PV.KINDS.rental.MAX);
+  assert.equal(PV.clamp('x', 'rental'), 20);
+  assert.ok(PV.KINDS.rental.PRESETS.some(p => p.value === 20));
+  assert.ok(!PV.PRESETS.some(p => /rental/i.test(p.sub)), 'the value editor offers no rental preset');
+});
+
+test('rental prices use the rental kind, never the $30 value', () => {
+  for (const f of ['app.js', 'compare.html']) {
+    const src = read(f);
+    assert.match(src, /rentalRate: window\.DVCPointValue\.RENTAL_DEFAULT/, f);
+    assert.match(src, /id: "rental-rate", kind: "rental"/, f);
+  }
+  const cv = read('contractvalue.html');
+  assert.match(cv, /rentalRate: window\.DVCPointValue\.RENTAL_DEFAULT/);
+  assert.match(cv, /const rentValueYear = inputs\.rentalRate \* /);
+});
+
 test('the shared default is $30 and inside the editor range', () => {
   assert.equal(PV.DEFAULT, 30);
   assert.ok(PV.MIN <= PV.DEFAULT && PV.DEFAULT <= PV.MAX);

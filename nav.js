@@ -23,6 +23,40 @@ if ("serviceWorker" in navigator) {
 // copied nav CSS, so every page gets them from one place; the 800px
 // breakpoint matches every page's own nav collapse.
 const NAV_OVERLAY_CSS = `
+/* Group labels are purple so a section heading never reads as a link.
+   Every page's copied nav CSS sets them grey; this wins on specificity. */
+.site-nav .site-nav-group-label { color: var(--color-primary, #4a148c); }
+
+/* Each group's links sit in a .site-nav-menu wrapper (added below). It's
+   invisible to layout unless the desktop bar is in dropdown mode. */
+.site-nav-menu { display: contents; }
+.site-nav-group-toggle { display: none; }
+
+/* Signed out, the bar shows one "Sign in" button; its panel holds the
+   Google and email options (auth.js renderAccountControl()). */
+#account-control { position: relative; }
+.account-signin-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 1100; padding: 16px; background: #fff; border: 1px solid #e6e0ee; border-radius: 12px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14); }
+.account-signin-panel[hidden] { display: none; }
+
+@media (min-width: 801px) {
+  /* Dropdown mode: set by fitNav() only when the full row doesn't fit, so
+     wide screens keep every link visible. */
+  .site-nav.compact .site-nav-links { flex-wrap: nowrap; gap: 4px; }
+  .site-nav.compact .site-nav-divider,
+  .site-nav.compact .site-nav-group-label { display: none; }
+  .site-nav.compact .site-nav-group { position: relative; }
+  .site-nav.compact .site-nav-group-toggle { display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: 0.85rem; font-weight: 600; color: #555; background: none; border: 0; padding: 8px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  .site-nav.compact .site-nav-group-toggle::after { content: ""; border: 4px solid transparent; border-top-color: currentColor; margin-top: 4px; }
+  .site-nav.compact .site-nav-group.has-active .site-nav-group-toggle { color: var(--color-primary, #4a148c); }
+  .site-nav.compact .site-nav-group-toggle:hover,
+  .site-nav.compact .site-nav-group.menu-open .site-nav-group-toggle { background: #f3e8fd; color: var(--color-primary, #4a148c); }
+  .site-nav.compact .site-nav-group-toggle:focus-visible { outline: 3px solid var(--color-primary, #4a148c); outline-offset: 2px; }
+  .site-nav.compact .site-nav-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 1100; min-width: 210px; flex-direction: column; gap: 2px; padding: 6px; margin-top: 4px; background: #fff; border: 1px solid #e6e0ee; border-radius: 10px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14); }
+  .site-nav.compact .site-nav-group.menu-open .site-nav-menu { display: flex; }
+  .site-nav.compact .site-nav-menu a { padding: 9px 12px; border-radius: 6px; border-bottom: none; white-space: nowrap; }
+  .site-nav.compact .site-nav-menu a:hover { background: #f7f5fa; }
+  .site-nav.compact .site-nav-menu a.active { background: #f3e8fd; }
+}
 @media (max-width: 800px) {
   .site-nav.open {
     position: fixed;
@@ -41,7 +75,16 @@ const NAV_OVERLAY_CSS = `
      marked with a tinted row instead of the desktop underline, which is
      easy to miss in a stacked list. */
   .site-nav .site-nav-group { align-items: stretch; align-self: stretch; gap: 2px; }
-  .site-nav .site-nav-group-label { padding: 0 12px; margin-bottom: 2px; }
+  /* On the stacked menu each label also gets a rule under it, so the
+     group reads as a heading over its links. */
+  .site-nav .site-nav-group-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.8px;
+    padding: 12px 12px 6px;
+    margin-bottom: 4px;
+    border-bottom: 2px solid #e6d6f5;
+  }
+  .site-nav .site-nav-group:first-child .site-nav-group-label { padding-top: 0; }
   .site-nav .site-nav-links a {
     display: flex;
     align-items: center;
@@ -53,6 +96,8 @@ const NAV_OVERLAY_CSS = `
   }
   .site-nav .site-nav-links a.active { background: #f3e8fd; color: #4a148c; }
   .site-nav.open #account-control { display: flex; flex-direction: column; align-items: center; }
+  /* In the full-screen menu the sign-in options open in place. */
+  .account-signin-panel { position: static; margin-top: 10px; box-shadow: none; }
   body.site-nav-locked { overflow: hidden; }
 }`;
 
@@ -73,6 +118,66 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   toggle.addEventListener("click", () => setOpen(!nav.classList.contains("open")));
+
+  // ---- Desktop dropdown mode ----
+  // Wrap each group's links in a .site-nav-menu and give the group a
+  // toggle button. Neither shows unless fitNav() finds the full row
+  // doesn't fit (a laptop-width window); then each group collapses to
+  // "My Membership ▾" and so on. The markup in each page stays the same.
+  const groups = [...nav.querySelectorAll(".site-nav-group")];
+  const closeMenus = except => groups.forEach(g => {
+    if (g === except) return;
+    g.classList.remove("menu-open");
+    g.querySelector(".site-nav-group-toggle")?.setAttribute("aria-expanded", "false");
+  });
+  groups.forEach((group, i) => {
+    const label = group.querySelector(".site-nav-group-label");
+    const menu = document.createElement("span");
+    menu.className = "site-nav-menu";
+    menu.id = `site-nav-menu-${i}`;
+    group.querySelectorAll("a").forEach(a => menu.appendChild(a));
+    group.appendChild(menu);
+    if (menu.querySelector("a.active")) group.classList.add("has-active");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "site-nav-group-toggle";
+    button.textContent = label ? label.textContent : "Menu";
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-controls", menu.id);
+    group.insertBefore(button, menu);
+    button.addEventListener("click", () => {
+      const open = !group.classList.contains("menu-open");
+      closeMenus(group);
+      group.classList.toggle("menu-open", open);
+      button.setAttribute("aria-expanded", String(open));
+    });
+  });
+  document.addEventListener("click", e => { if (!e.target.closest(".site-nav-group")) closeMenus(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeMenus(); });
+
+  const desktop = window.matchMedia("(min-width: 801px)");
+  const links = nav.querySelector(".site-nav-links");
+  const account = document.getElementById("account-control");
+  // The full row fits when every group, and the account control, sits on
+  // the brand's line.
+  function fitNav() {
+    nav.classList.remove("compact");
+    if (!desktop.matches || !groups.length) return;
+    const top = el => el.getBoundingClientRect().top;
+    const rowTop = top(groups[0]);
+    const wraps = groups.some(g => top(g) > rowTop + 4)
+      || links.scrollWidth > links.clientWidth + 1
+      || (account && account.offsetHeight && top(account) > rowTop + 24);
+    if (wraps) nav.classList.add("compact");
+    else closeMenus();
+  }
+  let fitFrame = 0;
+  const scheduleFit = () => { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(fitNav); };
+  window.addEventListener("resize", scheduleFit);
+  // The account control fills in after auth loads, and fonts can change widths.
+  if (account) new MutationObserver(scheduleFit).observe(account, { childList: true });
+  document.fonts?.ready.then(scheduleFit);
+  fitNav();
 
   // Close after tapping a link so the menu doesn't stay open into the next
   // page load -- state doesn't actually persist across navigation, but
