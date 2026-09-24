@@ -321,7 +321,16 @@ with the 5 events above selected.
 
 ---
 
-## Phase 5 — Testing (test mode, before touching anything real)
+## Phase 5 — Testing (test mode, before touching anything real) — **Passed 2026-09-24**
+
+Run with Managed Payments on and the test $25 tax-inclusive Price
+(`price_1UJHbV0R8PeF3sQTgFMWWeV8`, Product tax code `txcd_10103000`):
+checkout showed 7 days free then $25/yr, Link as seller and a promo-code
+box; the webhook stored `trialing` with the trial-end date; a second
+checkout was refused (409); the Customer Portal canceled a Managed Payments
+subscription and the row showed `cancel_at_period_end: true`. Live Price:
+`price_1UJHLZ0R8PeF3sQT42AnY8lE`.
+
 
 1. Install the Stripe CLI, `stripe login`.
 2. `stripe listen --forward-to <deployed-or-local-webhook-url>` to receive
