@@ -499,6 +499,7 @@ function injectEmailCodeStyles() {
   margin: 0 auto 16px;
   line-height: 1.5;
 }
+.membership-gate .dvcop { margin-bottom: 16px; }
 .membership-gate-btn {
   border: 0;
   border-radius: 999px;
@@ -836,10 +837,13 @@ const getTripDeductionHistory = () => readOwnRows("trip_deductions", "trip_deduc
 // doesn't exist yet reads as { missing: true } -- "not set up yet", not a
 // failed read or an empty history. Any other failure is reported through
 // readFailed(name).
+function isMissingTableError(error) {
+  return !!error && (error.code === "42P01" || error.code === "PGRST205" || /does not exist|could not find the table/i.test(error.message));
+}
 async function readOptionalTable(table) {
   if (!configured || !currentSession || !(await hasMembership())) return { rows: [], missing: false };
   const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false });
-  if (error && (error.code === "42P01" || error.code === "PGRST205" || /does not exist|could not find the table/i.test(error.message))) {
+  if (isMissingTableError(error)) {
     noteRead(table, null);
     return { rows: [], missing: true };
   }
@@ -848,6 +852,27 @@ async function readOptionalTable(table) {
   return { rows: error ? [] : data, missing: false };
 }
 const getBookingCancellations = () => readOptionalTable("booking_cancellations");
+
+// "Download my data" (My Contracts, dvc-data-export.js). Deliberately NOT
+// behind hasMembership(): an owner whose membership has ended can still
+// take their own records with them. Every read runs as the signed-in user
+// with the public anon key, so each table's row-level security returns only
+// that owner's rows -- the same policies every other read relies on, no
+// service role. Only reads; a failure is reported per table, never retried
+// into a partial result. tables: table names to read.
+async function readOwnerExport(tables) {
+  if (!configured || !currentSession) return { error: "Not signed in" };
+  const reads = {};
+  await Promise.all([
+    supabase.from("profiles").select("*").eq("id", currentSession.user.id).maybeSingle()
+      .then(({ data, error }) => { reads.profile = { row: data, error: error?.message || null }; },
+        e => { reads.profile = { row: null, error: e?.message || "failed" }; }),
+    ...tables.map(table => supabase.from(table).select("*").then(({ data, error }) => {
+      reads[table] = isMissingTableError(error) ? { rows: [], missing: true, error: null } : { rows: data || [], missing: false, error: error?.message || null };
+    }, e => { reads[table] = { rows: [], missing: false, error: e?.message || "failed" }; })),
+  ]);
+  return { reads };
+}
 
 async function deleteContractYearPoints(id) {
   if (!configured || !currentSession) return { error: "Not signed in" };
@@ -1029,14 +1054,18 @@ function hasMembership() {
 }
 
 // The upsell a gated page shows in place of its owner content. Reuses the
-// page's own .gate card so it matches that page's sign-in gate.
-function renderMembershipGate(container, { title, body }) {
+// page's own .gate card so it matches that page's sign-in gate. preview:
+// also show the labeled example dashboard (dvc-owner-preview.js, when the
+// page loads it) -- Home and My Contracts, the contract-management gates.
+function renderMembershipGate(container, { title, body, preview = false }) {
   injectEmailCodeStyles();
+  const example = preview && window.DVCOwnerPreview ? window.DVCOwnerPreview.render() : "";
   container.innerHTML = `
     <div class="gate membership-gate">
       <div class="membership-gate-eyebrow">Active Member</div>
       <h3 class="membership-gate-title">${title}</h3>
       <p>${body}</p>
+      ${example}
       <button type="button" class="membership-gate-btn" data-membership-upgrade>Start 7-day free trial</button>
       <div class="membership-gate-fine">Then $49.99/yr. Cancel anytime.</div>
       <div class="membership-gate-error" role="alert" hidden></div>
@@ -1446,6 +1475,7 @@ window.DVCAuth = {
   getPointReconciliations,
   getTripDeductionHistory,
   getBookingCancellations,
+  readOwnerExport,
   deleteContractYearPoints,
   getUserBadges,
   upsertUserBadge,

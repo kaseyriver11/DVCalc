@@ -131,6 +131,7 @@ function renderAttentionCard(contracts, yearPointsByContract) {
     formatDate: formatDeadlineDate,
     describe: window.DVCPointAttention.describe,
     total: window.DVCPointAttention.timeline(contracts, yearPointsByContract, today).length,
+    todayMs: dateOnlyUTC(today.year, today.month, today.day),
   });
   if (!card) {
     container.innerHTML = "";
@@ -143,6 +144,7 @@ function renderAttentionCard(contracts, yearPointsByContract) {
         <div class="attention-title" id="attention-title">${card.title}</div>
         ${card.detail ? `<div class="attention-detail">${card.detail}</div>` : ""}
         ${card.note ? `<div class="attention-note">${card.note}</div>` : ""}
+        ${card.check ? `<div class="attention-check"><span>${card.check.note}.</span> <a href="${card.check.href}">${card.check.label}</a></div>` : ""}
       </div>
       <div class="attention-links">
         <a class="attention-action" href="${card.action.href}">${card.action.label} &rarr;</a>
@@ -186,6 +188,11 @@ function renderContractsWidget(contracts, yearPointsByContract) {
     name: contractName,
     limit: HOME_CONTRACT_ROWS,
   });
+  // How recently the counted balances were checked against Disney.
+  const fresh = window.DVCHomeSummary.freshnessLine(summary, {
+    todayMs: dateOnlyUTC(today.year, today.month, today.day),
+    formatDate: formatDeadlineDate,
+  });
   const value = cycle => cycle.total == null ? `<span class="missing">Add balance</span>` : `${cycle.total.toLocaleString()} pts`;
   container.innerHTML = `
     <div class="portfolio-headline">
@@ -194,6 +201,7 @@ function renderContractsWidget(contracts, yearPointsByContract) {
         : `<span class="portfolio-total">${summary.total.toLocaleString()}</span><span class="portfolio-label">Recorded points left</span>`}
       ${summary.missing && !summary.allMissing ? `<span class="portfolio-missing">${summary.missing} current balance${summary.missing === 1 ? "" : "s"} needed</span>` : ""}
     </div>
+    ${fresh ? `<p class="portfolio-freshness ${fresh.tone}">${fresh.text}</p>` : ""}
     <ul class="portfolio-rows">
       ${summary.rows.map(row => `<li><a class="portfolio-row" href="${row.href}">
         <span class="portfolio-row-body">
@@ -241,31 +249,41 @@ function renderActions(member) {
 }
 
 // ---- Signed-out / member / load states ------------------------------------
-// One sign-in prompt for the whole dashboard, not one per widget.
-const DASHBOARD_SIGNIN_HTML = `
+// Signed out and non-members see one prompt with a labeled example of the
+// dashboard (dvc-owner-preview.js, shared with the membership gate) in
+// place of the widgets -- empty locked cards would show nothing.
+function dashboardSignInHTML() {
+  return `
   <div class="dashboard-signin-banner">
-    <p>Sign in to see your points and what needs attention.</p>
+    <h2 class="dashboard-signin-title">Record and manage your DVC contracts</h2>
+    <p class="dashboard-signin-body">Keep every contract's points, deadlines and stays together. Sign in to start.</p>
+    ${window.DVCOwnerPreview.render()}
     <div class="dashboard-signin-slot"></div>
   </div>
 `;
-const WIDGET_LOCKED_HTML = `<div class="widget-empty">Sign in above to see this.</div>`;
-const WIDGET_MEMBER_HTML = `<div class="widget-empty">Part of Active Member.</div>`;
+}
 const UNCONFIGURED_HTML = `<div class="widget-empty">Accounts aren't set up on this deployment yet.</div>`;
+
+// The two widgets only make sense with an owner's own data behind them.
+function showDashboard(show) {
+  document.getElementById("home-dashboard").hidden = !show;
+}
 
 function renderNonMember() {
   const top = document.getElementById("home-attention");
   top.innerHTML = `<div class="home-member-gate"></div>`;
   window.DVCAuth.renderMembershipGate(top.firstElementChild, {
-    title: "Your DVC command center",
-    body: "See every contract's points, the next deadline to act on, and your membership's payback in one place.",
+    title: "Record and manage your DVC contracts",
+    body: "See every contract's recorded points, the next deadline to act on, and your membership's payback in one place.",
+    preview: true,
   });
-  document.getElementById("home-contracts-summary").innerHTML = WIDGET_MEMBER_HTML;
-  document.getElementById("home-house-money").innerHTML = WIDGET_MEMBER_HTML;
+  showDashboard(false);
   renderActions(false);
 }
 
 async function renderSignedIn() {
   if (!(await window.DVCAuth.hasMembership())) return renderNonMember();
+  showDashboard(true);
   const [contracts, trips, yearPoints, settings] = await Promise.all([
     window.DVCAuth.getContracts(),
     window.DVCAuth.getTrips(),
@@ -303,14 +321,14 @@ document.addEventListener("click", (e) => {
 });
 
 function renderSignedOut() {
-  document.getElementById("home-attention").innerHTML = DASHBOARD_SIGNIN_HTML;
+  document.getElementById("home-attention").innerHTML = dashboardSignInHTML();
   window.DVCAuth.renderSignInButton(document.querySelector(".dashboard-signin-slot"), "widget-signin-btn", "large");
-  document.getElementById("home-contracts-summary").innerHTML = WIDGET_LOCKED_HTML;
-  document.getElementById("home-house-money").innerHTML = WIDGET_LOCKED_HTML;
+  showDashboard(false);
   renderActions(false);
 }
 
 function renderUnconfigured() {
+  showDashboard(true);
   document.getElementById("home-attention").innerHTML = "";
   document.getElementById("home-contracts-summary").innerHTML = UNCONFIGURED_HTML;
   document.getElementById("home-house-money").innerHTML = UNCONFIGURED_HTML;

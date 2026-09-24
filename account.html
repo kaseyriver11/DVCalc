@@ -952,21 +952,31 @@ body {
 .membership-checkout-banner.success { background: var(--color-primary-tint-bg); color: var(--color-primary); }
 .membership-checkout-banner.cancelled { background: #f0f0f0; color: #666; }
 
-.reminder-offer {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--color-primary-tint-bg);
-  border: 1px solid var(--color-border-light);
-}
-.reminder-offer-icon { font-size: 1.3rem; }
-.reminder-offer-text { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; color: var(--color-text-muted); }
-.reminder-offer-text strong { font-size: 0.88rem; color: var(--color-text); }
-.reminder-offer-actions { display: flex; gap: 8px; align-items: center; }
+/* First-balance reminder offer (dvc-reminder-setup.js). */
+.reminder-setup { margin-bottom: 14px; padding: 14px 16px; border-radius: 12px; background: var(--color-primary-tint-bg); border: 1px solid var(--color-border-light); }
+.reminder-setup h2 { font-size: 1rem; margin: 0; color: var(--color-text); }
+.reminder-setup-sub, .reminder-setup-note { font-size: 0.8rem; color: var(--color-text-muted); margin: 4px 0 10px; line-height: 1.4; }
+.reminder-setup-note { margin: 10px 0; }
+.reminder-setup-options { display: flex; flex-direction: column; gap: 6px; }
+.reminder-setup-option { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 10px; border-radius: 10px; background: var(--color-bg-card); cursor: pointer; }
+.reminder-setup-option input { flex-shrink: 0; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--color-primary); }
+.reminder-setup-option > span { min-width: 0; display: flex; flex-direction: column; gap: 1px; font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.35; }
+.reminder-setup-option strong { font-size: 0.88rem; color: var(--color-text); }
+.reminder-setup-error { font-size: 0.8rem; color: var(--color-danger); margin: 0 0 10px; }
+.reminder-setup.saved { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 0.84rem; color: var(--color-text); }
+.reminder-setup.saved p { flex: 1 1 220px; margin: 0; }
+.reminder-offer-dismiss { min-height: 44px; padding: 0 8px; }
+/* "Check balance with Disney" from Home: that year's Reconcile button. */
+.ledger-secondary-btn.reconcile-callout { box-shadow: 0 0 0 3px var(--color-warning); }
+.reconcile-callout-note { font-size: .8rem; color: var(--color-text); background: var(--color-warning-bg); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+/* Your data: "Download my data". */
+.export-btn { min-height: 44px; padding: 0 18px; border: 1px solid var(--color-primary); border-radius: 10px; background: var(--color-bg-card); color: var(--color-primary); font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; }
+.export-btn:disabled { opacity: .7; cursor: default; }
+.export-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.export-status { font-size: .8rem; color: var(--color-text-muted); margin-top: 8px; }
+.export-status:empty { display: none; }
+.export-status.error { color: var(--color-danger); }
+.reminder-offer-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .reminder-offer-actions .save-btn { width: auto; margin: 0; padding: 8px 16px; }
 .reminder-offer-dismiss { border: 0; background: none; color: var(--color-text-muted); font: inherit; font-size: 0.8rem; cursor: pointer; }
 /* ---- Point actions (Prompt 3): every active contract's current-cycle
@@ -1386,6 +1396,9 @@ body {
   <script src="account-reconcile.js"></script>
   <script src="dvc-ui.js"></script>
   <script src="dvc-pickers.js"></script>
+  <script src="dvc-owner-preview.js"></script>
+  <script src="dvc-reminder-setup.js"></script>
+  <script src="dvc-data-export.js"></script>
   <script>
 const { currentUYYear, todayInEastern, nextDeadlineForUseYear, isBankingWindowOpen, formatDeadlineDate, useYearExpiration, dateOnlyUTC, USE_YEAR_START_MONTH, urgencyTier, expirationTier, formatDeadlineWithCountdown } = window.DVCDates;
 const { initCustomSelect } = window.DVCUI;
@@ -1619,7 +1632,7 @@ function membershipCardState(sub, contracts) {
     return {
       statusClass: "",
       statusText: "Free",
-      detail: "Upgrade to Active Member to connect your own contracts, points ledger, and deadline reminders.",
+      detail: "Upgrade to Active Member to record and manage your contracts, points ledger, and deadline reminders.",
       anchorText: pricingAnchorMicroCopy(contracts),
       buttonText: `Upgrade -- $${MEMBERSHIP_PRICE}/yr`,
       buttonClass: "",
@@ -1794,37 +1807,167 @@ function useYearRangeLabel(useYear, label) {
   return `${fmt(dateOnlyUTC(label, USE_YEAR_START_MONTH[useYear], 1))} – ${fmt(useYearExpiration(useYear, label))}`;
 }
 
-// Email reminders are off by default and otherwise live behind the small
-// bell icon, so once there's a contract to remind about, offer them once.
-const REMINDER_OFFER_DISMISSED_KEY = "dvc_reminder_offer_dismissed";
-function buildReminderOfferHTML(profile, contracts) {
-  if (profile?.reminder_opt_in || !contracts.some(c => c.is_active)) return "";
-  try { if (localStorage.getItem(REMINDER_OFFER_DISMISSED_KEY)) return ""; } catch (_) {}
-  return `
-    <div class="reminder-offer" id="reminder-offer">
-      <span class="reminder-offer-icon" aria-hidden="true">🔔</span>
-      <div class="reminder-offer-text"><strong>Get an email before a deadline</strong><span>We'll email you ${profile?.reminder_lead_days || 14} days before a banking deadline when you've recorded current points you could bank.</span></div>
-      <div class="reminder-offer-actions"><button type="button" class="save-btn" id="reminder-offer-on">Turn on</button><button type="button" class="reminder-offer-dismiss" id="reminder-offer-dismiss">Not now</button></div>
-    </div>`;
+// ---- Reminder offer after a first balance (dvc-reminder-setup.js) ----
+// Shown once, right after the owner saves their first current or next
+// use-year balance -- not merely after adding a contract, since every
+// reminder depends on a recorded balance. Offers the three emails the app
+// already sends, reading and writing the same profile columns as
+// Notification Settings. Dismissed or saved, it doesn't come back.
+let reminderSetupPending = false;  // a first balance was saved this visit
+let reminderSetupScroll = false;   // bring it into view the first time
+let reminderSetupSaved = false;    // show the saved confirmation until closed
+let reminderSetupDraft = null;     // picks kept across a failed save
+let reminderSetupError = "";
+let reminderSetupBusy = false;
+function reminderSetupKey() { return window.DVCReminderSetup.doneKey(window.DVCAuth.getSession()?.user?.id); }
+function reminderSetupDone() { try { return !!localStorage.getItem(reminderSetupKey()); } catch (_) { return false; } }
+function markReminderSetupDone() { try { localStorage.setItem(reminderSetupKey(), "1"); } catch (_) {} }
+
+function buildReminderSetupHTML(profile) {
+  if (reminderSetupSaved) {
+    return `<section class="reminder-setup saved" id="reminder-setup" role="status">
+      <p><strong>Reminder choices saved.</strong> Change them anytime in Notification Settings (the bell next to Your Contracts).</p>
+      <button type="button" class="reminder-offer-dismiss" id="reminder-setup-close">Close</button>
+    </section>`;
+  }
+  if (!window.DVCReminderSetup.shouldOffer({ profile, pending: reminderSetupPending, done: reminderSetupDone() })) return "";
+  const picked = o => reminderSetupDraft ? reminderSetupDraft[o.key] === true : o.checked;
+  return `<section class="reminder-setup" id="reminder-setup" aria-labelledby="reminder-setup-title">
+    <h2 id="reminder-setup-title">Want email reminders?</h2>
+    <p class="reminder-setup-sub">Balance saved. Choose any reminders you'd like, sent to your account email.</p>
+    <div class="reminder-setup-options">
+      ${window.DVCReminderSetup.options(profile).map(o => `<label class="reminder-setup-option"><input type="checkbox" data-reminder-setup="${o.key}" ${picked(o) ? "checked" : ""}><span><strong>${o.label}</strong><span>${o.line}</span></span></label>`).join("")}
+    </div>
+    <p class="reminder-setup-note">Reminder dates come from the use years and balances you record here, so check those against Disney.</p>
+    <p class="reminder-setup-error" id="reminder-setup-error" role="alert"${reminderSetupError ? "" : " hidden"}>${reminderSetupError}</p>
+    <div class="reminder-offer-actions"><button type="button" class="save-btn" id="reminder-setup-save">${reminderSetupError ? "Try again" : "Save reminder choices"}</button><button type="button" class="reminder-offer-dismiss" id="reminder-setup-dismiss">Not now</button></div>
+  </section>`;
 }
-function wireReminderOffer() {
-  const offer = document.getElementById("reminder-offer");
-  if (!offer) return;
-  document.getElementById("reminder-offer-on").addEventListener("click", async (e) => {
-    e.target.disabled = true;
-    e.target.textContent = "Turning on...";
-    const { error } = await window.DVCAuth.updateProfile({ reminder_opt_in: true });
-    if (error) {
-      e.target.disabled = false;
-      e.target.textContent = "Try again";
-      return;
-    }
-    await renderSignedIn();
+
+async function saveReminderSetup() {
+  if (reminderSetupBusy) return;
+  const card = document.getElementById("reminder-setup");
+  const selections = {};
+  card.querySelectorAll("[data-reminder-setup]").forEach(input => { selections[input.dataset.reminderSetup] = input.checked; });
+  reminderSetupDraft = selections;
+  const saveBtn = document.getElementById("reminder-setup-save");
+  const errorEl = document.getElementById("reminder-setup-error");
+  const controls = [...card.querySelectorAll("input, button")];
+  reminderSetupBusy = true;
+  controls.forEach(el => el.disabled = true);
+  saveBtn.textContent = "Saving…";
+  errorEl.hidden = true;
+  let saved = false;
+  try {
+    const { error } = await window.DVCAuth.updateProfile(window.DVCReminderSetup.patch(currentProfile, selections));
+    if (error) throw new Error(error);
+    saved = true;
+  } catch (_) {
+    // Nothing is claimed on: the picks stay, and Save becomes a retry.
+    reminderSetupError = "Couldn't save your reminder choices, so no reminders changed. Your picks are still here.";
+    errorEl.textContent = reminderSetupError;
+    errorEl.hidden = false;
+    saveBtn.textContent = "Try again";
+  } finally {
+    reminderSetupBusy = false;
+    controls.forEach(el => el.disabled = false);
+  }
+  if (!saved) return;
+  markReminderSetupDone();
+  reminderSetupPending = false;
+  reminderSetupDraft = null;
+  reminderSetupError = "";
+  reminderSetupSaved = true;
+  // Re-reads the profile, so Notification Settings shows the same choices.
+  await renderSignedIn();
+}
+
+function wireReminderSetup() {
+  const card = document.getElementById("reminder-setup");
+  if (!card) return;
+  if (reminderSetupScroll) {
+    reminderSetupScroll = false;
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  document.getElementById("reminder-setup-save")?.addEventListener("click", saveReminderSetup);
+  document.getElementById("reminder-setup-dismiss")?.addEventListener("click", () => {
+    markReminderSetupDone();
+    reminderSetupPending = false;
+    reminderSetupDraft = null;
+    reminderSetupError = "";
+    card.remove();
   });
-  document.getElementById("reminder-offer-dismiss").addEventListener("click", () => {
-    try { localStorage.setItem(REMINDER_OFFER_DISMISSED_KEY, "1"); } catch (_) {}
-    offer.remove();
+  document.getElementById("reminder-setup-close")?.addEventListener("click", () => {
+    reminderSetupSaved = false;
+    card.remove();
   });
+}
+
+// ---- "Check balance with Disney" from Home ----
+// Home links here with ?contract=&year=&check=disney when a near deadline's
+// balance is unchecked or stale. The contract and year are already chosen
+// from the URL; this brings that year's Reconcile with Disney button
+// forward, once per visit. It doesn't open the sheet by itself.
+let reconcileCalloutShown = false;
+function bringReconcileForward() {
+  if (reconcileCalloutShown || new URLSearchParams(window.location.search).get("check") !== "disney") return;
+  reconcileCalloutShown = true;
+  const btn = document.querySelector(`#active-contract-details [data-reconcile="${activeLedgerYearTab}"]`);
+  if (!btn) return;
+  btn.classList.add("reconcile-callout");
+  btn.closest(".ledger-secondary")?.insertAdjacentHTML("beforebegin", `<p class="reconcile-callout-note">Open Disney's member site, then tap Reconcile with Disney to compare this balance.</p>`);
+  btn.scrollIntoView({ block: "center" });
+  btn.focus({ preventScroll: true });
+}
+
+// ---- Your data: "Download my data" (dvc-data-export.js) ----
+// Available to every signed-in owner, member or not: DVCAuth.readOwnerExport()
+// reads under row-level security without the membership gate. All or
+// nothing -- a failed read makes no file.
+const YOUR_DATA_HTML = `
+    <section class="section your-data" aria-labelledby="your-data-title">
+      <h2 id="your-data-title">Your data</h2>
+      <div class="section-sub">Download a copy of what you've recorded here: contracts, use-year balances, point activity, checks against Disney, bookings and saved itineraries. The file contains your personal contract and stay details, so keep it somewhere private.</div>
+      <button type="button" class="export-btn" id="download-data">Download my data</button>
+      <p class="export-status" id="export-status" role="status" aria-live="polite"></p>
+    </section>
+`;
+let exportBusy = false;
+async function handleDownloadData() {
+  if (exportBusy) return;
+  const btn = document.getElementById("download-data");
+  const status = document.getElementById("export-status");
+  exportBusy = true;
+  btn.disabled = true;
+  btn.textContent = "Preparing your file…";
+  status.textContent = "";
+  status.classList.remove("error");
+  let ok = false;
+  try {
+    const result = await window.DVCAuth.readOwnerExport(window.DVCDataExport.COLLECTIONS.map(c => c.table));
+    if (result.error) throw new Error(result.error);
+    const now = new Date();
+    const built = window.DVCDataExport.build(result.reads, now);
+    if (built.error) throw new Error(built.error);
+    const name = window.DVCDataExport.fileName(now);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(built.data, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    status.textContent = `Downloaded ${name}.`;
+    ok = true;
+  } catch (_) {
+    status.textContent = "Couldn't read all of your records, so no file was made. Nothing has changed. Try again.";
+    status.classList.add("error");
+  } finally {
+    exportBusy = false;
+    btn.disabled = false;
+    btn.textContent = ok ? "Download my data" : "Try again";
+  }
 }
 
 // Collapsed by default: a destructive action shouldn't be one of the most
@@ -1842,13 +1985,16 @@ async function renderSignedIn() {
     pageContent.innerHTML = `
       ${buildCheckoutReturnBannerHTML()}
       <div id="membership-gate"></div>
+      ${YOUR_DATA_HTML}
       ${DANGER_ZONE_HTML}
     `;
     window.DVCAuth.renderMembershipGate(document.getElementById("membership-gate"), {
       title: "Track your contracts, points and deadlines",
-      body: "Add your DVC contracts to see what's left in each use year, get banking and expiration reminders, record banking and borrowing, and book on the calendar as your own contract. Anything you've already saved stays put.",
+      body: "Record your DVC contracts and balances to see what's left in each use year, get banking and expiration reminders, record banking and borrowing, and book on the calendar as your own contract. Anything you've already saved stays put.",
+      preview: true,
     });
     document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
+    document.getElementById("download-data").addEventListener("click", handleDownloadData);
     handleCheckoutReturn();
     return;
   }
@@ -1896,7 +2042,7 @@ async function renderSignedIn() {
     ${buildCheckoutReturnBannerHTML()}
     ${buildMembershipCardHTML(subscription, contracts)}
     ${inAppEnabled ? buildPointActionsHTML(contracts, yearPointsByContract, today) : ""}
-    ${buildReminderOfferHTML(profile, contracts)}
+    ${buildReminderSetupHTML(profile)}
 
     <div class="modal-overlay" id="notif-settings-modal">
       <div class="modal-box">
@@ -2052,6 +2198,7 @@ async function renderSignedIn() {
 
     <div id="active-contract-details"></div>
 
+    ${YOUR_DATA_HTML}
     ${DANGER_ZONE_HTML}
   `;
 
@@ -2117,6 +2264,7 @@ async function renderSignedIn() {
   // same as every other Step 3 field that feeds the card face.
   document.getElementById("f-acquisition-year").addEventListener("input", updateModalCardPreview);
   document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
+  document.getElementById("download-data").addEventListener("click", handleDownloadData);
 
   // Notification Settings modal -- same open/close/backdrop-click
   // conventions as the Card Studio modal above.
@@ -2129,7 +2277,8 @@ async function renderSignedIn() {
   document.getElementById("notif-settings-save").addEventListener("click", saveNotificationSettings);
 
   document.getElementById("membership-action-btn").addEventListener("click", handleMembershipAction);
-  wireReminderOffer();
+  wireReminderSetup();
+  bringReconcileForward();
   handleCheckoutReturn();
   // Home's "View all point actions" link: the list renders after load, so
   // the browser's own anchor jump has already missed it. Once per visit.
@@ -2767,6 +2916,7 @@ let balanceSetupContract = null;
 let balanceSetupBusy = false;
 let balanceSetupSaved = new Map();
 let balanceSetupFailed = false;
+let balanceSetupRowsBefore = {};
 function balanceSetupHTML() {
   return `<div class="modal-overlay" id="balance-setup-modal"><div class="modal-box balance-setup-box" role="dialog" aria-modal="true" aria-labelledby="balance-setup-title">
     <div class="modal-header"><h3 id="balance-setup-title">What points do you have left?</h3><button type="button" class="modal-close" id="balance-setup-close" aria-label="Close balance setup" onclick="closeBalanceSetup()">&times;</button></div>
@@ -2782,6 +2932,9 @@ function openBalanceSetup(contractId, selectedYear, adjusting = false, explicitY
   if (!balanceSetupContract) return;
   balanceSetupSaved = new Map();
   balanceSetupFailed = false;
+  // The ledger as it was before this sheet saved anything: decides whether
+  // a save here is the owner's first balance (the reminder offer).
+  balanceSetupRowsBefore = JSON.parse(JSON.stringify(balanceSetupRows));
   const c = balanceSetupContract;
   const current = currentUYYear(c.use_year, todayInEastern());
   const first = selectedYear && selectedYear !== current ? selectedYear : current;
@@ -2849,6 +3002,13 @@ function skipBalanceYear(year) {
 async function closeBalanceSetup() {
   if (balanceSetupBusy) return;
   document.getElementById('balance-setup-modal').classList.remove('open');
+  // Any year this sheet actually stored counts, even if a later year failed.
+  const saved = [...balanceSetupSaved.keys()].map(year => ({ contractId: balanceSetupContract?.id, year }));
+  if (saved.length && window.DVCReminderSetup?.isFirstBalance(balanceSetupContracts, balanceSetupRowsBefore, saved, c => currentUYYear(c.use_year, todayInEastern()))) {
+    reminderSetupPending = true;
+    reminderSetupScroll = true;
+  }
+  balanceSetupSaved = new Map();
   await renderSignedIn();
 }
 async function saveBalanceSetup() {

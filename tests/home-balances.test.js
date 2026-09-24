@@ -15,7 +15,7 @@ function setup(today = { year: 2026, month: 9, day: 22 }) {
     document: { getElementById: () => container } });
   for (const f of ['dvc-dates.js', 'dvc-point-attention.js', 'dvc-home-summary.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
   c.window.DVCHomeSummary = c.window.DVCHomeSummary || require('../dvc-home-summary.js');
-  vm.runInContext(`const currentUYYear = window.DVCDates.currentUYYear; const todayInEastern = () => (${JSON.stringify(today)});
+  vm.runInContext(`const { currentUYYear, dateOnlyUTC, formatDeadlineDate } = window.DVCDates; const todayInEastern = () => (${JSON.stringify(today)});
     const HOME_CONTRACT_ROWS = 3;` + fn('resortName') + fn('contractName') + fn('renderContractsWidget'), c);
   return (contracts, rows) => { c.renderContractsWidget(contracts, rows); return container.innerHTML; };
 }
@@ -110,4 +110,46 @@ test('zero contracts: Membership Value asks for a contract, not a booking', () =
 
 test('Home hides the action row only for a successful empty read, not a failed one', () => {
   assert.ok(source.includes('if (!contractsFailed && contracts.length === 0) document.getElementById("home-actions").innerHTML = "";\n  else renderActions(true);'));
+});
+
+// ---- How recently the counted balances were checked against Disney ----
+const checked = (label, when, b = {}) => row(label, { last_checked_against_disney_at: when, ...b });
+
+test('every counted balance checked: shows the oldest check date, never "verified"', () => {
+  const html = setup()([contract('a'), contract('b')], {
+    a: [checked(2025, '2026-09-10T15:00:00Z', { points_remaining: 10 })],
+    b: [checked(2025, '2026-09-01T15:00:00Z', { points_remaining: 20 })],
+  });
+  assert.match(html, /portfolio-freshness checked">Checked against Disney &middot; oldest check Sep 1, 2026</);
+  assert.doesNotMatch(html, /verified/i);
+});
+
+test('a balance never checked is counted, not hidden behind the others', () => {
+  const html = setup()([contract('a'), contract('b'), contract('c')], {
+    a: [checked(2025, '2026-09-10T15:00:00Z', { points_remaining: 10 })],
+    b: [row(2025, { points_remaining: 20 })],
+    c: [row(2025, { points_remaining: 5 })],
+  });
+  assert.match(html, /portfolio-freshness unchecked">2 balances haven't been checked against Disney</);
+  assert.doesNotMatch(html, /oldest check/);
+  const one = setup()([contract('a')], { a: [row(2025, { points_remaining: 10 })] });
+  assert.match(one, /1 balance hasn't been checked against Disney/);
+});
+
+test('a stale check is flagged; missing balances never count toward freshness', () => {
+  const html = setup()([contract('a'), contract('b')], {
+    a: [checked(2025, '2026-07-01T15:00:00Z', { points_remaining: 10 })],
+    // b has no current balance: it's "needed", not "unchecked".
+  });
+  assert.match(html, /portfolio-freshness stale">Checked against Disney Jul 1, 2026</);
+  assert.match(html, /1 current balance needed/);
+  const none = setup()([contract('a')], {});
+  assert.doesNotMatch(none, /portfolio-freshness/);
+});
+
+test('a failed read shows Retry and no freshness claim', () => {
+  const signedIn = fn('renderSignedIn');
+  assert.match(signedIn, /if \(contractsFailed\) \{[^}]*loadErrorHTML\("your contracts"\)/);
+  // Freshness only renders inside renderContractsWidget, which a failed read never reaches.
+  assert.ok(signedIn.indexOf('renderContractsWidget') > signedIn.indexOf('} else {'));
 });
