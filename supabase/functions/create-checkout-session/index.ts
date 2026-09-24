@@ -60,9 +60,16 @@ Deno.serve(async (req) => {
     // one Customer instead of fragmenting across resubscribes.
     const { data: existing } = await supabase
       .from("subscriptions")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, status")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    // One membership per owner: a second checkout would start a second
+    // subscription and charge twice. The page only offers Upgrade to
+    // non-members; this covers a stale tab or a direct call.
+    if (["active", "trialing", "past_due"].includes(existing?.status as string)) {
+      return json({ error: "You already have a membership. Use Manage Membership on My Contracts to change it." }, 409);
+    }
 
     let customerId = existing?.stripe_customer_id as string | undefined;
     if (!customerId) {

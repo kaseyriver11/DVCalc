@@ -28,16 +28,17 @@ type SupabaseClient = any;
 async function upsertFromSubscription(supabase: SupabaseClient, sub: Stripe.Subscription, fallbackUserId?: string) {
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
 
-  let userId = fallbackUserId;
-  if (!userId) {
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("user_id")
-      .eq("stripe_customer_id", customerId)
-      .maybeSingle();
-    userId = data?.user_id;
-  }
+  const { data: row } = await supabase
+    .from("subscriptions")
+    .select("user_id, stripe_subscription_id, status")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  const userId = fallbackUserId ?? row?.user_id;
   if (!userId) return; // No known mapping yet -- nothing to attach this event to.
+  // The row tracks one subscription. Events for a different one (e.g. an
+  // older subscription winding down) can't overwrite a membership that's
+  // still live; they only take over once the one on file has ended.
+  if (row?.stripe_subscription_id && row.stripe_subscription_id !== sub.id && LIVE_STATUSES.has(row.status)) return;
 
   await supabase.from("subscriptions").upsert(
     {
@@ -60,6 +61,16 @@ async function upsertFromSubscription(supabase: SupabaseClient, sub: Stripe.Subs
     },
     { onConflict: "user_id" },
   );
+}
+
+const LIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+// Which subscription an invoice bills: top-level before 2025-03-31.basil,
+// under parent.subscription_details after.
+// deno-lint-ignore no-explicit-any
+function invoiceSubscriptionId(invoice: any): string | null {
+  const s = invoice.parent?.subscription_details?.subscription ?? invoice.subscription;
+  return typeof s === "string" ? s : s?.id ?? null;
 }
 
 // deno-lint-ignore no-explicit-any
@@ -110,12 +121,13 @@ Deno.serve(async (req) => {
       break;
     }
     case "customer.subscription.deleted": {
+      // Only the subscription on file: ending an older one mustn't cancel
+      // the membership that replaced it.
       const sub = event.data.object as Stripe.Subscription;
-      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
       await supabase
         .from("subscriptions")
         .update({ status: "canceled", updated_at: new Date().toISOString() })
-        .eq("stripe_customer_id", customerId);
+        .eq("stripe_subscription_id", sub.id);
       break;
     }
     case "invoice.payment_failed": {
@@ -124,7 +136,13 @@ Deno.serve(async (req) => {
       // Stripe auto-retries a few times before actually canceling -- see
       // docs/subscriptions_plan.md Phase 7 for a possible grace period
       // before this status would ever gate a feature off.
-      if (customerId) {
+      const subId = invoiceSubscriptionId(invoice);
+      if (subId) {
+        await supabase
+          .from("subscriptions")
+          .update({ status: "past_due", updated_at: new Date().toISOString() })
+          .eq("stripe_subscription_id", subId);
+      } else if (customerId) {
         await supabase
           .from("subscriptions")
           .update({ status: "past_due", updated_at: new Date().toISOString() })
