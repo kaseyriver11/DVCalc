@@ -380,6 +380,29 @@ with no way to subscribe. Flip both to `true` as part of Phase 6.
   their own rows directly. Server-side enforcement would mean adding a
   membership check to the owner-table RLS policies.
 
+## Complimentary memberships (live since 2026-09-24)
+
+For testers and friends: no card, no Stripe. The person signs in once
+(Google or email code) so they have an account, then run this in the
+Supabase SQL editor with their email:
+
+```sql
+insert into subscriptions (user_id, stripe_customer_id, status)
+select id, 'comp:' || id, 'active' from auth.users where email = 'friend@example.com'
+on conflict (user_id) do update
+  set stripe_customer_id = excluded.stripe_customer_id, status = 'active',
+      stripe_subscription_id = null, price_id = null, current_period_end = null,
+      cancel_at_period_end = false, updated_at = now();
+```
+
+To end one: `update subscriptions set status = 'canceled' where stripe_customer_id like 'comp:%' and user_id = (select id from auth.users where email = '...');`
+
+The `comp:` prefix is what My Contracts reads to show "Complimentary membership"
+with no Manage button (nothing in Stripe to manage), and the webhook never
+touches these rows. Comps don't expire on their own. A comped member who
+later wants to pay can't check out while the comp is active (one membership
+per owner), so cancel the comp first.
+
 ## Phase 7 — Later / optional
 
 - Wire `subscriptions.status = 'active'` into the "Active Member Pass"
