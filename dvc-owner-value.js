@@ -8,6 +8,10 @@
 // paid to date (contracts.financing_interest_paid, migration 029), if any.
 // The purchase price is the loan principal, so interest never counts it
 // twice. Future years use projected dues.
+//
+// A sold or ended contract (contracts.ended_on, migration 030) stops paying
+// dues after its end year, and what the owner got back (sale_proceeds, net
+// of fees) comes off what ownership has cost.
 (function () {
   function create(tripCashValue) {
 const FALLBACK_PRICE_PER_POINT = 140;
@@ -31,9 +35,46 @@ function contractInterestPaid(c) {
 }
 
 // One calendar year's dues: the published rate, projected after this year.
+// A year past the last one in DUES_HISTORY is projected too, even once it's
+// here -- getDuesForYear() would otherwise quietly hand back the last
+// published rate as if it were that year's.
+function lastPublishedDuesYear(resortId) {
+  const history = DUES_HISTORY[resortId];
+  return history ? Math.max(...Object.keys(history).map(Number)) : null;
+}
 function duesForYear(c, year, currentYear, duesGrowthRate) {
-  if (year > currentYear) return { amount: c.points_per_year * projectedDuesForYear(c.home_resort_id, year, duesGrowthRate), source: "projected" };
+  const lastKnown = lastPublishedDuesYear(c.home_resort_id);
+  if (year > currentYear || (lastKnown != null && year > lastKnown)) {
+    return { amount: c.points_per_year * projectedDuesForYear(c.home_resort_id, year, duesGrowthRate), source: "projected" };
+  }
   return { amount: getDuesForYear(c.home_resort_id, year) * c.points_per_year, source: "published" };
+}
+
+// The calendar year a sold/ended contract stopped (ended_on), or null.
+function contractEndYear(c) {
+  return c.ended_on ? parseInt(String(c.ended_on).slice(0, 4), 10) : null;
+}
+
+// What the owner got back selling it, net of fees (0 if none entered).
+function contractSaleProceeds(c) {
+  const n = Number(c.sale_proceeds);
+  return c.ended_on && Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+// Whether a contract was held (and paid dues) in a calendar year. An
+// inactive contract with no end date keeps counting through this year,
+// since nothing says when it stopped.
+function contractOwnedInYear(c, year, currentYear) {
+  if (contractOwnershipStartYear(c) > year || contractExpiredBy(c, year)) return false;
+  const end = contractEndYear(c);
+  if (end != null) return year <= end;
+  return c.is_active || year <= currentYear;
+}
+
+// The last calendar year dues have been paid through, as of this year.
+function contractLastPaidYear(c, currentYear) {
+  const end = contractEndYear(c);
+  return end != null ? Math.min(end, currentYear) : currentYear;
 }
 
 function contractOwnershipStartYear(c) {
@@ -55,7 +96,7 @@ function contractDuesPaidToDate(c) {
   const currentYear = new Date().getFullYear();
   const startYear = contractOwnershipStartYear(c);
   let total = 0;
-  for (let y = startYear; y <= currentYear; y++) {
+  for (let y = startYear; y <= contractLastPaidYear(c, currentYear); y++) {
     total += duesForYear(c, y, currentYear, 0).amount;
   }
   return total;
@@ -68,15 +109,16 @@ function contractCostBreakdown(c) {
   const startYear = contractOwnershipStartYear(c);
   const years = [];
   let duesTotal = 0;
-  for (let y = startYear; y <= currentYear; y++) {
+  for (let y = startYear; y <= contractLastPaidYear(c, currentYear); y++) {
     const d = duesForYear(c, y, currentYear, 0);
-    years.push({ year: y, dues: d.amount, publishedRate: getDuesForYear(c.home_resort_id, y) });
+    years.push({ year: y, dues: d.amount, rate: d.amount / c.points_per_year, rateSource: d.source });
     duesTotal += d.amount;
   }
   const initial = contractInitialCostBreakdown(c);
   const interest = contractInterestPaid(c);
-  return { contract: c, startYear, startEstimated: !c.purchase_date, years, duesTotal, interest,
-    ...initial, totalToDate: initial.total + duesTotal + interest };
+  const saleProceeds = contractSaleProceeds(c);
+  return { contract: c, startYear, startEstimated: !c.purchase_date, endYear: contractEndYear(c), years, duesTotal, interest,
+    saleProceeds, ...initial, totalToDate: initial.total + duesTotal + interest - saleProceeds };
 }
 
 function projectedDuesForYear(resortId, year, duesGrowthRate) {
@@ -98,7 +140,15 @@ function contractBaselinePotentialValue(c, year, yearsFromNow, settings) {
   return Math.max(0, grossValue - dues);
 }
 
-function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings) {
+// Points held in a calendar year across the given contracts.
+function pointsOwnedInYear(contracts, year, currentYear) {
+  return contracts.reduce((sum, c) => sum + (contractOwnedInYear(c, year, currentYear) ? c.points_per_year : 0), 0);
+}
+
+// paceValuePerPoint: logged value per point-year owned, or null before trip
+// history counts. Projected years scale it by the points still held that
+// year and grow it at the vacation-value rate, like the contract baseline.
+function buildHouseMoneySeries(contracts, trips, paceValuePerPoint, currentYear, settings) {
   if (contracts.length === 0) return null;
   const activeContracts = contracts.filter(c => c.is_active);
   const startYear = contracts.reduce((min, c) => Math.min(min, contractOwnershipStartYear(c)), currentYear);
@@ -141,10 +191,10 @@ function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentY
       }
     }
     for (const c of contracts) {
-      const ownedThisYear = contractOwnershipStartYear(c) <= y
-        && !contractExpiredBy(c, y)
-        && (c.is_active || y <= currentYear);
-      if (!ownedThisYear) continue;
+      if (contractEndYear(c) === y) cumOutlay -= contractSaleProceeds(c);
+    }
+    for (const c of contracts) {
+      if (!contractOwnedInYear(c, y, currentYear)) continue;
       const dues = duesForYear(c, y, currentYear, settings.dues_growth_rate).amount;
       cumOutlay += dues;
       duesThisYear += dues;
@@ -156,15 +206,22 @@ function buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentY
       valueThisYear = tripValueByYear[y] || 0;
     } else {
       const yearsFromNow = y - currentYear;
-      const yearBaseline = activeContracts
-        .filter(c => !contractExpiredBy(c, y))
-        .reduce((sum, c) => sum + contractBaselineGrossValue(c, yearsFromNow, settings), 0);
-      valueThisYear = paceReady ? (actualPace + yearBaseline) / 2 : yearBaseline;
+      const held = activeContracts.filter(c => contractOwnedInYear(c, y, currentYear));
+      const yearBaseline = held.reduce((sum, c) => sum + contractBaselineGrossValue(c, yearsFromNow, settings), 0);
+      if (paceValuePerPoint != null) {
+        const heldPoints = held.reduce((sum, c) => sum + c.points_per_year, 0);
+        const tripPace = paceValuePerPoint * heldPoints * Math.pow(1 + settings.value_growth_rate, yearsFromNow);
+        valueThisYear = (tripPace + yearBaseline) / 2;
+      } else {
+        valueThisYear = yearBaseline;
+      }
     }
     cumValue += valueThisYear;
 
-    const yearsFromStart = y - startYear;
-    const grossRoomCost = pointsThisYear * settings.point_value_baseline * Math.pow(1 + settings.value_growth_rate, yearsFromStart);
+    // The invested-instead fund buys the same rooms at the same $/pt as the
+    // value line: today's setting grown (or, for past years, shrunk) from
+    // this year, not from the purchase year.
+    const grossRoomCost = pointsThisYear * settings.point_value_baseline * Math.pow(1 + settings.value_growth_rate, y - currentYear);
     const netVacationWithdrawal = Math.max(0, grossRoomCost - duesThisYear);
     if (fund > 0) fund *= 1 + settings.opportunity_cost_rate;
     fund -= netVacationWithdrawal;
@@ -190,6 +247,7 @@ function computeHouseMoneyStats(contracts, trips, settings) {
   let totalPurchasePrice = 0;
   let totalDuesPaid = 0;
   let totalInterestPaid = 0;
+  let totalSaleProceeds = 0;
   let earliestStartYear = currentYear;
   // Which figures are estimated rather than entered by the owner.
   const costSources = { estimatedPrices: 0, estimatedStarts: 0 };
@@ -198,12 +256,13 @@ function computeHouseMoneyStats(contracts, trips, settings) {
     totalPurchasePrice += b.price;
     totalDuesPaid += b.duesTotal;
     totalInterestPaid += b.interest;
+    totalSaleProceeds += b.saleProceeds;
     earliestStartYear = Math.min(earliestStartYear, b.startYear);
     if (b.priceSource === "estimated") costSources.estimatedPrices++;
     if (b.startEstimated) costSources.estimatedStarts++;
   }
   const totalInitialCost = totalPurchasePrice;
-  const totalOutlay = totalInitialCost + totalDuesPaid + totalInterestPaid;
+  const totalOutlay = totalInitialCost + totalDuesPaid + totalInterestPaid - totalSaleProceeds;
 
   let lifetimeValue = 0;
   let tripsWithValue = 0;
@@ -221,13 +280,18 @@ function computeHouseMoneyStats(contracts, trips, settings) {
   const paybackPct = totalOutlay > 0 ? Math.min(100, Math.floor((lifetimeValue / totalOutlay) * 100)) : 0;
   const remaining = Math.max(0, totalOutlay - lifetimeValue);
 
-  const actualPace = tripsWithValue > 0
-    ? Math.max(lifetimeValue / yearsOwned, lifetimeValue / tripsWithValue)
-    : 0;
+  // Trip pace is logged value per point-year actually owned -- not per trip,
+  // which read one big stay as that much every year -- stated at this
+  // year's holdings.
+  let pointYearsOwned = 0;
+  for (let y = earliestStartYear; y <= currentYear; y++) pointYearsOwned += pointsOwnedInYear(contracts, y, currentYear);
+  const paceValuePerPoint = tripsWithValue > 0 && pointYearsOwned > 0 ? lifetimeValue / pointYearsOwned : 0;
+  const activeHeld = contracts.filter(c => c.is_active && contractOwnedInYear(c, currentYear, currentYear));
+  const actualPace = paceValuePerPoint * activeHeld.reduce((sum, c) => sum + c.points_per_year, 0);
 
-  const baselinePotential = contracts
-    .filter(c => c.is_active)
-    .reduce((sum, c) => sum + contractBaselinePotentialValue(c, currentYear, 0, settings), 0);
+  // Value before dues, like the chart's value line (where dues count as
+  // cost), so the pace and the chart measure the same thing.
+  const baselinePotential = activeHeld.reduce((sum, c) => sum + contractBaselineGrossValue(c, 0, settings), 0);
 
   // Trip history only earns a say in the projection once it covers at least
   // one full year of the owner's points. Before that, a new owner's first
@@ -245,7 +309,7 @@ function computeHouseMoneyStats(contracts, trips, settings) {
     velocitySource = baselinePotential > 0 ? "blended" : "trips";
   }
 
-  const series = buildHouseMoneySeries(contracts, trips, paceReady, actualPace, currentYear, settings);
+  const series = buildHouseMoneySeries(contracts, trips, paceReady ? paceValuePerPoint : null, currentYear, settings);
   let estimatedHouseMoneyDate = null;
   const projectedIndex = series ? series.years.findIndex((year, i) => year > currentYear && series.value[i] >= series.outlay[i]) : -1;
   if (paybackPct < 100 && annualVelocity > 0 && projectedIndex >= 0) {
@@ -261,7 +325,7 @@ function computeHouseMoneyStats(contracts, trips, settings) {
   }
 
   return {
-    totalPurchasePrice, totalInitialCost, totalDuesPaid, totalInterestPaid, totalOutlay, lifetimeValue,
+    totalPurchasePrice, totalInitialCost, totalDuesPaid, totalInterestPaid, totalSaleProceeds, totalOutlay, lifetimeValue,
     costSources, perContract,
     paybackPct, remaining, yearsOwned, actualPace, baselinePotential, annualVelocity, velocitySource,
     estimatedHouseMoneyDate, series, settings,
@@ -271,7 +335,7 @@ function computeHouseMoneyStats(contracts, trips, settings) {
 }
 
 
-return { contractInitialCostBreakdown, contractInitialCost, contractInterestPaid, contractOwnershipStartYear, contractDeedExpirationYear, contractExpiredBy, contractDuesPaidToDate, contractCostBreakdown, duesForYear, projectedDuesForYear, contractBaselineGrossValue, contractBaselinePotentialValue, buildHouseMoneySeries, computeHouseMoneyStats };
+return { FALLBACK_PRICE_PER_POINT, contractEndYear, contractSaleProceeds, contractOwnedInYear, contractInitialCostBreakdown, contractInitialCost, contractInterestPaid, contractOwnershipStartYear, contractDeedExpirationYear, contractExpiredBy, contractDuesPaidToDate, contractCostBreakdown, duesForYear, projectedDuesForYear, contractBaselineGrossValue, contractBaselinePotentialValue, buildHouseMoneySeries, computeHouseMoneyStats };
 }
 window.DVCOwnerValue = { create };
 })();

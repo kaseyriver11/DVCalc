@@ -71,7 +71,7 @@ pdfs/{resort}_archive/          # Source PDFs for the extract scripts -- NOT tra
 5. Color coding by travel periods (season)
 6. Check-in / check-out date selection
 7. Side-by-side layout: calendar left, cost breakdown right
-8. DVC rental rate slider ($15-$25/point, default $20)
+8. Value-per-point editor ($15-$50/point, default $30) -- one shared control (`dvc-point-value.js`) on Calendar, Resort Comparison, Contract Value and Membership Value
 9. Owner mode (calculates cost based on annual dues per point)
 10. Summary: total points, rental value, Disney cash rate, savings %
 11. Nightly breakdown (expanded by default)
@@ -98,7 +98,7 @@ For detailed data documentation, reproducibility audit, and update instructions,
 | Historical points | DVC Field Guide point-archive PDFs | Run `scripts/download_historical_pdfs.sh`, then `scripts/extract_all_historical.py pdfs/` |
 | Cash rack rates | MouseSavers.com (WDW only) | Scrape rate tables, map to DVC periods, add as `cashRates` in `wdwPeriods()` |
 | Annual dues | dvcresalemarket.com | Update `DUES_PER_POINT` in `data.js` |
-| Rental rates | Market observation | Slider is user-configurable ($15-$25/pt) |
+| Value per point | One default for every estimate ($30) | `dvc-point-value.js` -- $15-$50 slider with presets on every page that prices points |
 | Hotel construction/refurbishment | Disney Food Blog's DFB Disney World Calendar PDF | Re-read the latest PDF, update `data/resort_construction.js` |
 | Special events (festivals, hard-ticket parties, runDisney) | Disney Food Blog's DFB Disney World Calendar PDF | Re-read the latest PDF, update `data/disney_events.js` |
 

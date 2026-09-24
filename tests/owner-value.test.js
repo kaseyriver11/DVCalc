@@ -65,3 +65,28 @@ test('trip history blends in once it covers a full year of points',()=>{
   const stats=setup().computeHouseMoneyStats([contract],[{check_out:'2026-04-01',credit:{cash:300,ownedPoints:10}}],defaults);
   assert.equal(stats.velocitySource,'blended');
 });
+test('a sold contract stops paying dues at its end year and its sale proceeds come off the cost',()=>{
+  const api=setup();
+  const sold={...contract,purchase_date:'2020-01-01',is_active:false,ended_on:'2022-06-01',sale_proceeds:50};
+  assert.equal(api.computeHouseMoneyStats([sold],[],defaults).totalOutlay,100+3*10-50);
+  const undated={...sold,ended_on:null,sale_proceeds:null};
+  assert.equal(api.computeHouseMoneyStats([undated],[],defaults).totalOutlay,100+7*10);
+  const series=api.computeHouseMoneyStats([sold,contract],[],defaults).series;
+  assert.equal(series.outlay[series.years.indexOf(2023)]-series.outlay[series.years.indexOf(2022)],0);
+});
+test('trip pace is value per point-year owned, not value per trip',()=>{
+  const old={...contract,purchase_date:'2022-01-01'};
+  const stats=setup().computeHouseMoneyStats([old],[{check_out:'2025-04-01',credit:{cash:300,ownedPoints:10}}],defaults);
+  assert.equal(stats.velocitySource,'blended');
+  assert.equal(stats.actualPace,300/(5*10)*10);
+});
+test('pace figures are value before dues, like the chart',()=>{
+  const stats=setup().computeHouseMoneyStats([contract],[],defaults);
+  assert.equal(stats.baselinePotential,10*20);
+});
+test('the invested-instead fund prices rooms from today, not from the purchase year',()=>{
+  const old={...contract,purchase_date:'2016-01-01',purchase_price:100000};
+  const s=setup().computeHouseMoneyStats([old],[],{...defaults,value_growth_rate:0.05}).series;
+  const i=s.years.indexOf(2026);
+  assert.equal(Math.round(s.altFund[i-1]-s.altFund[i]),10*20-10);
+});

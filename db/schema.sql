@@ -29,7 +29,7 @@ create table if not exists profiles (
   -- "Model Assumptions & Sensitivity" panel (trips.html, House Money) --
   -- see db/migrations/018_add_house_money_model_settings.sql. Defaults
   -- match the flat constants the House Money projection used to hardcode.
-  point_value_baseline numeric(6,2) not null default 26,
+  point_value_baseline numeric(6,2) not null default 30,
   dues_growth_rate numeric(5,4) not null default 0.04,
   value_growth_rate numeric(5,4) not null default 0.05,
   opportunity_cost_rate numeric(5,4) not null default 0.00,
@@ -91,6 +91,13 @@ create table if not exists contracts (
   blue_card_override boolean,
   nickname text,
   is_active boolean not null default true,
+  -- Owner estimate of financing interest paid to date (migration 029);
+  -- interest only, the purchase price already covers the principal.
+  financing_interest_paid numeric(12,2) check (financing_interest_paid >= 0 and financing_interest_paid <= 10000000),
+  -- When a sold/ended contract stopped, and what the owner got back net of
+  -- fees (migration 030). Dues stop after the end year.
+  ended_on date,
+  sale_proceeds numeric(12,2) check (sale_proceeds >= 0 and sale_proceeds <= 10000000),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -197,9 +204,6 @@ create table if not exists trips (
   -- never marks a booking verified.
   disney_confirmation_number text check (char_length(disney_confirmation_number) <= 40),
   disney_checked_on date,
-  -- Owner estimate of financing interest paid to date (migration 029);
-  -- interest only, the purchase price already covers the principal.
-  financing_interest_paid numeric(12,2) check (financing_interest_paid >= 0 and financing_interest_paid <= 10000000),
   created_at timestamptz not null default now(),
   constraint trips_checkout_after_checkin check (check_out > check_in)
 );

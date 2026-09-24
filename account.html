@@ -2246,6 +2246,17 @@ async function renderSignedIn() {
                     <input type="number" id="f-acquisition-year" min="1991" max="${new Date().getFullYear()}" step="1" placeholder="e.g. ${new Date().getFullYear()}">
                   </div>
                   <div class="studio-perks-note">Entering your buy-in price and acquisition year unlocks lifetime cost-of-ownership tracking.</div>
+                  <div id="f-sale-fields" hidden>
+                    <div class="form-field">
+                      <label class="dvc-field-label" for="f-ended-on">Sold or ended on (optional)</label>
+                      <input type="date" class="dvc-date" id="f-ended-on">
+                      <div class="field-hint">Dues stop counting after this year. Saving a past date also deactivates the contract.</div>
+                    </div>
+                    <div class="form-field">
+                      <label for="f-sale-proceeds">Sale proceeds (optional)</label>
+                      <input type="number" id="f-sale-proceeds" min="0" step="1" inputmode="numeric" placeholder="What you got back, after fees">
+                    </div>
+                  </div>
                   <div class="form-field">
                     <label>Blue Card status</label>
                     <div class="field-hint">Membership Extras for direct buyers above a points minimum. Auto-Detect is right for most owners.</div>
@@ -2974,6 +2985,10 @@ function openForm(contract) {
   document.querySelectorAll(".points-preset-chip").forEach(chip => chip.classList.toggle("selected", chip.dataset.points == contract?.points_per_year));
   document.getElementById("f-price").value = contract?.purchase_price || "";
   document.getElementById("f-interest").value = contract?.financing_interest_paid ?? "";
+  // Only an existing contract can have been sold.
+  document.getElementById("f-sale-fields").hidden = !contract;
+  document.getElementById("f-ended-on").value = contract?.ended_on || "";
+  document.getElementById("f-sale-proceeds").value = contract?.sale_proceeds ?? "";
   // Editing an existing contract shows its real acquisition year; a brand
   // new one defaults to the current year, since most owners entering this
   // for the first time are doing so at (or right after) purchase.
@@ -3172,6 +3187,8 @@ function validateContractStep(step) {
   const price = document.getElementById('f-price');
   const year = document.getElementById('f-acquisition-year');
   const interest = document.getElementById('f-interest');
+  const endedOn = document.getElementById('f-ended-on');
+  const proceeds = document.getElementById('f-sale-proceeds');
   if (step === 1 && !document.querySelector('#home-resort-list .dvcp-row.selected')) {
     message = 'Choose your home resort to continue.'; field = document.getElementById('resort-chip-search');
   } else if (step === 2 && !useYearChosen) {
@@ -3184,6 +3201,12 @@ function validateContractStep(step) {
     message = 'Enter interest paid of zero or more, or leave it blank.'; field = interest;
   } else if (step === 3 && year.value && (!Number.isInteger(Number(year.value)) || Number(year.value) < 1991 || Number(year.value) > new Date().getFullYear())) {
     message = 'Enter an acquisition year from 1991 to this year, or leave it blank.'; field = year;
+  } else if (step === 3 && endedOn.value && year.value && Number(endedOn.value.slice(0, 4)) < Number(year.value)) {
+    message = 'The sold date can\'t be before the acquisition year.'; field = endedOn;
+  } else if (step === 3 && proceeds.value && (!Number.isFinite(Number(proceeds.value)) || Number(proceeds.value) < 0)) {
+    message = 'Enter sale proceeds of zero or more, or leave it blank.'; field = proceeds;
+  } else if (step === 3 && proceeds.value && !endedOn.value) {
+    message = 'Add the date you sold it to record sale proceeds.'; field = endedOn;
   }
   if (!message) return true;
   showStudioStep(step);
@@ -3219,6 +3242,15 @@ async function saveForm() {
     purchase_date: acquisitionYearToPurchaseDate(document.getElementById("f-acquisition-year")),
     blue_card_override: getSelectedBlueCardOverride(),
   };
+  if (editingId) {
+    const endedOn = document.getElementById("f-ended-on").value || null;
+    const proceeds = document.getElementById("f-sale-proceeds").value;
+    payload.ended_on = endedOn;
+    payload.sale_proceeds = endedOn && proceeds ? Math.round(parseFloat(proceeds) * 100) / 100 : null;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    if (endedOn && endedOn <= todayStr) payload.is_active = false;
+  }
 
   contractSaving = true;
   const controls = [...document.querySelectorAll('#contract-modal button, #contract-modal input')];

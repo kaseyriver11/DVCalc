@@ -856,6 +856,7 @@ body {
   </script>
   <script type="module" src="auth.js"></script>
   <script src="nav.js"></script>
+  <script src="dvc-point-value.js"></script>
 </head>
 <body>
 
@@ -962,30 +963,24 @@ function directPremiumCaptionHTML(r) {
   return `<span class="price-premium-note">Resale: &minus;$${premium.toFixed(0)}/pt${pct}</span>`;
 }
 
-// Fixed reference baseline for Breakeven Horizon -- what renting points
-// from another owner costs, independent of any other assumption on this
-// page. $20/pt matches the app's own rental-rate slider default elsewhere;
-// not exposed as an input since the point of this column is a single,
-// stable "how does owning compare to just renting every time" reference,
-// not another adjustable scenario.
-const RENT_POINT_VALUE = 20;
-const RENT_VALUE_GROWTH = 0.04;
-
 // Typical resale broker commission, netted out of what a seller actually
 // walks away with -- same 10% trips.html's Exit Equity card already uses,
 // so the two pages' "if I sold" figures rest on the same assumption.
 const RESALE_BROKER_FEE = 0.10;
 
-// Preset chips + readout formatters for the assumptions panel, mirroring
-// trips.html's own POINT_VALUE_PRESETS/ASSUMPTION_FORMATTERS. The three
-// Vacation Value presets are deliberately the SAME three that page offers
-// -- it's the same question ("what would this room have cost in cash?"),
-// so the answers a user can pick from shouldn't differ by page.
-const POINT_VALUE_PRESETS = [
-  { label: "$35", sub: "Deluxe Rack", value: 35 },
-  { label: "$26", sub: "AP / Promo", value: 26 },
-  { label: "$21", sub: "Point Rental", value: 21 },
-];
+// Share of a long deed's price a contract keeps with `yearsLeft` on it:
+// 1 - e^(-yearsLeft / 10). The 10-year constant is a least-squares fit of
+// RESORT_INVESTMENT_DATA's WDW resale prices against years left (2026
+// data), which level off rather than falling in a straight line -- 2042
+// deeds with 16 years left trade near deeds with 40+. Only ratios of this
+// are used, so a resort's own price level carries through.
+const RESALE_DECAY_YEARS = 10;
+function resaleValueFraction(yearsLeft) {
+  return yearsLeft > 0 ? 1 - Math.exp(-yearsLeft / RESALE_DECAY_YEARS) : 0;
+}
+
+// Preset chips + readout formatters for the assumptions panel. The value
+// of a point has its own shared editor (dvc-point-value.js).
 const CLOSING_COST_PRESETS = [
   { label: "$0", sub: "Direct", value: 0 },
   { label: "$1,000", sub: "Low", value: 1000 },
@@ -994,7 +989,6 @@ const CLOSING_COST_PRESETS = [
 const ASSUMPTION_FORMATTERS = {
   closingCost: v => "$" + v.toLocaleString(),
   duesGrowth: v => v.toFixed(1) + "%/yr",
-  pointValue: v => "$" + v.toFixed(0) + "/pt",
   valueGrowth: v => v.toFixed(1) + "%/yr",
 };
 
@@ -1050,32 +1044,40 @@ const CATEGORY_LABELS = { studio: "Studios", one: "1-Bedrooms", two: "2-Bedrooms
 const METRIC_TIPS = {
   pricePerPoint: purchaseType => `Current ${purchaseType} price per point. Editable -- enter a real listing price to recalculate.`,
   currentDuesPerPoint: "Today's annual dues per point.",
-  costPerPointYear: "Amortized buy-in plus dues (with growth), spread over the years you said you'd keep the contract, minus what you'd get back selling it. Primary ranking metric -- lower is better.",
-  sellAtEnd: "Credits the contract's leftover resale value when your plan ends, net of ~10% broker fees. Estimated as today's resale price scaled by the years still left on the deed.",
+  costPerPointYear: "Buy-in (minus any resale credit) plus average dues, per point per year of your plan. Dues are in today's dollars, net of hotel inflation. Lower is better.",
+  sellAtEnd: "Credits what the contract would sell for when your plan ends, net of ~10% broker fees. Based on how today's resale prices fall with years left on the deed.",
   nightlyRoomCost: "Cost/Pt/Year × points needed for a typical night in this room type. Your ownership cost per night -- not Disney's cash rate.",
-  yearsToBreakeven: "Years of rental-value savings (at DVC's ~$20/pt market rental rate) needed to recoup your buy-in. \"Never\" = doesn't break even in the time left on the contract. If Cost/Pt/Year is already under $20, you're beating the rental market from year one -- \"Never\" here just means dues growth outpaces that margin before the contract expires, not that renting always wins.",
-  lifetimeOutlay: "Total cost over your vacationing years: buy-in plus all dues.",
-  vacationValueScope: "A point's rack-rate cash value and its growth rate. Only affects Cash Ratio.",
+  yearsToBreakeven: "Years until the value of your points, less dues, covers your buy-in (less its resale value, if you sell at the end). \"Never\" means not within your plan.",
+  lifetimeOutlay: "Total cost over your plan: buy-in plus all dues, minus the resale credit if you sell at the end.",
+  valueGrowthScope: "How fast Deluxe room prices rise. Grows Cash Ratio's vacation value, and Cost/Pt/Year states dues net of it.",
   cashRatio: "Vacation Value ÷ Lifetime Outlay. Higher is better -- a 2.5x means $2.50 of rack-rate value per $1 spent owning.",
-  duesGrowthScope: "Feeds every cost metric here, each averaged over its own timeframe. Can change which resort ranks best.",
+  duesGrowthScope: "Feeds every cost metric here. Cost/Pt/Year counts it net of hotel inflation. Can change which resort ranks best.",
 };
 
 const POINT_PRESETS = [100, 150, 200, 250];
 const STEP_TITLES = ["Purchase Intent & Channel", "Target Point Budget", "Primary Room Category", "Usage Horizon & Vibe"];
 
-// Median points-per-night for a resort's room category, across every travel
-// period and both day types (sunThu/friSat) -- normalizes resorts with very
-// different point charts into one comparable "typical night" figure.
+// Median points-per-night for a resort's room category: every standard room
+// type in the category (every view), every travel period, with a week's
+// five Sun-Thu nights and two Fri-Sat nights weighted as such. Specialty
+// units that share a category name (Polynesian's Bungalows and Penthouses,
+// Copper Creek's Cabins, the Treehouses, club-level) are left out unless
+// they're all a resort has -- the first room listed used to stand in for
+// the whole category, which made the Polynesian's "2-Bedroom" a Bungalow.
+const SPECIALTY_ROOM_PATTERN = /bungalow|penthouse|cabin|treehouse|concierge/i;
 function medianRoomPoints(resort, category) {
-  const roomTypes = getRoomTypesForCategory(resort, category);
+  const all = getRoomTypesForCategory(resort, category);
+  const standard = all.filter(rt => !SPECIALTY_ROOM_PATTERN.test(rt.name));
+  const roomTypes = standard.length ? standard : all;
   if (roomTypes.length === 0) return null;
-  const roomTypeId = roomTypes[0].id;
   const values = [];
   for (const period of resort.travelPeriods || []) {
-    const sunThu = period.rates && period.rates.sunThu ? period.rates.sunThu[roomTypeId] : undefined;
-    const friSat = period.rates && period.rates.friSat ? period.rates.friSat[roomTypeId] : undefined;
-    if (typeof sunThu === "number") values.push(sunThu);
-    if (typeof friSat === "number") values.push(friSat);
+    for (const rt of roomTypes) {
+      const sunThu = period.rates && period.rates.sunThu ? period.rates.sunThu[rt.id] : undefined;
+      const friSat = period.rates && period.rates.friSat ? period.rates.friSat[rt.id] : undefined;
+      if (typeof sunThu === "number") for (let i = 0; i < 5; i++) values.push(sunThu);
+      if (typeof friSat === "number") for (let i = 0; i < 2; i++) values.push(friSat);
+    }
   }
   if (values.length === 0) return null;
   values.sort((a, b) => a - b);
@@ -1107,10 +1109,18 @@ function computeRow(resortId, inputs) {
   // and wildly different costs 20 years out depending on their growth
   // trend, and a "true cost of ownership" figure that can't tell them
   // apart isn't measuring what it claims to.
+  //
+  // In today's dollars: dues grow at duesGrowth but are deflated by
+  // valueGrowth (Deluxe Hotel Inflation), the same yardstick Cash Ratio
+  // grows vacation value by. Nominal growth with no deflator (the first
+  // version) made every later year's dollar count in full, so the longest
+  // deeds averaged ~3x today's dues and the shortest (2042) deeds topped
+  // "Best Overall Value" while Cash Ratio ranked them near the bottom.
   function averageDuesPerPoint(years) {
     if (years <= 0) return currentDuesPerPoint;
+    const realGrowth = (1 + inputs.duesGrowth) / (1 + inputs.valueGrowth);
     let total = 0;
-    for (let t = 0; t < years; t++) total += currentDuesPerPoint * Math.pow(1 + inputs.duesGrowth, t);
+    for (let t = 0; t < years; t++) total += currentDuesPerPoint * Math.pow(realGrowth, t);
     return total / years;
   }
 
@@ -1138,10 +1148,12 @@ function computeRow(resortId, inputs) {
   // who means it -- what it does NOT price is the resale value still left
   // in the longer deed at the end of those 20 years, which this page
   // doesn't model anywhere.
-  // Residual resale value at the end of the horizon. Straight-line decay to
-  // $0 at expiration: a deed's worth is essentially its remaining years, so
-  // what's left when you sell is today's price scaled by the fraction of
-  // those years still unspent, minus the broker's cut.
+  // Residual resale value at the end of the horizon: today's price moved
+  // along resaleValueFraction()'s curve (fit to this page's own resale
+  // prices vs. years left on the deed) from the years left today to the
+  // years left at exit, minus the broker's cut. A straight line to $0 --
+  // the first version -- valued a Riviera sold after 20 years at ~$67/pt,
+  // while today's 2042 deeds with 16 years left trade at $97-139.
   //
   // Basis is the RESALE price, never the direct price: you sell into the
   // resale market regardless of how you bought, so a direct buyer does not
@@ -1159,9 +1171,10 @@ function computeRow(resortId, inputs) {
     ? pricePerPoint
     : inv.resalePricePerPoint;
   const yearsLeftAtExit = Math.max(0, yearsRemaining - vacationYears);
-  const residualPerPoint = yearsRemaining > 0
-    ? resaleBasisPerPoint * (yearsLeftAtExit / yearsRemaining)
+  const resaleValueAt = yearsLeft => yearsRemaining > 0
+    ? resaleBasisPerPoint * resaleValueFraction(yearsLeft) / resaleValueFraction(yearsRemaining)
     : 0;
+  const residualPerPoint = resaleValueAt(yearsLeftAtExit);
   const netResaleProceeds = wizardData.sellAtEnd
     ? residualPerPoint * inputs.points * (1 - RESALE_BROKER_FEE)
     : 0;
@@ -1194,22 +1207,25 @@ function computeRow(resortId, inputs) {
   // style metric above where lower is better.
   const cashRatio = lifetimeOutlay > 0 ? totalValue / lifetimeOutlay : 0;
 
-  // Years to breakeven vs. renting instead: the fractional year within
-  // which cumulative (rent value saved - dues paid) crosses the initial
-  // buy-in, interpolated within that year rather than rounded up to the
-  // next whole year -- capped at the years actually left on the contract;
-  // null ("Never") if it never crosses within that window.
+  // Years to breakeven: the first point in the buyer's plan where
+  // cumulative (value of the points at the page's $/pt - dues) covers the buy-in
+  // -- less, with "sell at end" on, what the contract would fetch if sold
+  // that year -- interpolated within the year. null ("Never") if it doesn't
+  // happen within the plan (capped at the deed).
   let cumulative = 0;
   let yearsToBreakeven = null;
-  for (let t = 1; t <= yearsRemaining; t++) {
-    const rentValueYear = RENT_POINT_VALUE * inputs.points * Math.pow(1 + RENT_VALUE_GROWTH, t - 1);
+  const netCostIfSoldAt = t => initialCost
+    - (wizardData.sellAtEnd ? resaleValueAt(yearsRemaining - t) * inputs.points * (1 - RESALE_BROKER_FEE) : 0);
+  for (let t = 1; t <= vacationYears; t++) {
+    const rentValueYear = inputs.pointValue * inputs.points * Math.pow(1 + inputs.valueGrowth, t - 1);
     const duesCostYear = currentDuesPerPoint * inputs.points * Math.pow(1 + inputs.duesGrowth, t - 1);
     const annualSavings = rentValueYear - duesCostYear;
-    const prevCumulative = cumulative;
+    const prevGap = netCostIfSoldAt(t - 1) - cumulative;
     cumulative += annualSavings;
-    if (cumulative >= initialCost) {
-      yearsToBreakeven = annualSavings > 0
-        ? Math.round((t - 1 + (initialCost - prevCumulative) / annualSavings) * 10) / 10
+    const gap = netCostIfSoldAt(t) - cumulative;
+    if (gap <= 0) {
+      yearsToBreakeven = prevGap > gap
+        ? Math.round((t - 1 + prevGap / (prevGap - gap)) * 10) / 10
         : t;
       break;
     }
@@ -1559,10 +1575,9 @@ function renderMatches() {
         min: 0, max: 3000, step: 50, format: ASSUMPTION_FORMATTERS.closingCost, presets: CLOSING_COST_PRESETS })}
       ${settingRow("duesGrowth", "Annual Dues Inflation", wizardData.duesGrowth, {
         min: 2, max: 8, step: 0.1, format: ASSUMPTION_FORMATTERS.duesGrowth, tip: METRIC_TIPS.duesGrowthScope })}
-      ${settingRow("pointValue", "Vacation Value Baseline ($/point)", wizardData.pointValue, {
-        min: 15, max: 50, step: 1, format: ASSUMPTION_FORMATTERS.pointValue, presets: POINT_VALUE_PRESETS, tip: METRIC_TIPS.vacationValueScope })}
+      <div class="assumption-row">${window.DVCPointValue.html({ id: "a-pointValue", value: wizardData.pointValue, hint: "Prices Cash Ratio and Breakeven Horizon." })}</div>
       ${settingRow("valueGrowth", "Deluxe Hotel Inflation", wizardData.valueGrowth, {
-        min: 2, max: 8, step: 0.1, format: ASSUMPTION_FORMATTERS.valueGrowth })}
+        min: 2, max: 8, step: 0.1, format: ASSUMPTION_FORMATTERS.valueGrowth, tip: METRIC_TIPS.valueGrowthScope })}
     </div>
   `;
 
@@ -1702,6 +1717,11 @@ function renderMatches() {
       renderMatches();
     });
   });
+
+  window.DVCPointValue.attach("a-pointValue", (value, final) => {
+    wizardData.pointValue = value;
+    if (final) renderMatches();
+  });
 }
 
 // ---- Wizard state --------------------------------------------------------
@@ -1724,7 +1744,7 @@ const wizardData = {
   // cash (rack rate), used only for Cash Ratio -- defaults match what
   // this page shipped with historically (the version live on dvcalc.app,
   // before the move to dvccompanion.com).
-  pointValue: 35,
+  pointValue: window.DVCPointValue.DEFAULT,
   valueGrowth: 5.0,
 };
 

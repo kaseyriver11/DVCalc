@@ -1,9 +1,6 @@
 // DVC Points Data — All Disney Vacation Club Resorts (2026 & 2027)
 // Rack rate estimates sourced from MouseSavers 2026 data (includes 12.5% tax)
 
-// Default rental rate per point (DVC rental market average)
-const DEFAULT_RENTAL_RATE = 20;
-
 // Annual dues per point by resort (2026, source: dvcresalemarket.com)
 const DUES_PER_POINT = {
   animalKingdomVillas: 10.16,

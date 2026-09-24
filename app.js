@@ -29,7 +29,7 @@ const state = {
   month: new Date().getMonth(), // 0-indexed, defaults to current month
   checkIn: null,  // "YYYY-MM-DD" or null
   checkOut: null,  // "YYYY-MM-DD" or null
-  rentalRate: DEFAULT_RENTAL_RATE,
+  rentalRate: window.DVCPointValue.DEFAULT,
   rentalEnabled: true, // always on — both cost-comparison tiles are always shown
   ownerEnabled: true,
   ownerResortId: "saratogaSprings",
@@ -3674,15 +3674,13 @@ function renderSummary() {
         ${state.rentalEnabled ? `
         <div class="cost-tile">
           <div class="cost-tile-label">If renting DVC points</div>
-          <div class="cost-tile-rate-input">
-            <span>$</span><input type="number" id="rental-rate" min="15" max="25" step="0.5" value="${state.rentalRate}"><span>/pt</span>
-          </div>
           <div class="cost-tile-value cash">$${Math.round(rentalValue).toLocaleString()}</div>
-          <div class="cost-tile-sub">${totalPoints} pts</div>
+          <div class="cost-tile-sub">${totalPoints} pts × $${state.rentalRate}/pt</div>
           ${hasCashData ? `<div class="cost-tile-savings">save $${Math.round(totalDisneyCash - rentalValue).toLocaleString()} <span class="savings-badge">${savings}% off</span></div>` : ""}
         </div>
         ` : ""}
       </div>
+      ${state.rentalEnabled ? `<div class="cost-point-value">${window.DVCPointValue.html({ id: "rental-rate", value: state.rentalRate, hint: "Prices the renting-points estimate." })}</div>` : ""}
     </div>
   `;
 
@@ -3745,17 +3743,13 @@ function renderSummary() {
   // to the current state.ownerResortId, same as syncResortPickerTrigger().
   syncOwnerResortTrigger();
 
-  const rentalRateInput = document.getElementById("rental-rate");
-  if (rentalRateInput) {
-    rentalRateInput.addEventListener("change", (e) => {
-      const val = parseFloat(e.target.value);
-      if (val >= 15 && val <= 25) state.rentalRate = val;
-      renderSummary();
-    });
-    rentalRateInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") e.target.blur();
-    });
-  }
+  // Re-rendering the summary mid-drag would drop the slider, so the
+  // estimate updates when the drag ends (or a preset is tapped).
+  window.DVCPointValue.attach("rental-rate", (value, final) => {
+    if (!final) return;
+    state.rentalRate = value;
+    renderSummary();
+  });
 
   renderLayoutMode();
 }

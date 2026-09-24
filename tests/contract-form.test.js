@@ -2,7 +2,7 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), vm = require('node:vm'), path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../account.html'), 'utf8');
 function form(values = {}, chosen = true) {
-  const fields = Object.fromEntries(['f-points', 'f-price', 'f-interest', 'f-acquisition-year', 'resort-chip-search', 'form-error'].map(id => [id, { value: values[id] ?? '', style: {}, focus() { this.focused = true; } }]));
+  const fields = Object.fromEntries(['f-points', 'f-price', 'f-interest', 'f-acquisition-year', 'f-ended-on', 'f-sale-proceeds', 'resort-chip-search', 'form-error'].map(id => [id, { value: values[id] ?? '', style: {}, focus() { this.focused = true; } }]));
   const c = vm.createContext({ useYearChosen: chosen, document: { getElementById: id => fields[id], querySelector: () => ({ focus() {} }) }, showStudioStep(step) { c.step = step; } });
   vm.runInContext(source.match(/function validateContractStep\([^]*?\n\}/)[0], c);
   return { c, fields };
@@ -26,6 +26,10 @@ test('optional financial entries validate before saving', () => {
   assert.equal(form({ 'f-price': '0', 'f-acquisition-year': '2020' }).c.validateContractStep(3), true);
   assert.equal(form({ 'f-interest': '-1' }).c.validateContractStep(3), false);
   assert.equal(form({ 'f-interest': '1200' }).c.validateContractStep(3), true);
+  assert.equal(form({ 'f-ended-on': '2024-05-01', 'f-sale-proceeds': '15000', 'f-acquisition-year': '2018' }).c.validateContractStep(3), true);
+  assert.equal(form({ 'f-sale-proceeds': '15000' }).c.validateContractStep(3), false, 'proceeds need a sold date');
+  assert.equal(form({ 'f-ended-on': '2017-05-01', 'f-acquisition-year': '2018' }).c.validateContractStep(3), false, 'sold before acquired');
+  assert.equal(form({ 'f-ended-on': '2024-05-01', 'f-sale-proceeds': '-5' }).c.validateContractStep(3), false);
 });
 
 // UX2-04: editing a contract must not rewrite a known purchase date.

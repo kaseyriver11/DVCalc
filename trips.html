@@ -1021,6 +1021,7 @@ a.add-btn { display: inline-flex; align-items: center; }
   </script>
   <script type="module" src="auth.js"></script>
   <script src="nav.js"></script>
+  <script src="dvc-point-value.js"></script>
 </head>
 <body>
 
@@ -1092,7 +1093,7 @@ let trips = [];
 // overwritten with the signed-in owner's real saved settings once
 // renderSignedIn()'s initial fetch resolves. contractYearPoints is
 // cached at module scope for the separate badge coverage estimate.
-let userSettings = { point_value_baseline: 26, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
+let userSettings = { point_value_baseline: 30, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
 let contractYearPoints = [];
 let assumptionsOpen = window.location.hash === '#model-assumptions';
 let settingsSaveTimer = null;
@@ -1111,10 +1112,10 @@ function contractCostCardHTML(b) {
   const total = b.totalToDate;
   const duesPct = total > 0 ? Math.round((b.duesTotal / total) * 100) : 0;
   const notes = [
-    b.priceSource === "estimated" ? "Price estimated (none entered)" : "",
+    b.priceSource === "estimated" ? "Price estimated at today's resale price (none entered)" : "",
     b.interest ? `Includes ${fmt(b.interest)} financing interest (your estimate)` : "",
   ].filter(Boolean).join(" &middot; ");
-  const rows = b.years.slice().reverse().map(y => `<tr><td>${y.year}</td><td>$${y.publishedRate.toFixed(2)}/pt</td><td>${fmt(y.dues)}</td></tr>`).join("");
+  const rows = b.years.slice().reverse().map(y => `<tr><td>${y.year}</td><td>$${y.rate.toFixed(2)}/pt${y.rateSource === "projected" ? " (est.)" : ""}</td><td>${fmt(y.dues)}</td></tr>`).join("");
   return `
     <div class="contract-cost-card payback-info-anchor" style="${resortArtCardStyle(c.home_resort_id)}">
       <div class="contract-cost-header">
@@ -1178,7 +1179,7 @@ function renderUnconfigured() {
 // resale pricing (data/resort_investment.js, already loaded elsewhere in
 // the app) is far more accurate than one flat guess across all 17 resorts,
 // so that's tried first and a flat $140/pt is the last resort.
-const { contractInitialCostBreakdown, contractInitialCost, contractOwnershipStartYear, contractDeedExpirationYear, contractExpiredBy, contractDuesPaidToDate, contractCostBreakdown, projectedDuesForYear, contractBaselineGrossValue, contractBaselinePotentialValue, buildHouseMoneySeries, computeHouseMoneyStats } = window.DVCOwnerValue.create(tripCashValue);
+const { FALLBACK_PRICE_PER_POINT, contractInitialCostBreakdown, contractInitialCost, contractOwnershipStartYear, contractDeedExpirationYear, contractExpiredBy, contractDuesPaidToDate, contractCostBreakdown, projectedDuesForYear, contractBaselineGrossValue, contractBaselinePotentialValue, buildHouseMoneySeries, computeHouseMoneyStats } = window.DVCOwnerValue.create(tripCashValue);
 
 function computeLast12MonthSavings(trips) {
   const now = Date.now();
@@ -1236,7 +1237,7 @@ function buildPaybackBreakdownHTML(stats, dateLabel) {
         <button type="button" class="payback-breakdown-close" aria-label="Close">&times;</button>
       </div>
       <div class="payback-breakdown-row">
-        <span>Contract Purchase Price(s)${stats.costSources.estimatedPrices ? " (partly estimated)" : ""}</span><span>${fmt(stats.totalPurchasePrice)}</span>
+        <span>Contract Purchase Price(s)${stats.costSources.estimatedPrices ? " (partly estimated at today's resale price)" : ""}</span><span>${fmt(stats.totalPurchasePrice)}</span>
       </div>
       <div class="payback-breakdown-row total">
         <span>= Total Initial Investment</span><span>${fmt(stats.totalInitialCost)}</span>
@@ -1245,6 +1246,7 @@ function buildPaybackBreakdownHTML(stats, dateLabel) {
         <span>+ Cumulative Dues Paid to Date</span><span>${fmt(stats.totalDuesPaid)}</span>
       </div>
       ${stats.totalInterestPaid ? `<div class="payback-breakdown-row sub"><span>+ Financing Interest (your estimate)</span><span>${fmt(stats.totalInterestPaid)}</span></div>` : ""}
+      ${stats.totalSaleProceeds ? `<div class="payback-breakdown-row sub"><span>&minus; Sale Proceeds (contracts you sold)</span><span>&minus;${fmt(stats.totalSaleProceeds)}</span></div>` : ""}
       <div class="payback-breakdown-row total">
         <span>= Total Spent So Far</span><span>${fmt(stats.totalOutlay)}</span>
       </div>
@@ -1253,7 +1255,7 @@ function buildPaybackBreakdownHTML(stats, dateLabel) {
         <span>Lifetime Value Extracted</span><span>${fmt(stats.lifetimeValue)}</span>
       </div>
       <div class="payback-breakdown-row">
-        <span>Current Annual Pace</span><span>${stats.annualVelocity > 0 ? fmt(stats.annualVelocity) + "/yr" : "&mdash;"}</span>
+        <span>Current Annual Pace (before dues)</span><span>${stats.annualVelocity > 0 ? fmt(stats.annualVelocity) + "/yr" : "&mdash;"}</span>
       </div>
       ${sourceNote ? `<div class="payback-breakdown-row sub"><span>${sourceNote}</span><span></span></div>` : ""}
       <div class="payback-breakdown-footnote">
@@ -1703,19 +1705,13 @@ function buildExitEquityHTML(equity) {
 }
 
 // ---- Model Assumptions & Sensitivity ----
-// Chip-driven presets for the two sliders the spec calls for tap targets
-// on (Vacation Value Baseline, Opportunity Cost Rate) -- the other two
-// (Dues/Hotel Inflation) are slider-only, same as contractvalue.html's own
-// Dues Growth/Vacation Value Growth advanced inputs.
+// Chip presets for Opportunity Cost Rate. Vacation Value Baseline uses the
+// shared $/pt editor (dvc-point-value.js), with its own presets; Dues and
+// Hotel Inflation are slider-only, same as contractvalue.html.
 // Two fields per preset (the rate itself, then what it represents) rather
 // than one "4% (Conservative/HYSA)" string -- the chip stacks them on two
 // lines, which is what lets all three sit on a single row on a phone
 // without shortening "Conservative/HYSA" into something unreadable.
-const POINT_VALUE_PRESETS = [
-  { label: "$35", sub: "Deluxe Rack", value: 35 },
-  { label: "$26", sub: "AP / Promo", value: 26 },
-  { label: "$21", sub: "Point Rental", value: 21 },
-];
 // No 0% chip: "off" is the checkbox's job (buildOpportunityControlsHTML()).
 const OPPORTUNITY_COST_PRESETS = [
   { label: "4%", sub: "HYSA", value: 0.04 },
@@ -1733,7 +1729,6 @@ const ASSUMPTION_HINTS = {
 // live updates (handleAssumptionChange, which has no server-shaped object
 // to re-derive a label from) format the same field's readout identically.
 const ASSUMPTION_FORMATTERS = {
-  point_value_baseline: v => "$" + v.toFixed(0) + "/pt",
   dues_growth_rate: v => (v * 100).toFixed(1) + "%/yr",
   value_growth_rate: v => (v * 100).toFixed(1) + "%/yr",
   opportunity_cost_rate: v => (v * 100).toFixed(1) + "%/yr",
@@ -1780,7 +1775,7 @@ function buildAssumptionsPanelHTML(settings, stats) {
       </button>
       <div class="assumptions-panel${assumptionsOpen ? " open" : ""}" id="assumptions-panel">
         <div class="assumptions-result" id="assumptions-result" aria-live="polite">${assumptionsResultHTML(stats)}</div>
-        ${assumptionSliderRow("point_value_baseline", "Vacation Value Baseline ($/point)", settings.point_value_baseline, 15, 50, 1, POINT_VALUE_PRESETS)}
+        <div class="assumption-row">${window.DVCPointValue.html({ id: "a-point_value_baseline", value: settings.point_value_baseline, hint: "Prices your future points in the projection." })}</div>
         ${assumptionSliderRow("dues_growth_rate", "Annual Dues Inflation", settings.dues_growth_rate, 0.02, 0.08, 0.001)}
         ${assumptionSliderRow("value_growth_rate", "Deluxe Hotel Inflation", settings.value_growth_rate, 0.02, 0.08, 0.001)}
         <div class="assumptions-save-status" id="assumptions-save-status" role="status">${settingsSaveNote}</div>
@@ -1907,6 +1902,9 @@ function attachAssumptionsListeners() {
     handleAssumptionChange("opportunity_cost_rate", e.target.checked ? lastOpportunityCostRate : 0);
     renderOpportunityControls();
   });
+  // The shared $/pt editor (dvc-point-value.js). Its drag only writes the
+  // targeted outputs below, so it can follow every tick.
+  window.DVCPointValue.attach("a-point_value_baseline", value => handleAssumptionChange("point_value_baseline", value));
   // Sliders live in two places: the projection panel and the chart's own
   // Opportunity Cost control.
   document.querySelectorAll("#assumptions-panel .assumption-slider, #chart-assumptions .assumption-slider").forEach(input => {

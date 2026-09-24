@@ -1858,6 +1858,13 @@ select, input, textarea, button {
   box-shadow: 0 0 0 2px rgba(74, 20, 140, 0.15);
 }
 
+/* The shared $/pt editor (dvc-point-value.js) under the tiles. */
+.cost-point-value {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
 .cost-tile-savings {
   margin-top: 6px;
   font-size: 0.68rem;

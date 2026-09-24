@@ -758,6 +758,12 @@ async function updateContract(id, patch) {
     ({ data, error } = await supabase.from("contracts").update(patch).eq("id", id).select().single());
     if (!error && had) return { data, warning: "Contract saved, but financing interest wasn't stored -- the database needs db/migrations/029_contract_financing_interest.sql run against it." };
   }
+  if (error && (isMissingColumnError(error, "ended_on") || isMissingColumnError(error, "sale_proceeds"))) {
+    const had = patch.ended_on != null || patch.sale_proceeds != null;
+    patch = { ...patch }; delete patch.ended_on; delete patch.sale_proceeds;
+    ({ data, error } = await supabase.from("contracts").update(patch).eq("id", id).select().single());
+    if (!error && had) return { data, warning: "Contract saved, but the sale date and proceeds weren't stored -- the database needs db/migrations/030_contract_sale.sql run against it." };
+  }
   if (error && isMissingColumnError(error, "blue_card_override")) {
     const { blue_card_override, ...rest } = patch;
     ({ data, error } = await supabase.from("contracts").update(rest).eq("id", id).select().single());
@@ -986,7 +992,7 @@ async function updateProfile(patch) {
 // four field names and defaults itself -- DEFAULT_USER_SETTINGS here is the
 // one place that has to agree with the migration's column defaults.
 const DEFAULT_USER_SETTINGS = {
-  point_value_baseline: 26,
+  point_value_baseline: 30,
   dues_growth_rate: 0.04,
   value_growth_rate: 0.05,
   opportunity_cost_rate: 0.00,
