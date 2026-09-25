@@ -1891,6 +1891,8 @@ select, input, textarea, button {
   color: var(--color-good);
 }
 
+.cost-tile-savings.costs-more { color: var(--color-danger, #b71c1c); }
+
 .cost-tile-savings .savings-badge {
   display: inline-block;
   font-size: 0.65rem;

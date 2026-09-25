@@ -257,23 +257,83 @@ function renderActions(member) {
 // Non-members see the membership gate instead of the widgets -- empty
 // locked cards would show nothing.
 const ADD_CONTRACT_HREF = "account.html?start=add-contract";
+// Signed-out Home (2026-09-24 redesign): get a first-time visitor into the
+// calendar in one tap. A photo hero with a resort picker that opens the
+// calendar on that resort (index.html?resort=), the free tools as cards,
+// then the owner pitch with the example dashboard and the price line.
+let heroResortId = null;
+function pickHeroResort() {
+  const withArt = window.DVCPickers.allResorts().filter(r => typeof getResortImage === "function" && getResortImage(r.id));
+  return (withArt[Math.floor(Math.random() * withArt.length)] || window.DVCPickers.allResorts()[0]).id;
+}
+function heroResortName(id) {
+  const r = window.DVCPickers.allResorts().find(x => x.id === id);
+  const name = r ? r.name : id;
+  return typeof shorthandResortName === "function" ? shorthandResortName(id, name) : name;
+}
+function heroArt(id) {
+  const img = typeof getResortImage === "function" ? getResortImage(id) : null;
+  return img ? `linear-gradient(180deg, rgba(22, 12, 52, 0.45), rgba(22, 12, 52, 0.82)), url('${img}')` : "linear-gradient(135deg, #1a237e, #4a148c)";
+}
+const FREE_TOOLS = [
+  { href: "index.html", icon: "\u{1F4C5}", title: "Points calendar", body: "Nightly points and cash price at every resort." },
+  { href: "compare.html", icon: "\u{2696}\u{FE0F}", title: "Compare resorts", body: "Your dates, priced at all 17 resorts." },
+  { href: "suggest.html", icon: "\u{1F50E}", title: "Suggest a stay", body: "Enter your points, see what they book." },
+];
 function dashboardSignInHTML() {
+  heroResortId = heroResortId || pickHeroResort();
   return `
   <div class="home-signed-out">
-  <section class="home-intro" aria-labelledby="home-intro-title">
-    <h1 class="home-intro-title" id="home-intro-title">Keep your DVC contracts, points and deadlines in one place</h1>
-    <p class="home-intro-body">Record your contracts and balances, see your upcoming banking and expiration dates, and plan stays with your own contract details.</p>
-    <div class="home-intro-actions">
-      <a href="${ADD_CONTRACT_HREF}" class="home-primary-btn" data-funnel="home-cta">Add my first contract</a>
-      <a href="index.html" class="home-outline-btn">Explore the points calendar</a>
+  <section class="home-hero" id="home-hero" style="background-image:${heroArt(heroResortId)}" aria-labelledby="home-intro-title">
+    <h1 class="home-hero-title" id="home-intro-title">Every DVC resort, every night, in points.</h1>
+    <p class="home-hero-body">A free points calendar for all 17 resorts, with Disney's cash price beside it. No account needed.</p>
+    <div class="home-hero-start">
+      <button type="button" class="home-hero-resort" id="home-hero-resort" aria-haspopup="dialog"><span class="home-hero-resort-label">Resort</span><span class="home-hero-resort-name" id="home-hero-resort-name">${heroResortName(heroResortId)}</span><span class="home-hero-resort-caret" aria-hidden="true">&#9662;</span></button>
+      <a class="home-hero-go" id="home-hero-go" href="index.html?resort=${encodeURIComponent(heroResortId)}" data-funnel="home-calendar">Open the points calendar &rarr;</a>
     </div>
-    <p class="home-intro-note">You enter your balances from Disney. DVC Companion doesn't connect to your Disney account. ${window.DVCAuth.membershipTermsLine()}</p>
-    <p class="home-intro-returning">Already added your contracts? <a href="account.html">Sign in</a></p>
+    <p class="home-hero-returning">Already an owner here? <a href="account.html">Sign in</a></p>
   </section>
-  ${window.DVCOwnerPreview.render({ caption: false })}
+
+  <section class="home-tools" aria-label="Free tools">
+    ${FREE_TOOLS.map(t => `<a class="home-tool" href="${t.href}"><span class="home-tool-icon" aria-hidden="true">${t.icon}</span><span class="home-tool-text"><span class="home-tool-title">${t.title}</span><span class="home-tool-body">${t.body}</span></span><span class="home-tool-chevron" aria-hidden="true">&rsaquo;</span></a>`).join("")}
+  </section>
+
+  <section class="home-owner" aria-labelledby="home-owner-title">
+    <div class="home-owner-copy">
+      <h2 class="home-owner-title" id="home-owner-title">Own a contract? Keep it all in one place.</h2>
+      <ul class="home-owner-list">
+        <li>What's left in each use year, across every contract</li>
+        <li>Banking and expiration reminders before points are lost</li>
+        <li>How close your membership is to paying for itself</li>
+      </ul>
+      <a href="${ADD_CONTRACT_HREF}" class="home-primary-btn" data-funnel="home-cta">Add my first contract</a>
+      <p class="home-intro-note">You enter your balances from Disney; DVC Companion doesn't connect to your Disney account. ${window.DVCAuth.membershipTermsLine()}</p>
+    </div>
+    ${window.DVCOwnerPreview.render({ caption: false })}
+  </section>
   </div>
 `;
 }
+// The hero's resort picker: the shared calendar-style sheet. Picking one
+// swaps the photo and points "Open the points calendar" at that resort.
+document.addEventListener("click", (e) => {
+  const trigger = e.target.closest("#home-hero-resort");
+  if (!trigger) return;
+  window.DVCPickers.open({
+    title: "Choose a resort",
+    selected: heroResortId,
+    returnFocus: trigger,
+    onPick: id => {
+      heroResortId = id;
+      document.getElementById("home-hero").style.backgroundImage = heroArt(id);
+      document.getElementById("home-hero-resort-name").textContent = heroResortName(id);
+      document.getElementById("home-hero-go").href = `index.html?resort=${encodeURIComponent(id)}`;
+    },
+  });
+});
+document.addEventListener("click", (e) => {
+  if (e.target.closest('[data-funnel="home-calendar"]')) window.DVCFunnel?.event("home-calendar");
+});
 document.addEventListener("click", (e) => {
   if (e.target.closest('[data-funnel="home-cta"]')) window.DVCFunnel?.event("home-cta");
 });

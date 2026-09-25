@@ -505,6 +505,7 @@ body {
   font-weight: 600;
   color: var(--color-good);
 }
+.savings-value.costs-more { color: var(--color-danger, #b71c1c); }
 
 .savings-badge {
   display: inline-block;
@@ -1535,7 +1536,27 @@ function getRoomTypesForCategory(resort, category) {
   return resort.roomTypes.filter(rt => rt.name.toLowerCase().includes(keyword));
 }
 
+// "$843 54%" when owning beats the alternative; "$28 more" when it doesn't
+// (Vero Beach / Hilton Head dues can exceed their cash rate), instead of
+// "$-28 -16%".
+function savingsHTML(amount, pct) {
+  if (amount == null || pct == null) return `<span class="na">&mdash;</span>`;
+  if (amount < 0) return `<span class="savings-value costs-more">$${Math.round(-amount).toLocaleString()} more</span>`;
+  return `<span class="savings-value">$${Math.round(amount).toLocaleString()}<span class="savings-badge">${pct}%</span></span>`;
+}
+
 // Calculate total points for a stay at a specific resort/room
+// Same resort, the chart for the year a given night falls in -- a stay that
+// crosses Dec 31 prices its January nights off next year's chart instead of
+// silently dropping them (the calendar's getResortForStayDate() does the
+// same). Falls back to the check-in year's chart when the next year isn't
+// published yet.
+function resortForNight(resort, dateStr) {
+  const year = Number(dateStr.slice(0, 4));
+  if (year === resort.year) return resort;
+  return RESORTS.find(r => r.id === resort.id && r.year === year) || resort;
+}
+
 function calcStay(resort, roomTypeId, stayDates) {
   let totalPoints = 0;
   let totalCash = 0;
@@ -1543,8 +1564,9 @@ function calcStay(resort, roomTypeId, stayDates) {
   let isPriorYearCash = false;
   let fallbackYear = null;
   for (const dateStr of stayDates) {
-    const pts = getPointsForDate(resort, dateStr, roomTypeId);
-    const cashResult = getCashRateWithFallback(resort, dateStr, roomTypeId);
+    const nightResort = resortForNight(resort, dateStr);
+    const pts = getPointsForDate(nightResort, dateStr, roomTypeId);
+    const cashResult = getCashRateWithFallback(nightResort, dateStr, roomTypeId);
     const cash = cashResult ? cashResult.rate : null;
     if (cashResult && cashResult.isPriorYear) { isPriorYearCash = true; fallbackYear = cashResult.fallbackYear; }
     if (pts) totalPoints += pts;
@@ -1985,7 +2007,7 @@ function render() {
   withoutCash.sort((a, b) => a.totalPoints - b.totalPoints);
 
   if (withCash.length === 0 && withoutCash.length === 0) {
-    resultsContainer.innerHTML = `<div class="empty-state">No resorts have ${state.category} rooms for these dates</div>`;
+    resultsContainer.innerHTML = `<div class="empty-state">No resorts have ${({ studio: "Studio", one: "1-Bedroom", two: "2-Bedroom", three: "3-Bedroom" })[state.category] || state.category} rooms for these dates</div>`;
     document.getElementById("mobile-sort-slot").innerHTML = "";
     hideVibeFilterRow();
     return;
@@ -2033,9 +2055,9 @@ function render() {
       <td class="num editable-cash">${cashDisplay}</td>
       <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
       ${rentalCol ? `<td class="num col-secondary rental-value">$${Math.round(row.rentalCost).toLocaleString()}</td>` : ""}
-      ${rentalCol ? `<td class="num"><span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span></td>` : ""}
+      ${rentalCol ? `<td class="num">${savingsHTML(row.rentalSavings, row.rentalSavingsPct)}</td>` : ""}
       ${ownerCol ? `<td class="num col-secondary owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
-      ${ownerCol ? `<td class="num"><span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span></td>` : ""}
+      ${ownerCol ? `<td class="num">${savingsHTML(row.ownerSavings, row.ownerSavingsPct)}</td>` : ""}
       <td><button type="button" class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</button></td>
     </tr>`;
     });
@@ -2107,11 +2129,11 @@ function render() {
         <div class="compare-card-grid">
           <div class="compare-card-metric">
             <span class="compare-card-metric-label">My points vs renting</span>
-            ${rank != null ? `<span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span><span class="compare-card-basis">$${Math.round(row.ownerCost).toLocaleString()} dues vs $${Math.round(row.rentalCost).toLocaleString()} rent</span>` : `<span class="na">&mdash;</span>`}
+            ${rank != null ? `${savingsHTML(row.rentalSavings, row.rentalSavingsPct)}<span class="compare-card-basis">$${Math.round(row.ownerCost).toLocaleString()} dues vs $${Math.round(row.rentalCost).toLocaleString()} rent</span>` : `<span class="na">&mdash;</span>`}
           </div>
           <div class="compare-card-metric">
             <span class="compare-card-metric-label">My points vs Disney cash</span>
-            ${rank != null ? `<span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span><span class="compare-card-basis">$${Math.round(row.ownerCost).toLocaleString()} dues vs $${Math.round(row.totalCash).toLocaleString()} cash</span>` : `<span class="na">&mdash;</span>`}
+            ${rank != null ? `${savingsHTML(row.ownerSavings, row.ownerSavingsPct)}<span class="compare-card-basis">$${Math.round(row.ownerCost).toLocaleString()} dues vs $${Math.round(row.totalCash).toLocaleString()} cash</span>` : `<span class="na">&mdash;</span>`}
           </div>
         </div>
         <button type="button" class="select-resort compare-card-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select This Resort</button>

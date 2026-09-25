@@ -26,7 +26,20 @@
     });
   }
 
-  const api = { cancellationDates, cancellationOutcome };
+  // Disney's reservation-modification rule (Home Resort Rules update effective
+  // 2026-09-17): dates and room type on a confirmed booking can only change
+  // once the original check-out date is within 11 months of the request.
+  // Guests and cancellations are unrestricted. Eleven calendar months before
+  // check-out, with Date.setUTCMonth rollover (a Mar 31 check-out unlocks on
+  // May 1, since Apr 31 doesn't exist) -- the same convention every
+  // booking-window date in the app uses.
+  function modifiableFrom(checkOut) {
+    const d = new Date(parse(checkOut));
+    d.setUTCMonth(d.getUTCMonth() - 11);
+    return iso(d.getTime());
+  }
+
+  const api = { cancellationDates, cancellationOutcome, modifiableFrom };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else window.DVCBookingRecords = api;
 })();

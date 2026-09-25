@@ -45,3 +45,11 @@ test('confirmation details only in expanded booking details, never called verifi
   assert.doesNotMatch(page + read('bookings-cancellations.js'), /\bverified\b/i);
   assert.doesNotMatch(page.replace('Waitlist Whisperer', ''), /waitlist/i); // that's an itinerary badge
 });
+
+test('modification date: dates/room type unlock 11 months before the original check-out (Disney rule since 2026-09-17)', () => {
+  assert.equal(B.modifiableFrom('2026-12-10'), '2026-01-10');
+  assert.equal(B.modifiableFrom('2027-08-05'), '2026-09-05');
+  // Rollover, not clamping: 11 months before Mar 31 is "Apr 31" -> May 1.
+  assert.equal(B.modifiableFrom('2027-03-31'), '2026-05-01');
+  assert.equal(B.modifiableFrom('2027-01-15'), '2026-02-15');
+});

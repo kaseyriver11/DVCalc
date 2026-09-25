@@ -879,6 +879,7 @@ a.add-btn { display: inline-flex; align-items: center; }
   <script src="data/resort_shorthand.js"></script>
   <script src="dvc-trip-funding.js"></script>
   <script src="dvc-trip-deduct.js"></script>
+  <script src="dvc-dates.js"></script>
   <script src="dvc-booking-records.js"></script>
   <script src="bookings-cancellations.js"></script>
   <script src="dvc-stay-value.js"></script>
@@ -1229,7 +1230,7 @@ function stayRowHTML(t, today, justLogged) {
     deducted ? `<div class="stay-detail-line">Took ${deducted.toLocaleString()} pts out of your balances: ${receipts.map(d => `${fundingEscape(deductionContractName(contracts.find(c => c.id === d.contract_id)))} ${d.use_year_label} (${fundingEscape(window.DVCTripDeduct.describeReceipt(d))})`).join("; ")}</div>` : `<div class="stay-detail-line muted">Didn't change your balances in the app</div>`,
     t.disney_confirmation_number ? `<div class="stay-detail-line">Disney confirmation (as entered): ${fundingEscape(t.disney_confirmation_number)}${t.disney_checked_on ? ` &middot; you last checked it in Disney ${wlDay(t.disney_checked_on)}` : ""}</div>`
       : t.disney_checked_on ? `<div class="stay-detail-line">You last checked it in Disney ${wlDay(t.disney_checked_on)}</div>` : "",
-    phase === "upcoming" ? cancellationDatesHTML(t.check_in, today) : "",
+    phase === "upcoming" ? cancellationDatesHTML(t.check_in, today) + modificationDateHTML(t.check_out, today) : "",
     t.notes ? `<div class="stay-detail-line muted">${fundingEscape(t.notes)}</div>` : "",
   ].join("");
   return `
@@ -1255,6 +1256,30 @@ function stayRowHTML(t, today, justLogged) {
     </div>`;
 }
 // Disney's cancellation thresholds for an upcoming booking, as dates.
+// Short "Sep 24, 2026" for a YYYY-MM-DD string (Disney check dates, cancellation
+// dates). The old helper was removed on 2026-09-23 while these call sites
+// stayed, which threw on every upcoming booking and left Bookings & Stays
+// blank.
+function wlDay(isoDate) {
+  return window.DVCDates && window.DVCDates.formatShortDate ? window.DVCDates.formatShortDate(isoDate) : isoDate;
+}
+
+// Disney's cancellation windows run on Eastern time (the server applies
+// them in America/New_York); a late-evening Pacific preview must not say
+// "returns to use years" for a booking the server will send to Holding.
+function easternToday() {
+  return window.DVCDates.todayInEastern();
+}
+
+// Since Sep 17, 2026 Disney only lets dates or room type on a confirmed
+// booking change once the ORIGINAL check-out is within 11 months (guests
+// and cancellations are unrestricted). Say when that is.
+function modificationDateHTML(checkOut, today) {
+  const from = window.DVCBookingRecords.modifiableFrom(checkOut);
+  if (today >= from) return `<div class="stay-detail-line muted">Dates and room type can be changed with Disney now (guests and cancellation anytime).</div>`;
+  return `<div class="stay-detail-line muted">Dates and room type can't be changed with Disney until ${wlDay(from)}, when check-out is within 11 months (Disney rule since Sep 17, 2026). Guests and cancellation can be changed anytime.</div>`;
+}
+
 function cancellationDatesHTML(checkIn, today) {
   const d = window.DVCBookingRecords.cancellationDates(checkIn);
   if (today <= d.restoreThrough) return `<div class="stay-detail-line muted">If you cancel with Disney by ${wlDay(d.restoreThrough)}, points go back to their use years; ${wlDay(d.holdingFrom)} to ${wlDay(d.holdingThrough)}, they go to Holding.</div>`;
@@ -1349,7 +1374,7 @@ function openDeleteTrip(t) {
   } else {
     const total = receipts.reduce((sum, d) => sum + window.DVCTripDeduct.receiptTotal(d), 0);
     const from = receipts.map(d => `${fundingEscape(deductionContractName(contracts.find(c => c.id === d.contract_id)))} ${d.use_year_label}: ${window.DVCTripDeduct.describeReceipt(d)}`).join("; ");
-    const effect = window.DVCTripDeduct.cancellationEffect(t.check_in, localToday());
+    const effect = window.DVCTripDeduct.cancellationEffect(t.check_in, easternToday());
     const canceledDetail = effect === "restore"
       ? "More than 30 days before check-in, so Disney returns them to the use years they came from."
       : effect === "holding"
@@ -1622,7 +1647,7 @@ function currentDeductionPlan() {
     rows: receipts.length ? window.DVCTripDeduct.rowsWithReceiptsRestored(contractYearPoints, receipts) : contractYearPoints,
     checkIn,
     checkOut,
-    today: localToday(),
+    today: easternToday(),
     nightPoints: formNightPoints(),
     overrides: splitOverrides,
   });
@@ -1821,6 +1846,10 @@ function wireTripForm(activeContracts) {
   wireTripPickers();
   const resortSelect = document.getElementById("f-resort");
   resortSelect.innerHTML = uniqueResorts().map(r => `<option value="${r.id}">${r.name}</option>`).join("");
+  // Start on the owner's own resort rather than the alphabetically first
+  // (Aulani); most recorded stays are at a home resort.
+  const homeId = activeContracts?.[0]?.home_resort_id;
+  if (homeId && uniqueResorts().some(r => r.id === homeId)) resortSelect.value = homeId;
   populateRoomTypesForResort(resortSelect.value, null);
 
   resortSelect.addEventListener("change", () => {

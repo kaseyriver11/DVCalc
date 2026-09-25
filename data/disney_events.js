@@ -28,6 +28,7 @@ const DISNEY_EVENTS = [
   {
     name: "Mickey's Not-So-Scary Halloween Party",
     category: "hardTicketEvent",
+    selectNights: true, // runs on select nights only; the source lists the season, not the nights
     park: "Magic Kingdom",
     startDate: "2026-08-07",
     endDate: "2026-10-31",
@@ -36,6 +37,7 @@ const DISNEY_EVENTS = [
   {
     name: "H2O Glow After Hours",
     category: "hardTicketEvent",
+    selectNights: true, // runs on select nights only; the source lists the season, not the nights
     park: "Typhoon Lagoon",
     startDate: "2026-06-02",
     endDate: "2026-09-05",
@@ -62,6 +64,7 @@ const DISNEY_EVENTS = [
   {
     name: "Mickey's Very Merry Christmas Party",
     category: "hardTicketEvent",
+    selectNights: true, // runs on select nights only; the source lists the season, not the nights
     park: "Magic Kingdom",
     startDate: "2026-11-06",
     endDate: "2026-12-22",
@@ -71,6 +74,7 @@ const DISNEY_EVENTS = [
   {
     name: "Disney Jollywood Nights",
     category: "hardTicketEvent",
+    selectNights: true, // runs on select nights only; the source lists the season, not the nights
     park: "Hollywood Studios",
     startDate: "2026-11-02",
     endDate: "2026-12-20",

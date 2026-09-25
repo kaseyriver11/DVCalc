@@ -683,10 +683,13 @@ function riskTierForScore(score, stayLength) {
   return { level: "high", rank: 0, badge: "🔴 High Risk", sub: "Tough 7mo booking" };
 }
 
+// Same setMonth rollover as app.js / compare.html / dvc-dates.js: a window
+// for the 31st opens on the 1st of the following month when the earlier
+// month is shorter (Disney's rule), not on that month's last day.
 function monthsBeforeCheckIn(dateStr, months) {
   const [y, m, d] = dateStr.split("-").map(Number);
-  const dt = new Date(y, m - 1 - months, 1);
-  dt.setDate(Math.min(d, new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate()));
+  const dt = new Date(y, m - 1, d);
+  dt.setMonth(dt.getMonth() - months);
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
 }
 

@@ -22,4 +22,8 @@ test('each night uses its own cycle; later balance cannot hide an earlier shorta
 test('unrecorded balances need input, missing charts and past stays require review',()=>{const c=setup();c.add('a','ssr',150);c.contractYearPoints=[];assert.equal(c.calcFeasibility(c.plan()).badge,'Balance not confirmed');c.getPointsForDate=()=>null;assert.equal(c.calcFeasibility(c.plan()).badge,'Needs review');c.getPointsForDate=()=>55;assert.equal(c.calcFeasibility(c.plan('ssr','2026-08-01','2026-08-02')).badge,'Needs review');});
 test('holding and speculative future borrowing do not create a success indicator',()=>{const c=setup();c.add('a','ssr',0);c.contractYearPoints[0].points_holding=100;const r=c.calcFeasibility(c.plan());assert.equal(r.badge,'Review holding points');assert.match(r.detail,/Holding points excluded/);});
 test('already banked and borrowed points are usable only in their recorded cycle',()=>{const c=setup();c.add('a','ssr',5);Object.assign(c.contractYearPoints[0],{points_banked:25,points_borrowed:25});assert.equal(c.calcFeasibility(c.plan()).badge,'Points covered');});
-test('booking-window subtraction clamps to month end',()=>{const c=setup();assert.equal(c.monthsBeforeCheckIn('2027-09-30',7),'2027-02-28');});
+// Rollover, not clamping: Disney opens the window for a check-in whose
+// same-day-N-months-earlier doesn't exist on the 1st of the following month
+// (Sep 30 - 7 months = "Feb 30" = Mar 2). Matches app.js, compare.html,
+// suggest.html and dvc-dates.js; the old clamp put this page a day early.
+test('booking-window subtraction rolls over like every other page',()=>{const c=setup();assert.equal(c.monthsBeforeCheckIn('2027-09-30',7),'2027-03-02');assert.equal(c.monthsBeforeCheckIn('2027-09-15',7),'2027-02-15');});

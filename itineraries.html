@@ -1386,7 +1386,7 @@ function cardHTML(itin, totals) {
     <div class="itin-segment-row">
       <strong>${resortName(seg.resortId, itin.year)}</strong> &mdash; ${roomTypeName(seg.resortId, itin.year, seg.roomTypeId)}
       &middot; ${nights} Night${nights === 1 ? "" : "s"}
-      &middot; ${formatDisplayDate(seg.checkIn)} &ndash; ${formatDisplayDate(seg.checkOut)}
+      &middot; ${window.DVCDates.formatDateRange(seg.checkIn, seg.checkOut)}
     </div>
   `;
   }).join("");

@@ -65,7 +65,9 @@ test('both gates use the one shared renderer, with one trial or sign-in action',
   assert.equal((signedOut.match(/class="home-primary-btn"/g) || []).length, 1);
   assert.ok(signedOut.indexOf('Add my first contract') < signedOut.indexOf('DVCOwnerPreview'));
   assert.match(signedOut, /doesn't connect to your Disney account/);
-  assert.doesNotMatch(signedOut, /<button/);
+  // The only button is the hero's resort picker (no sign-in or trial
+  // buttons on signed-out Home).
+  assert.deepEqual(signedOut.match(/<button[^>]*id="[^"]+"/g), ['<button type="button" class="home-hero-resort" id="home-hero-resort"']);
   for (const page of ['home.html', 'account.html']) assert.match(read(page), /<script src="dvc-owner-preview\.js"><\/script>/);
 });
 

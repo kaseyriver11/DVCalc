@@ -494,6 +494,7 @@ body {
 
   <script src="dvc-track.js"></script>
   <script src="dvc-ui.js"></script>
+  <script src="dvc-dates.js"></script>
   <script src="dvc-share.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
@@ -921,7 +922,7 @@ function renderResults() {
       </div>
       <div class="result-card-dates">
         <span class="result-card-dates-label">Best Dates</span>
-        <span class="result-card-dates-value">${r.checkIn} &rarr; ${r.checkOut}</span>
+        <span class="result-card-dates-value">${window.DVCDates.formatDateRange(r.checkIn, r.checkOut)}</span>
       </div>
       <div class="result-card-grid">
         <div class="result-card-metric">

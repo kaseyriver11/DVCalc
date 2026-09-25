@@ -535,6 +535,7 @@ function populateResorts(filter = "") {
 
 function selectResort(id) {
   state.resortId = id;
+  syncOwnerResortToBrowsed();
   if (!isSplitMode()) {
     state.checkIn = null;
     state.checkOut = null;
@@ -932,12 +933,12 @@ function buildSpecialEventsHTML(resort, stayDates) {
 
   const festivals = [];
   const dateSpecific = [];
-  byEvent.forEach(entry => (BROAD_EVENT_CATEGORIES.has(entry.event.category) ? festivals : dateSpecific).push(entry));
+  byEvent.forEach(entry => (BROAD_EVENT_CATEGORIES.has(entry.event.category) || entry.event.selectNights ? festivals : dateSpecific).push(entry));
 
   const festivalsHTML = festivals.map(({ event }) => `
     <div class="special-event">
       <div class="special-event-name">${event.name}</div>
-      <div class="special-event-dates">${formatShortDate(event.startDate)} &ndash; ${formatShortDate(event.endDate)}</div>
+      <div class="special-event-dates">${formatShortDate(event.startDate)} &ndash; ${formatShortDate(event.endDate)}${event.selectNights ? " &middot; select nights only" : ""}</div>
       <div class="special-event-desc">${event.description}</div>
     </div>
   `).join("");
@@ -1554,6 +1555,7 @@ function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {
   }
   if (resortId && resortId !== state.resortId) {
     state.resortId = resortId;
+    syncOwnerResortToBrowsed();
   }
   if (roomTypeId) state.roomTypeId = roomTypeId;
   resortSearch.value = getResort().name;
@@ -1642,6 +1644,15 @@ function stayYearGroups(contract, dates) {
   }
   return [...groups.values()];
 }
+// The usual fix for a shortfall in one cycle of a stay that spans use years
+// is to borrow from the next cycle (DVC allows up to 100% of next year's
+// points). Name it when the next year's recorded balance can cover it, so
+// the owner isn't sent to My Contracts to work out what to do.
+function crossYearBorrowHint(contract, row, shortfall) {
+  const next = userContractYearPoints.find(r => r.contract_id === contract.id && r.use_year_label === row.year + 1);
+  if (!next?.balance_confirmed_at || (next.points_remaining || 0) < shortfall) return '';
+  return ` Borrowing ${shortfall} pts from your ${row.year + 1} use year (${next.points_remaining} recorded) would cover it -- borrow on Disney's site first, then <a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${row.year}">record it in My Contracts</a>.`;
+}
 function buildCrossYearDrawHTML(contract, resort, dates) {
   const groups = stayYearGroups(contract, dates);
   return '<div class="smart-draw-card"><div class="smart-draw-title">This stay spans use years</div>' + groups.map(group => {
@@ -1650,7 +1661,7 @@ function buildCrossYearDrawHTML(contract, resort, dates) {
     if (points == null) return '<div class="smart-draw-guardrail warning">Point chart unavailable for part of this stay. Review each date range separately.</div>';
     const draw = computeSmartDraw(group.row, points);
     const available = group.row.remaining + group.row.banked + group.row.borrowed + group.row.holding;
-    return `<div class="smart-draw-guardrail ${draw.shortfall ? 'warning' : 'ok'}"><strong>${stayYearLabel(contract, group.row)}</strong><br>${group.dates.length} night(s): ${points} pts needed / ${available} available. ${draw.shortfall ? 'Short by ' + draw.shortfall + ' pts in this use year.' : (available - points) + ' pts projected left in this use year.'}</div>`;
+    return `<div class="smart-draw-guardrail ${draw.shortfall ? 'warning' : 'ok'}"><strong>${stayYearLabel(contract, group.row)}</strong><br>${group.dates.length} night(s): ${points} pts needed / ${available} available. ${draw.shortfall ? 'Short by ' + draw.shortfall + ' pts in this use year.' + crossYearBorrowHint(contract, group.row, draw.shortfall) : (available - points) + ' pts projected left in this use year.'}</div>`;
   }).join('') + '<div class="smart-draw-footer">Each night uses its applicable cycle. Balances are not combined or moved between years. Review banking or borrowing in My Contracts if needed.</div><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking</button></div>';
 }
 
@@ -1818,6 +1829,13 @@ function applyOwnerDefault() {
 
 // Owner Cost prices the stay at the dues of the contract you're booking as.
 // Picking a resort in the Owner tile afterwards still overrides it.
+// With no contract selected and no manual pick, "If using your own points"
+// prices dues at the resort being browsed -- a visitor looking at Copper
+// Creek shouldn't see Saratoga Springs dues (the old hardcoded default).
+function syncOwnerResortToBrowsed() {
+  if (state.ownerResortPicked || getSelectedContract()) return;
+  if (DUES_PER_POINT[state.resortId]) state.ownerResortId = state.resortId;
+}
 function syncOwnerResortToContract(contract) {
   if (contract && DUES_PER_POINT[contract.home_resort_id]) state.ownerResortId = contract.home_resort_id;
 }
@@ -2330,7 +2348,10 @@ function renderCalendar() {
     // paint it across all 30+ days it runs, which is what originally
     // cluttered the grid. Those broader windows are still surfaced, just in
     // the Special Events & Festivals card instead of on every affected cell.
-    const dayEvents = getEventsForDate(dateStr).filter(e => !BROAD_EVENT_CATEGORIES.has(e.category));
+    // selectNights entries (MNSSHP, MVMCP...) are stored as their whole run
+    // because the source doesn't list the actual party nights, so a per-cell
+    // badge would paint every day of Aug-Oct; they list once in the card.
+    const dayEvents = getEventsForDate(dateStr).filter(e => !BROAD_EVENT_CATEGORIES.has(e.category) && !e.selectNights);
     const eventLabel = dayEvents.length > 0 ? `
       <span class="day-event tooltip-anchor ${tooltipAlign}">
         🎉
@@ -2471,7 +2492,7 @@ function buildNightlyRows(breakdown, hasCashData, useCustomRate) {
     return `
       <div class="nightly-row">
         <span class="night-date">${n.dayName} ${formatShortDate(n.date)}</span>
-        <span class="night-points">${n.points} pts</span>
+        <span class="night-points">${n.points == null ? "— (no chart)" : n.points + " pts"}</span>
         ${hasCashData ? `<span class="night-cash">$${displayCash ? Math.round(displayCash).toLocaleString() : "—"}</span>` : ""}
       </div>
     `;
@@ -3004,13 +3025,13 @@ function buildMultiContractSplitHTML(resort, stayDates) {
   const rowsHTML = contracts.map(c => {
     const currentRow = getStayYearRow(c, stayDates[0]);
     const available = currentRow.remaining + currentRow.banked + currentRow.borrowed + currentRow.holding;
-    if (!currentRow.recorded) return `<div class="multi-split-row">${c.nickname || resortName(c.home_resort_id)}<br>${stayYearLabel(c, currentRow)}. <a href="account.html?contract=${encodeURIComponent(c.id)}&year=${currentRow.year}">Confirm balance</a></div>`;
+    if (!currentRow.recorded) return `<div class="multi-split-row">${escapeHTML(c.nickname || resortNameForId(c.home_resort_id))}<br>${stayYearLabel(c, currentRow)}. <a href="account.html?contract=${encodeURIComponent(c.id)}&year=${currentRow.year}">Confirm balance</a></div>`;
     const allocated = Math.min(allocations[c.id] || 0, available);
     const warning = contractWindowNotYetOpenWarning(c, resort, stayDates);
     return `
       <div class="multi-split-row" data-contract-id="${c.id}">
         <div class="multi-split-row-header">
-          <span class="multi-split-row-name">${c.nickname || resortName(c.home_resort_id)}<br><small>${stayYearLabel(c, currentRow)}</small></span>
+          <span class="multi-split-row-name">${escapeHTML(c.nickname || resortNameForId(c.home_resort_id))}<br><small>${stayYearLabel(c, currentRow)}</small></span>
           <span class="multi-split-row-stat"><span class="multi-split-allocated-num">${allocated.toLocaleString()}</span> / ${available.toLocaleString()} pts</span>
         </div>
         <input type="range" class="multi-split-slider" min="0" max="${available}" step="1" value="${allocated}"
@@ -3112,10 +3133,14 @@ function buildSwapSimulatorHTML(contract, resort, stayDates) {
       // non-borrowed buckets (Remaining/Banked/Holding), and whether that
       // leftover fits within the contract's real borrowing ceiling.
       const currentRow = getStayYearRow(contract, stayDates[0]);
-      const nonBorrowedAvailable = currentRow.remaining + currentRow.banked + currentRow.holding;
-      const maxBorrowable = contract.points_per_year; // same proxy validateBorrowedPoints() uses -- no separate "next year's adjusted allotment" concept in this data model
-      const homeBorrowNeeded = Math.max(0, homeEntry.points - nonBorrowedAvailable);
-      const targetBorrowNeeded = Math.max(0, targetEntry.points - nonBorrowedAvailable);
+      // Everything already in the cycle is spendable without a NEW borrow --
+      // including points already recorded as borrowed (they were borrowed
+      // once; they don't need borrowing again). What's left to borrow is
+      // the ceiling minus what's already been pulled forward.
+      const availableWithoutNewBorrow = currentRow.remaining + currentRow.banked + currentRow.holding + currentRow.borrowed;
+      const maxBorrowable = Math.max(0, contract.points_per_year - currentRow.borrowed); // same 100%-of-allotment proxy validateBorrowedPoints() uses
+      const homeBorrowNeeded = Math.max(0, homeEntry.points - availableWithoutNewBorrow);
+      const targetBorrowNeeded = Math.max(0, targetEntry.points - availableWithoutNewBorrow);
       const extraBorrowNeeded = Math.max(0, targetBorrowNeeded - homeBorrowNeeded);
       const cantCoverAtAll = targetBorrowNeeded > maxBorrowable;
       const shortfall = targetBorrowNeeded - maxBorrowable;
@@ -3631,7 +3656,7 @@ function renderSummary() {
           ${hasCashData ? `
           <div class="cost-tile-value rack">$${Math.round(totalDisneyCash).toLocaleString()}</div>
           <div class="cost-tile-sub">${useCustomRate ? `${stayDates.length} nights × $${state.customCashRate}/night` : `$${(totalDisneyCash / totalPoints).toFixed(2)}/pt`}</div>
-          ${anyIsPriorYear ? `<div class="prior-year-note">* Some cash rates based on ${priorYearFallbackYear || ''} pricing</div>` : ""}
+          ${anyIsPriorYear ? `<div class="prior-year-note">* Some cash rates based on ${priorYearFallbackYear ? priorYearFallbackYear + " " : "prior-year "}pricing</div>` : ""}
           ` : `
           <div class="cost-tile-sub no-cash-note">No cash rate data for non-WDW resorts</div>
           `}
@@ -3655,7 +3680,9 @@ function renderSummary() {
           <div class="cost-tile-label">If renting DVC points</div>
           <div class="cost-tile-value cash">$${Math.round(rentalValue).toLocaleString()}</div>
           <div class="cost-tile-sub">${totalPoints} pts × $${state.rentalRate}/pt</div>
-          ${hasCashData ? `<div class="cost-tile-savings">save $${Math.round(totalDisneyCash - rentalValue).toLocaleString()} <span class="savings-badge">${savings}% off</span></div>` : ""}
+          ${hasCashData ? (rentalValue > totalDisneyCash
+            ? `<div class="cost-tile-savings costs-more">$${Math.round(rentalValue - totalDisneyCash).toLocaleString()} more than Disney's cash price</div>`
+            : `<div class="cost-tile-savings">save $${Math.round(totalDisneyCash - rentalValue).toLocaleString()} <span class="savings-badge">${savings}% off</span></div>`) : ""}
         </div>
         ` : ""}
       </div>
@@ -3980,6 +4007,7 @@ function renderOwnerResortSheetList(filter) {
 
 function pickOwnerResort(id) {
   state.ownerResortId = id;
+  state.ownerResortPicked = true;
   closeOwnerResortSheet();
   renderSummary();
 }
@@ -4009,7 +4037,12 @@ const sharedStays = compareSelection ? null : window.DVCShare.readStays(new URLS
 const returningFromCompare = compareSelection ? compareSelection.segment != null : readCalendarSession("dvc_return_to_calendar");
 const savedState = returningFromCompare ? readCalendarSession("dvc_calendar_state") : null;
 const switchResort = returningFromCompare && !compareSelection ? readCalendarSession("dvc_switch_resort") : null;
-let ownerDefaultPending = !savedState && !compareSelection && !sharedStays;
+// ?resort=<id> (Home's "Open the points calendar"): start on that resort,
+// no dates picked, instead of the default or the owner's own resort.
+const startResortParam = !savedState && !compareSelection && !sharedStays ? new URLSearchParams(window.location.search).get("resort") : null;
+const startResort = startResortParam && resortsForYear(state.year).some(r => r.id === startResortParam) ? startResortParam : null;
+if (startResort) state.resortId = startResort;
+let ownerDefaultPending = !savedState && !compareSelection && !sharedStays && !startResort;
 clearCalendarSession("dvc_calendar_state");
 clearCalendarSession("dvc_switch_resort");
 clearCalendarSession("dvc_return_to_calendar");
@@ -4086,6 +4119,7 @@ populateRoomTypes();
 roomSelect.value = state.roomTypeId;
 syncResortPickerTrigger();
 updateHint();
+syncOwnerResortToBrowsed();
 renderCalendar();
 renderSummary();
 initAccountPersonalization(40);

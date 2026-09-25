@@ -1693,7 +1693,7 @@ function pricingAnchorMicroCopy(contracts) {
 
 function membershipCardState(sub, contracts) {
   const status = sub?.status;
-  const renewDate = sub?.current_period_end ? new Date(sub.current_period_end).toISOString().slice(0, 10) : null;
+  const renewDate = sub?.current_period_end ? window.DVCDates.formatShortDate(new Date(sub.current_period_end).toISOString().slice(0, 10)) : null;
 
   if (!sub || status === "incomplete" || status === "canceled") {
     return {

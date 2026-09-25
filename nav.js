@@ -99,7 +99,10 @@ const NAV_OVERLAY_CSS = `
   /* In the full-screen menu the sign-in options open in place. */
   .account-signin-panel { position: static; margin-top: 10px; box-shadow: none; }
   body.site-nav-locked { overflow: hidden; }
-}`;
+}
+.site-footer { text-align: center; font-size: 0.72rem; color: #777; padding: 28px 16px 20px; }
+.site-footer a { color: #6a1b9a; font-weight: 600; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }`;
 
 document.addEventListener("DOMContentLoaded", () => {
   const nav = document.querySelector(".site-nav");
@@ -109,6 +112,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const style = document.createElement("style");
   style.textContent = NAV_OVERLAY_CSS;
   document.head.appendChild(style);
+
+  // Site footer: privacy.html and terms.html were only linked from each
+  // other, and the "not affiliated with Disney" line only lived there.
+  if (!document.querySelector(".site-footer")) {
+    const footer = document.createElement("footer");
+    footer.className = "site-footer";
+    footer.innerHTML = `<a href="privacy.html">Privacy</a> &middot; <a href="terms.html">Terms</a> &middot; <span>Not affiliated with Disney or Disney Vacation Club</span>`;
+    document.body.appendChild(footer);
+  }
 
   function setOpen(isOpen) {
     nav.classList.toggle("open", isOpen);

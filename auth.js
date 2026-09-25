@@ -1444,6 +1444,13 @@ async function deleteItinerary(id) {
 // it's permanent). Direct-purchased points have no restriction anywhere.
 const HOME_ONLY_RESALE_RESORTS = new Set(["rivieraResort", "disneylandHotel", "fortWildernessCabins"]);
 
+// Resale deeds bought before Disney's 2019-01-19 restriction keep 7-month
+// access to every resort, Riviera and later ones included.
+const RESALE_RESTRICTION_START = "2019-01-19";
+function isResaleGrandfathered(purchaseDate) {
+  return typeof purchaseDate === "string" && /^\d{4}-\d{2}-\d{2}/.test(purchaseDate) && purchaseDate.slice(0, 10) < RESALE_RESTRICTION_START && !purchaseDate.startsWith("2019");
+}
+
 // Pure function: no DOM, no network. Takes the contracts array (as returned
 // by getContracts()) plus the full list of resort ids currently in data.js,
 // and returns which resorts this user can book and how. Access unions
@@ -1468,9 +1475,14 @@ function getUserResortAccess(contracts, allResortIds) {
     if (HOME_ONLY_RESALE_RESORTS.has(c.home_resort_id)) continue;
 
     // Resale at any other resort: 7-month access to every resort except
-    // the three home-only ones.
+    // the three home-only ones -- unless the deed was bought before the
+    // restriction started (2019-01-19), which is grandfathered everywhere.
+    // My Contracts stores acquisition as YYYY-01-01, so a 2019 purchase
+    // can't be placed on either side of Jan 19 and is treated as restricted
+    // (the safer error: a wrongly-open resort is a booking that fails).
+    const grandfathered = isResaleGrandfathered(c.purchase_date);
     for (const id of allResortIds) {
-      if (!HOME_ONLY_RESALE_RESORTS.has(id)) sevenMoResortIds.add(id);
+      if (grandfathered || !HOME_ONLY_RESALE_RESORTS.has(id)) sevenMoResortIds.add(id);
     }
   }
 
