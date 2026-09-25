@@ -39,6 +39,7 @@ const state = {
   compareMonthEnd: null,   // 0-11 or null; start > end wraps across the year boundary (e.g. Dec–Apr)
   altCrossResort: false,   // "Find a Better Stay" modal: also search other resorts, not just the current one
   altWdwOnly: false,       // same modal, cross-resort mode: restrict candidates to WDW (Orlando) resorts
+  altSameDays: false,      // same modal: only stays that check in (and so check out) on the same weekdays
 };
 
 // ---- DOM References ----
@@ -1494,6 +1495,14 @@ function setAltWdwOnly(checked) {
   renderAlternativesModal();
 }
 
+function setAltSameDays(checked) {
+  state.altSameDays = checked;
+  renderAlternativesModal();
+}
+
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const weekdayOf = dateStr => new Date(dateStr + "T12:00:00").getDay();
+
 function renderAlternativesModal() {
   const resort = getResort();
   const stayDates = getStayDates();
@@ -1516,6 +1525,11 @@ function renderAlternativesModal() {
       .filter(s => s.checkIn !== stayDates[0] && s.checkIn >= todayStr)
       .map(s => ({ ...s, resortId: resort.id, roomTypeId: state.roomTypeId, resortName: resort.name }));
   }
+  // Same length, so a matching check-in weekday means matching check-out
+  // too (a Thu-Mon stay only gets Thu-Mon suggestions).
+  const checkInDay = weekdayOf(stayDates[0]);
+  const daysLabel = `${WEEKDAY_SHORT[checkInDay]} &ndash; ${WEEKDAY_SHORT[weekdayOf(dateStrPlusDays(stayDates[0], nights))]}`;
+  if (state.altSameDays) candidates = candidates.filter(c => weekdayOf(c.checkIn) === checkInDay);
 
   const picks = candidates.length >= 5 ? buildAlternativePicks(currentEntry, candidates) : [];
   const allEmpty = picks.length > 0 && picks.every(p => !p.entry);
@@ -1539,12 +1553,17 @@ function renderAlternativesModal() {
       WDW (Orlando) only
     </label>
     ` : ""}
-    <div class="dist-subtitle">vs. every other ${nights}-night stay ${state.altCrossResort ? "across resorts offering this room type" : `at ${resort.name}`} ${rangeLabel}</div>
+    <label class="alt-cross-toggle">
+      <input type="checkbox" id="alt-same-days" ${state.altSameDays ? "checked" : ""}>
+      Keep the same days (${daysLabel})
+    </label>
+    <div class="dist-subtitle">vs. every other ${nights}-night stay${state.altSameDays ? ` from ${daysLabel}` : ""} ${state.altCrossResort ? "across resorts offering this room type" : `at ${resort.name}`} ${rangeLabel}</div>
     ${body}
   `;
 
   document.getElementById("alt-cross-resort").addEventListener("change", (e) => setAltCrossResort(e.target.checked));
   document.getElementById("alt-wdw-only")?.addEventListener("change", (e) => setAltWdwOnly(e.target.checked));
+  document.getElementById("alt-same-days").addEventListener("change", (e) => setAltSameDays(e.target.checked));
 }
 
 function applyAlternativeStay(checkInStr, nights, resortId, roomTypeId) {

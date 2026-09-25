@@ -25,6 +25,7 @@ Usage:
 """
 
 import hashlib
+import html as html_lib
 import json
 import os
 import re
@@ -48,15 +49,54 @@ DFB_EVENTS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "disney_
 DFB_CONSTRUCTION_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "resort_construction.js")
 DFB_STALENESS_DAYS = 21
 
-# Pages checked by content-hash diff. No structured API exists for any of
-# these -- a hash diff is the cheapest reliable "did this change" signal
-# without attempting to parse and risk misreading an actual number.
+# Pages checked by content-hash diff, for sources with no numbers worth
+# reading automatically. Dues and direct prices are read as numbers instead
+# (check_dues(), check_direct_prices()), since a raw "page changed" flag on
+# them fired on every promo edit and new post with nothing to do.
 HASH_WATCHED_PAGES = {
-    "dvcresalemarket_dues": "https://www.dvcresalemarket.com/buying/annual-dues/",
     "mousesavers_hub_2027": "https://www.mousesavers.com/2027-disney-world-room-rates-season-dates/",
-    "dvcnews_pricing": "https://dvcnews.com/dvc-program-menu/financial/pricing-a-promotions",
     "fidelity_blog": "https://www.fidelityrealestate.com/blog/",
 }
+# A change on these is worth knowing but never needs action by itself.
+FYI_HASH_PAGES = {"fidelity_blog": "new post(s) on the Fidelity blog -- optional read"}
+
+DUES_URL = "https://www.dvcresalemarket.com/buying/annual-dues/"
+DIRECT_PRICES_URL = "https://dvcnews.com/dvc-program-menu/financial/pricing-a-promotions"
+DATA_JS = os.path.join(os.path.dirname(__file__), "..", "data", "data.js")
+INVESTMENT_JS = os.path.join(os.path.dirname(__file__), "..", "data", "resort_investment.js")
+# The dues year data.js's DUES_PER_POINT holds. Bump it when the new year's
+# dues go into data.js, so a newer column on the dues page reads as news.
+APP_DUES_YEAR = 2026
+
+# Resort id -> a name fragment both source pages use (case-insensitive).
+RESORT_NAME_KEYS = {
+    "animalKingdomVillas": "animal kingdom",
+    "aulani": "aulani",
+    "bayLakeTower": "bay lake",
+    "beachClubVillas": "beach club",
+    "boardwalkVillas": "boardwalk",
+    "boulderRidge": "boulder ridge",
+    "copperCreek": "copper creek",
+    "fortWildernessCabins": "fort wilderness",
+    "disneylandHotel": "disneyland hotel",
+    "grandCalifornian": "grand californian",
+    "grandFloridian": "grand floridian",
+    "hiltonHead": "hilton head",
+    "oldKeyWest": "old key west",
+    "polynesianVillas": "polynesian",
+    "rivieraResort": "riviera",
+    "saratogaSprings": "saratoga",
+    "veroBeach": "vero beach",
+}
+
+# Disney Collection charts (points at non-DVC hotels) sit on the same
+# points-chart page as DVC's own. The app doesn't use them, so a new one
+# is noted, not flagged.
+NON_DVC_CHART_RE = re.compile(
+    r"Tokyo|Hong-Kong|Hollywood-Hotel|Explorers-Lodge|Newport-Bay|Hotel-New-York|Cheyenne|"
+    r"Santa-Fe|Sequoia|Davy-Crocket|Disneyland-Hotel-(?:Apr|Jan)|Disney-Collection|-TAT-",
+    re.IGNORECASE,
+)
 
 PDF_CONTENT_API = "https://disneyvacationclub.disney.go.com/api/v1/content?url=/vacation-planning/points-charts&format=raw"
 
@@ -157,12 +197,129 @@ def check_page_hashes(state, results):
             if old_hash is None:
                 results.append(("ok", f"{key}: first check, baseline recorded"))
             elif old_hash != new_hash:
-                results.append(("review", f"{key}: page content changed since last check -- {url}"))
+                if key in FYI_HASH_PAGES:
+                    results.append(("ok", f"FYI: {FYI_HASH_PAGES[key]} -- {url}"))
+                else:
+                    results.append(("review", f"{key}: page content changed since last check -- {url}"))
             else:
                 results.append(("ok", f"{key}: unchanged"))
             state["pageHashes"][key] = new_hash
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
             results.append(("error", f"{key}: fetch failed -- {e}"))
+
+
+# ---- Dues and direct prices, read as numbers ----
+def page_text(html_bytes):
+    """Visible text of a page: scripts/styles dropped, tags to spaces,
+    entities decoded, whitespace collapsed."""
+    s = html_bytes.decode("utf-8", errors="ignore")
+    s = re.sub(r"<(script|style)\b.*?</\1>", " ", s, flags=re.DOTALL | re.IGNORECASE)
+    s = html_lib.unescape(re.sub(r"<[^>]+>", " ", s))
+    s = html_lib.unescape(s)  # some pages double-encode (&amp;amp;)
+    return re.sub(r"\s+", " ", s)
+
+
+def resort_id_for(name):
+    low = name.lower()
+    for rid, key in RESORT_NAME_KEYS.items():
+        if key in low:
+            return rid
+    return None
+
+
+def app_values(path, pattern):
+    """{resortId: number} from a data file, via a regex with two groups."""
+    with open(path, "r", encoding="utf-8") as f:
+        return {m.group(1): float(m.group(2)) for m in re.finditer(pattern, f.read())}
+
+
+def parse_dues_page(html_bytes):
+    """(year, {resortId: dues}) from the dues table's newest "YYYY Annual
+    Dues" column, or (None, {}) if the table can't be read."""
+    s = html_bytes.decode("utf-8", errors="ignore")
+    table = re.search(r"<table\b.*?</table>", s, flags=re.DOTALL | re.IGNORECASE)
+    if not table:
+        return None, {}
+    rows = re.findall(r"<tr\b.*?</tr>", table.group(0), flags=re.DOTALL | re.IGNORECASE)
+    cells = [[page_text(c.encode()).strip() for c in re.findall(r"<t[dh]\b.*?</t[dh]>", r, flags=re.DOTALL | re.IGNORECASE)] for r in rows]
+    if not cells:
+        return None, {}
+    header = cells[0]
+    years = [(i, int(m.group(1))) for i, h in enumerate(header) if (m := re.search(r"(20\d\d)\s+Annual Dues", h))]
+    if not years:
+        return None, {}
+    col, year = max(years, key=lambda x: x[1])
+    dues = {}
+    for row in cells[1:]:
+        if len(row) <= col:
+            continue
+        rid = resort_id_for(row[0])
+        m = re.search(r"\$\s*(\d+(?:\.\d+)?)", row[col])
+        if rid and m:
+            dues[rid] = float(m.group(1))
+    return year, dues
+
+
+def parse_direct_prices(html_bytes):
+    """{resortId: $/pt} from DVC News' "<Resort> (Ownership end ...) $NNN"
+    lines. The first mention wins (the page repeats itself in metadata)."""
+    text = page_text(html_bytes)
+    prices = {}
+    for m in re.finditer(r"\(Ownership end[^)]*\)\s*\$(\d{2,4})", text):
+        # The resort named closest before "(Ownership end" (names can hold
+        # their own parentheses, e.g. "Aulani ... (Hawaii)").
+        before = text[max(0, m.start() - 140):m.start()].lower()
+        hits = [(before.rfind(key), rid) for rid, key in RESORT_NAME_KEYS.items() if key in before]
+        if not hits:
+            continue
+        rid = max(hits)[1]
+        if rid not in prices:
+            prices[rid] = float(m.group(1))
+    return prices
+
+
+def compare_numbers(label, page, app, fmt):
+    """Mismatch lines for resorts both sides have."""
+    return [f"{rid}: app {fmt(app[rid])}, page {fmt(v)}" for rid, v in sorted(page.items())
+            if rid in app and abs(app[rid] - v) > 0.004]
+
+
+def check_dues(state, results):
+    try:
+        year, dues = parse_dues_page(http_get(DUES_URL))
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
+        results.append(("error", f"dues: fetch failed -- {e}"))
+        return
+    if len(dues) < 15:
+        results.append(("review", f"dues: couldn't read the dues table ({len(dues)} of 17 resorts) -- check the page by hand: {DUES_URL}"))
+        return
+    if year > APP_DUES_YEAR:
+        listed = ", ".join(f"{rid} ${v:.2f}" for rid, v in sorted(dues.items()))
+        results.append(("review", f"dues: {year} dues are posted -- update DUES_PER_POINT in data/data.js (and APP_DUES_YEAR here): {listed}"))
+        return
+    app = app_values(DATA_JS, r"(?m)^\s*(\w+):\s*(\d+\.\d+),\s*$")
+    diffs = compare_numbers("dues", dues, app, lambda v: f"${v:.2f}")
+    if diffs:
+        results.append(("review", f"dues: {len(diffs)} resort(s) differ from the app -- " + "; ".join(diffs)))
+    else:
+        results.append(("ok", f"dues: {year} dues match the app for all {len(dues)} resorts"))
+
+
+def check_direct_prices(state, results):
+    try:
+        prices = parse_direct_prices(http_get(DIRECT_PRICES_URL))
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
+        results.append(("error", f"direct prices: fetch failed -- {e}"))
+        return
+    if len(prices) < 15:
+        results.append(("review", f"direct prices: couldn't read DVC News' price list ({len(prices)} of 17 resorts) -- check the page by hand: {DIRECT_PRICES_URL}"))
+        return
+    app = app_values(INVESTMENT_JS, r"(\w+):\s*\{[^}]*directPricePerPoint:\s*(\d+(?:\.\d+)?)")
+    diffs = compare_numbers("direct", prices, app, lambda v: f"${v:.0f}")
+    if diffs:
+        results.append(("review", f"direct prices: {len(diffs)} resort(s) differ from the app -- update directPricePerPoint in data/resort_investment.js: " + "; ".join(diffs)))
+    else:
+        results.append(("ok", f"direct prices: match the app for all {len(prices)} resorts"))
 
 
 def find_pdf_urls(obj, urls):
@@ -187,8 +344,13 @@ def check_points_chart_pdfs(state, results):
         if not known:
             results.append(("ok", f"points chart PDFs: first check, {len(urls)} baseline URLs recorded"))
         elif new_urls:
-            joined = "; ".join(new_urls[:5])
-            results.append(("review", f"points chart PDFs: {len(new_urls)} new PDF(s) found -- {joined}"))
+            dvc = [u for u in new_urls if not NON_DVC_CHART_RE.search(u)]
+            other = len(new_urls) - len(dvc)
+            if dvc:
+                joined = "; ".join(dvc[:5])
+                results.append(("review", f"points chart PDFs: {len(dvc)} new DVC chart(s) found -- {joined}"))
+            if other:
+                results.append(("ok", f"points chart PDFs: {other} new Disney Collection chart(s), not used by the app"))
         else:
             results.append(("ok", "points chart PDFs: no new charts"))
         state["knownPdfUrls"] = urls
@@ -522,6 +684,8 @@ def main():
 
     check_points_chart_pdfs(state, results)
     check_page_hashes(state, results)
+    check_dues(state, results)
+    check_direct_prices(state, results)
     check_dfb_calendar_freshness(state, results)
     check_undercover_tourist_season(state, results)
     check_live_pricing(state, results)

@@ -97,8 +97,8 @@ const NAV_OVERLAY_CSS = `
   .site-nav .site-nav-links a.active { background: #f3e8fd; color: #4a148c; }
   .site-nav.open #account-control { display: flex; flex-direction: column; align-items: center; }
   /* Signed out: Sign in leads the open menu, above the links. */
-  .site-nav.signed-out #account-control { order: 1; margin: 8px 0 4px; padding-bottom: 14px; border-bottom: 1px solid #eee; }
-  .site-nav.signed-out .site-nav-links { order: 2; }
+  .site-nav.signed-out #account-control { order: 1; margin: 8px 0 2px; }
+  .site-nav.signed-out .site-nav-links { order: 2; border-top: 0; margin-top: 0; }
   /* In the full-screen menu the sign-in options open in place. */
   .account-signin-panel { position: static; margin-top: 10px; box-shadow: none; }
   body.site-nav-locked { overflow: hidden; }
