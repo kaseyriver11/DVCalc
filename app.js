@@ -3457,7 +3457,7 @@ function buildUseOrRentHTML(cashValue, points) {
     : r.verdict === "rent"
       ? `<strong>Consider renting these points out.</strong> This stay is worth ${per(r.stayPerPoint)} in cash; renting them at ${per(r.rentalRate)} and paying cash would leave you about $${Math.round(r.rentAdvantage).toLocaleString()} ahead.`
       : `<strong>About even.</strong> This stay is worth ${per(r.stayPerPoint)} in cash, close to the ${per(r.rentalRate)} renting them out would bring.`;
-  return `<div class="use-or-rent ${r.verdict}"><p>${text}</p><a href="pointsorcash.html?points=${points}&cash=${Math.round(cashValue)}">Worth the points? &rarr;</a></div>`;
+  return `<div class="use-or-rent ${r.verdict}"><p>${text}</p><a href="pointsorcash.html?points=${points}&cash=${Math.round(cashValue)}">Point Value &rarr;</a></div>`;
 }
 
 function renderSummary() {
