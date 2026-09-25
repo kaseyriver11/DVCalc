@@ -15,7 +15,7 @@ const context = vm.createContext({
   RESORT_INVESTMENT_DATA: { ssr: { resalePricePerPoint: 100, contractExpirationYear: 2054 } },
   DUES_HISTORY: { ssr: RATES }, getDuesForYear: (id, y) => RATES[y] ?? 10,
 });
-vm.runInContext(read('dvc-owner-value.js'), context);
+vm.runInContext(read('js/dvc-owner-value.js'), context);
 const M = context.window.DVCOwnerValue.create(t => t.credit);
 const ssr = { id: 'a', home_resort_id: 'ssr', purchase_type: 'resale', purchase_date: '2024-03-01', purchase_price: 15000, points_per_year: 100, is_active: true };
 
@@ -44,6 +44,6 @@ test('missing purchase details stay estimated and labeled', () => {
 
 test('the contract form collects it, and every page uses the same model without per-year actuals', () => {
   assert.match(read('account.html'), /financing_interest_paid: document\.getElementById\("f-interest"\)/);
-  for (const f of ['trips.html', 'home.js', 'badges.html']) assert.doesNotMatch(read(f), /DVCActualCosts|getOwnershipCosts|costActuals/, f);
+  for (const f of ['trips.html', 'js/home.js', 'badges.html']) assert.doesNotMatch(read(f), /DVCActualCosts|getOwnershipCosts|costActuals/, f);
   assert.match(read('db/migrations/029_contract_financing_interest.sql'), /add column if not exists financing_interest_paid numeric\(12,2\)/);
 });

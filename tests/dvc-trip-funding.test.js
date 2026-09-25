@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const funding = require('../dvc-trip-funding.js');
+const funding = require('../js/dvc-trip-funding.js');
 const contracts = [{ id: 'a', is_active: true }, { id: 'b', is_active: false }];
 const sources = (allocations, transferred = 0) => ({ version: 2, allocations, one_time: 0, transferred, other: 0 });
 const trip = points_source_breakdown => ({ points_used: 100, custom_cash_value: 2000, points_source_breakdown });
@@ -44,7 +44,7 @@ test('invalid cash never enters value totals; zero cash is supported', () => {
   for (const cash of [-1, NaN, Infinity]) assert.equal(funding.credit(t, cash, contracts), null);
   assert.equal(funding.credit(t, 0, contracts).cash, 0);
 });
-for (const file of ['home.js', 'dvc-stay-value.js', 'badges.html']) {
+for (const file of ['js/home.js', 'js/dvc-stay-value.js', 'badges.html']) {
   test(`${file} uses the same credited value for both custom and estimated cash`, () => {
     const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
     const fn = source.match(/function tripCashValue\(trip, ownedContracts\) \{[\s\S]*?\n\}/)[0];
@@ -58,7 +58,7 @@ for (const file of ['home.js', 'dvc-stay-value.js', 'badges.html']) {
 }
 for (const name of ['addTrip', 'updateTrip']) {
   test(`${name} never retries a confirmed trip by discarding its funding or cash`, async () => {
-    const source = fs.readFileSync(path.join(__dirname, '..', 'auth.js'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '..', 'js/auth.js'), 'utf8');
     const fn = source.match(new RegExp(`async function ${name}\\([^]*?\\n\\}`))[0];
     let writes = 0;
     const chain = { insert: () => chain, update: () => chain, eq: () => chain, select: () => chain,

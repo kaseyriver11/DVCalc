@@ -1200,7 +1200,7 @@ function loadResortPicker() {
   if (window.DVCPickers) return Promise.resolve(window.DVCPickers);
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
-    s.src = "dvc-pickers.js";
+    s.src = "js/dvc-pickers.js";
     s.onload = () => (window.DVCPickers ? resolve(window.DVCPickers) : reject(new Error("picker missing")));
     s.onerror = reject;
     document.head.appendChild(s);

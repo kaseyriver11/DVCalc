@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const auth = fs.readFileSync(require.resolve('../auth.js'), 'utf8');
+const auth = fs.readFileSync(require.resolve('../js/auth.js'), 'utf8');
 const fnSource = name => auth.match(new RegExp('(?:async )?function ' + name + '\\([^]*?\\n\\}'))[0];
 
 const READS = ['getContracts', 'getContractYearPoints', 'getTrips', 'getTripDeductions'];
@@ -63,7 +63,7 @@ test('trialing and past_due still count as members; canceled does not', () => {
 });
 
 test('every owner page renders the membership gate', () => {
-  for (const file of ['account.html', 'bookings.html', 'trips.html', 'badges.html', 'home.js']) {
+  for (const file of ['account.html', 'bookings.html', 'trips.html', 'badges.html', 'js/home.js']) {
     assert.match(fs.readFileSync(require.resolve('../' + file), 'utf8'), /hasMembership\(\)/, file);
   }
 });

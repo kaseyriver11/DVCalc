@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const api=require('../dvc-compare-handoff.js');
+const api=require('../js/dvc-compare-handoff.js');
 const resorts=[2026,2027].map(year=>({id:'animalKingdom',year,roomTypes:[{id:'valueStudio'}]}));
 const stay={resortId:'animalKingdom',roomTypeId:'valueStudio',checkIn:'2026-10-12',checkOut:'2026-10-17',segment:null};
 test('standalone selection carries exact resort, room, dates and visible month without saved state',()=>{

@@ -1,11 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-const allocator=require('../dvc-plan-funding.js');
+const allocator=require('../js/dvc-plan-funding.js');
 const page=fs.readFileSync(path.join(__dirname,'../itinerarycompare.html'),'utf8');
 function setup(){
  const c=vm.createContext({window:{DVCPlanFunding:allocator},activeContracts:[],contractYearPoints:[],RESORTS:['ssr','akv','rivieraResort'].flatMap(id=>[2026,2027].map(year=>({id,year}))),getPointsForDate:()=>55,shorthandResortName:id=>id});
- vm.runInContext(fs.readFileSync(path.join(__dirname,'../dvc-dates.js'),'utf8'),c);
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/dvc-dates.js'),'utf8'),c);
  c.window.DVCDates.todayInEastern=()=>({year:2026,month:9,day:21});
- const auth=fs.readFileSync(path.join(__dirname,'../auth.js'),'utf8');
+ const auth=fs.readFileSync(path.join(__dirname,'../js/auth.js'),'utf8');
  vm.runInContext(auth.slice(auth.indexOf('const HOME_ONLY_RESALE_RESORTS'),auth.indexOf('// Direct-purchase minimum points')),c);
  c.window.DVCAuth={getUserResortAccess:c.getUserResortAccess};
  for(const name of ['resortName','nightsBetween','stayDateRange','monthsBeforeCheckIn','formatShortDate','getYearRowForDate','fundingText','calcFeasibility'])vm.runInContext(page.match(new RegExp('function '+name+'\\([^]*?\\n\\}'))[0],c);

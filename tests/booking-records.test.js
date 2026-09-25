@@ -5,8 +5,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const B = require('../dvc-booking-records.js');
-const { cancellationEffect } = require('../dvc-trip-deduct.js');
+const B = require('../js/dvc-booking-records.js');
+const { cancellationEffect } = require('../js/dvc-trip-deduct.js');
 const read = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
 
 test('cancellation dates match the 31+ / 30-1 / check-in-day rule used for real cancellations', () => {
@@ -42,7 +42,7 @@ test('confirmation details only in expanded booking details, never called verifi
   const summary = row.slice(row.indexOf('<button type="button" class="stay-row-toggle"'), row.indexOf('<div class="stay-details"'));
   assert.doesNotMatch(summary, /confirmation/);
   assert.match(row, /Disney confirmation \(as entered\)/);
-  assert.doesNotMatch(page + read('bookings-cancellations.js'), /\bverified\b/i);
+  assert.doesNotMatch(page + read('js/bookings-cancellations.js'), /\bverified\b/i);
   assert.doesNotMatch(page.replace('Waitlist Whisperer', ''), /waitlist/i); // that's an itinerary badge
 });
 

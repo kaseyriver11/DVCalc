@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const auth = fs.readFileSync(require.resolve('../auth.js'), 'utf8').replace(/\r/g, '');
+const auth = fs.readFileSync(require.resolve('../js/auth.js'), 'utf8').replace(/\r/g, '');
 const fnSource = name => auth.match(new RegExp('(?:async )?function ' + name + '\\([^]*?\\n\\}'))[0];
 
 function context(error) {

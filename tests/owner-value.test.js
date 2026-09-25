@@ -10,7 +10,7 @@ function setup(month = 8) {
     RESORT_INVESTMENT_DATA:{test:{resalePricePerPoint:10,contractExpirationYear:2070}},
     DUES_HISTORY:{test:{2026:1}},getDuesForYear:()=>1
   });
-  vm.runInContext(fs.readFileSync(require.resolve('../dvc-owner-value.js'),'utf8'),context);
+  vm.runInContext(fs.readFileSync(require.resolve('../js/dvc-owner-value.js'),'utf8'),context);
   return context.window.DVCOwnerValue.create(t=>t.credit);
 }
 const contract = {id:'c',home_resort_id:'test',purchase_type:'direct',purchase_date:'2026-01-01',purchase_price:100,points_per_year:10,is_active:true};
@@ -47,7 +47,7 @@ test('no active contracts means no future ownership projection',()=>{
   assert.equal(stats.estimatedHouseMoneyDate,null);assert.equal(stats.series.years.at(-1),2026);
 });
 test('both screens call the shared model and Home loads saved assumptions',()=>{
-  for(const file of ['home.js','trips.html']){
+  for(const file of ['js/home.js','trips.html']){
     const s=fs.readFileSync(require.resolve('../'+file),'utf8');
     assert.match(s,/window\.DVCOwnerValue\.create\(tripCashValue\)/);
     assert.doesNotMatch(s,/function computeHouseMoneyStats\(/);

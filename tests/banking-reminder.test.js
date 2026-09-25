@@ -19,7 +19,7 @@ const feb = { year: 2026, month: 9, day: 16 }; // 14 days before Feb UY's Sep 30
 // ---- Decision rules ----
 test('matches dvc-dates.js exactly: tables, labels, deadlines and use-year ends', () => {
   const c = vm.createContext({ window: {} });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../dvc-dates.js'), 'utf8'), c);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/dvc-dates.js'), 'utf8'), c);
   const D = c.window.DVCDates;
   assert.deepEqual({ ...D.USE_YEAR_START_MONTH }, R.USE_YEAR_START_MONTH);
   for (const uy of Object.keys(R.USE_YEAR_START_MONTH)) {

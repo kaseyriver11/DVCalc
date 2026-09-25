@@ -1,7 +1,7 @@
 // Bookings & Stays grouping and Membership Value's two-stay preview.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { groupStays, stayPreview, phase } = require('../dvc-stay-groups.js');
+const { groupStays, stayPreview, phase } = require('../js/dvc-stay-groups.js');
 
 const today = '2026-09-23';
 const stay = (id, check_in, check_out, extra = {}) => ({ id, check_in, check_out, ...extra });

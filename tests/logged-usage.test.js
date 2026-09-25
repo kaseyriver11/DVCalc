@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {loggedUsage}=require('../dvc-trip-funding.js');
+const {loggedUsage}=require('../js/dvc-trip-funding.js');
 const contracts=[{id:'a',points_per_year:200,is_active:true},{id:'b',is_active:false}];
 const trip=(allocations,outside=0)=>({points_used:allocations.reduce((n,a)=>n+a.points,0)+outside,points_source_breakdown:{version:2,allocations,transferred:outside,one_time:0,other:0}});
 test('no logged stays is zero usage regardless of entitlement or balances',()=>{

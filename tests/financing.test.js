@@ -1,5 +1,5 @@
 const test = require('node:test'), assert = require('node:assert/strict');
-const F = require('../dvc-financing.js');
+const F = require('../js/dvc-financing.js');
 
 const near = (a, b, tol = 0.01) => assert.ok(Math.abs(a - b) <= tol, `${a} vs ${b}`);
 

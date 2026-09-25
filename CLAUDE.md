@@ -7,7 +7,7 @@ A web app for Disney Vacation Club owners and renters — started as a points ca
 Live at dvccompanion.com (GitHub Pages, deployed on push to `main`), with Supabase (`dvcalc_start`) for accounts, owner data, and Edge Functions. Core calculator, owner tools (contracts, points ledger, trips, itineraries, Trophy Room), and the nightly data pipeline are all shipped. Active Member billing is built against Stripe **test mode** only -- `MEMBERSHIP_GATE_ENABLED` ships `false` until go-live (`docs/subscriptions_plan.md` Phase 6). Open work lives in `docs/*_todo.md` and the plan docs; there are no TODO comments in code. Home is the landing page: the brand link on every page and the installed app's `start_url` both open `home.html` (the product is a contract manager; the calendar supports it). Home shows only the single earliest attention item (`DVCPointAttention.earliest()`) and a compact points portfolio (`dvc-home-summary.js`) -- every other deadline, bucket breakdown, and use-year date range lives on My Contracts, so nothing is stated twice.
 
 ## Tech Stack
-- **Frontend:** HTML/CSS/JavaScript (vanilla, no framework, no build step). Shared logic is plain `<script>` files exposing `window.DVC*` globals, most also `require()`-able by Node for tests.
+- **Frontend:** HTML/CSS/JavaScript (vanilla, no framework, no build step). Shared logic is plain `<script>` files under `js/` (moved out of the root 2026-09-25; only `service-worker.js` stays at the root, for PWA scope) exposing `window.DVC*` globals, most also `require()`-able by Node for tests. Pages load them as `js/<name>.js`; tests as `../js/<name>.js` or `read("js/<name>.js")`.
 - **Hosting:** Static files on GitHub Pages (`CNAME` -> dvccompanion.com); a PWA via `manifest.json` + `service-worker.js`
 - **Backend:** Supabase -- Postgres with RLS (`db/schema.sql`, `db/migrations/`), auth, Edge Functions (`supabase/functions/`)
 - **Data:** JSON embedded in JS under `data/` (points charts extracted from DVC PDFs, plus cash, dues, availability, events)
@@ -17,8 +17,8 @@ Live at dvccompanion.com (GitHub Pages, deployed on push to `main`), with Supaba
 ## File Structure
 ```
 Pages
-├── home.html / home.js         # Home: "Next up" attention card, points portfolio, value preview
-├── index.html / app.js         # Points calendar -- the original tool; Smart Draw, review mode, split stays
+├── home.html (js/home.js)      # Home: "Next up" attention card, points portfolio, value preview
+├── index.html (js/app.js)      # Points calendar -- the original tool; Smart Draw, review mode, split stays
 ├── compare.html                # Cross-resort date comparison (self-contained)
 ├── changes.html                # Point Changes -- year-over-year chart, nav: Research (self-contained)
 ├── suggest.html                # Suggest a Stay -- points budget -> stays (self-contained)
@@ -32,7 +32,7 @@ Pages
 ├── badges.html / badges_info.html  # Trophy Room and badge reference
 ├── privacy.html / terms.html   # Legal
 └── styles.css / tokens.css     # Calendar styles / shared design tokens and components
-Shared scripts (window.DVC* globals)
+js/                             # Shared scripts (window.DVC* globals) -- every root .js except the service worker
 ├── auth.js                     # Supabase auth + every owner-data read/write; Active Member gate
 ├── nav.js                      # Mobile nav toggle + service worker registration (PWA install)
 ├── dvc-ui.js                   # Custom select component
@@ -57,8 +57,8 @@ Shared scripts (window.DVC* globals)
 ├── dvc-financing.js            # Loan payment and interest math
 ├── dvc-compare-handoff.js      # URL handoff that opens the calendar on a given stay (+ applyShared for share links)
 ├── dvc-share.js                # Share links: stay/itinerary (s= params) and Suggest a Stay searches; share sheet or copy
-├── dvc-badges.js / dvc-track.js  # Trophy Room logic / event-count tracking
-└── service-worker.js           # PWA service worker
+└── dvc-badges.js / dvc-track.js  # Trophy Room logic / event-count tracking
+service-worker.js               # PWA service worker (root, so its scope covers the whole site)
 data/                           # data.js (2026-27 charts, cash, dues), data_historical.js (2016-2027, generated),
                                 # availability, live cash prices, events, construction, investment, images, shorthand
 db/                             # schema.sql, migrations/ (run by hand in the Supabase SQL editor), check_migrations.sql

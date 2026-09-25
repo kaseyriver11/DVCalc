@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
 function setup() {
   const c = vm.createContext({ window: {}, state: { checkIn: '2027-03-01', checkOut: '2027-03-04' },
     selectedContractId: 'a',
@@ -12,7 +12,7 @@ function setup() {
       { contract_id: 'a', use_year_label: 2026, balance_confirmed_at: '2026-09-22', points_remaining: 0 },
       { contract_id: 'a', use_year_label: 2027, balance_confirmed_at: '2026-09-22', points_remaining: 150 },
     ], computeStayEntry: (_r, _room, dates) => ({ points: dates.length * 20 }) });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../dvc-dates.js'), 'utf8'), c);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/dvc-dates.js'), 'utf8'), c);
   c.window.DVCDates.todayInEastern = () => ({ year: 2026, month: 9, day: 21 });
   for (const [first, next] of [
     ['currentUYYear', 'getContractWindowMonths'],

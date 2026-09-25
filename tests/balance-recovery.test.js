@@ -11,7 +11,7 @@ function screen(save,years=[2026]) {
       querySelector:selector=>selector==='[data-balance-total]'?total:node(year+selector),querySelectorAll:()=>buckets};
     total.closest=()=>card;buckets.forEach(input=>input.closest=()=>card);return card;
   });
-  const context=vm.createContext({window:{DVCBalances:require('../dvc-balances.js'),DVCAuth:{upsertContractYearPoints:save}},
+  const context=vm.createContext({window:{DVCBalances:require('../js/dvc-balances.js'),DVCAuth:{upsertContractYearPoints:save}},
     document:{getElementById:node,querySelectorAll:selector=>selector==='[data-balance-year]'?cards:[]}});
   vm.runInContext(`let balanceSetupBusy=false,balanceSetupFailed=false,balanceSetupSaved=new Map(),balanceSetupContract={id:'c'},balanceSetupRows={c:${JSON.stringify(years.map(year=>({contract_id:'c',use_year_label:year,points_remaining:10,points_banked:0,points_borrowed:0,points_holding:0,balance_confirmed_at:'saved'})))}};let closed=false;`,context);
   const source=fs.readFileSync(require.resolve('../account.html'),'utf8'),start=source.indexOf('function updateBalanceCorrectionPreview('),end=source.indexOf("document.addEventListener('keydown'",start);

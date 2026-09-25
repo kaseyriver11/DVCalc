@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const R = require('../dvc-reconcile.js');
+const R = require('../js/dvc-reconcile.js');
 
 const row = (b = {}) => ({ balance_confirmed_at: '2026-09-01T00:00:00+00:00', updated_at: '2026-09-01T00:00:00+00:00', points_remaining: 120, points_banked: 20, points_borrowed: 0, points_holding: 0, ...b });
 const entry = (b = {}) => ({ points_remaining: '120', points_banked: '20', points_borrowed: '0', points_holding: '0', ...b });

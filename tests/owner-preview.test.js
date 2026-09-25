@@ -5,10 +5,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const P = require('../dvc-owner-preview.js');
+const P = require('../js/dvc-owner-preview.js');
 const read = f => fs.readFileSync(require.resolve('../' + f), 'utf8').replace(/\r/g, '');
-const auth = read('auth.js');
-const home = read('home.js');
+const auth = read('js/auth.js');
+const home = read('js/home.js');
 const account = read('account.html');
 
 test('the example is labeled as an example, never as the visitor\'s data', () => {
@@ -44,7 +44,7 @@ test('it says owners enter their numbers and check them against Disney -- no con
 });
 
 test('the preview script never touches owner data', () => {
-  const src = read('dvc-owner-preview.js').replace(/^\s*\/\/.*$/gm, '');
+  const src = read('js/dvc-owner-preview.js').replace(/^\s*\/\/.*$/gm, '');
   assert.doesNotMatch(src, /DVCAuth|supabase|fetch\(|localStorage|sessionStorage/);
 });
 
@@ -68,7 +68,7 @@ test('both gates use the one shared renderer, with one trial or sign-in action',
   // The only button is the hero's resort picker (no sign-in or trial
   // buttons on signed-out Home).
   assert.deepEqual(signedOut.match(/<button[^>]*id="[^"]+"/g), ['<button type="button" class="home-hero-resort" id="home-hero-resort"']);
-  for (const page of ['home.html', 'account.html']) assert.match(read(page), /<script src="dvc-owner-preview\.js"><\/script>/);
+  for (const page of ['home.html', 'account.html']) assert.match(read(page), /<script src="js\/dvc-owner-preview\.js"><\/script>/);
 });
 
 test('without the preview option the gate is unchanged', () => {
@@ -90,7 +90,7 @@ test('the example says the owner confirmed its balances, not that the app checke
 });
 
 test('no membership surface says owners "connect" their contracts', () => {
-  for (const f of ['account.html', 'home.js', 'auth.js', 'badges.html', 'bookings.html', 'trips.html', 'itineraries.html', 'itinerarycompare.html', 'use-points.html']) {
+  for (const f of ['account.html', 'js/home.js', 'js/auth.js', 'badges.html', 'bookings.html', 'trips.html', 'itineraries.html', 'itinerarycompare.html', 'use-points.html']) {
     assert.doesNotMatch(read(f), /connect your own|connect your contracts/i, f);
   }
   assert.match(account, /record and manage your contracts/);

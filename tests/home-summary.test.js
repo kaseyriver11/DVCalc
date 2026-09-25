@@ -4,10 +4,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const { attentionCard, portfolioSummary } = require('../dvc-home-summary.js');
+const { attentionCard, portfolioSummary } = require('../js/dvc-home-summary.js');
 
 const c = vm.createContext({ window: {} });
-for (const f of ['dvc-dates.js', 'dvc-point-attention.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
+for (const f of ['js/dvc-dates.js', 'js/dvc-point-attention.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
 const { DVCDates: D, DVCPointAttention: A } = c.window;
 const opts = event => ({ name: event?.contract ? A.label(event.contract, 'Saratoga Springs') : '', tiers: { urgency: D.urgencyTier, expiration: D.expirationTier }, formatDate: D.formatDeadlineDate, describe: A.describe });
 const today = { year: 2026, month: 9, day: 22 };
@@ -63,7 +63,7 @@ test('all clear only when every current bucket is recorded and empty', () => {
 });
 
 // ---- "Check balance with Disney" beside a near deadline ----
-const { disneyCheck } = require('../dvc-home-summary.js');
+const { disneyCheck } = require('../js/dvc-home-summary.js');
 const todayMs = D.dateOnlyUTC(today.year, today.month, today.day);
 const cardFor = (rows, contracts = [contract('a', 'Oct')]) => {
   const event = A.earliest(contracts, rows, today);

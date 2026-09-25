@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { preview, total } = require('../dvc-point-moves.js');
+const { preview, total } = require('../js/dvc-point-moves.js');
 const row = (year, remaining, extras = {}) => ({ use_year_label: year, points_remaining: remaining, points_banked: 0, points_borrowed: 0, points_holding: 0, balance_confirmed_at: '2026-09-22T00:00:00Z', ...extras });
 test('banking subtracts current points and adds banked points in the next year', () => {
   const rows = [row(2026,120,{points_holding:10}),row(2027,200,{points_banked:5})];

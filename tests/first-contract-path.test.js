@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const read = f => fs.readFileSync(require.resolve('../' + f), 'utf8').replace(/\r/g, '');
-const auth = read('auth.js');
+const auth = read('js/auth.js');
 const account = read('account.html');
 const fn = (src, name) => src.match(new RegExp(`function ${name}\\([^]*?\\n\\}`))[0];
 
@@ -100,7 +100,7 @@ test('a stale intent expires instead of opening a form later', () => {
 });
 
 test('funnel events carry only a step name', () => {
-  const src = read('dvc-funnel.js');
+  const src = read('js/dvc-funnel.js');
   assert.match(src, /path: "funnel\/" \+ step, title: step, event: true/);
   for (const [, step] of account.matchAll(/DVCFunnel\?\.event\(([^)]*)\)/g)) {
     assert.match(step, /^("[a-z-]+"|`step-\$\{modalStep\}-done`|saved\.length \? "balance-saved" : "balance-skipped")$/, step);

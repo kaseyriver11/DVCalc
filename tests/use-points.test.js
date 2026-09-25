@@ -7,14 +7,14 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const U = require('../dvc-use-points.js');
-const { allocate } = require('../dvc-plan-funding.js');
+const U = require('../js/dvc-use-points.js');
+const { allocate } = require('../js/dvc-plan-funding.js');
 
 const ROOT = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const c = vm.createContext({ window: {} });
-for (const f of ['data/data.js', 'data/data_historical.js', 'data/availability_data.js', 'dvc-dates.js', 'dvc-leftover-points.js']) vm.runInContext(read(f), c);
-const auth = read('auth.js');
+for (const f of ['data/data.js', 'data/data_historical.js', 'data/availability_data.js', 'js/dvc-dates.js', 'js/dvc-leftover-points.js']) vm.runInContext(read(f), c);
+const auth = read('js/auth.js');
 vm.runInContext(auth.slice(auth.indexOf('const HOME_ONLY_RESALE_RESORTS'), auth.indexOf('// Direct-purchase minimum points')), c);
 const RESORTS = vm.runInContext('RESORTS', c), AV = vm.runInContext('AVAILABILITY_DATA', c);
 const getPointsForDate = vm.runInContext('getPointsForDate', c), getUserResortAccess = vm.runInContext('getUserResortAccess', c);
@@ -171,5 +171,5 @@ test('entry points: the ledger row and point actions open this flow for the exac
   const account = read('account.html');
   assert.match(account, /class="ledger-primary-btn" href="use-points\.html\?contract=\$\{encodeURIComponent\(c\.id\)\}&year=\$\{row\.year\}"/);
   assert.match(account, /href="use-points\.html\?contract=\$\{encodeURIComponent\(c\.id\)\}&year=\$\{event\.year\}">Use these points &rarr;</);
-  assert.match(read('dvc-home-summary.js'), /use-points\.html\?contract=/);
+  assert.match(read('js/dvc-home-summary.js'), /use-points\.html\?contract=/);
 });

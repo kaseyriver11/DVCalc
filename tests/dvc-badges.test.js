@@ -25,7 +25,7 @@ global.window = {
   // without needing fixture allocations.
   DVCTripFunding: { summary: () => ({ valid: false, owned: 0 }) },
 };
-for (const f of ["data/data.js", "data/resort_shorthand.js", "data/disney_events.js", "dvc-dates.js", "dvc-badges.js"]) {
+for (const f of ["data/data.js", "data/resort_shorthand.js", "data/disney_events.js", "js/dvc-dates.js", "js/dvc-badges.js"]) {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), "utf8"), { filename: f });
 }
 const B = window.DVCBadges;
@@ -380,7 +380,7 @@ test("7-Month Sniper needs an away stay the contract can actually reach", () => 
 });
 
 // ---- Free badges (2026-09-24) ----
-const FREE_IDS = new Set([...fs.readFileSync(path.join(ROOT, "auth.js"), "utf8")
+const FREE_IDS = new Set([...fs.readFileSync(path.join(ROOT, "js/auth.js"), "utf8")
   .match(/const FREE_BADGE_IDS = new Set\(\[([^]*?)\]\)/)[1].matchAll(/"([a-z-]+)"/g)].map(m => m[1]));
 const everyBadge = (itins = [], stored = []) => [
   ...window.DVCBadges.evaluateUserBadges([], [], itins, { paybackPct: 0 }, null, []),

@@ -3,8 +3,8 @@
 // nothing private, and a bad link never half-applies.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const S = require('../dvc-share.js');
-const H = require('../dvc-compare-handoff.js');
+const S = require('../js/dvc-share.js');
+const H = require('../js/dvc-compare-handoff.js');
 
 const RESORTS = [
   { id: 'riviera', year: 2026, roomTypes: [{ id: 'deluxeStudio' }] },

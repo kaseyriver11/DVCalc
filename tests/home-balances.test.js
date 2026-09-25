@@ -6,15 +6,15 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../home.js'), 'utf8').replace(/\r/g, '');
+const source = fs.readFileSync(path.join(__dirname, '../js/home.js'), 'utf8').replace(/\r/g, '');
 const fn = name => source.match(new RegExp('function ' + name + '\\([^]*?\\n\\}'))[0];
 
 function setup(today = { year: 2026, month: 9, day: 22 }) {
   const container = { innerHTML: '' };
   const c = vm.createContext({ window: {}, RESORTS: [{ id: 'ssr', name: "Disney's Saratoga Springs Resort & Spa" }],
     document: { getElementById: () => container } });
-  for (const f of ['dvc-dates.js', 'dvc-point-attention.js', 'dvc-home-summary.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
-  c.window.DVCHomeSummary = c.window.DVCHomeSummary || require('../dvc-home-summary.js');
+  for (const f of ['js/dvc-dates.js', 'js/dvc-point-attention.js', 'js/dvc-home-summary.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
+  c.window.DVCHomeSummary = c.window.DVCHomeSummary || require('../js/dvc-home-summary.js');
   vm.runInContext(`const { currentUYYear, dateOnlyUTC, formatDeadlineDate } = window.DVCDates; const todayInEastern = () => (${JSON.stringify(today)});
     const HOME_CONTRACT_ROWS = 3; const ADD_CONTRACT_HREF = "account.html?start=add-contract";` + fn('resortName') + fn('contractName') + fn('renderContractsWidget'), c);
   return (contracts, rows) => { c.renderContractsWidget(contracts, rows); return container.innerHTML; };

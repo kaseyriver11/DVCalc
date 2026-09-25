@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { findStays } = require("../dvc-leftover-points.js");
+const { findStays } = require("../js/dvc-leftover-points.js");
 
 // Weekday 10 pts, Fri/Sat 14 pts; OKW is cheaper at 8/12.
 const weekend = s => [5, 6].includes(new Date(s + "T00:00:00Z").getUTCDay());
@@ -52,7 +52,7 @@ test("caps a single stay at maxNights", () => {
 });
 
 // ---- availability odds (short-notice realism) ----
-const { bookingWindowKey, keyDatesPeriod, availabilityScore, oddsLabel } = require("../dvc-leftover-points.js");
+const { bookingWindowKey, keyDatesPeriod, availabilityScore, oddsLabel } = require("../js/dvc-leftover-points.js");
 const avail = { ssr: 1.6, okw: 0.7 }; // avg days open out of 7, flat for the test
 const availabilityFor = resortId => avail[resortId] ?? null;
 

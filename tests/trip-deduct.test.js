@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const deduct = require('../dvc-trip-deduct.js');
+const deduct = require('../js/dvc-trip-deduct.js');
 
 const ssr = { id: 'ssr', use_year: 'Dec', points_per_year: 150 };
 const riv = { id: 'riv', use_year: 'Jun', points_per_year: 100 };

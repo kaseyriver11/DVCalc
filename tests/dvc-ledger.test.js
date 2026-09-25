@@ -3,7 +3,7 @@
 // with: node --test tests/
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateBorrowedPoints, pointsEnterHolding, holdingExpiration, MAX_BORROW_RATIO, HOLDING_BOOKING_WINDOW_DAYS } = require("../dvc-ledger.js");
+const { validateBorrowedPoints, pointsEnterHolding, holdingExpiration, MAX_BORROW_RATIO, HOLDING_BOOKING_WINDOW_DAYS } = require("../js/dvc-ledger.js");
 
 const DAY = 86400000;
 
@@ -77,7 +77,7 @@ test("60 days describes the booking window", () => {
 
 // ---- cancellationOutcome / shouldSuggestBankFirst ----
 // Disney On-Line Booking T&C (2025-06-01) + DVC Fan / planDisney, 2026-09-22.
-const { cancellationOutcome, shouldSuggestBankFirst } = require("../dvc-ledger.js");
+const { cancellationOutcome, shouldSuggestBankFirst } = require("../js/dvc-ledger.js");
 const d = (y, m, day) => Date.UTC(y, m - 1, day);
 
 test("cancel 31+ days out before the banking deadline comes back bankable until the deadline", () => {

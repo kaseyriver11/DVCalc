@@ -14,7 +14,7 @@ let P, Run;
 test.before(async () => { P = await load('point-reminders.js'); Run = await load('point-reminder-run.js'); });
 
 const c = vm.createContext({ window: {} });
-for (const f of ['dvc-dates.js', 'dvc-point-attention.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
+for (const f of ['js/dvc-dates.js', 'js/dvc-point-attention.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), c);
 const { DVCDates: D, DVCPointAttention: A } = c.window;
 const plain = v => JSON.parse(JSON.stringify(v));
 const confirmed = (b = {}) => ({ balance_confirmed_at: '2026-09-01T00:00:00Z', points_remaining: 0, points_banked: 0, points_borrowed: 0, points_holding: 0, ...b });

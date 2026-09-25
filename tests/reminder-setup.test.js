@@ -5,7 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const R = require('../dvc-reminder-setup.js');
+const R = require('../js/dvc-reminder-setup.js');
 const source = fs.readFileSync(require.resolve('../account.html'), 'utf8').replace(/\r/g, '');
 
 const withAll = (extra = {}) => ({ reminder_opt_in: false, reminder_lead_days: 14, expiration_reminder_opt_in: false, expiration_reminder_lead_days: 45, holding_reminder_opt_in: false, holding_reminder_lead_days: 60, ...extra });

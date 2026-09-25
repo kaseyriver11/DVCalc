@@ -27,8 +27,8 @@ function extractConst(name) {
 function setup(wizard) {
   const context = vm.createContext({ window: {}, console, Math, Number, Object, Set });
   context.window = context;
-  context.DVCResale = require('../dvc-resale.js');
-  context.DVCFinancing = require('../dvc-financing.js');
+  context.DVCResale = require('../js/dvc-resale.js');
+  context.DVCFinancing = require('../js/dvc-financing.js');
   for (const f of ['data/data.js', 'data/data_historical.js', 'data/dues_historical.js', 'data/resort_investment.js']) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/^(const|let) /gm, 'var '), context);
   }

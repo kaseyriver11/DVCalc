@@ -29,7 +29,7 @@ const TOO_SOON = "2026-12-01";
 
 // Real dvc-dates.js, loaded once for its window math.
 const datesCtx = vm.createContext({ window: {} });
-vm.runInContext(read("dvc-dates.js"), datesCtx);
+vm.runInContext(read("js/dvc-dates.js"), datesCtx);
 const realDates = datesCtx.window.DVCDates;
 
 const ALL_RESORT_IDS = [
@@ -55,14 +55,14 @@ function setup() {
     },
   });
 
-  const auth = read("auth.js");
+  const auth = read("js/auth.js");
   vm.runInContext(
     auth.slice(auth.indexOf("const HOME_ONLY_RESALE_RESORTS"), auth.indexOf("// Direct-purchase minimum points")),
     ctx,
   );
   ctx.window.DVCAuth = { getUserResortAccess: ctx.getUserResortAccess };
 
-  const app = read("app.js");
+  const app = read("js/app.js");
   vm.runInContext(app.match(/function trackElevenMonthSniper\(\)[^]*?\n\}/)[0], ctx);
 
   ctx.tracked = tracked;

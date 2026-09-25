@@ -3,11 +3,11 @@
 // default agrees with it.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path');
-const PV = require('../dvc-point-value.js');
+const PV = require('../js/dvc-point-value.js');
 
 const ROOT = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
-const PAGES = { 'index.html': 'app.js', 'compare.html': 'compare.html', 'contractvalue.html': 'contractvalue.html', 'trips.html': 'trips.html' };
+const PAGES = { 'index.html': 'js/app.js', 'compare.html': 'compare.html', 'contractvalue.html': 'contractvalue.html', 'trips.html': 'trips.html' };
 
 test('rental is its own $20 kind, separate from the $30 value per point', () => {
   assert.equal(PV.RENTAL_DEFAULT, 20);
@@ -18,7 +18,7 @@ test('rental is its own $20 kind, separate from the $30 value per point', () => 
 });
 
 test('rental prices use the rental kind, never the $30 value', () => {
-  for (const f of ['app.js', 'compare.html']) {
+  for (const f of ['js/app.js', 'compare.html']) {
     const src = read(f);
     assert.match(src, /rentalRate: window\.DVCPointValue\.RENTAL_DEFAULT/, f);
     assert.match(src, /id: "rental-rate", kind: "rental"/, f);
@@ -38,7 +38,7 @@ test('the shared default is $30 and inside the editor range', () => {
 
 for (const [page, script] of Object.entries(PAGES)) {
   test(`${page} loads and renders the shared $/pt editor`, () => {
-    assert.match(read(page), /<script src="dvc-point-value\.js"><\/script>/);
+    assert.match(read(page), /<script src="js\/dvc-point-value\.js"><\/script>/);
     const src = read(script);
     assert.match(src, /window\.DVCPointValue\.html\(/);
     assert.match(src, /window\.DVCPointValue\.attach\(/);
@@ -46,7 +46,7 @@ for (const [page, script] of Object.entries(PAGES)) {
 }
 
 test('no page keeps its own $/pt default or preset list', () => {
-  for (const f of ['app.js', 'compare.html', 'contractvalue.html', 'trips.html', 'data/data.js']) {
+  for (const f of ['js/app.js', 'compare.html', 'contractvalue.html', 'trips.html', 'data/data.js']) {
     const src = read(f);
     assert.doesNotMatch(src, /DEFAULT_RENTAL_RATE|RENT_POINT_VALUE|POINT_VALUE_PRESETS/, f);
   }
@@ -54,7 +54,7 @@ test('no page keeps its own $/pt default or preset list', () => {
 });
 
 test('saved-setting defaults match the shared default', () => {
-  assert.match(read('auth.js'), new RegExp(`point_value_baseline: ${PV.DEFAULT},`));
+  assert.match(read('js/auth.js'), new RegExp(`point_value_baseline: ${PV.DEFAULT},`));
   for (const f of ['trips.html', 'bookings.html']) {
     assert.match(read(f), new RegExp(`(let userSettings|const DEFAULT_ASSUMPTIONS) = \\{ point_value_baseline: ${PV.DEFAULT},`), f);
   }

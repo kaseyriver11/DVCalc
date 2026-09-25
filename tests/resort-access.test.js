@@ -8,7 +8,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-const auth = fs.readFileSync(path.join(__dirname, "..", "auth.js"), "utf8");
+const auth = fs.readFileSync(path.join(__dirname, "..", "js/auth.js"), "utf8");
 const ctx = vm.createContext({});
 vm.runInContext(auth.slice(auth.indexOf("const HOME_ONLY_RESALE_RESORTS"), auth.indexOf("// Direct-purchase minimum points")), ctx);
 const access = ctx.getUserResortAccess;

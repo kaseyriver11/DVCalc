@@ -1,5 +1,5 @@
 const test = require('node:test'), assert = require('node:assert/strict');
-const R = require('../dvc-rental.js');
+const R = require('../js/dvc-rental.js');
 
 test('a stay worth more per point than renting says use the points', () => {
   const r = R.useOrRent({ cashValue: 3000, points: 100, rentalRate: 20 });

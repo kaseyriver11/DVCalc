@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const moves = require('../dvc-point-moves.js');
+const moves = require('../js/dvc-point-moves.js');
 
 function screen(api, storageFails = false) {
   const elements = new Map();
@@ -21,7 +21,7 @@ function screen(api, storageFails = false) {
       removeItem: key => stored.delete(key)
     }
   });
-  vm.runInContext(fs.readFileSync(require.resolve('../account-point-moves.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(require.resolve('../js/account-point-moves.js'), 'utf8'), context);
   vm.runInContext(`
     renderPointMovePreview = () => {};
     closePointMove = async () => { pointMove = null; };

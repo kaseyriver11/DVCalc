@@ -53,7 +53,7 @@ function setup() {
     RESORTS: [{ id: "ssr", roomTypes: [{ id: "studio" }] }],
     openTripForm: (...args) => opened.push(args),
   });
-  vm.runInContext(handler("app.js", "logTripFromCalendar", "eligibleSplitContracts"), context);
+  vm.runInContext(handler("js/app.js", "logTripFromCalendar", "eligibleSplitContracts"), context);
   vm.runInContext(handler("bookings.html", "openCalendarTripDraft", "openTripForm"), context);
   return { context, storage, opened, alerts, totals, contracts };
 }
