@@ -190,17 +190,20 @@ select, input, textarea, button {
    and shift sideways the moment #booking-as-control/#itinerary-load-control
    flip from display:none to flex once Supabase auth resolves and there's
    contract/itinerary data to show. */
+/* Desktop: a full-width white strip under the header (background and
+   border run edge to edge like the header itself) whose CONTENT is padded
+   in to the same 1200px column, 16px inner edge, as .main-layout below, so
+   the dropdowns line up with the calendar card instead of floating in a
+   narrower white box with its own edges. */
 .controls {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 12px 24px;
+  padding: 12px max(16px, calc((100% - 1200px) / 2 + 16px));
   background: white;
   border-bottom: 1px solid #e0e0e0;
   align-items: center;
   justify-content: flex-start;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 /* max-width:100% is load-bearing here, not belt-and-braces: a
