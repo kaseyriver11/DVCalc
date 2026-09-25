@@ -262,18 +262,19 @@ body {
 
 .wizard-nav { display: flex; gap: 10px; margin-top: 18px; }
 .wizard-nav .find-btn { width: auto; flex: 1; }
+/* Secondary (clickable styles). */
 .btn-back {
   font: inherit;
   min-height: 48px;
   padding: 12px 18px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1.5px solid #4a148c;
   background: white;
-  color: #555;
-  font-weight: 600;
+  color: #4a148c;
+  font-weight: 700;
   cursor: pointer;
 }
-.btn-back:hover { border-color: #999; }
+.btn-back:hover { background: #f5effb; }
 
 /* ---- Top Matches: curated hero cards -----------------------------------
    The primary results view -- 2-3 standout resorts, not the full 17-row
@@ -355,15 +356,15 @@ body {
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 8px;
-  border: 1px dashed #ccc;
+  border: 1.5px solid var(--color-primary);
   background: white;
   font: inherit;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-primary);
   cursor: pointer;
 }
-.advanced-toggle:hover, .view-all-toggle:hover { border-color: var(--color-primary); background: #f7f5fa; }
+.advanced-toggle:hover, .view-all-toggle:hover { background: var(--color-primary-tint-bg); }
 /* A list of settings rows -- label left, value pill right -- not a stack
    of <label>+bare-<input> pairs, which read as a form to fill out rather
    than settings that already have sensible values. Each row's control is
@@ -884,7 +885,6 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -897,6 +897,7 @@ body {
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html" class="active">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -972,7 +973,7 @@ function directPremiumCaptionHTML(r) {
 }
 
 // Resale broker commission and the price-vs-years-left curve come from
-// dvc-resale.js, shared with Membership Value's Keep or Sell and Exit
+// dvc-resale.js, shared with Membership Value's Exit
 // Equity, so every "if I sold" figure rests on the same assumptions.
 const RESALE_BROKER_FEE = window.DVCResale.BROKER_FEE;
 const resaleValueFraction = window.DVCResale.valueFraction;

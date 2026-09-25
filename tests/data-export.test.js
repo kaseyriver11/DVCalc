@@ -139,31 +139,31 @@ test('Your data sits above the Danger Zone for members and non-members alike', (
   const signedIn = account.match(/async function renderSignedIn\(\) \{[^]*?\n\}/)[0];
   const gate = signedIn.slice(0, signedIn.indexOf('return;'));
   assert.ok(gate.indexOf('${YOUR_DATA_HTML}') > -1 && gate.indexOf('${YOUR_DATA_HTML}') < gate.indexOf('${DANGER_ZONE_HTML}'));
-  assert.match(gate, /getElementById\("download-data"\)\.addEventListener\("click", handleDownloadData\)/);
+  assert.match(gate, /wireDownloadData\(\)/);
   const rest = signedIn.slice(signedIn.indexOf('return;'));
   assert.ok(rest.indexOf('${YOUR_DATA_HTML}') > -1 && rest.indexOf('${YOUR_DATA_HTML}') < rest.indexOf('${DANGER_ZONE_HTML}'));
   assert.match(account, /The file contains your personal contract and stay details/);
 });
 
-function downloadContext(readOwnerExport) {
-  const nodes = { 'download-data': { disabled: false, textContent: 'Download my data' }, 'export-status': { textContent: '', classList: { add(c) { this.list.add(c); }, remove(c) { this.list.delete(c); }, list: new Set() } } };
+function downloadContext(readOwnerExport, XLSX) {
+  const nodes = { 'download-data': { disabled: false, textContent: 'Download spreadsheet' }, 'download-data-json': { disabled: false, textContent: 'Full technical copy (JSON)' }, 'export-status': { textContent: '', classList: { add(c) { this.list.add(c); }, remove(c) { this.list.delete(c); }, list: new Set() } } };
   const downloads = [];
   const ctx = vm.createContext({
-    window: { DVCAuth: { readOwnerExport }, DVCDataExport: X },
+    window: { DVCAuth: { readOwnerExport }, DVCDataExport: X, XLSX }, RESORTS: [], resortName: id => id,
     document: { getElementById: id => nodes[id], createElement: () => ({ click() { downloads.push({ name: this.download, href: this.href }); }, remove() {} }), body: { appendChild() {} } },
     URL: { createObjectURL: blob => { downloads.blob = blob; return 'blob:1'; }, revokeObjectURL() {} },
     Blob: class { constructor(parts, opts) { this.text = parts.join(''); this.type = opts.type; } },
     setTimeout: () => {}, Date,
   });
   vm.runInContext(account.slice(account.indexOf('let exportBusy = false;'), account.indexOf('// Collapsed by default: a destructive action')), ctx);
-  return { nodes, downloads, run: () => vm.runInContext('handleDownloadData()', ctx) };
+  return { nodes, downloads, run: (format = 'json') => vm.runInContext(`handleDownloadData(${JSON.stringify(format)})`, ctx) };
 }
 
 test('a failed read downloads nothing and offers a retry', async () => {
   const ui = downloadContext(async () => ({ reads: reads({ contracts: { rows: [], missing: false, error: 'down' } }) }));
-  await ui.run();
+  await ui.run('xlsx');
   assert.equal(ui.downloads.length, 0);
-  assert.match(ui.nodes['export-status'].textContent, /no file was made/);
+  assert.match(ui.nodes['export-status'].textContent, /nothing was downloaded/);
   assert.ok(ui.nodes['export-status'].classList.list.has('error'));
   assert.equal(ui.nodes['download-data'].textContent, 'Try again');
   assert.equal(ui.nodes['download-data'].disabled, false);
@@ -180,4 +180,48 @@ test('a good read downloads one JSON file with the dated name', async () => {
   assert.equal(ui.downloads.blob.type, 'application/json');
   assert.equal(JSON.parse(ui.downloads.blob.text).schemaVersion, 1);
   assert.match(ui.nodes['export-status'].textContent, /^Downloaded dvc-companion-export-/);
+});
+
+test('the spreadsheet button downloads one .xlsx workbook, one tab per sheet', async () => {
+  const appended = [];
+  const XLSX = {
+    utils: { book_new: () => ({}), aoa_to_sheet: rows => ({ rows }), book_append_sheet: (b, ws, name) => appended.push(name) },
+    write: () => new Uint8Array([1]),
+  };
+  const ui = downloadContext(async () => ({ reads: reads() }), XLSX);
+  await ui.run('xlsx');
+  assert.equal(ui.downloads.length, 1);
+  assert.match(ui.downloads[0].name, /^dvc-companion-export-\d{4}-\d{2}-\d{2}\.xlsx$/);
+  assert.match(ui.downloads.blob.type, /spreadsheetml/);
+  assert.equal(appended[0], 'About');
+  assert.ok(appended.includes('Bookings'));
+  assert.equal(ui.nodes['download-data'].textContent, 'Download spreadsheet');
+});
+
+// ---- Spreadsheet: the main download ----
+const NAMES = { resort: id => ({ saratogaSprings: 'Saratoga Springs', riviera: 'Riviera' }[id] || id), room: (r, t) => ({ studio: 'Deluxe Studio' }[t] || t) };
+const CONTRACT = { id: 'c1', user_id: 'u1', home_resort_id: 'saratogaSprings', use_year: 'Dec', points_per_year: 180, purchase_type: 'resale', purchase_price: '18000.00', is_active: true, nickname: null, created_at: '2026-01-02T15:00:00Z' };
+
+test('spreadsheet: one tab per collection, names instead of ids, xlsx file name', () => {
+  const { data } = X.build(reads({
+    contracts: { rows: [CONTRACT], missing: false, error: null },
+    contract_year_points: { rows: [{ contract_id: 'c1', use_year_label: 2026, points_remaining: 150, points_banked: 30, points_borrowed: 0, points_holding: 0 }], missing: false, error: null },
+    trips: { rows: [{ id: 't1', contract_id: 'c1', resort_id: 'riviera', room_type_id: 'studio', check_in: '2026-10-01', check_out: '2026-10-05', points_used: 88 }], missing: false, error: null },
+    itineraries: { rows: [{ name: 'Fall', year: 2026, segments: [{ resortId: 'riviera', roomTypeId: 'studio', checkIn: '2026-10-01', checkOut: '2026-10-03' }, { resortId: 'saratogaSprings', roomTypeId: 'studio', checkIn: '2026-10-03', checkOut: '2026-10-05' }] }], missing: false, error: null },
+  }), NOW);
+  const sheets = X.sheets(data, NAMES);
+  assert.deepEqual(sheets.map(s => s.name), ['About', 'Contracts', 'Balances', 'Bookings', 'Point activity', 'Disney checks', 'Points taken', 'Cancellations', 'Itineraries']);
+  const get = n => sheets.find(s => s.name === n).rows;
+  assert.deepEqual(get('Contracts')[1].slice(0, 6), ['Saratoga Springs', 'Saratoga Springs', 'Dec', 180, 'Resale', 18000]);
+  assert.deepEqual(get('Balances')[1].slice(0, 6), ['Saratoga Springs', 2026, 150, 30, 0, 0]);
+  assert.deepEqual(get('Bookings')[1].slice(0, 7), ['Riviera', 'Deluxe Studio', '2026-10-01', '2026-10-05', 4, 88, 'Saratoga Springs']);
+  assert.equal(get('Itineraries').length, 3); // header + one row per stay
+  assert.equal(X.fileName(NOW, 'xlsx'), 'dvc-companion-export-2026-09-24.xlsx');
+  for (const s of sheets) assert.ok(s.name.length <= 31, s.name); // Excel's tab-name limit
+  assert.ok(!JSON.stringify(sheets).includes('u1'));
+});
+
+test('spreadsheet: a table the database lacks gets no tab, not an empty one', () => {
+  const { data } = X.build(reads({ point_movements: { rows: null, missing: true, error: null } }), NOW);
+  assert.ok(!X.sheets(data, NAMES).some(s => s.name === 'Point activity'));
 });

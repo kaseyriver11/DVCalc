@@ -88,10 +88,10 @@ body {
    dvc-home-summary.js attentionCard(). Calm tinted surface, dark text, a
    status accent on the left edge, and a single action -- replacing the old
    photo-backed banner with its multi-line warning copy. */
-.attention-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px 18px; margin-bottom: 16px; border-radius: 12px; border: 1px solid #e7e3ef; border-left: 5px solid var(--attention-accent); background: var(--attention-bg); color: #1d1b2e; }
-.attention-card.calm { --attention-accent: #2e7d32; --attention-bg: #f3f9f3; }
-.attention-card.warning { --attention-accent: #e65100; --attention-bg: #fff7ef; }
-.attention-card.danger { --attention-accent: #c62828; --attention-bg: #fdf2f2; }
+.attention-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px 18px; margin-bottom: 16px; border-radius: 12px; border: 1px solid #e7e3ef; background: var(--attention-bg); color: #1d1b2e; }
+.attention-card.calm { --attention-bg: #f3f9f3; }
+.attention-card.warning { --attention-bg: #fff7ef; }
+.attention-card.danger { --attention-bg: #fdf2f2; }
 .attention-body { flex: 1 1 220px; min-width: 0; }
 .attention-eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5b5670; }
 .attention-title { font-size: 1.02rem; font-weight: 700; margin-top: 2px; }
@@ -100,14 +100,13 @@ body {
 /* Secondary "Check balance with Disney" beside a near deadline whose
    balance is unchecked or stale; the primary action stays the button. */
 .attention-check { font-size: 0.82rem; color: #3d3a4d; margin-top: 6px; }
-.attention-check a { display: inline-flex; align-items: center; min-height: 44px; color: #4a148c; font-weight: 700; }
+.attention-check a { display: inline-flex; align-items: center; min-height: 44px; color: #4a148c; font-size: 0.85rem; font-weight: 700; text-decoration: none; }
+.attention-check a:hover { text-decoration: underline; }
 .attention-check a:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
 .attention-action { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 8px; background: #4a148c; color: white; font-size: 0.88rem; font-weight: 700; text-decoration: none; }
 .attention-action:hover { background: #38106b; }
 .attention-links { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.attention-more { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.85rem; font-weight: 600; color: #4a148c; }
-.attention-more:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
-.attention-action:focus-visible, .portfolio-row:focus-visible, .home-primary-btn:focus-visible, .home-secondary-link:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
+.attention-action:focus-visible, .portfolio-row:focus-visible, .home-primary-btn:focus-visible, .widget-link-inline:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
 
 /* ---- Dashboard widget grid: 2 columns on desktop, 1 on mobile (CLAUDE.md's
    mobile guardrail -- straight to 1fr under 700px, no cramped intermediate
@@ -146,8 +145,8 @@ body {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   color: #4a148c;
   text-decoration: none;
 }
@@ -205,7 +204,7 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
 @media (max-width: 480px) {
   .home-intro { padding: 18px 16px; }
   .home-intro-title { font-size: 1.25rem; }
-  .home-intro-actions .home-primary-btn { width: 100%; justify-content: center; }
+  .home-intro-actions .home-primary-btn, .home-intro-actions .home-outline-btn { width: 100%; justify-content: center; }
 }
 .home-member-gate .gate {
   padding: 22px 20px;
@@ -248,7 +247,7 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
 .portfolio-row-name { display: block; font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .portfolio-row-years { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 0.84rem; color: #3d3a4d; margin-top: 2px; }
 .portfolio-row-years .missing { color: #8a4b00; font-weight: 700; }
-.portfolio-row-arrow { flex-shrink: 0; color: #4a148c; font-weight: 700; }
+.portfolio-row-arrow { flex-shrink: 0; color: #4a148c; font-size: 1.5rem; line-height: 1; }
 .portfolio-more { display: inline-block; margin-top: 10px; }
 
 /* ---- Membership Value preview ---- */
@@ -259,10 +258,18 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
 .value-note a { color: #4a148c; font-weight: 600; }
 
 /* ---- Actions below the cards: one primary, one secondary ---- */
-.home-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 4px; }
+/* Clickable things on Home, four kinds only (CLAUDE.md "Clickable
+   styles"): primary button (.home-primary-btn / .attention-action, filled,
+   no arrow), secondary button (.home-outline-btn, outline, no arrow), link
+   (.widget-link-inline, text + arrow) and tappable row (› chevron).
+   Record a booking + Plan a stay: two equal pills side by side. */
+.home-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; max-width: 440px; margin-top: 4px; }
+.home-actions .home-primary-btn { justify-content: center; }
+.home-outline-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 8px; border: 1.5px solid #4a148c; background: white; color: #4a148c; font-size: 0.9rem; font-weight: 700; text-decoration: none; }
+.home-outline-btn:hover { background: #f5effb; }
+.home-outline-btn:focus-visible { outline: 3px solid #7c4dff; outline-offset: 2px; }
 .home-primary-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 8px; background: #4a148c; color: white; font-size: 0.9rem; font-weight: 700; text-decoration: none; }
 .home-primary-btn:hover { background: #38106b; }
-.home-secondary-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.9rem; font-weight: 600; color: #4a148c; text-decoration: none; }
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -311,7 +318,6 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -324,6 +330,7 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -349,7 +356,7 @@ button.widget-empty-cta { font-family: inherit; cursor: pointer; }
     </div>
 
     <div class="home-actions" id="home-actions">
-      <a href="index.html" class="home-secondary-link">Plan a stay &rarr;</a>
+      <a href="index.html" class="home-outline-btn">Plan a stay</a>
     </div>
   </div>
 

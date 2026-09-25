@@ -61,6 +61,10 @@
 .dvcp-row.selected { border-color: var(--color-primary, #4a148c); background: var(--color-primary-tint-bg, #f3edfb); font-weight: 700; }
 .dvcp-row.selected::after { content: "\\2713"; margin-left: auto; color: var(--color-primary, #4a148c); }
 .dvcp-row[disabled] { opacity: .45; cursor: not-allowed; }
+.dvcp-row.muted { color: #8a8a8a; }
+.dvcp-row.muted .dvcp-swatch { opacity: .35; }
+.dvcp-meta { margin-left: auto; padding-left: 8px; font-size: .78rem; font-weight: 600; color: #666; white-space: nowrap; }
+.dvcp-row.has-meta.selected::after { margin-left: 8px; }
 .dvcp-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 .dvcp-empty { padding: 20px 4px; text-align: center; color: #888; font-size: .85rem; }
 .dvcp-rooms { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
@@ -93,20 +97,24 @@
   }
 
   // Resort rows. resorts: [{id, name}]. anyLabel: an optional first row
-  // with value "". disabled(id) -> true to grey a row out.
-  function rowsHTML({ resorts, selected, query = "", anyLabel = null, disabled = null }) {
+  // with value "". disabled(id) -> true to grey a row out and block it;
+  // muted(id) -> true to grey it but keep it pickable; meta(id) -> short
+  // text on the row's right (e.g. a dues rate).
+  function rowsHTML({ resorts, selected, query = "", anyLabel = null, disabled = null, muted = null, meta = null }) {
     const q = query.trim().toLowerCase();
     const matches = resorts.filter(r => !q || r.name.toLowerCase().includes(q) || shortName(r.id, r.name).toLowerCase().includes(q) || (r.search || "").includes(q));
     const any = anyLabel && !q ? `<button type="button" class="dvcp-row${!selected ? " selected" : ""}" data-dvcp-resort="" aria-pressed="${!selected}"><span class="dvcp-swatch" style="background:#bbb"></span><span>${esc(anyLabel)}</span></button>` : "";
     if (!matches.length) return any + `<div class="dvcp-empty" role="status">No resorts match your search.</div>`;
     return any + matches.map(r => {
       const off = disabled && disabled(r.id);
-      return `<button type="button" class="dvcp-row${r.id === selected ? " selected" : ""}" data-dvcp-resort="${esc(r.id)}" aria-pressed="${r.id === selected}"${off ? " disabled" : ""}><span class="dvcp-swatch" style="background:${swatch(r.id)}"></span><span>${esc(r.name)}</span></button>`;
+      const m = meta ? meta(r.id) : "";
+      const cls = `dvcp-row${r.id === selected ? " selected" : ""}${muted && muted(r.id) ? " muted" : ""}${m ? " has-meta" : ""}`;
+      return `<button type="button" class="${cls}" data-dvcp-resort="${esc(r.id)}" aria-pressed="${r.id === selected}"${off ? " disabled" : ""}><span class="dvcp-swatch" style="background:${swatch(r.id)}"></span><span>${esc(r.name)}</span>${m ? `<span class="dvcp-meta">${esc(m)}</span>` : ""}</button>`;
     }).join("");
   }
 
   // The bottom sheet, created once per page. opts: { title, resorts,
-  // selected, anyLabel, disabled, onPick(id), returnFocus }.
+  // selected, anyLabel, disabled, muted, meta, onPick(id), returnFocus }.
   let current = null;
   function ensureSheet() {
     injectStyles();

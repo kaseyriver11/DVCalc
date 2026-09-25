@@ -6,7 +6,7 @@ const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
 function setup() {
   const c = vm.createContext({ window: {}, state: { checkIn: '2027-03-01', checkOut: '2027-03-04' },
-    selectedContractId: 'a', smartDrawManualOpen: false, smartDrawManualDraws: null,
+    selectedContractId: 'a',
     multiContractAllocations: null,
     userContractYearPoints: [
       { contract_id: 'a', use_year_label: 2026, balance_confirmed_at: '2026-09-22', points_remaining: 0 },
@@ -16,7 +16,7 @@ function setup() {
   c.window.DVCDates.todayInEastern = () => ({ year: 2026, month: 9, day: 21 });
   for (const [first, next] of [
     ['currentUYYear', 'getContractWindowMonths'],
-    ['smartDrawEffectiveDraws', 'buildSmartDrawHTML'],
+    ['buildCancelOutcomeHTML', 'buildSmartDrawHTML'],
     ['computeDefaultMultiSplit', 'toggleMultiContractSplit'],
   ]) {
     vm.runInContext(source.slice(source.indexOf(`function ${first}(`), source.indexOf(`function ${next}(`)), c);
@@ -24,7 +24,6 @@ function setup() {
   c.contract = { id: 'a', use_year: 'Feb', points_per_year: 150 };
   c.getSelectedContract = () => c.contract;
   c.rerenderStaySummary = () => {};
-  vm.runInContext(source.match(/function setSmartDrawManual\([^]*?\n\}/)[0], c);
   return c;
 }
 test('March 2027 uses February 2027 balance, not depleted 2026 balance', () => {
@@ -55,17 +54,11 @@ test('cross-boundary nights are assessed separately, checkout is not a night', (
   assert.match(html, /Short by 20 pts in this use year/);
   assert.match(html, /130 pts projected left/);
 });
-test('same-cost new dates cannot reuse manual draws or contract allocations', () => {
-  const c = setup(), row = c.getStayYearRow(c.contract);
-  c.smartDrawManualOpen = true;
-  c.smartDrawManualDraws = { context: c.smartDrawContext(row), pointsNeeded: 81, holding: 0, banked: 0, borrowed: 0, remaining: 81 };
+test('same-cost new dates cannot reuse contract allocations', () => {
+  const c = setup();
   assert.equal(c.getMultiSplitAllocations([c.contract], 81).a, 81);
   c.state.checkIn = '2027-01-10';
-  assert.equal(c.smartDrawEffectiveDraws(c.getStayYearRow(c.contract), 81).shortfall, 81);
   assert.equal(c.getMultiSplitAllocations([c.contract], 81).a, 0);
-  c.setSmartDrawManual('remaining', '0', 0, 81);
-  assert.equal(c.smartDrawManualDraws.remaining, 0);
-  assert.equal(c.smartDrawManualDraws.banked, 0);
 });
 test('different contracts use their own cycles and recorded buckets', () => {
   const c = setup();

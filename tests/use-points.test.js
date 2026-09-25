@@ -170,6 +170,6 @@ test('the page labels possibility, history and Disney separately, and never book
 test('entry points: the ledger row and point actions open this flow for the exact contract and use year', () => {
   const account = read('account.html');
   assert.match(account, /class="ledger-primary-btn" href="use-points\.html\?contract=\$\{encodeURIComponent\(c\.id\)\}&year=\$\{row\.year\}"/);
-  assert.match(account, /href="use-points\.html\?contract=\$\{encodeURIComponent\(c\.id\)\}&year=\$\{event\.year\}">Use these points</);
+  assert.match(account, /href="use-points\.html\?contract=\$\{encodeURIComponent\(c\.id\)\}&year=\$\{event\.year\}">Use these points &rarr;</);
   assert.match(read('dvc-home-summary.js'), /use-points\.html\?contract=/);
 });

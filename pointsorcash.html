@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Points or Cash — DVC Companion</title>
+  <title>Worth the Points? — DVC Companion</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="images/icons/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
@@ -115,7 +115,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html" class="active">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -128,13 +127,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html" class="active">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
   </nav>
 
   <div class="header">
-    <h1>Points or Cash?</h1>
+    <h1>Worth the Points?</h1>
     <div class="subtitle">What your points buy, and what renting them out brings in</div>
   </div>
 
@@ -144,8 +144,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
       <div class="chips" role="group" aria-label="What you're booking" id="kind-chips">
         <button type="button" class="chip" data-kind="dvc">DVC stay</button>
         <button type="button" class="chip" data-kind="cruise">Cruise or Adventures</button>
-        <button type="button" class="chip" data-kind="hotel">Disney hotel</button>
-        <button type="button" class="chip" data-kind="other">Something else</button>
+        <button type="button" class="chip" data-kind="other">Other</button>
       </div>
       <p class="hint" id="kind-hint"></p>
       <div class="fields">
@@ -178,7 +177,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   <script src="data/data.js"></script>
   <script src="dvc-rental.js"></script>
   <script>
-// ---- Points or Cash? -----------------------------------------------------
+// ---- Worth the Points? ---------------------------------------------------
 // Two questions owners work out by hand: is a points booking (a cruise, a
 // Disney hotel, a DVC stay) worth the points, and what does renting points
 // out bring in. Math in dvc-rental.js (tests/rental.test.js). Two prices,
@@ -192,11 +191,10 @@ const CRUISE_FEE = 95; // Disney's exchange fee per cruise booked with points
 const KIND_HINTS = {
   dvc: "A DVC resort stay, priced at what Disney charges in cash. The calendar fills this in.",
   cruise: "Disney Cruise Line or Adventures by Disney through Membership Extras. Points bookings add an exchange fee of about $95 per cruise.",
-  hotel: "A Disney hotel room booked with points through the Disney Collection.",
-  other: "Any booking where you know both the cash price and the point cost.",
+  other: "Anything else with a cash price and a point cost, like a regular Disney hotel room through the Disney Collection.",
 };
 const state = {
-  kind: KIND_HINTS[params.get("kind")] ? params.get("kind") : (params.has("points") ? "dvc" : "cruise"),
+  kind: KIND_HINTS[params.get("kind")] ? params.get("kind") : "dvc",
   rentalRate: PV.RENTAL_DEFAULT,
   pointValue: PV.DEFAULT,
   contracts: [],
@@ -224,7 +222,7 @@ function renderKind() {
 // auth.js's evaluateContractPerks(), the same one My Contracts' card
 // badges use.
 function eligibilityHTML() {
-  if (state.kind !== "cruise" && state.kind !== "hotel") return "";
+  if (state.kind === "dvc") return "";
   const active = activeContracts();
   if (!active.length || !window.DVCAuth) {
     return `<div class="eligibility"><span>Direct contracts can book this with points. Resale contracts bought on or after March 21, 2011 can't.</span></div>`;
@@ -289,7 +287,7 @@ function renderRent() {
 function renderAll() { renderKind(); renderSpend(); renderRent(); }
 
 function renderValueEditor() {
-  $("value-editor").innerHTML = PV.html({ id: "point-value", value: state.pointValue, hint: "Compared for cruises, hotels and other bookings, not DVC stays." });
+  $("value-editor").innerHTML = PV.html({ id: "point-value", value: state.pointValue, hint: "Compared for cruises and other bookings, not DVC stays." });
   PV.attach("point-value", v => { state.pointValue = v; renderSpend(); });
 }
 

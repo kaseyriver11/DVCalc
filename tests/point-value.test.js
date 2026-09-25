@@ -56,7 +56,7 @@ test('no page keeps its own $/pt default or preset list', () => {
 test('saved-setting defaults match the shared default', () => {
   assert.match(read('auth.js'), new RegExp(`point_value_baseline: ${PV.DEFAULT},`));
   for (const f of ['trips.html', 'bookings.html']) {
-    assert.match(read(f), new RegExp(`let userSettings = \\{ point_value_baseline: ${PV.DEFAULT},`), f);
+    assert.match(read(f), new RegExp(`(let userSettings|const DEFAULT_ASSUMPTIONS) = \\{ point_value_baseline: ${PV.DEFAULT},`), f);
   }
   assert.match(read('db/schema.sql'), new RegExp(`point_value_baseline numeric\\(6,2\\) not null default ${PV.DEFAULT},`));
 });

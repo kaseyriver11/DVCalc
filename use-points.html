@@ -49,7 +49,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .gate { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 40px 24px; text-align: center; color: #666; }
 .gate p { margin-bottom: 16px; }
 .big-signin-btn { background: var(--color-primary); color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
-.back-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; font-weight: 600; color: var(--color-primary); text-decoration: none; }
+.back-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; font-weight: 700; color: var(--color-primary); text-decoration: none; }
 
 .card { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; margin-bottom: 14px; min-width: 0; }
 .card h2 { font-size: 1rem; color: var(--color-secondary); margin-bottom: 8px; }
@@ -71,7 +71,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .primary-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--color-primary); color: #fff; font: inherit; font-weight: 700; font-size: .95rem; text-decoration: none; cursor: pointer; width: 100%; margin-top: 12px; }
 .primary-btn:disabled { opacity: .6; cursor: default; }
 .link-list { margin-top: 8px; display: grid; gap: 4px; }
-.link-list a { display: flex; align-items: center; min-height: 44px; font-weight: 600; color: var(--color-primary); overflow-wrap: anywhere; }
+.link-list a { display: flex; align-items: center; min-height: 44px; font-size: .85rem; font-weight: 700; text-decoration: none; color: var(--color-primary); overflow-wrap: anywhere; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: 999px; background: #fff; font: inherit; font-size: .85rem; color: var(--color-text); cursor: pointer; }
 .chip[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-tint-bg); color: var(--color-primary); font-weight: 700; }
@@ -92,7 +92,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .results-head { margin: 18px 0 8px; }
 .results-head h2 { font-size: 1.05rem; color: var(--color-secondary); }
 .results-head p { font-size: .8rem; color: var(--color-text-muted); margin-top: 2px; }
-.result { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 14px 16px; margin-bottom: 12px; border-left: 4px solid var(--color-primary); min-width: 0; }
+.result { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 14px 16px; margin-bottom: 12px; min-width: 0; }
 .result-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .result-name { font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; min-width: 0; }
 .result-room { font-size: .84rem; color: var(--color-text-muted); margin-top: 2px; }
@@ -106,7 +106,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .pill.limited { background: #fff3e0; color: #a3401f; }
 .pill.unknown { background: #f1f1f4; color: #555; }
 .result-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; }
-.result-actions a { display: inline-flex; align-items: center; min-height: 44px; font-size: .86rem; font-weight: 700; color: var(--color-primary); }
+.result-actions a { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; font-weight: 700; color: var(--color-primary); text-decoration: none; }
+.result-actions a:hover { text-decoration: underline; }
 .result-math { margin-top: 4px; border-top: 1px solid var(--color-border-light); }
 .result-math > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--color-primary); }
 .math-nights { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 6px; }
@@ -144,7 +145,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -157,6 +157,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -391,7 +392,7 @@ function resultHTML(r, b, c) {
         <li><span aria-hidden="true">📈</span><div><strong>Historical availability outlook</strong>${OUTLOOK_TEXT[r.outlook]} ${r.outlook === "unknown" ? "for this room and season" : `for this room at about ${windowWord(r.checkIn)}`}. Past patterns only; not a room that's open now.</div></li>
         <li><span aria-hidden="true">↗</span><div><strong>Check live availability with Disney</strong>Only Disney's member site shows what's open and books it.</div></li>
       </ul>
-      <div class="result-actions"><a href="${disneyHref}" target="_blank" rel="noopener">Check with Disney &#8599;</a><a href="${calHref}">Open in Calendar</a></div>
+      <div class="result-actions"><a href="${disneyHref}" target="_blank" rel="noopener">Check with Disney &#8599;</a><a href="${calHref}">Open in Calendar &rarr;</a></div>
       <details class="result-math"${r.checked ? " open" : ""}><summary>See the point math</summary>
         ${r.nightsList ? `<div class="math-nights">${r.nightsList.map(x => `<div class="math-night">${new Date(x.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric", timeZone: "UTC" })}<strong>${x.points}</strong></div>`).join("")}</div>` : ""}
         <div class="math-lines"><div><strong>Total:</strong> ${r.pointsUsed.toLocaleString()} points. ${esc(contractName(c))}'s ${state.year} balance covers ${covered === r.pointsUsed ? "all of them" : covered.toLocaleString()}.</div>${lines.join("")}</div>

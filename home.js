@@ -147,8 +147,8 @@ function renderAttentionCard(contracts, yearPointsByContract) {
         ${card.check ? `<div class="attention-check"><span>${card.check.note}.</span> <a href="${card.check.href}">${card.check.label}</a></div>` : ""}
       </div>
       <div class="attention-links">
-        <a class="attention-action" href="${card.action.href}">${card.action.label} &rarr;</a>
-        ${card.more ? `<a class="attention-more" href="${card.more.href}">${card.more.label}</a>` : ""}
+        <a class="${card.tone === "calm" ? "home-outline-btn" : "attention-action"}" href="${card.action.href}">${card.action.label}</a>
+        ${card.more ? `<a class="widget-link-inline" href="${card.more.href}">${card.more.label} &rarr;</a>` : ""}
       </div>
     </section>
   `;
@@ -208,7 +208,7 @@ function renderContractsWidget(contracts, yearPointsByContract) {
           <span class="portfolio-row-name">${row.name}</span>
           <span class="portfolio-row-years"><span>Now &middot; ${row.now.year}: ${value(row.now)}</span><span>Next &middot; ${row.next.year}: ${value(row.next)}</span></span>
         </span>
-        <span class="portfolio-row-arrow" aria-hidden="true">&rarr;</span>
+        <span class="portfolio-row-arrow" aria-hidden="true">&rsaquo;</span>
       </a></li>`).join("")}
     </ul>
     ${summary.hidden ? `<a class="widget-link-inline portfolio-more" href="account.html">View all ${summary.count} contracts &rarr;</a>` : ""}
@@ -244,7 +244,7 @@ function renderHouseMoneyWidget(contracts, trips, settings) {
 function renderActions(member) {
   document.getElementById("home-actions").innerHTML = `
     ${member ? `<a href="bookings.html#record-booking" class="home-primary-btn">+ Record a booking</a>` : ""}
-    <a href="index.html" class="home-secondary-link">Plan a stay &rarr;</a>
+    <a href="index.html" class="home-outline-btn">Plan a stay</a>
   `;
 }
 
@@ -265,7 +265,7 @@ function dashboardSignInHTML() {
     <p class="home-intro-body">Record your contracts and balances, see your upcoming banking and expiration dates, and plan stays with your own contract details.</p>
     <div class="home-intro-actions">
       <a href="${ADD_CONTRACT_HREF}" class="home-primary-btn" data-funnel="home-cta">Add my first contract</a>
-      <a href="index.html" class="home-secondary-link">Explore the points calendar &rarr;</a>
+      <a href="index.html" class="home-outline-btn">Explore the points calendar</a>
     </div>
     <p class="home-intro-note">You enter your balances from Disney. DVC Companion doesn't connect to your Disney account. ${window.DVCAuth.membershipTermsLine()}</p>
     <p class="home-intro-returning">Already added your contracts? <a href="account.html">Sign in</a></p>

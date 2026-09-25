@@ -6,9 +6,9 @@
    same "purple active" state, and three different "danger" reds
    (#b71c1c/#c62828/#b3261e). Going forward, --color-primary-active and
    --color-danger are the single source of truth for those.
-   Only index.html and account.html consume this file so far -- the other
-   5 standalone pages keep their own inline <style> blocks until the
-   app-wide visual refresh phase folds them in too. */
+   Loaded by every page except home.html and changes.html, which hard-code
+   the same hex values. Each page still keeps its own <style> block; the
+   clickable styles at the end of this file are the reference they match. */
 :root {
   --color-primary: #4a148c;
   --color-primary-hover: #6a1b9a;
@@ -398,17 +398,14 @@
 }
 .smart-draw-guardrail.calm {
   background: var(--color-good-bg);
-  border-left: 3px solid var(--color-good);
   color: var(--color-good);
 }
 .smart-draw-guardrail.warning {
   background: var(--color-warning-bg);
-  border-left: 3px solid var(--color-warning);
   color: #7a4a00;
 }
 .smart-draw-guardrail.danger {
   background: var(--color-danger-bg);
-  border-left: 3px solid var(--color-danger);
   color: var(--color-danger);
 }
 .smart-draw-guardrail a { color: inherit; font-weight: 600; }
@@ -421,6 +418,7 @@
 
 .smart-draw-actions {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 10px;
   margin-top: 10px;
@@ -431,23 +429,29 @@
   background: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 7px 16px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
 }
 .smart-draw-apply-btn:hover { background: var(--color-primary-active); }
 
+/* "<- Use one contract": a back link (clickable styles). */
 .smart-draw-manual-toggle {
   background: none;
   border: none;
   color: var(--color-primary);
-  font-size: 0.78rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  min-height: 40px;
   padding: 0;
 }
+.smart-draw-manual-toggle:hover { text-decoration: underline; }
 
 .smart-draw-manual-total {
   font-size: 0.76rem;
@@ -997,3 +1001,31 @@ input.dvc-date[type="date"] {
 input.dvc-date[type="date"]:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.15); }
 input.dvc-date[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .6; }
 input.dvc-date[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+/* ---- Clickable styles (CLAUDE.md "Clickable styles") ----
+   Four kinds, each with one job, plus two extras. Pages with their own
+   older class names restyle them to match these values.
+   Primary: filled purple, no arrow -- the one main action in a block.
+   Secondary: purple outline, no arrow -- alternates, Cancel/Back, and an
+     action repeated on every card of a list.
+   Danger: red outline -- delete/remove.
+   Link: purple text + an arrow in the label (-> forward, <- back).
+   Row: the whole row taps, with a chevron (.row-chevron).
+   Toggle: a Secondary button with a caret that flips when open. */
+.btn-primary, .btn-secondary, .btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; padding: 0 18px; border-radius: 8px;
+  font: inherit; font-size: 0.88rem; font-weight: 700; line-height: 1.2;
+  text-decoration: none; cursor: pointer; box-sizing: border-box;
+}
+.btn-primary { background: var(--color-primary); color: #fff; border: 1.5px solid var(--color-primary); }
+.btn-primary:hover { background: var(--color-primary-active); border-color: var(--color-primary-active); }
+.btn-secondary { background: var(--color-bg-card, #fff); color: var(--color-primary); border: 1.5px solid var(--color-primary); }
+.btn-secondary:hover { background: var(--color-primary-tint-bg); }
+.btn-danger { background: var(--color-bg-card, #fff); color: var(--color-danger); border: 1.5px solid var(--color-danger); }
+.btn-danger:hover { background: var(--color-danger-bg); }
+.btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled { opacity: 0.6; cursor: default; }
+.text-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.85rem; font-weight: 700; color: var(--color-primary); text-decoration: none; }
+.text-link:hover { text-decoration: underline; }
+.row-chevron { flex-shrink: 0; margin-left: auto; color: var(--color-primary); font-size: 1.5rem; line-height: 1; }
+.btn-primary:focus-visible, .btn-secondary:focus-visible, .btn-danger:focus-visible, .text-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }

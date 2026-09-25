@@ -266,23 +266,26 @@ body {
 
 .wizard-nav { display: flex; gap: 10px; margin-top: 18px; }
 .wizard-nav .find-btn { width: auto; flex: 1; }
+/* Secondary (clickable styles). */
 .btn-back {
   font: inherit;
   min-height: 48px;
   padding: 12px 18px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1.5px solid #4a148c;
   background: white;
-  color: #555;
-  font-weight: 600;
+  color: #4a148c;
+  font-weight: 700;
   cursor: pointer;
 }
-.btn-back:hover { border-color: #999; }
+.btn-back:hover { background: #f5effb; }
 
 /* ---- Results header: count badge + sort toolbar ------------------------
    One pill-badge count and one row of toggle pills, identical at every
    viewport -- there's no table with its own header-click affordance to
    keep in sync (see the suggest.html note in CLAUDE.md). ---- */
+.results-share { flex-shrink: 0; margin-left: auto; min-height: 40px; padding: 0 14px; border: 1.5px solid var(--color-primary, #4a148c); border-radius: 999px; background: #fff; color: var(--color-primary, #4a148c); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+.results-share:hover { background: rgba(74, 20, 140, 0.06); }
 .results-count-badge {
   display: inline-block;
   background: #ece1f7;
@@ -294,22 +297,9 @@ body {
   margin-bottom: 14px;
 }
 
-.sort-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.sort-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.sort-toolbar .sort-select { flex: 1; min-width: 0; max-width: 240px; }
 .sort-toolbar-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; color: #999; margin-right: 2px; }
-.sort-pill {
-  font: inherit;
-  min-height: 40px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-  background: white;
-  color: #555;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.sort-pill:hover { border-color: #4a148c; color: #4a148c; }
-.sort-pill.active { background: #4a148c; border-color: #4a148c; color: white; }
 
 /* ---- Delightful empty state --------------------------------------- */
 .empty-state { text-align: center; padding: 32px 16px; }
@@ -341,7 +331,7 @@ body {
   border: 1px solid #eee;
   border-radius: 12px;
   padding: 16px;
-  background: white;
+  background: white center / cover no-repeat;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
@@ -370,8 +360,6 @@ body {
 /* "Uses X of Y pts" leftover caption (see findFeasibleStays()/cardHTML()) --
    sits under the metric grid rather than duplicating Points Used/Points
    Left as a fourth tile. */
-.result-card-leftover { font-size: 0.76rem; color: #666; margin: -6px 0 12px; }
-.result-card-leftover b { color: #333; }
 
 .result-card-dates {
   display: flex;
@@ -391,10 +379,6 @@ body {
 .result-card-metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .result-card-metric-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.3px; color: #999; font-weight: 600; }
 .result-card-metric-value { font-size: 0.95rem; font-weight: 700; color: #333; font-variant-numeric: tabular-nums; }
-/* Nights is this page's headline answer ("how long can I stay"), so it
-   gets the same large-callout treatment contractvalue.html gives its own
-   single most important metric. */
-.result-card-metric.hero .result-card-metric-value { font-size: 1.4rem; color: #4a148c; }
 
 .result-card-view {
   display: block;
@@ -404,13 +388,13 @@ body {
   font-weight: 700;
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #4a148c;
+  border: 1.5px solid #4a148c;
   background: white;
   color: #4a148c;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
+  transition: background 0.15s, transform 0.1s;
 }
-.result-card-view:hover { background: #4a148c; color: white; }
+.result-card-view:hover { background: #f5effb; }
 .result-card-view:active { transform: scale(0.98); }
 
 .show-more-btn {
@@ -420,7 +404,7 @@ body {
   margin-top: 4px;
   padding: 12px;
   border-radius: 8px;
-  border: 1px dashed #ccc;
+  border: 1.5px solid #4a148c;
   background: white;
   color: #4a148c;
   font: inherit;
@@ -428,7 +412,7 @@ body {
   font-size: 0.9rem;
   cursor: pointer;
 }
-.show-more-btn:hover { border-color: #4a148c; background: #f7f5fa; }
+.show-more-btn:hover { background: #f5effb; }
   </style>
   <script>
     // Injected dynamically (not a static <script async> tag) so this third-party
@@ -472,7 +456,6 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html" class="active">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -485,6 +468,7 @@ body {
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -510,9 +494,11 @@ body {
 
   <script src="dvc-track.js"></script>
   <script src="dvc-ui.js"></script>
+  <script src="dvc-share.js"></script>
   <script src="data/data.js"></script>
   <script src="data/data_historical.js"></script>
   <script src="data/cash_prices_live_summary.js"></script>
+  <script src="data/resort_images.js"></script>
   <script>
 const currentRealYear = new Date().getFullYear();
 const ALL_DATA_YEARS = [...new Set(RESORTS.map(r => r.year))].sort();
@@ -645,10 +631,10 @@ function analyzeBookingAccess(resortId, checkIn) {
 
   return {
     badgeType: isHome ? "home" : "switch",
-    badgeText: isHome ? "\u{1F3E0} Home Resort · 11-mo" : "7-Month Switch",
+    badgeText: isHome ? "\u{1F3E0} Your home resort" : "Not your home resort",
     statusText: isOpen
-      ? "Window open now"
-      : `Opens ${formatShortDate(opensOn)} · ${daysUntilOpen}d away`,
+      ? `You can book this now (from ${gateMonths} months out)`
+      : `Booking opens ${formatShortDate(opensOn)}, ${gateMonths} months out (in ${daysUntilOpen} day${daysUntilOpen === 1 ? "" : "s"})`,
   };
 }
 
@@ -802,12 +788,12 @@ function sortResults(results) {
 }
 
 const SORT_OPTIONS = [
-  ["pointsPerNight", "Best Value"],
-  ["nights", "Nights"],
-  ["pointsLeft", "Least Leftover"],
-  ["cashValuePerPoint", "Best Cash Value"],
-  ["pointsUsed", "Points Used"],
-  ["resortName", "Resort Name"],
+  ["pointsPerNight", "Best value"],
+  ["nights", "Most nights"],
+  ["pointsLeft", "Least leftover"],
+  ["cashValuePerPoint", "Best cash value"],
+  ["pointsUsed", "Fewest points used"],
+  ["resortName", "Resort name"],
 ];
 // Efficiency metrics (value, total points, leftover points) default to
 // ascending -- lower is better. Nights and cash value default descending
@@ -818,16 +804,24 @@ function defaultDirFor(key) {
   return "asc";
 }
 
+// One dropdown (the shared custom-select, like Points Year) with the
+// Share button beside it. Each option sorts in its better-first direction
+// (defaultDirFor()), so the option name says it all.
 function buildSortToolbarHTML() {
-  const pill = ([key, label]) => {
-    const active = sortKey === key;
-    const arrow = active ? (sortDir === "asc" ? " &uarr;" : " &darr;") : "";
-    return `<button type="button" class="sort-pill${active ? " active" : ""}" data-sort="${key}">${label}${arrow}</button>`;
-  };
   return `
     <div class="sort-toolbar">
-      <span class="sort-toolbar-label">Sort by</span>
-      ${SORT_OPTIONS.map(pill).join("")}
+      <label class="sort-toolbar-label" for="sort-select">Sort by</label>
+      <div class="custom-select sort-select">
+        <select id="sort-select" class="native-select">
+          ${SORT_OPTIONS.map(([key, label]) => `<option value="${key}" ${sortKey === key ? "selected" : ""}>${label}</option>`).join("")}
+        </select>
+        <button type="button" class="custom-select-trigger">
+          <span class="custom-select-value"></span>
+          <span class="custom-select-arrow"></span>
+        </button>
+        <div class="custom-select-dropdown"></div>
+      </div>
+      <button type="button" class="results-share" id="share-results">${window.DVCShare.ICON}Share</button>
     </div>
   `;
 }
@@ -855,6 +849,26 @@ function buildEmptyStateHTML() {
       <div class="empty-state-actions">${suggestions.join("")}</div>
     </div>
   `;
+}
+
+// Resort art behind each result card, under the same white wash Saved
+// Itineraries uses. Each image is ~800KB, so a card only fetches its art
+// once it's about to scroll into view.
+const CARD_ART_WASH = "linear-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.86))";
+let cardArtObserver = null;
+function loadCardArt(root) {
+  const cards = root.querySelectorAll(".result-card[data-art]");
+  const show = card => { card.style.backgroundImage = `${CARD_ART_WASH}, url('${card.dataset.art}')`; };
+  if (!("IntersectionObserver" in window)) { cards.forEach(show); return; }
+  if (cardArtObserver) cardArtObserver.disconnect();
+  cardArtObserver = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      show(e.target);
+      cardArtObserver.unobserve(e.target);
+    }
+  }, { rootMargin: "300px 0px" });
+  cards.forEach(card => cardArtObserver.observe(card));
 }
 
 function renderResults() {
@@ -899,7 +913,7 @@ function renderResults() {
   };
 
   const cardHTML = (r, i) => `
-    <div class="result-card">
+    <div class="result-card"${typeof getResortImage === "function" && getResortImage(r.resortId) ? ` data-art="${getResortImage(r.resortId)}"` : ""}>
       <div class="result-card-header">
         <div class="resort-name">${r.resortName}</div>
         <div class="room-name">${r.roomName} &middot; sleeps ${r.sleeps}</div>
@@ -910,7 +924,7 @@ function renderResults() {
         <span class="result-card-dates-value">${r.checkIn} &rarr; ${r.checkOut}</span>
       </div>
       <div class="result-card-grid">
-        <div class="result-card-metric hero">
+        <div class="result-card-metric">
           <span class="result-card-metric-label">Nights</span>
           <span class="result-card-metric-value">${r.nights}</span>
         </div>
@@ -923,7 +937,6 @@ function renderResults() {
           <span class="result-card-metric-value">${fmtNum(r.pointsLeft)}</span>
         </div>
       </div>
-      <div class="result-card-leftover">Uses <b>${fmtNum(r.pointsUsed)}</b> of <b>${fmtNum(r.pointsUsed + r.pointsLeft)}</b> pts &bull; ${r.pointsLeft > 0 ? `${fmtNum(r.pointsLeft)} leftover` : "no leftover"}</div>
       <button type="button" class="result-card-view" data-view="${i}">View This Stay</button>
     </div>
   `;
@@ -934,21 +947,28 @@ function renderResults() {
     <div class="results-cards">
       ${visible.map((r, i) => cardHTML(r, i)).join("")}
     </div>
-    ${sorted.length > visible.length ? `<button type="button" class="show-more-btn" id="show-more-results">Show all ${sorted.length} stays</button>` : ""}
+    ${sorted.length > visible.length ? `<button type="button" class="show-more-btn" id="show-more-results">Show all ${sorted.length} stays &#9662;</button>` : ""}
   `;
 
-  body.querySelectorAll(".sort-pill").forEach(pillBtn => {
-    pillBtn.addEventListener("click", () => {
-      const key = pillBtn.dataset.sort;
-      if (sortKey === key) {
-        sortDir = sortDir === "asc" ? "desc" : "asc";
-      } else {
-        sortKey = key;
-        sortDir = defaultDirFor(key);
-      }
-      renderResults();
+  const sortSelect = document.getElementById("sort-select");
+  window.DVCUI.initCustomSelect(sortSelect);
+  sortSelect.addEventListener("change", () => {
+    sortKey = sortSelect.value;
+    sortDir = defaultDirFor(sortKey);
+    renderResults();
+  });
+
+  // Share: a link that reruns this same search for anyone (dvc-share.js).
+  // "Resorts I can book" is left out -- it means the sender's contracts.
+  document.getElementById("share-results").addEventListener("click", () => {
+    window.DVCShare.share({
+      title: "Suggest a Stay",
+      text: `DVC stays for ${fmtNum(wizardData.points)} points`,
+      url: window.DVCShare.link("suggest.html", window.DVCShare.suggestParams(wizardData, { key: sortKey, dir: sortDir }), location.href),
     });
   });
+
+  loadCardArt(body);
 
   const showMoreBtn = document.getElementById("show-more-results");
   if (showMoreBtn) showMoreBtn.addEventListener("click", () => { showAllResults = true; renderResults(); });
@@ -962,6 +982,7 @@ function renderResults() {
         roomTypeId: r.roomTypeId,
         checkIn: r.checkIn,
         checkOut: r.checkOut,
+        month: Number(r.checkIn.slice(5, 7)) - 1,
         segments: [],
       };
       sessionStorage.setItem("dvc_calendar_state", JSON.stringify(restoredState));
@@ -1346,7 +1367,20 @@ const savedSuggestState = sessionStorage.getItem("dvc_suggest_state");
 sessionStorage.removeItem("dvc_suggest_state");
 sessionStorage.removeItem("dvc_suggest_return");
 let restored = false;
-if (savedSuggestState) {
+// A shared link (the Share button on results) reruns that search. Values
+// outside this page's own options fall back to its defaults.
+const sharedSearch = window.DVCShare.readSuggest(new URLSearchParams(location.search));
+if (sharedSearch) {
+  const w = sharedSearch.wizardData;
+  if (w.year != null && !AVAILABLE_YEARS.includes(w.year)) delete w.year;
+  if (w.category != null && !CATEGORY_OPTIONS.some(([key]) => key === w.category)) delete w.category;
+  if (w.partySize != null && !PARTY_SIZE_PRESETS.includes(w.partySize)) delete w.partySize;
+  Object.assign(wizardData, w);
+  const s = sharedSearch.sort;
+  if (s && SORT_OPTIONS.some(([key]) => key === s.key)) { sortKey = s.key; sortDir = s.dir; }
+  runSearch();
+  restored = true;
+} else if (savedSuggestState) {
   try {
     const parsed = JSON.parse(savedSuggestState);
     Object.assign(wizardData, parsed.wizardData);

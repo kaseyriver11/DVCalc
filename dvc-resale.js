@@ -31,41 +31,7 @@
     return Math.max(0, points * pricePerPoint * (1 - BROKER_FEE) - ESTOPPEL_FEE);
   }
 
-  // Keep for `years`, then sell -- vs sell today. In today's dollars: point
-  // value holds steady, dues grow at duesGrowth net of valueGrowth (hotel
-  // inflation), resale follows the curve, and every future dollar is
-  // discounted at discountRate (0 = none).
-  //   contracts: [{ points, pricePerPoint, yearsLeft, duesPerPoint }]
-  //   usage: share of each year's points used on stays (0-1); unused
-  //   points are counted as worth nothing.
-  // Keeping is linear in usage, so breakEvenUsage is the usage share at
-  // which keeping and selling come out equal (null if keeping wins even at
-  // 0% or loses even at 100%).
-  function keepOrSell({ contracts, years, usage, pointValue, duesGrowth = 0, valueGrowth = 0, discountRate = 0 }) {
-    let sellNow = 0, stayValue = 0, dues = 0, saleLater = 0, heldYears = 0;
-    const realDues = (1 + duesGrowth) / (1 + valueGrowth);
-    for (const c of contracts) {
-      sellNow += netSale(c.points, c.pricePerPoint);
-      const n = Math.max(0, Math.min(years, c.yearsLeft));
-      heldYears = Math.max(heldYears, n);
-      for (let t = 0; t < n; t++) {
-        const d = Math.pow(1 + discountRate, t);
-        stayValue += c.points * pointValue / d;
-        dues += c.points * c.duesPerPoint * Math.pow(realDues, t) / d;
-      }
-      saleLater += netSale(c.points, pricePerPointAt(c.pricePerPoint, c.yearsLeft, c.yearsLeft - n)) / Math.pow(1 + discountRate, n);
-    }
-    const keep = stayValue * usage - dues + saleLater;
-    const u = stayValue > 0 ? (sellNow + dues - saleLater) / stayValue : null;
-    return {
-      sellNow, keep, advantage: keep - sellNow,
-      verdict: keep >= sellNow ? "keep" : "sell",
-      stayValue: stayValue * usage, dues, saleLater, heldYears,
-      breakEvenUsage: u != null && u > 0 && u <= 1 ? u : null,
-    };
-  }
-
-  const api = { BROKER_FEE, ESTOPPEL_FEE, DECAY_YEARS, valueFraction, pricePerPointAt, netSale, keepOrSell };
+  const api = { BROKER_FEE, ESTOPPEL_FEE, DECAY_YEARS, valueFraction, pricePerPointAt, netSale };
   if (typeof window !== "undefined") window.DVCResale = api;
   if (typeof module !== "undefined") module.exports = api;
 })();

@@ -26,7 +26,7 @@
 .dvcop-badge { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #4a148c; background: #ece1f7; border-radius: 999px; padding: 2px 10px; }
 .dvcop-sample { font-size: 0.75rem; color: #5b5670; }
 .dvcop-mock { pointer-events: none; user-select: none; }
-.dvcop-next { border-left: 4px solid #e65100; background: #fff7ef; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+.dvcop-next { border: 1px solid #f3dcc7; background: #fff7ef; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
 .dvcop-eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5b5670; }
 .dvcop-next-title { font-size: 0.9rem; font-weight: 700; margin-top: 1px; }
 .dvcop-next-detail { font-size: 0.8rem; color: #3d3a4d; overflow-wrap: anywhere; }

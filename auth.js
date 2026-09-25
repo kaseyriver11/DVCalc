@@ -491,7 +491,7 @@ function injectEmailCodeStyles() {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-primary, #5b2a86);
+  color: var(--color-primary, #4a148c);
 }
 .membership-gate-title {
   margin: 6px 0 8px;
@@ -506,9 +506,10 @@ function injectEmailCodeStyles() {
 .membership-gate .dvcop { margin-bottom: 16px; }
 .membership-gate-btn {
   border: 0;
-  border-radius: 999px;
-  padding: 10px 22px;
-  background: var(--color-primary, #5b2a86);
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  background: var(--color-primary, #4a148c);
   color: white;
   font: inherit;
   font-weight: 700;
@@ -536,7 +537,7 @@ function injectEmailCodeStyles() {
   border: 0;
   padding: 0;
   background: none;
-  color: var(--color-primary, #5b2a86);
+  color: var(--color-primary, #4a148c);
   font: inherit;
   font-weight: 600;
   text-decoration: underline;
@@ -661,7 +662,7 @@ function injectEmailCodeStyles() {
   border: none;
   border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .dvc-emailcode-submit:hover { background: #38116b; }

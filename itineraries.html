@@ -294,10 +294,10 @@ body {
 
 .sync-pill {
   flex-shrink: 0;
-  font-size: 0.74rem;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 700;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.9);
   background: rgba(255,255,255,0.8);
   backdrop-filter: blur(4px);
@@ -312,18 +312,21 @@ body {
   box-shadow: 0 3px 10px rgba(0,0,0,0.18);
 }
 
+/* Small Secondary button; .danger is the red Danger outline. */
 .small-btn {
   font-size: 0.78rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-primary);
   background: white;
-  color: #555;
+  color: var(--color-primary);
   cursor: pointer;
 }
-.small-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.small-btn.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
+.small-btn:hover { background: var(--color-primary-tint-bg); }
+.small-btn.danger { border-color: var(--color-danger); color: var(--color-danger); }
+.small-btn.danger:hover { background: var(--color-danger-bg); }
 .small-btn.primary {
   background: var(--color-primary);
   border-color: var(--color-primary);
@@ -415,16 +418,17 @@ body {
 
 .sync-milestone-gcal {
   flex-shrink: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.74rem;
+  font-weight: 700;
   color: var(--color-primary);
   text-decoration: none;
   white-space: nowrap;
-  padding: 3px 8px;
-  border: 1px solid var(--color-primary);
-  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
+  background: white;
 }
-.sync-milestone-gcal:hover { background: var(--color-primary); color: white; }
+.sync-milestone-gcal:hover { background: var(--color-primary-tint-bg); }
 
 .sync-milestone-passed {
   flex-shrink: 0;
@@ -708,7 +712,6 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -721,6 +724,7 @@ body {
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -742,6 +746,8 @@ body {
   <script src="data/resort_shorthand.js"></script>
   <script src="dvc-track.js"></script>
   <script src="dvc-ui.js"></script>
+  <script src="dvc-dates.js"></script>
+  <script src="dvc-share.js"></script>
   <script>
 const pageContent = document.getElementById("page-content");
 let itineraries = [];
@@ -1391,6 +1397,7 @@ function cardHTML(itin, totals) {
       <div class="itin-card-header">
         <div class="itin-name">${itin.name}${isPast ? `<span class="itin-past-badge">Past</span>` : ""}</div>
         <div class="itin-card-icons">
+          <button type="button" class="itin-icon-btn" data-share="${itin.id}" aria-label="Share itinerary" title="Share itinerary"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
           <button type="button" class="itin-icon-btn" data-load="${itin.id}" aria-label="Edit in calendar" title="Edit in calendar">&#9998;&#65039;</button>
           <button type="button" class="itin-icon-btn danger" data-delete="${itin.id}" aria-label="Delete itinerary" title="Delete itinerary">&#128465;&#65039;</button>
         </div>
@@ -1451,6 +1458,22 @@ function wireCardEvents() {
       sessionStorage.setItem("dvc_calendar_state", JSON.stringify(restoredState));
       sessionStorage.setItem("dvc_return_to_calendar", "1");
       window.location.href = "index.html";
+    });
+  });
+
+  // Share: a link that opens this stay on the calendar for anyone (resort,
+  // room and dates only -- dvc-share.js). The recipient can save their own.
+  pageContent.querySelectorAll("[data-share]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const itin = itineraries.find(i => i.id === btn.dataset.share);
+      if (!itin || !itin.segments.length) return;
+      const segs = itin.segments;
+      const names = [...new Set(segs.map(s => resortName(s.resortId, itin.year)))].join(" + ");
+      window.DVCShare.share({
+        title: itin.name,
+        text: `${itin.name}: ${names}, ${window.DVCDates.formatDateRange(segs[0].checkIn, segs[segs.length - 1].checkOut)}`,
+        url: window.DVCShare.link("index.html", window.DVCShare.stayParams(segs), location.href),
+      });
     });
   });
 

@@ -14,10 +14,11 @@ const EXPECTED = [
   ['My Membership', [['account.html', 'My Contracts'], ['bookings.html', 'Bookings &amp; Stays'],
                      ['trips.html', 'Membership Value']]],
   ['Plan a Stay', [['index.html', 'Calendar'], ['compare.html', 'Compare Resorts'],
-                   ['suggest.html', 'Suggest a Stay'], ['pointsorcash.html', 'Points or Cash']]],
+                   ['suggest.html', 'Suggest a Stay']]],
   ['My Itineraries', [['itineraries.html', 'Saved Itineraries'],
                       ['itinerarycompare.html', 'Compare Itineraries']]],
-  ['Research', [['contractvalue.html', 'Buying Guide'], ['changes.html', 'Point Changes']]],
+  ['Research', [['contractvalue.html', 'Buying Guide'], ['changes.html', 'Point Changes'],
+                ['pointsorcash.html', 'Worth the Points?']]],
 ];
 // Every page that renders the nav. use-points.html carries it but is not a
 // nav destination itself, so it is the one page expected to have no active tab.

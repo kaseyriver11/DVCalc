@@ -169,7 +169,7 @@ select, input, textarea, button {
 }
 .suggest-return-banner a {
   color: var(--color-primary);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
 }
 .suggest-return-banner a:hover { text-decoration: underline; }
@@ -847,17 +847,13 @@ select, input, textarea, button {
 
 .trip-strip-day {
   min-width: 0;
-  border-left: 3px solid #999;
+  border: 1px solid transparent;
   border-radius: 4px;
   padding: 5px 2px;
   text-align: center;
 }
 
-.trip-strip-day.empty {
-  border-left: none;
-}
-
-/* Context days just outside the stay -- dimmed and dashed so they read as
+/* Context days just outside the stay -- dimmed and faintly filled so they read as
    "not part of this stay yet" rather than a real night; clicking one
    extends check-in/check-out to include it (adjustTripEdge() in app.js).
    The dimming is applied to just the number/points text, NOT the chip
@@ -866,7 +862,6 @@ select, input, textarea, button {
    tooltip that's separately set to opacity:1 when shown), making the
    hover label hard to read. */
 .trip-strip-day.context {
-  border-left-style: dashed;
   cursor: pointer;
 }
 
@@ -944,19 +939,19 @@ select, input, textarea, button {
   display: block;
   width: 100%;
   margin-top: 14px;
-  padding: 8px;
+  padding: 9px;
   background: white;
-  border: 1px solid var(--color-primary);
+  border: 1.5px solid var(--color-primary);
   color: var(--color-primary);
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
   text-align: center;
   cursor: pointer;
 }
 
 .edit-dates-btn:hover {
-  background: #f3e5f5;
+  background: var(--color-primary-tint-bg);
 }
 
 /* ---- Selection Hint ---- */
@@ -978,7 +973,7 @@ select, input, textarea, button {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  gap: 4px;
   background: white;
   border-radius: 10px;
   padding: 12px;
@@ -994,7 +989,10 @@ select, input, textarea, button {
   padding: 6px 0;
 }
 
+/* A soft all-round border in the season color (set per cell in app.js)
+   keeps neighboring days apart without a heavy one-side accent. */
 .day-cell {
+  border: 1px solid transparent;
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -1492,12 +1490,12 @@ select, input, textarea, button {
   width: 100%;
   margin-top: 10px;
   padding: 10px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
+  background: white;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
   border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -1510,7 +1508,7 @@ select, input, textarea, button {
 }
 
 .find-alt-btn:hover {
-  background: var(--color-primary-active);
+  background: var(--color-primary-tint-bg);
 }
 
 /* ---- Modal (.modal-overlay/.modal-box) ---- moved to tokens.css (shared with account.html) */
@@ -1876,7 +1874,8 @@ select, input, textarea, button {
 .use-or-rent p { margin: 0; flex: 1 1 240px; }
 .use-or-rent.rent { background: #fff6e0; color: #6b4a00; }
 .use-or-rent.close { background: #f4f1f8; color: #444; }
-.use-or-rent a { font-weight: 600; color: var(--color-primary); white-space: nowrap; }
+.use-or-rent a { font-weight: 700; color: var(--color-primary); white-space: nowrap; text-decoration: none; }
+.use-or-rent a:hover { text-decoration: underline; }
 
 /* The shared $/pt editor (dvc-point-value.js) under the tiles. */
 .cost-point-value {
@@ -2057,7 +2056,6 @@ select, input, textarea, button {
 
 .resort-alert.overlaps-stay {
   background: var(--color-warning-bg);
-  border-left: 3px solid var(--color-warning);
 }
 
 .resort-alert-badge {
@@ -2130,7 +2128,7 @@ select, input, textarea, button {
 }
 
 .special-event.ticketed {
-  border-left: 3px solid var(--color-primary);
+  background: var(--color-primary-tint-bg, #f3ecfb);
 }
 
 .special-event-badge {
@@ -2245,41 +2243,39 @@ select, input, textarea, button {
   display: block;
   width: 100%;
   margin-top: 10px;
-  padding: 8px;
-  background: var(--color-primary);
-  border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: white;
+  padding: 9px;
+  background: white;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
-  transition: background 0.15s;
+  box-sizing: border-box;
 }
 
 .summary-compare:hover {
-  background: var(--color-primary-hover);
+  background: var(--color-primary-tint-bg);
 }
 
 .summary-clear {
   display: block;
   width: 100%;
   margin-top: 10px;
-  padding: 6px;
-  background: none;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: #666;
+  padding: 9px;
+  background: white;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s;
 }
 
 .summary-clear:hover {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-  background: rgba(183, 28, 28, 0.04);
+  background: var(--color-primary-tint-bg);
 }
 
 /* ---- Contract personalization: dates outside this contract's current
@@ -2393,8 +2389,8 @@ select, input, textarea, button {
 }
 
 .segment-compare {
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--color-primary);
   text-decoration: none;
 }
@@ -2420,46 +2416,66 @@ select, input, textarea, button {
   border-top: none;
 }
 
+/* Share this stay (dvc-share.js): top-right of the Your Stay / Split
+   Stay card, beside its title (.card-header-row there; .card-title-row on
+   the review-mode trip card, which has no rule under its label). */
+.card-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-share-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  background: var(--color-bg-card, #fff);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.card-share-btn:hover { background: rgba(74, 20, 140, 0.06); }
+
 .summary-add-segment {
   display: block;
   width: 100%;
   margin-top: 10px;
-  padding: 8px;
-  background: none;
-  border: 2px dashed var(--color-primary);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 9px;
+  background: white;
+  border: 1.5px solid var(--color-primary);
   color: var(--color-primary);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   text-align: center;
-  transition: all 0.15s;
 }
 
 .summary-add-segment:hover {
-  background: rgba(74, 20, 140, 0.06);
-  border-color: var(--color-primary-hover);
+  background: var(--color-primary-tint-bg);
 }
 
 .summary-save-itinerary {
   display: block;
   width: 100%;
   margin-top: 10px;
-  padding: 8px;
-  background: var(--color-good);
-  border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 9px;
+  background: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
   color: white;
   cursor: pointer;
   text-align: center;
-  transition: background 0.15s;
 }
 
 .summary-save-itinerary:hover {
-  background: var(--color-good-hover);
+  background: var(--color-primary-active);
 }
+.summary-save-itinerary.secondary { background: white; color: var(--color-primary); }
+.summary-save-itinerary.secondary:hover { background: var(--color-primary-tint-bg); }
 
 .itinerary-save-form {
   display: flex;
@@ -2484,18 +2500,18 @@ select, input, textarea, button {
 
 .itinerary-save-confirm {
   padding: 7px 12px;
-  background: var(--color-good);
+  background: var(--color-primary);
   border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
   color: white;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.itinerary-save-confirm:hover { background: var(--color-good-hover); }
-.itinerary-save-confirm:disabled { background: #9ccc9f; cursor: default; }
+.itinerary-save-confirm:hover { background: var(--color-primary-active); }
+.itinerary-save-confirm:disabled { opacity: 0.6; cursor: default; }
 
 .itinerary-save-cancel {
   padding: 7px 10px;
@@ -2754,7 +2770,7 @@ select, input, textarea, button {
   .calendar-grid {
     min-width: 0;
     padding: 4px;
-    gap: 2px;
+    gap: 3px;
   }
 
   .day-cell {

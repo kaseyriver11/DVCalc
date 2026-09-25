@@ -292,6 +292,16 @@ function buildAvailabilityDotsHTML(avail, stayLength) {
   }).join("");
 }
 
+// When a later window rates better than an earlier one (the Field Guide
+// shows this, mostly around Thanksgiving), say so, so it doesn't read as a
+// mistake. Rooms come back as people cancel or change their plans.
+const AVAIL_RANK = { NL: 0, Lo: 1, Fr: 2, Gd: 3, Ex: 4 };
+function availabilityReboundNote(avail, stayLength) {
+  const ranks = BOOKING_WINDOWS.map(w => availabilityLabel(avail[w.key], stayLength)).map(l => (l ? AVAIL_RANK[l.short] : null));
+  const rebound = ranks.some((r, i) => r != null && ranks.slice(0, i).some(p => p != null && p < r));
+  return rebound ? `<div class="avail-note">Odds can improve closer to check-in: rooms open back up as people cancel or change plans.</div>` : "";
+}
+
 function buildAvailabilityHTML(resortId, roomTypeId, dates) {
   const avail = getStayAvailability(resortId, roomTypeId, dates);
   if (!avail) return "";
@@ -304,6 +314,7 @@ function buildAvailabilityHTML(resortId, roomTypeId, dates) {
       <div class="availability-outlook">
         <h3>Booking Outlook <span class="avail-stay-length">${dates.length} night${dates.length !== 1 ? "s" : ""}</span></h3>
         <div class="avail-dot-row">${dots}</div>
+        ${availabilityReboundNote(avail, stayLength)}
         <div class="avail-note">Based on historical availability from <a href="https://dvcfieldguide.com/availability-tables" target="_blank" rel="noopener">DVC Field Guide</a></div>
       </div>
     </div>
@@ -425,10 +436,20 @@ function addSegment() {
     checkIn: state.checkIn,
     checkOut: state.checkOut,
   });
-  // Lock next check-in to previous check-out
+  // Lock next check-in to previous check-out, and show that month -- the
+  // calendar may be on another month (paged away, or a stay handed over
+  // from Suggest a Stay while the grid was collapsed).
   state.checkIn = state.checkOut;
   state.checkOut = null;
   state.customCashRate = null;
+  if (state.checkIn) {
+    const year = Number(state.checkIn.slice(0, 4));
+    state.month = Number(state.checkIn.slice(5, 7)) - 1;
+    if (year !== state.year && AVAILABLE_YEARS.includes(year)) {
+      state.year = year;
+      if (getResort()) populateRoomTypes(); // same as paging across a year
+    }
+  }
   updateHint();
   renderCalendar();
   renderSummary();
@@ -1437,7 +1458,7 @@ function buildStayInsightsHTML(resort, roomTypeId, stayDates) {
     <div class="summary-card wide">
       <div class="card-header-row">
         <h3>Stay Insights</h3>
-        <button class="find-alt-btn" onclick="openAlternativesModal()">🔍 Find Alternatives</button>
+        <button class="find-alt-btn" onclick="openAlternativesModal()">Find Alternatives</button>
       </div>
       <div class="dist-subtitle">vs. every other ${nights}-night stay at ${resort.name} ${rangeLabel}</div>
 
@@ -1556,16 +1577,6 @@ let userContracts = [];          // every contract for the signed-in user (activ
 let userContractYearPoints = []; // that user's contract_year_points rows, across all contracts
 let selectedContractId = null;   // which one the user is browsing "as", or null
 
-// ---- Smart Draw (point allocation recommendation) UI state ----
-// Session-derived, not calendar selection state -- same reasoning as
-// userContracts/itinerary state above.
-let smartDrawManualOpen = false;
-// { pointsNeeded, banked, borrowed, remaining } -- only trusted while
-// pointsNeeded still matches the active stay's cost, so switching to a
-// different/longer stay silently falls back to a fresh recommendation
-// instead of carrying over a manual split that no longer adds up.
-let smartDrawManualDraws = null;
-
 // ---- Multi-Contract Split (points across MULTIPLE contracts) UI state ----
 // Deliberately named "multiContractSplit", never "splitMode"/"split" alone
 // -- isSplitMode() elsewhere in this file means a SPLIT STAY (multiple
@@ -1573,7 +1584,7 @@ let smartDrawManualDraws = null;
 // (one stay, paid for out of more than one contract's points).
 let multiContractSplitMode = false;
 // { pointsNeeded, byContractId: { [contractId]: points } } -- same
-// staleness guard as smartDrawManualDraws: only trusted while pointsNeeded
+// staleness guard: only trusted while pointsNeeded
 // matches the active stay, so switching stays discards a stale split
 // rather than silently carrying over amounts that no longer add up.
 let multiContractAllocations = null;
@@ -1581,7 +1592,6 @@ let multiContractAllocations = null;
 // ---- 11-to-7 Swap Simulator (Task 04) UI state ----
 // Only meaningful while booking the actual home resort at 11 months --
 // see buildSwapSimulatorHTML()'s own gating comment.
-let swapSimulatorMode = false;
 let swapTargetResortId = null;
 let swapTargetRoomTypeId = null;
 
@@ -1632,9 +1642,6 @@ function stayYearGroups(contract, dates) {
   }
   return [...groups.values()];
 }
-function smartDrawContext(row) {
-  return JSON.stringify([selectedContractId, state.checkIn, state.checkOut, row]);
-}
 function buildCrossYearDrawHTML(contract, resort, dates) {
   const groups = stayYearGroups(contract, dates);
   return '<div class="smart-draw-card"><div class="smart-draw-title">This stay spans use years</div>' + groups.map(group => {
@@ -1644,7 +1651,7 @@ function buildCrossYearDrawHTML(contract, resort, dates) {
     const draw = computeSmartDraw(group.row, points);
     const available = group.row.remaining + group.row.banked + group.row.borrowed + group.row.holding;
     return `<div class="smart-draw-guardrail ${draw.shortfall ? 'warning' : 'ok'}"><strong>${stayYearLabel(contract, group.row)}</strong><br>${group.dates.length} night(s): ${points} pts needed / ${available} available. ${draw.shortfall ? 'Short by ' + draw.shortfall + ' pts in this use year.' : (available - points) + ' pts projected left in this use year.'}</div>`;
-  }).join('') + '<div class="smart-draw-footer">Each night uses its applicable cycle. Balances are not combined or moved between years. Review banking or borrowing in My Contracts if needed.</div><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button></div>';
+  }).join('') + '<div class="smart-draw-footer">Each night uses its applicable cycle. Balances are not combined or moved between years. Review banking or borrowing in My Contracts if needed.</div><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking</button></div>';
 }
 
 function getAvailablePoints(c) {
@@ -1820,9 +1827,6 @@ function setSelectedContract(id) {
   syncOwnerResortToContract(getSelectedContract());
   state.bookingContractId = selectedContractId;
   state.bookingOwnerId = window.DVCAuth.getSession()?.user?.id;
-  // Recompute the preview when changing contracts.
-  smartDrawManualOpen = false;
-  smartDrawManualDraws = null;
   renderBookingAsControl();
   renderSummary();
   renderCalendar();
@@ -2120,12 +2124,11 @@ function renderTripRail() {
     // dashed-vs-solid border being a subtle difference at this size -- made
     // a context day and the first real night hard to tell apart at a
     // glance). A near-white fill reads immediately as "not part of the stay
-    // yet," leaving the dashed period-color edge as just a hint of what
-    // period it'd join.
+    // yet."
     const bgAlpha = isContext ? "08" : "20";
     return `
       <div class="trip-strip-day${isContext ? " context" : ""}${isEdge ? " editable" : ""}${clickable ? " tooltip-anchor" : ""}"
-        style="background: ${color}${bgAlpha}; border-left-color: ${color};"
+        style="background: ${color}${bgAlpha}; border-color: ${color}${isContext ? "33" : "55"};"
         ${clickable ? `onclick="adjustTripEdge('${dateStr}')" tabindex="0"` : ""}>
         <div class="trip-strip-num">${dayNum}</div>
         <div class="trip-strip-pts" style="color: ${color};">${points ?? "—"}</div>
@@ -2154,7 +2157,7 @@ function renderTripRail() {
 
   el.innerHTML = `
     <div class="trip-card">
-      <div class="trip-resort-label">Your Stay</div>
+      <div class="card-title-row"><div class="trip-resort-label">Your Stay</div>${shareStayButtonHTML()}</div>
       <div class="trip-resort-name">${resort.name}${resort.estimatedCashRates ? estimateBadgeHTML() : ""}</div>
       <div class="trip-room-name">${totals.roomType ? totals.roomType.name : ""}</div>
 
@@ -2302,7 +2305,7 @@ function renderCalendar() {
 
     if (period) {
       el.style.backgroundColor = period.color + "20";
-      el.style.borderLeft = `3px solid ${period.color}`;
+      el.style.borderColor = period.color + "55";
       periodTooltipHTML = `
         <div class="period-tooltip tooltip-card">
           <div class="period-tooltip-header">
@@ -2507,7 +2510,7 @@ function buildSegmentBlock(seg, totals, index, isCurrentSegment, totalVisible) {
       <div class="segment-detail">${formatShortDate(segCheckIn)} — ${formatShortDate(segCheckOut)} (${nightCount} night${nightCount !== 1 ? "s" : ""})</div>
       <div class="segment-detail"><strong>${totals.totalPoints} pts</strong>${hasCashData ? ` · $${Math.round(totals.totalCash).toLocaleString()} cash` : ""}</div>
       <div class="segment-actions">
-        ${hasCompleteDates ? `<a class="segment-compare" href="compare.html?checkin=${segCheckIn}&checkout=${segCheckOut}&category=${segCategory}&segment=${isCurrentSegment ? "current" : index}">Compare Resorts</a>` : ""}
+        ${hasCompleteDates ? `<a class="segment-compare" href="compare.html?checkin=${segCheckIn}&checkout=${segCheckOut}&category=${segCategory}&segment=${isCurrentSegment ? "current" : index}">Compare Resorts &rarr;</a>` : ""}
         <span class="segment-nightly-toggle" onclick="this.closest('.segment-block').querySelector('.summary-nightly').classList.toggle('open')">Nightly</span>
       </div>
       <div class="summary-nightly">
@@ -2728,25 +2731,6 @@ function rerenderStaySummary() {
   if (isReviewMode()) renderTripRail(); else renderSummary();
 }
 
-// The draw shown in the preview: the auto recommendation, unless manual
-// mode is open AND its stashed amounts were computed for this exact
-// pointsNeeded (see smartDrawManualDraws's comment above).
-function smartDrawEffectiveDraws(currentRow, pointsNeeded) {
-  if (smartDrawManualOpen && smartDrawManualDraws && smartDrawManualDraws.pointsNeeded === pointsNeeded && smartDrawManualDraws.context === smartDrawContext(currentRow)) {
-    const m = smartDrawManualDraws;
-    return {
-      draws: { holding: m.holding, banked: m.banked, borrowed: m.borrowed, remaining: m.remaining },
-      shortfall: Math.max(0, pointsNeeded - (m.holding + m.banked + m.borrowed + m.remaining)),
-      after: {
-        holding: currentRow.holding - m.holding,
-        banked: currentRow.banked - m.banked,
-        borrowed: currentRow.borrowed - m.borrowed,
-        remaining: currentRow.remaining - m.remaining,
-      },
-    };
-  }
-  return computeSmartDraw(currentRow, pointsNeeded);
-}
 
 // The recommendation card itself: a segmented bar (same visual language as
 // account.html's wallet-card ledger rows, tokens.css), one plain-language
@@ -2783,9 +2767,10 @@ function buildCancelOutcomeHTML(contract, currentRow, draws, checkInStr) {
   return lines.length ? `<div class="smart-draw-guardrail calm">${lines.join("<br>")}</div>` : "";
 }
 
-function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
-  if (!currentRow.recorded) return `<div class="smart-draw-card"><div class="smart-draw-title">Balance not confirmed</div><p>Confirm ${contract.use_year} ${currentRow.year} points before assessing this stay. Your annual allotment is not a confirmed available balance.</p><a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Review balance</a><div class="smart-draw-actions"><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button></div></div>`;
-  const { draws, after, shortfall } = smartDrawEffectiveDraws(currentRow, pointsNeeded);
+// leadHTML: the contract's eligibility note, shown first inside the card.
+function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates, leadHTML = "") {
+  if (!currentRow.recorded) return `<div class="smart-draw-card"><div class="smart-draw-title">Balance not confirmed</div>${leadHTML}<p>Confirm ${contract.use_year} ${currentRow.year} points before assessing this stay. Your annual allotment is not a confirmed available balance.</p><a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}" class="text-link">Review balance &rarr;</a><div class="smart-draw-actions"><button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking</button></div></div>`;
+  const { draws, after, shortfall } = computeSmartDraw(currentRow, pointsNeeded);
 
   const barHTML = `
     <div class="ledger-bar">
@@ -2842,38 +2827,16 @@ function buildSmartDrawHTML(contract, currentRow, pointsNeeded, stayDates) {
     const cancelHTML = buildCancelOutcomeHTML(contract, currentRow, draws, stayDates[0]);
     if (cancelHTML) guardrails.push(cancelHTML);
   }
-  let manualHTML = "";
-  if (smartDrawManualOpen) {
-    const manualTotal = draws.holding + draws.banked + draws.borrowed + draws.remaining;
-    const stepper = (field, label, max) => `
-      <div class="ledger-stepper ${field}">
-        <span class="ledger-stepper-label">${label}</span>
-        <div class="ledger-stepper-row">
-          <input type="number" min="0" max="${max}" step="1" value="${draws[field]}" onchange="setSmartDrawManual('${field}', this.value, ${max}, ${pointsNeeded})">
-        </div>
-      </div>
-    `;
-    manualHTML = `
-      <div class="smart-draw-manual-total">${manualTotal.toLocaleString()} of ${pointsNeeded.toLocaleString()} pts allocated</div>
-      <div class="ledger-steppers">
-        ${stepper("holding", "Holding", currentRow.holding)}
-        ${stepper("banked", "Banked", currentRow.banked)}
-        ${stepper("remaining", "Current", currentRow.remaining)}
-        ${stepper("borrowed", "Borrowed", currentRow.borrowed)}
-      </div>
-    `;
-  }
   return `
     <div class="smart-draw-card">
       <div class="smart-draw-title">Suggested draw for this trip</div>
       <div class="smart-draw-footer">${stayYearLabel(contract, currentRow)}</div>
       ${barHTML}
       <div class="smart-draw-lines">${lines.join("")}</div>
+      ${leadHTML}
       ${guardrails.join("")}
-      ${manualHTML}
       <div class="smart-draw-actions">
-        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button>
-        <button type="button" class="smart-draw-manual-toggle" onclick="toggleSmartDrawManual(${pointsNeeded})">${smartDrawManualOpen ? "Use recommended split" : "Adjust manually"}</button>
+        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking</button>
       </div>
       <div class="smart-draw-footer">Planning preview only. Record this booking opens a prefilled form where you can save the stay and take its points out of your balances.</div>
     </div>
@@ -2917,29 +2880,6 @@ function logTripFromCalendar() {
     return;
   }
   window.location.href = "bookings.html";
-}
-
-function toggleSmartDrawManual(pointsNeeded) {
-  smartDrawManualOpen = !smartDrawManualOpen;
-  if (smartDrawManualOpen) {
-    const contract = getSelectedContract();
-    const currentRow = contract ? getStayYearRow(contract) : null;
-    const auto = currentRow ? computeSmartDraw(currentRow, pointsNeeded) : null;
-    smartDrawManualDraws = auto ? { pointsNeeded, context: smartDrawContext(currentRow), ...auto.draws } : { pointsNeeded, holding: 0, banked: 0, borrowed: 0, remaining: 0 };
-  }
-  rerenderStaySummary();
-}
-
-function setSmartDrawManual(field, rawValue, max, pointsNeeded) {
-  const value = Math.max(0, Math.min(max, parseInt(rawValue, 10) || 0));
-  const row = getStayYearRow(getSelectedContract());
-  const context = smartDrawContext(row);
-  if (!smartDrawManualDraws || smartDrawManualDraws.pointsNeeded !== pointsNeeded || smartDrawManualDraws.context !== context) {
-    smartDrawManualDraws = { pointsNeeded, ...computeSmartDraw(row, pointsNeeded).draws };
-  }
-  smartDrawManualDraws.context = context;
-  smartDrawManualDraws[field] = value;
-  rerenderStaySummary();
 }
 
 // ---- Multi-Contract Split (Task 07) ----------------------------------
@@ -3056,7 +2996,7 @@ function buildMultiContractSplitHTML(resort, stayDates) {
   }
 
   if (contracts.some(c => stayYearGroups(c, stayDates).length > 1)) {
-    return '<div class="smart-draw-card"><div class="smart-draw-title">Review by use year</div><p>This stay crosses a use-year boundary for one or more contracts. A combined allocation could hide a shortage in one year. Select one contract to see the nightly costs assessed by use year, or preview each date range separately.</p><button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">Use one contract</button></div>';
+    return '<div class="smart-draw-card"><div class="smart-draw-title">Review by use year</div><p>This stay crosses a use-year boundary for one or more contracts. A combined allocation could hide a shortage in one year. Select one contract to see the nightly costs assessed by use year, or preview each date range separately.</p><button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">&larr; Use one contract</button></div>';
   }
   const allocations = getMultiSplitAllocations(contracts, pointsNeeded);
   const totalAllocated = Object.values(allocations).reduce((a, b) => a + b, 0);
@@ -3090,7 +3030,7 @@ function buildMultiContractSplitHTML(resort, stayDates) {
       ${contracts.some(c => !getStayYearRow(c).recorded) && totalAllocated < pointsNeeded ? `<div class="smart-draw-guardrail warning">${totalAllocated} / ${pointsNeeded} pts allocated from confirmed balances. Confirm the remaining contract balances before judging this stay.</div>` : buildMultiSplitTotalsHTML(totalAllocated, pointsNeeded)}
       <div class="multi-split-rows">${rowsHTML}</div>
       <div class="smart-draw-actions">
-        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking &rarr;</button>
+        <button type="button" class="smart-draw-apply-btn" onclick="logTripFromCalendar()">Record this booking</button>
         <button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">&larr; Use one contract</button>
       </div>
       <div class="smart-draw-footer">Planning preview only. Record this booking opens a prefilled form with this split, where you can save the stay and take its points out of your balances.</div>
@@ -3104,8 +3044,7 @@ function buildMultiContractSplitHTML(resort, stayDates) {
 // once the 7-month all-resorts window opens -- lets an owner see the real
 // numbers (both booking-window dates, the point delta, and any extra
 // borrowing the swap would need) before committing to that plan.
-function toggleSwapSimulator() {
-  swapSimulatorMode = !swapSimulatorMode;
+function clearSwapSimulator() {
   swapTargetResortId = null;
   swapTargetRoomTypeId = null;
   rerenderStaySummary();
@@ -3123,10 +3062,6 @@ function setSwapTargetRoomType(roomTypeId) {
 }
 
 function buildSwapSimulatorHTML(contract, resort, stayDates) {
-  if (!swapSimulatorMode) {
-    return `<div class="swap-sim-offer"><button type="button" class="smart-draw-manual-toggle" onclick="toggleSwapSimulator()">&#128260; Planning to swap at 7 months? &rarr;</button></div>`;
-  }
-
   const targetCandidates = resortsForYear(state.year).filter(r => r.id !== resort.id);
   const targetResort = swapTargetResortId ? targetCandidates.find(r => r.id === swapTargetResortId) : null;
   const targetRoomTypes = targetResort ? targetResort.roomTypes : [];
@@ -3199,19 +3134,18 @@ function buildSwapSimulatorHTML(contract, resort, stayDates) {
           ? `<div class="smart-draw-guardrail danger">This contract can't cover ${targetResort.name} even after borrowing its full next-year allotment &mdash; short by ${shortfall.toLocaleString()} pts. Consider a different contract, or Split Across Contracts above.</div>`
           : extraBorrowNeeded > 0
           ? `<div class="smart-draw-guardrail warning">Covering the swap needs about ${extraBorrowNeeded.toLocaleString()} more borrowed pts than your ${resort.name} stay alone would. Borrowing is final &mdash; if ${targetResort.name} isn't actually available when the 7-month window opens, those extra points stay borrowed regardless, with no swap left to use them on.</div>`
-          : `<div class="smart-draw-guardrail" style="background:var(--color-good-bg);border-left:3px solid var(--color-good);color:var(--color-good);">No extra borrowing needed for this swap &mdash; your ${resort.name} stay already covers it.</div>`}
+          : `<div class="smart-draw-guardrail" style="background:var(--color-good-bg);color:var(--color-good);">No extra borrowing needed for this swap &mdash; your ${resort.name} stay already covers it.</div>`}
       `;
     }
   }
 
   return `
     <div class="swap-sim-card smart-draw-card">
-      <div class="smart-draw-title">11-to-7 Swap Simulator</div>
+      <div class="smart-draw-title">&#128260; Planning to swap at 7 months?</div>
+      <div class="smart-draw-footer">Book ${resort.name} at 11 months, then compare switching to another resort when its 7-month window opens.</div>
       ${pickerHTML}
       ${resultsHTML}
-      <div class="smart-draw-actions">
-        <button type="button" class="smart-draw-manual-toggle" onclick="toggleSwapSimulator()">&larr; Not planning a swap</button>
-      </div>
+      ${swapTargetResortId ? `<button type="button" class="edit-dates-btn" onclick="clearSwapSimulator()">Clear simulator</button>` : ""}
       <div class="smart-draw-footer">Advisory only -- doesn't check real-time room availability or execute a swap with Disney.</div>
     </div>
   `;
@@ -3252,7 +3186,7 @@ function buildContractEligibilityHTML(resort, stayDates) {
   }
 
   const splitOfferHTML = canSplit
-    ? `<div class="multi-split-offer"><button type="button" class="smart-draw-manual-toggle" onclick="toggleMultiContractSplit()">Split points across contracts instead &rarr;</button></div>`
+    ? `<div class="multi-split-offer"><button type="button" class="edit-dates-btn" onclick="toggleMultiContractSplit()">Split points across contracts</button></div>`
     : splitCandidates.length >= 2 && unconfirmedSplit.length
       ? `<div class="multi-split-offer">To split points across contracts, <a href="account.html?contract=${encodeURIComponent(unconfirmedSplit[0].id)}">add ${escapeHTML(unconfirmedSplit[0].nickname || resortNameForId(unconfirmedSplit[0].home_resort_id))}'s balance</a>.</div>`
       : "";
@@ -3262,16 +3196,18 @@ function buildContractEligibilityHTML(resort, stayDates) {
     return splitOfferHTML ? `<div class="summary-divider"></div>${splitOfferHTML}` : "";
   }
 
-  let html = "";
+  // Eligibility: its own line, except when the Suggested draw card shows,
+  // where it becomes that card's first note (one card, not two).
+  let elig;
   const months = getContractWindowMonths(contract, resort.id);
   if (months === 11) {
-    html = `<div class="contract-eligibility contract-ok">&check; Home resort &mdash; bookable up to 11 months out</div>`;
+    elig = { tone: "ok", text: "&check; Home resort &mdash; bookable up to 11 months out" };
   } else if (months === 7) {
-    html = `<div class="contract-eligibility contract-ok">&check; Bookable up to 7 months out with this contract</div>`;
+    elig = { tone: "ok", text: "&check; Bookable up to 7 months out with this contract" };
   } else if (contractIsHomeOnly(contract)) {
-    html = `<div class="contract-eligibility contract-blocked">&times; This contract can't book ${resort.name} &mdash; resale-restricted to ${resortNameForId(contract.home_resort_id)} only</div>`;
+    elig = { tone: "blocked", text: `&times; This contract can't book ${resort.name} &mdash; resale-restricted to ${resortNameForId(contract.home_resort_id)} only` };
   } else {
-    html = `<div class="contract-eligibility contract-blocked">&times; Can't book ${resort.name} with this contract due to resale restrictions</div>`;
+    elig = { tone: "blocked", text: `&times; Can't book ${resort.name} with this contract due to resale restrictions` };
   }
 
   // "Bookable" only means the contract can reach this resort. When the
@@ -3282,9 +3218,11 @@ function buildContractEligibilityHTML(resort, stayDates) {
     const avail = key ? getStayAvailability(resort.id, state.roomTypeId, stayDates) : null;
     const label = avail ? availabilityLabel(avail[key], stayDates.length) : null;
     if (label && (label.short === "NL" || label.short === "Lo")) {
-      html = `<div class="contract-eligibility contract-warn">&check; This contract can book it, but this room is ${label.short === "NL" ? "rarely still open" : "usually scarce"} ${key === "1Mo" ? "this close to check-in" : key.replace("Mo", " months out")} (Booking Outlook: ${label.text})</div>`;
+      elig = { tone: "warn", text: `&check; This contract can book it, but this room is ${label.short === "NL" ? "rarely still open" : "usually scarce"} ${key === "1Mo" ? "this close to check-in" : key.replace("Mo", " months out")} (Booking Outlook: ${label.text})` };
     }
   }
+  let html = `<div class="contract-eligibility contract-${elig.tone}">${elig.text}</div>`;
+  const eligNoteHTML = `<div class="smart-draw-guardrail ${{ ok: "calm", warn: "warning", blocked: "danger" }[elig.tone]}">${elig.text}</div>`;
 
   const currentRow = getStayYearRow(contract, stayDates[0]);
   const available = currentRow.remaining + currentRow.banked + currentRow.borrowed + currentRow.holding;
@@ -3297,12 +3235,15 @@ function buildContractEligibilityHTML(resort, stayDates) {
       if (stayYearGroups(contract, stayDates).length > 1) {
         return `<div class="summary-divider"></div>${html}${buildCrossYearDrawHTML(contract, resort, stayDates)}${splitOfferHTML}`;
       }
-      html += buildSmartDrawHTML(contract, currentRow, totals.points, stayDates);
+      html = buildSmartDrawHTML(contract, currentRow, totals.points, stayDates, eligNoteHTML);
       // Swap Simulator only makes sense when booking the actual HOME
       // resort at 11 months with intent to try swapping later -- a
       // 7-month (non-home) stay is already the "swapped-to" side of that
       // scenario, not the starting point.
-      if (months === 11 && currentRow.recorded) html += buildSwapSimulatorHTML(contract, resort, stayDates);
+      // Only while the 7-month window is still ahead: once check-in is
+      // inside 7 months every resort is already bookable, so there's no
+      // swap to plan -- just book the other resort.
+      if (months === 11 && currentRow.recorded && stayDates[0] > monthsFromTodayCutoff(7)) html += buildSwapSimulatorHTML(contract, resort, stayDates);
     } else if (totals.points != null && !currentRow.recorded) {
       html += `<p>${stayYearLabel(contract, currentRow)}. <a href="account.html?contract=${encodeURIComponent(contract.id)}&year=${currentRow.year}">Add balance</a> before assessing available points.</p>`;
     } else if (totals.points != null) {
@@ -3352,7 +3293,7 @@ function buildStayActionButtonsHTML(inSplitMode, overallCheckIn, overallCheckOut
       `;
     } else {
       saveItineraryHTML = editing
-        ? `<p class="itinerary-edit-context">Editing ${escapeHTML(editing.name)}</p><button class="summary-save-itinerary" onclick="openItinerarySaveForm('update')">Save Changes</button><button class="summary-save-itinerary" onclick="openItinerarySaveForm('copy')">Save as Copy</button>`
+        ? `<p class="itinerary-edit-context">Editing ${escapeHTML(editing.name)}</p><button class="summary-save-itinerary" onclick="openItinerarySaveForm('update')">Save Changes</button><button class="summary-save-itinerary secondary" onclick="openItinerarySaveForm('copy')">Save as Copy</button>`
         : `<button class="summary-save-itinerary" onclick="openItinerarySaveForm()">&#128190; Save Itinerary</button>`;
     }
   }
@@ -3361,6 +3302,27 @@ function buildStayActionButtonsHTML(inSplitMode, overallCheckIn, overallCheckOut
     ${!inSplitMode ? `<a class="summary-compare" href="compare.html?checkin=${overallCheckIn}&checkout=${overallCheckOut}&category=${getCategoryFromRoomType()}&segment=current">Compare All Resorts</a>` : ""}
     ${saveItineraryHTML}
   `;
+}
+
+// Top-right corner of the Your Stay / Split Stay card; only once there's
+// a complete stay to share.
+function shareStayButtonHTML() {
+  if (!getFullItinerarySegments().length) return "";
+  return `<button type="button" class="card-share-btn" onclick="shareCurrentStay()" aria-label="Share this stay" title="Share this stay">${window.DVCShare.ICON}Share</button>`;
+}
+
+// Share: a link that reopens this exact stay (every split segment) for
+// anyone. Resort, room and dates only -- never the contract or itinerary.
+function shareCurrentStay() {
+  const stays = getFullItinerarySegments();
+  if (!stays.length) return;
+  const first = stays[0], last = stays[stays.length - 1];
+  const names = [...new Set(stays.map(st => RESORTS.find(r => r.id === st.resortId)?.name || st.resortId))].join(" + ");
+  window.DVCShare.share({
+    title: "DVC stay",
+    text: `${names}, ${window.DVCDates.formatDateRange(first.checkIn, last.checkOut)}`,
+    url: window.DVCShare.link("index.html", window.DVCShare.stayParams(stays), location.href),
+  });
 }
 
 function attachStayActionButtonListeners() {
@@ -3470,7 +3432,7 @@ function buildUseOrRentHTML(cashValue, points) {
     : r.verdict === "rent"
       ? `<strong>Consider renting these points out.</strong> This stay is worth ${per(r.stayPerPoint)} in cash; renting them at ${per(r.rentalRate)} and paying cash would leave you about $${Math.round(r.rentAdvantage).toLocaleString()} ahead.`
       : `<strong>About even.</strong> This stay is worth ${per(r.stayPerPoint)} in cash, close to the ${per(r.rentalRate)} renting them out would bring.`;
-  return `<div class="use-or-rent ${r.verdict}"><p>${text}</p><a href="pointsorcash.html?points=${points}&cash=${Math.round(cashValue)}">Points or cash?</a></div>`;
+  return `<div class="use-or-rent ${r.verdict}"><p>${text}</p><a href="pointsorcash.html?points=${points}&cash=${Math.round(cashValue)}">Worth the points? &rarr;</a></div>`;
 }
 
 function renderSummary() {
@@ -3600,7 +3562,7 @@ function renderSummary() {
 
   const yourStayCardHTML = `
     <div class="summary-card${inSplitMode ? " wide" : ""}">
-      <h3>${inSplitMode ? "Split Stay" : "Your Stay"}</h3>
+      <div class="card-header-row"><h3>${inSplitMode ? "Split Stay" : "Your Stay"}</h3>${shareStayButtonHTML()}</div>
 
       ${inSplitMode ? `
         ${segmentBlocksHTML}
@@ -4041,10 +4003,13 @@ document.addEventListener("click", (e) => {
 function readCalendarSession(key) { try { return sessionStorage.getItem(key); } catch (_) { return null; } }
 function clearCalendarSession(key) { try { sessionStorage.removeItem(key); } catch (_) {} }
 const compareSelection = window.DVCCompareHandoff.read(new URLSearchParams(window.location.search));
+// A shared link (Share button here, on Saved Itineraries): replaces any
+// selection, saves nothing -- see dvc-share.js.
+const sharedStays = compareSelection ? null : window.DVCShare.readStays(new URLSearchParams(window.location.search));
 const returningFromCompare = compareSelection ? compareSelection.segment != null : readCalendarSession("dvc_return_to_calendar");
 const savedState = returningFromCompare ? readCalendarSession("dvc_calendar_state") : null;
 const switchResort = returningFromCompare && !compareSelection ? readCalendarSession("dvc_switch_resort") : null;
-let ownerDefaultPending = !savedState && !compareSelection;
+let ownerDefaultPending = !savedState && !compareSelection && !sharedStays;
 clearCalendarSession("dvc_calendar_state");
 clearCalendarSession("dvc_switch_resort");
 clearCalendarSession("dvc_return_to_calendar");
@@ -4067,6 +4032,9 @@ document.getElementById("suggest-return-dismiss").addEventListener("click", () =
 if (savedState) {
   try {
     const restored = JSON.parse(savedState);
+    // A handed-off stay without a month (older Suggest a Stay links)
+    // shows the month it starts in, not today's.
+    if (restored.checkIn && restored.month == null) restored.month = Number(restored.checkIn.slice(5, 7)) - 1;
     Object.assign(state, restored);
 
     // If switching resort from compare page, apply it
@@ -4098,6 +4066,18 @@ if (compareSelection) {
     if (compareSelection.segment != null) {
       try { saveStateToSession(); } catch (_) {}
     }
+  }
+}
+
+if (sharedStays) {
+  const result = window.DVCCompareHandoff.applyShared(sharedStays, state, RESORTS);
+  if (result.error) {
+    const notice = document.createElement('p');
+    notice.setAttribute('role','alert');
+    notice.textContent = result.error;
+    document.body.prepend(notice);
+  } else {
+    Object.assign(state, result.state);
   }
 }
 

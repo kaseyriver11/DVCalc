@@ -29,12 +29,33 @@
     }
     return {state};
   }
+  // A shared link (dvc-share.js readStays()): one or more back-to-back
+  // stays, the last becoming the calendar's current selection and the
+  // rest its completed split-stay segments -- the same shape a loaded
+  // itinerary takes. Replaces whatever was selected; nothing is saved.
+  function applyShared(stays, original, resorts) {
+    if (!stays || !stays.length || stays.length > 10) return { error: 'This shared link is incomplete. Pick your dates on the calendar instead.' };
+    for (let i = 0; i < stays.length; i++) {
+      const s = stays[i];
+      const checked = apply({ ...s, segment: null }, { segments: [] }, resorts);
+      if (checked.error) return { error: "This shared stay isn't available on the calendar. Pick your dates on the calendar instead." };
+      if (i > 0 && stays[i - 1].checkOut !== s.checkIn) return { error: 'This shared link is incomplete. Pick your dates on the calendar instead.' };
+    }
+    const last = stays[stays.length - 1];
+    const pick = s => ({ resortId: s.resortId, roomTypeId: s.roomTypeId, checkIn: s.checkIn, checkOut: s.checkOut });
+    return { state: {
+      ...original, ...pick(last),
+      year: Number(last.checkIn.slice(0, 4)), month: Number(last.checkIn.slice(5, 7)) - 1,
+      segments: stays.slice(0, -1).map(pick), customCashRate: null,
+      itineraryEdit: null, itineraryPendingSave: null,
+    } };
+  }
   function url(selection) {
     const params = new URLSearchParams({selection:'compare',resort:selection.resortId,room:selection.roomTypeId,checkin:selection.checkIn,checkout:selection.checkOut});
     if (selection.segment != null) params.set('segment',selection.segment);
     return 'index.html?' + params;
   }
-  const api={read,apply,url};
+  const api={read,apply,applyShared,url};
   if (typeof module !== 'undefined' && module.exports) module.exports=api;
   else window.DVCCompareHandoff=api;
 })();

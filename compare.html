@@ -363,11 +363,6 @@ body {
   vertical-align: middle;
 }
 
-/* border-left on <tr> itself isn't reliably rendered under border-collapse,
-   so the accent goes on the first cell instead. */
-.compare-table tbody tr:first-child td:first-child {
-  border-left: 3px solid var(--color-good);
-}
 
 /* Personalized booking-window chips (bookingWindowChipsHTML()) -- only
    rendered once a signed-in user's contracts resolve via getUserResortAccess(). */
@@ -441,154 +436,6 @@ body {
 .owner-access-badge.window-pending {
   background: #f0f0f0;
   color: #555;
-}
-
-/* ---- Owner Contract Picker (picker-trigger + wallet-mini-card sheet) ----
-   Ported verbatim from styles.css/app.js's "Booking As" contract picker
-   (index.html) -- this page doesn't load styles.css (fully self-contained,
-   see the file header), so the classes are duplicated here rather than
-   shared, same call as this page's own windowOpensOn()/daysUntilDate()
-   duplication. Only what populateOwnerSelector() actually needs: the
-   trigger button, the bottom sheet, and the wallet-mini-card -- NOT the
-   resort-sheet-hero/sheet-search/resort-pick-row pieces, since this page's
-   no-contract fallback keeps the original plain resort dropdown rather
-   than porting that second picker too (out of scope for the reported bug,
-   which was specifically about the contract case). */
-.picker-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-width: 200px;
-  max-width: 360px;
-  padding: 6px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-family: inherit;
-  background: var(--color-bg-card);
-  background-size: cover;
-  background-position: center;
-  color: var(--color-text);
-  cursor: pointer;
-  text-align: left;
-}
-.picker-trigger:hover { border-color: #b39ddb; }
-.picker-trigger.has-art { border-color: rgba(255, 255, 255, 0.6); }
-.picker-trigger.has-art .picker-trigger-value {
-  font-weight: 700;
-  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75), 0 0 1px rgba(255, 255, 255, 0.75);
-}
-.picker-trigger-value {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.booking-as-trigger-pill {
-  display: inline-block;
-  background: var(--color-primary-tint-bg);
-  color: var(--color-primary);
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  margin-left: 6px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.sheet-overlay.open { align-items: flex-end; }
-.modal-box.sheet {
-  max-width: 100%;
-  width: 100%;
-  max-height: 85vh;
-  border-radius: 16px 16px 0 0;
-  margin: 0;
-  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
-  animation: sheet-slide-up 0.22s ease-out;
-}
-/* On desktop a full-bleed sheet turns each card into a 1500px-wide strip;
-   keep it phone-sheet sized and centered. */
-@media (min-width: 769px) {
-  .modal-box.sheet { max-width: 560px; }
-}
-
-@keyframes sheet-slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-.sheet-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--color-border);
-  border-radius: var(--radius-pill);
-  margin: 4px auto 12px;
-}
-.sheet-list {
-  overflow-y: auto;
-  max-height: 60vh;
-  -webkit-overflow-scrolling: touch;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.wallet-mini-btn {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-}
-.wallet-mini-card {
-  position: relative;
-  height: 110px;
-  border-radius: 14px;
-  padding: 14px 16px;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-shadow: inset 0 0 0 1.5px rgba(212,175,55,0.35), 0 6px 16px rgba(0,0,0,0.2);
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
-}
-.wallet-mini-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 55%);
-  pointer-events: none;
-}
-.wallet-mini-card.selected { box-shadow: inset 0 0 0 2.5px #fff, 0 6px 16px rgba(0,0,0,0.2); }
-.wallet-mini-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  position: relative;
-}
-.wallet-mini-name {
-  font-family: "Playfair Display", Georgia, serif;
-  font-weight: 700;
-  font-size: 1rem;
-  line-height: 1.25;
-}
-.wallet-mini-points-num { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
-.wallet-mini-points-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 1px; opacity: 0.8; }
-.wallet-mini-bottom { display: flex; gap: 6px; position: relative; }
-.wallet-mini-pill {
-  background: rgba(255,255,255,0.16);
-  border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 0.68rem;
-  font-weight: 600;
 }
 
 /* Vibe & Logistics view badges (poolTierHTML()/diningHTML()) */
@@ -809,16 +656,23 @@ body {
   opacity: 0.7;
 }
 
+/* "Select" on every row: a small Secondary button (clickable styles). */
 .select-resort {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
+  background: white;
   color: var(--color-primary);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .select-resort:hover {
-  text-decoration: underline;
+  background: var(--color-primary-tint-bg);
 }
 
 .owner-cost {
@@ -842,6 +696,8 @@ body {
 .settings-bar label {
   color: #666;
 }
+label[for="owner-dues-trigger"] { display: flex; align-items: center; gap: 8px; }
+#owner-dues-trigger { width: 260px; max-width: 100%; min-height: 38px; }
 
 .settings-bar input[type="range"]:not(.dvcpv-slider) {
   width: 100px;
@@ -947,12 +803,16 @@ body {
    on mobile per the app's mobile guardrails -- three short pills wrap
    to two rows on a narrow phone instead of needing to scroll. */
 .vibe-filter-row { margin: 0 24px 14px; }
-.vibe-filter-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+/* One even row of three, labels wrapping inside their own button rather
+   than one filter dropping to a line of its own. */
+.vibe-filter-pills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .vibe-filter-chip {
   font: inherit;
-  min-height: 40px;
-  padding: 8px 14px;
-  border-radius: 999px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  line-height: 1.25;
+  text-align: center;
   border: 1px solid #ddd;
   background: white;
   color: #555;
@@ -967,6 +827,18 @@ body {
   border-color: var(--color-primary);
   color: white;
 }
+/* Says what the active filters keep, with a live count, so each pill
+   visibly does something (buildVibeFilterPillsHTML()). */
+.vibe-filter-hint { margin: 8px 0 0; font-size: 0.8rem; line-height: 1.4; color: var(--color-text-muted, #666); }
+.vibe-filter-hint strong { color: var(--color-text, #333); }
+/* Work in progress: shown only inside Vibe & Logistics. */
+.wip-note { margin: 0 0 10px; padding: 8px 12px; border-radius: 8px; background: #fff3e0; color: #7a4a00; font-size: 0.8rem; line-height: 1.4; }
+/* Pool/Dining/Transportation sit at their own size in a card, not
+   stretched across the column. */
+.compare-card-metric > .tooltip-anchor { align-self: flex-start; }
+/* Cost settings don't apply to this view. */
+.settings-bar.experience-view .rental-settings,
+.settings-bar.experience-view label[for="owner-dues-trigger"] { display: none; }
 
 /* ---- Mobile Card Feed (2026-09-18) ----
    Replaces the earlier "shrink the table + hide secondary columns" approach
@@ -1071,17 +943,11 @@ body {
 .compare-card-select {
   display: block;
   width: 100%;
+  min-height: 44px;
   text-align: center;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
   padding: 11px;
   font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
 }
-.compare-card-select:hover { background: var(--color-primary-active); }
 
 /* Hidden by default (desktop) -- sorting on mobile has no column headers
    to click, so this replaces that interaction with an explicit control. */
@@ -1161,7 +1027,6 @@ body {
     color: #888;
     font-weight: 600;
   }
-  #owner-dues-label { text-transform: none; font-weight: 400; letter-spacing: 0; }
   .rental-settings { width: 100%; }
   .settings-bar input[type="range"]:not(.dvcpv-slider) {
     width: 100%;
@@ -1182,6 +1047,8 @@ body {
     max-width: none;
     min-width: 0;
   }
+  label[for="owner-dues-trigger"] { align-items: stretch; gap: 4px; }
+  #owner-dues-trigger { width: 100%; }
   .settings-bar .custom-select-trigger {
     padding: 8px 10px;
     font-size: 0.85rem;
@@ -1229,7 +1096,6 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html" class="active">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -1242,6 +1108,7 @@ body {
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1299,43 +1166,14 @@ body {
 
   <div class="settings-bar">
     <div class="rental-settings" id="rental-settings"></div>
-    <label for="owner-resort">
-      <span class="settings-label-text"><span id="owner-selector-label">Home resort:</span> <span id="owner-dues-label"></span></span>
-      <!-- Two mutually-exclusive views onto the same underlying <select>
-           (populateOwnerSelector() toggles which is visible): the plain
-           custom-select dropdown when there's no contract to draw from
-           (unchanged, original hypothetical "if I owned at X" resort
-           picker), and the wallet-mini-card sheet below -- same
-           picker-trigger + bottom-sheet pattern as index.html's own
-           "Booking As" contract picker -- once the signed-in user has
-           active contracts, so picking your real contract looks like every
-           other contract-picking spot in the app instead of a bespoke
-           dropdown. -->
-      <div class="custom-select custom-select-narrow" id="owner-resort-select-wrap">
-        <select id="owner-resort" class="native-select"></select>
-        <button type="button" class="custom-select-trigger">
-          <span class="custom-select-value"></span>
-          <span class="custom-select-arrow"></span>
-        </button>
-        <div class="custom-select-dropdown"></div>
-      </div>
-      <button type="button" class="picker-trigger" id="owner-picker-trigger" onclick="openOwnerSheet()" style="display:none;">
-        <span class="picker-trigger-value" id="owner-picker-trigger-label"></span>
-        <span class="custom-select-arrow"></span>
-      </button>
+    <!-- Dues rate: which resort's annual dues per point price the Owner
+         Cost column. The shared resort sheet (dvc-pickers.js), owned
+         resorts first; the rest stay pickable for "what if I owned at X". -->
+    <label for="owner-dues-trigger">
+      <span class="settings-label-text">Dues rate</span>
+      <button type="button" class="dvcp-trigger" id="owner-dues-trigger" aria-haspopup="dialog"><span class="dvcp-trigger-value" id="owner-dues-value"></span><span class="dvcp-arrow" aria-hidden="true"></span></button>
     </label>
     <div class="mobile-sort-control" id="mobile-sort-slot"></div>
-  </div>
-
-  <div class="modal-overlay sheet-overlay" id="owner-sheet">
-    <div class="modal-box sheet">
-      <div class="sheet-handle"></div>
-      <div class="modal-header">
-        <h3>Your Contract</h3>
-        <button class="modal-close" onclick="closeOwnerSheet()" aria-label="Close">&times;</button>
-      </div>
-      <div class="sheet-list" id="owner-sheet-list"></div>
-    </div>
   </div>
 
   <div class="table-container" id="results">
@@ -1351,6 +1189,8 @@ body {
   <script src="data/availability_data.js"></script>
   <script src="data/resort_experience.js"></script>
   <script src="data/resort_images.js"></script>
+  <script src="data/resort_shorthand.js"></script>
+  <script src="dvc-pickers.js"></script>
   <script>
 // ---- State ----
 RESORTS.sort((a, b) => a.name.localeCompare(b.name));
@@ -1368,42 +1208,6 @@ function resortDotColor(resortId) {
   return RESORT_DOT_COLORS[resortAccentHash(resortId) % RESORT_DOT_COLORS.length];
 }
 
-// Second color of each RESORT_DOT_COLORS pairing, used only by the Owner
-// Contract Picker's wallet-mini-cards below (resortAccentGradient()) --
-// same palette/hash app.js's RESORT_ACCENT_GRADIENTS uses for index.html's
-// own Booking As sheet, so a given resort's card reads the same color in
-// both places instead of two independently-hashed palettes drifting apart.
-const RESORT_ACCENT_GRADIENT_PAIRS = ["#1a237e", "#0d3b26", "#082a63", "#4a0e20", "#5c3612", "#1c262b"];
-function hexToRgba(hex, alpha) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
-}
-// Tinted-gradient-over-photo blend, falling back to the flat two-tone
-// gradient for a resort with no art yet (data/resort_images.js) -- same
-// blend app.js's own resortAccentGradient() uses.
-function resortAccentGradient(resortId) {
-  const idx = resortAccentHash(resortId) % RESORT_DOT_COLORS.length;
-  const a = RESORT_DOT_COLORS[idx], b = RESORT_ACCENT_GRADIENT_PAIRS[idx];
-  const image = typeof getResortImage === "function" ? getResortImage(resortId) : null;
-  if (image) return `linear-gradient(135deg, ${hexToRgba(a, 0.82)}, ${hexToRgba(b, 0.82)}), url('${image}')`;
-  return `linear-gradient(135deg, ${a}, ${b})`;
-}
-
-// Same translucent lavender wash (--color-primary-tint-bg at 82%) app.js
-// uses for its own Booking As trigger button.
-function resortArtWashCSS(imagePath) {
-  return `linear-gradient(rgba(236, 225, 247, 0.82), rgba(236, 225, 247, 0.82)), url('${imagePath}')`;
-}
-function applyResortArtBackground(el, imagePath) {
-  if (!el) return;
-  if (imagePath) {
-    el.style.backgroundImage = resortArtWashCSS(imagePath);
-    el.classList.add("has-art");
-  } else {
-    el.style.backgroundImage = "";
-    el.classList.remove("has-art");
-  }
-}
 
 const state = {
   checkIn: null,
@@ -1411,15 +1215,10 @@ const state = {
   category: "studio",
   wdwOnly: false,
   rentalRate: window.DVCPointValue.RENTAL_DEFAULT,
-  // Fallback hypothetical resort -- only used to compute Owner Cost when
-  // the signed-in user has no active contracts (or isn't signed in) and
-  // there's nothing real to draw dues from yet. See populateOwnerSelector().
+  // Whose annual dues per point price Owner Cost. Defaults to the owner's
+  // first active contract's resort once contracts load (until they pick
+  // one themselves); Saratoga Springs for everyone else.
   ownerResortId: "saratogaSprings",
-  // Selected contract id, when the user HAS active contracts -- the real
-  // fix for the actual pain point this control used to have: a returning
-  // owner shouldn't have to re-pick their own home resort from a 17-resort
-  // alphabetical list every visit just to see their real dues.
-  ownerContractId: null,
   customCashRates: {}, // key: "resortId_roomId", value: total cash price
   sortBy: "points", // key into activeSortColumns() -- financial or experience columns, per `view`
   sortDir: "asc", // "asc" | "desc" — toggles when clicking the already-active column
@@ -1463,9 +1262,8 @@ function formatStayRange(startIso, endIso) {
 }
 const resultsContainer = document.getElementById("results");
 const wdwOnlyToggle = document.getElementById("wdw-only-toggle");
-const ownerResortSelect = document.getElementById("owner-resort");
+const ownerDuesTrigger = document.getElementById("owner-dues-trigger");
 const initCustomSelect = window.DVCUI.initCustomSelect;
-const ownerDuesLabel = document.getElementById("owner-dues-label");
 
 // ---- Sorting ----
 // Each sortable column: how to read its value off a row, and which direction
@@ -1666,15 +1464,23 @@ function rowPassesVibeFilters(row) {
   return true;
 }
 
-function buildVibeFilterPillsHTML() {
-  const chip = (key, emoji, label) =>
-    `<button type="button" class="vibe-filter-chip${state.vibeFilters[key] ? " active" : ""}" data-filter="${key}">${emoji} ${label}</button>`;
+// What each pill keeps, in plain words -- shown under the pills for every
+// active one, with how many resorts are left.
+const VIBE_FILTERS = [
+  { key: "zeroBus", emoji: "\u{1F686}", label: "No bus needed", keeps: "resorts where you can walk, or take the Skyliner, monorail or a boat, instead of a bus" },
+  { key: "topPool", emoji: "\u{1F3CA}", label: "Top pools", keeps: "resorts with a themed or signature pool, not just a standard one" },
+  { key: "highDining", emoji: "\u{1F355}", label: "Lots of dining", keeps: "resorts with many restaurants on site or a short walk away" },
+];
+function buildVibeFilterPillsHTML(shown, total) {
+  const active = VIBE_FILTERS.filter(v => state.vibeFilters[v.key]);
+  const hint = active.length
+    ? `<strong>${shown} of ${total} rooms</strong> match. Showing only ${active.map(v => v.keeps).join("; and ")}.`
+    : "Filters narrow the list: tap one to keep only resorts that fit it.";
   return `
     <div class="vibe-filter-pills">
-      ${chip("zeroBus", "\u{1F686}", "Zero-Bus Required")}
-      ${chip("topPool", "\u{1F3CA}", "Top-Tier Pools")}
-      ${chip("highDining", "\u{1F355}", "Foodie / High Dining")}
+      ${VIBE_FILTERS.map(v => `<button type="button" class="vibe-filter-chip${state.vibeFilters[v.key] ? " active" : ""}" data-filter="${v.key}" aria-pressed="${!!state.vibeFilters[v.key]}">${v.emoji} ${v.label}</button>`).join("")}
     </div>
+    <p class="vibe-filter-hint" role="status">${hint}</p>
   `;
 }
 
@@ -2019,167 +1825,52 @@ function analyzeBookingWindow(resortId, roomTypeId, stayDates) {
   };
 }
 
-// ---- Populate Owner Selector (contract-aware) ----
-// When the signed-in user has active contracts, this is "which of YOUR
-// contracts" (contractSelect-style options, same label format index.html's
-// own Booking As picker uses) -- not a resort picker at all, since a
-// returning owner already has a real answer to "what are my dues" and
-// shouldn't have to fake it by re-selecting their own home resort out of
-// an alphabetical list of all 17. Falls back to the original hypothetical
-// "if I owned at X" resort picker only when there's no contract to draw
-// from (signed out, or no active contracts) -- still useful there for a
-// prospective buyer comparing resorts before owning anything.
-function populateOwnerSelector() {
-  const labelEl = document.getElementById("owner-selector-label");
-  const dropdownWrap = document.getElementById("owner-resort-select-wrap");
-  const pickerTrigger = document.getElementById("owner-picker-trigger");
-  ownerResortSelect.innerHTML = "";
-
-  if (userContracts.length > 0) {
-    if (labelEl) labelEl.textContent = "Your contract:";
-    if (!userContracts.some(c => c.id === state.ownerContractId)) {
-      state.ownerContractId = userContracts[0].id;
-    }
-    for (const c of userContracts) {
-      const opt = document.createElement("option");
-      opt.value = c.id;
-      opt.textContent = `${c.nickname || resortNameForId(c.home_resort_id)} (${c.use_year} UY, ${c.points_per_year.toLocaleString()} pts)`;
-      ownerResortSelect.appendChild(opt);
-    }
-    ownerResortSelect.value = state.ownerContractId;
-    // Swap to the wallet-mini-card picker (matches index.html's Booking As
-    // picker) -- the plain resort dropdown stays hidden but populated, so
-    // switching back to it (e.g. signing out) needs no rebuild of its own.
-    if (dropdownWrap) dropdownWrap.style.display = "none";
-    if (pickerTrigger) pickerTrigger.style.display = "flex";
-    syncOwnerPickerTrigger();
-  } else {
-    if (labelEl) labelEl.textContent = "Home resort:";
-    const seen = new Set();
-    const unique = [];
-    for (const r of RESORTS) {
-      if (!seen.has(r.id)) { seen.add(r.id); unique.push(r); }
-    }
-    unique.sort((a, b) => a.name.localeCompare(b.name));
-    for (const r of unique) {
-      const opt = document.createElement("option");
-      opt.value = r.id;
-      opt.textContent = r.name;
-      ownerResortSelect.appendChild(opt);
-    }
-    ownerResortSelect.value = state.ownerResortId;
-    if (dropdownWrap) dropdownWrap.style.display = "";
-    if (pickerTrigger) pickerTrigger.style.display = "none";
-  }
-
-  // Repopulate the styled trigger/dropdown from the now-rebuilt <select>
-  // rather than re-running initCustomSelect() on it -- this is a persistent
-  // node (not rebuilt via innerHTML each render), and initCustomSelect()
-  // isn't idempotent: calling it twice on the same element would attach a
-  // second set of click listeners. Guarded since the very first call (init,
-  // before initCustomSelect() has run yet) has no _customSelectRender yet.
-  if (ownerResortSelect._customSelectRender) ownerResortSelect._customSelectRender();
-  updateDuesLabel();
-}
-
-// ---- Owner Contract Picker sheet (wallet-mini-cards) ----
-// Same visual language and interaction pattern as index.html's own Booking
-// As sheet (app.js's renderBookingAsSheetList()/pickContract()) -- the
-// underlying <select id="owner-resort"> stays the real source of truth
-// either way (see populateOwnerSelector()), this just drives it from a
-// nicer picker instead of a native dropdown once there are real contracts
-// to show as cards.
-function syncOwnerPickerTrigger() {
-  const trigger = document.getElementById("owner-picker-trigger");
-  const label = document.getElementById("owner-picker-trigger-label");
-  if (!trigger || !label) return;
-  const contract = userContracts.find(c => c.id === state.ownerContractId);
-  // The UY pill is a SIBLING of the label span, not nested inside it -- see
-  // app.js's own syncBookingAsPickerTrigger() for why: .picker-trigger-value
-  // truncates with an ellipsis once the name outgrows the trigger, and a
-  // nested pill would be the first thing that ellipsis ate.
-  let pill = trigger.querySelector(".booking-as-trigger-pill");
-  if (contract) {
-    const name = contract.nickname || resortNameForId(contract.home_resort_id);
-    label.textContent = name;
-    if (!pill) {
-      pill = document.createElement("span");
-      pill.className = "booking-as-trigger-pill";
-      label.insertAdjacentElement("afterend", pill);
-    }
-    pill.textContent = `${contract.use_year} UY`;
-    applyResortArtBackground(trigger, typeof getResortImage === "function" ? getResortImage(contract.home_resort_id) : null);
-  } else {
-    label.textContent = "Select a contract";
-    if (pill) pill.remove();
-    applyResortArtBackground(trigger, null);
-  }
-}
-
-// This page doesn't load dvc-ledger.js (no per-contract-year ledger rows
-// fetched here), so unlike index.html's own wallet-mini-cards there's no
-// real "available points" number to show -- rather than fabricate one,
-// every card shows the same honest "?" / UNCONFIRMED state index.html
-// itself falls back to for a contract with no recorded ledger row yet.
-function renderOwnerSheetList() {
-  const listEl = document.getElementById("owner-sheet-list");
-  if (!listEl) return;
-  listEl.innerHTML = userContracts.map(c => {
-    const name = c.nickname || resortNameForId(c.home_resort_id);
-    return `
-      <button type="button" class="wallet-mini-btn" onclick="pickOwnerContract('${c.id}')">
-        <div class="wallet-mini-card${c.id === state.ownerContractId ? " selected" : ""}" style="background:${resortAccentGradient(c.home_resort_id)};">
-          <div class="wallet-mini-top">
-            <div class="wallet-mini-name">${name}</div>
-            <div style="text-align:right;">
-              <div class="wallet-mini-points-num">?</div>
-              <div class="wallet-mini-points-label">UNCONFIRMED</div>
-            </div>
-          </div>
-          <div class="wallet-mini-bottom">
-            <span class="wallet-mini-pill">${c.use_year} UY</span>
-            <span class="wallet-mini-pill">${c.points_per_year.toLocaleString()}/yr</span>
-          </div>
-        </div>
-      </button>
-    `;
-  }).join("");
-}
-
-function pickOwnerContract(id) {
-  ownerResortSelect.value = id;
-  ownerResortSelect.dispatchEvent(new Event("change", { bubbles: true }));
-  closeOwnerSheet();
-}
-
-function openOwnerSheet() {
-  renderOwnerSheetList();
-  document.getElementById("owner-sheet").classList.add("open");
-}
-
-function closeOwnerSheet() {
-  document.getElementById("owner-sheet").classList.remove("open");
-}
-
-// Resolves the actual dues-per-point Owner Cost should use: the selected
-// contract's real home resort when one exists, else the hypothetical
-// fallback resort. Single source of truth so the label and the actual
-// per-row Owner Cost calc (below) can never read two different values.
+// ---- Dues rate (Owner Cost) ----
+// The owner's resorts (every active contract's home resort) list first;
+// the rest are greyed but still pickable. ownerResortPicked stops a later
+// contract load from overriding a resort the visitor chose themselves.
+let ownerResortPicked = false;
+const ownedResortIds = () => new Set(userContracts.map(c => c.home_resort_id));
 function getOwnerDuesPerPoint() {
-  if (userContracts.length > 0) {
-    const contract = userContracts.find(c => c.id === state.ownerContractId);
-    if (contract) return DUES_PER_POINT[contract.home_resort_id] || 0;
-  }
   return DUES_PER_POINT[state.ownerResortId] || 0;
 }
-
-function updateDuesLabel() {
-  const dues = getOwnerDuesPerPoint();
-  ownerDuesLabel.textContent = dues ? `($${dues.toFixed(2)}/pt)` : "";
+function duesText(id) {
+  const dues = DUES_PER_POINT[id];
+  return dues ? `$${dues.toFixed(2)}/pt` : "";
 }
+function populateOwnerSelector() {
+  const owned = ownedResortIds();
+  if (!ownerResortPicked && owned.size && !owned.has(state.ownerResortId)) {
+    state.ownerResortId = userContracts[0].home_resort_id;
+  }
+  const name = resortNameForId(state.ownerResortId);
+  const short = typeof shorthandResortName === "function" ? shorthandResortName(state.ownerResortId, name) : name;
+  document.getElementById("owner-dues-value").textContent = `${short} · ${duesText(state.ownerResortId)}`;
+  ownerDuesTrigger.setAttribute("aria-label", `Dues rate: ${name}, ${duesText(state.ownerResortId)}`);
+  window.DVCPickers.applyArt(ownerDuesTrigger, state.ownerResortId);
+}
+ownerDuesTrigger.addEventListener("click", () => {
+  const owned = ownedResortIds();
+  const all = window.DVCPickers.allResorts();
+  window.DVCPickers.open({
+    title: "Price Owner Cost at",
+    resorts: [...all.filter(r => owned.has(r.id)), ...all.filter(r => !owned.has(r.id))],
+    selected: state.ownerResortId,
+    muted: owned.size ? id => !owned.has(id) : null,
+    meta: id => (owned.has(id) ? "Yours · " : "") + duesText(id),
+    returnFocus: ownerDuesTrigger,
+    onPick: id => {
+      state.ownerResortId = id;
+      ownerResortPicked = true;
+      populateOwnerSelector();
+      render();
+    },
+  });
+});
 
 // ---- Render ----
 function render() {
+  document.querySelector(".settings-bar").classList.toggle("experience-view", state.view === "experience");
   const stayDates = getStayDates(state.checkIn, state.checkOut);
 
   if (stayDates.length === 0) {
@@ -2345,7 +2036,7 @@ function render() {
       ${rentalCol ? `<td class="num"><span class="savings-value">$${Math.round(row.rentalSavings).toLocaleString()}<span class="savings-badge">${row.rentalSavingsPct}%</span></span></td>` : ""}
       ${ownerCol ? `<td class="num col-secondary owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
       ${ownerCol ? `<td class="num"><span class="savings-value">$${Math.round(row.ownerSavings).toLocaleString()}<span class="savings-badge">${row.ownerSavingsPct}%</span></span></td>` : ""}
-      <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
+      <td><button type="button" class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</button></td>
     </tr>`;
     });
 
@@ -2366,7 +2057,7 @@ function render() {
         ${rentalCol ? `<td class="num"><span class="na">—</span></td>` : ""}
         ${ownerCol ? `<td class="num col-secondary owner-cost">$${Math.round(row.ownerCost).toLocaleString()}</td>` : ""}
         ${ownerCol ? `<td class="num"><span class="na">—</span></td>` : ""}
-        <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
+        <td><button type="button" class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</button></td>
       </tr>`;
       });
     }
@@ -2450,14 +2141,13 @@ function render() {
     // value to sort by; a cash-dependent sort just won't mean much here
     // visually since that column isn't shown, which is a minor cosmetic
     // quirk, not a broken feature.
+    const experienceRows = rows.filter(rowPassesVibeFilters).sort((a, b) => (accessor(a) - accessor(b)) * dirMul);
     const vibeFilterRow = document.getElementById("vibe-filter-row");
     vibeFilterRow.style.display = "";
-    vibeFilterRow.innerHTML = buildVibeFilterPillsHTML();
-
-    const experienceRows = rows.filter(rowPassesVibeFilters).sort((a, b) => (accessor(a) - accessor(b)) * dirMul);
+    vibeFilterRow.innerHTML = `<p class="wip-note"><strong>Work in progress.</strong> These resort details are rough guides we're still checking and adding to.</p>` + buildVibeFilterPillsHTML(experienceRows.length, rows.length);
 
     if (experienceRows.length === 0) {
-      resultsContainer.innerHTML = `<div class="empty-state">No resorts match these filters -- try clearing one of the pills above</div>`;
+      resultsContainer.innerHTML = `<div class="empty-state">No resorts match all of these filters. Turn one off to see more.</div>`;
       document.getElementById("mobile-sort-slot").innerHTML = "";
       return;
     }
@@ -2494,14 +2184,17 @@ function render() {
       <td class="num pts-value">${row.totalPoints.toLocaleString()}</td>
       <td class="num">${row.sqft != null ? row.sqft.toLocaleString() + " sqft" : "&mdash;"}</td>
       <td class="num sqft-per-point">${row.sqftPerPoint != null ? row.sqftPerPoint.toFixed(1) : "&mdash;"}</td>
-      <td><span class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</span></td>
+      <td><button type="button" class="select-resort" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select</button></td>
     </tr>`;
     });
 
     html += `</tbody></table></div>`;
 
-    const cardHTML = (row, rank) => `
-      <div class="compare-card">
+    const cardHTML = (row, rank) => {
+      const art = typeof getResortImage === "function" ? getResortImage(row.resort.id) : null;
+      const artStyle = art ? ` style="background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), url('${art}')"` : "";
+      return `
+      <div class="compare-card"${artStyle}>
         <div class="compare-card-header">
           <span class="compare-card-rank">#${rank}</span>
         </div>
@@ -2539,6 +2232,7 @@ function render() {
         <button type="button" class="select-resort compare-card-select" data-resort-id="${row.resort.id}" data-room-id="${row.room.id}">Select This Resort</button>
       </div>
     `;
+    };
 
     html = html + `
     <div class="compare-cards">
@@ -2579,8 +2273,7 @@ function render() {
   if (mobileSortSelect) {
     mobileSortSelect.addEventListener("change", () => setSortBy(mobileSortSelect.value));
     // Rebuilt fresh every render (it's part of `html` above), so this needs
-    // a fresh init each time too -- unlike ownerResortSelect, which is only
-    // ever populated once at page load.
+    // a fresh init each time too.
     initCustomSelect(mobileSortSelect);
   }
 
@@ -2733,16 +2426,6 @@ wdwOnlyToggle.addEventListener("change", (e) => {
   render();
 });
 
-ownerResortSelect.addEventListener("change", (e) => {
-  if (userContracts.length > 0) {
-    state.ownerContractId = e.target.value;
-    syncOwnerPickerTrigger();
-  } else {
-    state.ownerResortId = e.target.value;
-  }
-  updateDuesLabel();
-  render();
-});
 
 // ---- Init ----
 // Read dates from URL params if provided, then try sessionStorage, otherwise use defaults
@@ -2781,13 +2464,17 @@ if (!paramCheckIn || !paramCheckOut || !paramCategory) {
 // With no dates handed in, start on an upcoming stay (5 nights, 30 days
 // out) rather than fixed dates that go stale -- this used to open on
 // March 2026 long after it had passed (UX2-08).
-function localDateOffset(days) {
+// With no dates handed in, start at 7 months out -- when every resort's
+// booking window opens, so the whole comparison is actually bookable.
+// Same month math (Date.setMonth) as the calendar's window dates.
+function localDateMonthsOut(months, plusDays = 0) {
   const d = new Date();
-  d.setDate(d.getDate() + days);
+  d.setMonth(d.getMonth() + months);
+  d.setDate(d.getDate() + plusDays);
   return d.toLocaleDateString("en-CA");
 }
-const defaultCheckIn = paramCheckIn || localDateOffset(30);
-const defaultCheckOut = paramCheckOut || localDateOffset(35);
+const defaultCheckIn = paramCheckIn || localDateMonthsOut(7);
+const defaultCheckOut = paramCheckOut || localDateMonthsOut(7, 5);
 
 checkInInput.value = defaultCheckIn;
 checkOutInput.value = defaultCheckOut;
@@ -2803,7 +2490,6 @@ if (paramCategory && ["studio", "one", "two", "three"].includes(paramCategory)) 
 }
 
 populateOwnerSelector();
-initCustomSelect(ownerResortSelect);
 render();
 
 // Mobile tap-to-toggle for every .tooltip-anchor on this page (column
@@ -2847,19 +2533,15 @@ document.addEventListener("keydown", (e) => {
 function waitForAuthPersonalization(attempts) {
   if (window.DVCAuth) {
     window.DVCAuth.onAuthChange(async (session) => {
-      if (!session) { userResortAccess = null; userContracts = []; state.ownerContractId = null; populateOwnerSelector(); render(); return; }
+      if (!session) { userResortAccess = null; userContracts = []; populateOwnerSelector(); render(); return; }
       const contracts = await window.DVCAuth.getContracts();
       const activeContracts = contracts.filter(c => c.is_active);
-      if (activeContracts.length === 0) { userResortAccess = null; userContracts = []; state.ownerContractId = null; populateOwnerSelector(); render(); return; }
+      if (activeContracts.length === 0) { userResortAccess = null; userContracts = []; populateOwnerSelector(); render(); return; }
       const allResortIds = [...new Set(RESORTS.map(r => r.id))];
       userContracts = activeContracts;
       userResortAccess = window.DVCAuth.getUserResortAccess(activeContracts, allResortIds);
-      // Signing in (or contracts resolving) mid-visit swaps the selector
-      // from the hypothetical resort list over to the user's real
-      // contracts -- populateOwnerSelector() picks state.ownerContractId
-      // (defaulting to the first contract) the same way it does on initial
-      // load, so a returning owner sees their own dues without touching
-      // the control at all.
+      // Contracts resolving (on load or a mid-visit sign-in) moves Dues
+      // rate to the owner's own resort unless they already picked one.
       populateOwnerSelector();
       render();
     });

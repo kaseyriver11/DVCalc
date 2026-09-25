@@ -221,7 +221,7 @@ body {
    absolutely-positioned descendant sitting right at the card's bottom
    edge; clipping the whole card would clip the tooltip too (it did,
    before this was split out -- the tooltip fired but rendered invisible,
-   cropped away). This inner layer clips only the sheen/watermark below,
+   cropped away). This inner layer clips only the sheen below,
    while real content (z-index:1 on .wallet-card-top/-points/-bottom) and
    its tooltip stay free to overflow past the card's own box. */
 .wallet-card-decor {
@@ -240,23 +240,6 @@ body {
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 55%);
-}
-
-/* An engraved sunburst/compass-rose watermark, tucked in a back corner --
-   decorative only, low-opacity enough to read as a pressed motif rather
-   than compete with the real content sitting above it (z-index below). */
-.wallet-card-decor::after {
-  content: "";
-  position: absolute;
-  right: -20px;
-  bottom: -20px;
-  width: 130px;
-  height: 130px;
-  background-image: url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Cg stroke=%27white%27 stroke-width=%271%27%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2750%27 y2=%275%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2773%27 y2=%2712%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2790%27 y2=%2730%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2795%27 y2=%2750%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2790%27 y2=%2770%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2773%27 y2=%2788%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2750%27 y2=%2795%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2727%27 y2=%2788%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2710%27 y2=%2770%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%275%27 y2=%2750%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2710%27 y2=%2730%27/%3E%3Cline x1=%2750%27 y1=%2750%27 x2=%2727%27 y2=%2712%27/%3E%3C/g%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%273%27 fill=%27white%27/%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27none%27 stroke=%27white%27 stroke-width=%270.5%27/%3E%3C/svg%3E');
-  background-size: contain;
-  background-repeat: no-repeat;
-  opacity: 0.12;
-  pointer-events: none;
 }
 
 /* filter, not opacity -- opacity makes the card semi-transparent, which
@@ -406,13 +389,9 @@ body {
    Standalone panel below the deck -- same white-card treatment as the
    calendar's summary-side cards, since this now carries all the ledger
    controls the card face used to (see renderActiveContractDetails()). */
-/* border-top color is set inline per render (walletCardPrimaryColor()), so
-   the panel reads as a continuation of whichever card is active rather
-   than a generic detached box. */
 #active-contract-details {
   background: white;
   border-radius: var(--radius-md);
-  border-top: 4px solid var(--color-primary);
   padding: 20px;
   box-shadow: var(--shadow-card);
   margin-top: 20px;
@@ -453,21 +432,22 @@ body {
 .perk-badge-warning { color: #a3401f; background: #f6e5db; }
 
 .wallet-details-actions { display: flex; gap: 8px; }
-/* Ghost buttons -- no border/background of their own -- so Edit/
-   Deactivate/Delete read as quiet secondary actions instead of a toolbar
-   competing with the tabs and balance fields for attention. */
+/* Small Secondary buttons (Delete in Danger red) -- clickable styles. */
 .wallet-details-actions button {
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border: none;
-  background: none;
-  color: #999;
+  min-height: 36px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0 12px;
+  border: 1.5px solid var(--color-primary);
+  background: var(--color-bg-card);
+  color: var(--color-primary);
   cursor: pointer;
 }
-.wallet-details-actions button:hover { background: #f0f0f0; color: var(--color-primary); }
-.wallet-details-actions button.danger:hover { background: var(--color-danger-bg); color: var(--color-danger); }
+.wallet-details-actions button:hover { background: var(--color-primary-tint-bg); }
+.wallet-details-actions button.danger { border-color: var(--color-danger); color: var(--color-danger); }
+.wallet-details-actions button.danger:hover { background: var(--color-danger-bg); }
 
 /* ---- Wallet deck (2+ contracts) ----
    Cards overlap via negative top margin so only the top ~70px (name,
@@ -544,8 +524,8 @@ body {
 .ledger-row [data-setup-balance] { margin-top: 10px; }
 .ledger-year-range { display: block; font-size: 0.66rem; font-weight: 500; opacity: 0.8; }
 .ledger-year-tab.selected { background: var(--color-primary); border-color: var(--color-primary); color: white; }
-.ledger-year-tab.add-year { border-style: dashed; color: #999; }
-.ledger-year-tab.add-year:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.ledger-year-tab.add-year { border-color: var(--color-primary); color: var(--color-primary); font-weight: 700; }
+.ledger-year-tab.add-year:hover { background: var(--color-primary-tint-bg); }
 
 .ledger-row {
   background: #fafafa;
@@ -673,9 +653,10 @@ body {
   color: white;
   border: none;
   border-radius: 8px;
-  padding: 9px 18px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
 }
 .add-btn:hover { background: var(--color-primary-active); }
@@ -767,15 +748,16 @@ body {
 }
 .studio-nav-right { display: flex; gap: 10px; }
 .ghost-btn {
-  background: none;
-  border: none;
-  color: #666;
+  background: var(--color-bg-card);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
+  color: var(--color-primary);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  padding: 9px 12px;
+  padding: 9px 16px;
 }
-.ghost-btn:hover { color: var(--color-primary); }
+.ghost-btn:hover { background: var(--color-primary-tint-bg); }
 
 /* Quick-preset point chips: same pill language as .use-year-chip, just a
    shortcut into the (still fully editable) Points per Year input below. */
@@ -812,7 +794,7 @@ body {
 .loan-estimate { margin-top: 6px; }
 .loan-estimate > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--color-primary); }
 .loan-estimate-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.loan-estimate-btn { margin-top: 10px; min-height: 44px; padding: 0 14px; border: 1px solid var(--color-primary); border-radius: 10px; background: #fff; color: var(--color-primary); font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.loan-estimate-btn { margin-top: 10px; min-height: 44px; padding: 0 14px; border: 1.5px solid var(--color-primary); border-radius: 8px; background: #fff; color: var(--color-primary); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
 @media (max-width: 700px) { .loan-estimate-grid { grid-template-columns: 1fr; } }
 
 /* Field labels are sentence case; uppercase is reserved for section headings. */
@@ -878,24 +860,26 @@ body {
 .save-btn {
   background: var(--color-primary);
   color: white;
-  border: none;
-  border-radius: 6px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
   padding: 9px 20px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .save-btn:hover { background: var(--color-primary-active); }
 
 .cancel-btn {
   background: white;
-  color: #666;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
   padding: 9px 20px;
   font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
 }
+.cancel-btn:hover { background: var(--color-primary-tint-bg); }
 
 .form-error {
   color: var(--color-danger);
@@ -953,16 +937,17 @@ body {
   background: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 20px;
-  padding: 9px 18px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
 .membership-card-btn:hover { background: var(--color-primary-active); }
 .membership-card-btn:disabled { opacity: 0.6; cursor: default; }
-.membership-card-btn.secondary { background: #f7f5fa; color: var(--color-primary); border: 1px solid #ddd; }
+.membership-card-btn.secondary { background: var(--color-bg-card); color: var(--color-primary); border: 1.5px solid var(--color-primary); }
 .membership-card-btn.secondary:hover { background: var(--color-primary-tint-bg); }
 .membership-card-msg { flex-basis: 100%; font-size: 0.78rem; color: var(--color-danger); }
 .membership-checkout-banner {
@@ -992,15 +977,17 @@ body {
 .ledger-secondary-btn.reconcile-callout { box-shadow: 0 0 0 3px var(--color-warning); }
 .reconcile-callout-note { font-size: .8rem; color: var(--color-text); background: var(--color-warning-bg); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
 /* Your data: "Download my data". */
-.export-btn { min-height: 44px; padding: 0 18px; border: 1px solid var(--color-primary); border-radius: 10px; background: var(--color-bg-card); color: var(--color-primary); font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; }
+.export-btn { min-height: 44px; padding: 0 18px; border: 1.5px solid var(--color-primary); border-radius: 8px; background: var(--color-bg-card); color: var(--color-primary); font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; }
 .export-btn:disabled { opacity: .7; cursor: default; }
 .export-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.export-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; max-width: 520px; }
 .export-status { font-size: .8rem; color: var(--color-text-muted); margin-top: 8px; }
 .export-status:empty { display: none; }
 .export-status.error { color: var(--color-danger); }
 .reminder-offer-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .reminder-offer-actions .save-btn { width: auto; margin: 0; padding: 8px 16px; }
-.reminder-offer-dismiss { border: 0; background: none; color: var(--color-text-muted); font: inherit; font-size: 0.8rem; cursor: pointer; }
+.reminder-offer-dismiss { border: 1.5px solid var(--color-primary); border-radius: 8px; background: var(--color-bg-card); color: var(--color-primary); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.reminder-offer-dismiss:hover { background: var(--color-primary-tint-bg); }
 /* ---- Point actions (Prompt 3): every active contract's current-cycle
    actions, grouped by contract, most urgent first. Tone follows
    dvc-dates.js's urgency scale (calm/warning/danger). ---- */
@@ -1015,7 +1002,7 @@ body {
 .point-action-contract { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-bottom: 8px; font-size: .9rem; min-width: 0; }
 .point-action-contract strong { overflow-wrap: anywhere; }
 .point-action-contract span { font-size: .76rem; color: var(--color-text-muted); }
-.point-action { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; border-left: 4px solid var(--pa-accent); background: var(--pa-bg); }
+.point-action { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: var(--pa-bg); }
 .point-action.calm { --pa-accent: var(--color-primary); --pa-bg: var(--color-primary-tint-bg); }
 .point-action.warning { --pa-accent: #e65100; --pa-bg: #fff3e0; }
 .point-action.danger { --pa-accent: var(--color-danger); --pa-bg: var(--color-danger-bg); }
@@ -1024,13 +1011,13 @@ body {
 .point-action-why { margin: 6px 0 0; font-size: .82rem; color: var(--color-text); }
 .point-action-fresh { margin-top: 4px; font-size: .74rem; color: var(--color-text-muted); }
 .point-action-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; }
-.point-action-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .84rem; font-weight: 600; color: var(--color-primary); }
-.point-action-link.primary { font-weight: 700; }
+.point-action-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; font-weight: 700; color: var(--color-primary); text-decoration: none; }
+.point-action-link:hover { text-decoration: underline; }
 .use-points-btn { display: flex; align-items: center; justify-content: center; min-height: 48px; margin: 8px 0 4px; border-radius: 12px; background: var(--color-primary); color: #fff; font-weight: 700; font-size: .92rem; text-decoration: none; }
 .use-points-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-link:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .point-action-clear { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; background: var(--color-good-bg); color: var(--color-good); font-size: .84rem; font-weight: 700; }
-.point-action-clear::before { content: "¹3"; }
+.point-action-clear::before { content: "\2713"; }
 
 /* ---- Notification Settings modal ---- */
 .notif-settings-row {
@@ -1113,11 +1100,11 @@ body {
 .delete-account-btn {
   background: white;
   color: var(--color-danger);
-  border: 1px solid var(--color-danger);
-  border-radius: 6px;
+  border: 1.5px solid var(--color-danger);
+  border-radius: 8px;
   padding: 9px 20px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   margin-top: 10px;
 }
@@ -1287,13 +1274,16 @@ body {
 .ledger-activity-source.owner { color: var(--color-primary); }
 .ledger-activity-note { font-size: .76rem; color: var(--color-text-muted); margin: 6px 0 0; }
 .ledger-activity-note.warn { color: #8a6d00; }
-.point-ledger-actions button {text-align:left;padding:14px 16px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);color:var(--color-text);font:inherit;font-weight:600;}
+/* Tappable rows (clickable styles): each opens its sheet, with a chevron. */
+.point-ledger-actions button {position:relative;text-align:left;padding:14px 40px 14px 16px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);color:var(--color-text);font:inherit;font-weight:700;}
+.point-ledger-actions button::after {content:"\203A";position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:1.5rem;line-height:1;color:var(--color-primary);}
+.point-ledger-actions button:hover {border-color:var(--color-primary);}
 .point-ledger-actions span {display:block;font-size:.76rem;font-weight:400;margin-top:4px;color:var(--color-text-muted);}
 .point-ledger-actions button {width:100%;cursor:pointer;}
 /* Two equal secondary actions under "Use these points"; Adjust balance
    opens the three balance changes as a compact list below them. */
 .ledger-secondary {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;}
-.ledger-secondary-btn {min-height:44px;padding:0 10px;border:1px solid var(--color-primary);border-radius:12px;background:var(--color-bg-card);color:var(--color-primary);font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;}
+.ledger-secondary-btn {min-height:44px;padding:0 10px;border:1.5px solid var(--color-primary);border-radius:8px;background:var(--color-bg-card);color:var(--color-primary);font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;}
 .ledger-secondary-btn[aria-expanded="true"] {background:var(--color-primary-tint-bg);}
 .ledger-secondary-btn:focus-visible {outline:3px solid var(--color-primary);outline-offset:2px;}
 .adjust-options {margin:8px 0 0;gap:6px;}
@@ -1305,7 +1295,7 @@ body {
 /* The one primary action in a ledger row: Add points left (no balance)
    or Use these points (a recorded balance). Everything else is a
    .point-ledger-actions card, so buttons don't come in four sizes. */
-.ledger-primary-btn {display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin:14px 0 0;padding:0 16px;border:0;border-radius:12px;background:var(--color-primary);color:#fff;font:inherit;font-size:.95rem;font-weight:700;text-decoration:none;cursor:pointer;box-sizing:border-box;}
+.ledger-primary-btn {display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin:14px 0 0;padding:0 16px;border:0;border-radius:8px;background:var(--color-primary);color:#fff;font:inherit;font-size:.95rem;font-weight:700;text-decoration:none;cursor:pointer;box-sizing:border-box;}
 .ledger-primary-btn:hover {background:var(--color-primary-active);}
 .ledger-primary-btn:focus-visible {outline:3px solid var(--color-primary);outline-offset:2px;}
 .ledger-primary-num.empty {font-size:1.25rem;}
@@ -1377,7 +1367,6 @@ body {
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -1390,6 +1379,7 @@ body {
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1470,14 +1460,6 @@ function walletCardGradient(resortId) {
   return `linear-gradient(135deg, ${a}, ${b})`;
 }
 
-// Same hash as walletCardGradient(), just the first stop -- used for
-// #active-contract-details' accent top border so it visually reads as a
-// continuation of whichever card is active.
-function walletCardPrimaryColor(resortId) {
-  let hash = 0;
-  for (let i = 0; i < resortId.length; i++) hash = (hash * 31 + resortId.charCodeAt(i)) >>> 0;
-  return WALLET_CARD_GRADIENTS[hash % WALLET_CARD_GRADIENTS.length][0];
-}
 const pageContent = document.getElementById("page-content");
 
 // Unique resorts (data.js has one entry per resort per year -- dedupe by id).
@@ -1836,14 +1818,14 @@ function pointActionFreshness(event) {
 function pointActionLinks(event) {
   const c = event.contract;
   const ledger = `account.html?contract=${encodeURIComponent(c.id)}&year=${event.year}`;
-  const open = (label, primary) => `<a class="point-action-link${primary ? " primary" : ""}" href="${ledger}" data-open-ledger="${c.id}" data-open-year="${event.year}">${label}</a>`;
-  if (event.kind === "unconfirmed") return open("Add or check balance", true);
+  const open = label => `<a class="point-action-link" href="${ledger}" data-open-ledger="${c.id}" data-open-year="${event.year}">${label} &rarr;</a>`;
+  if (event.kind === "unconfirmed") return open("Add or check balance");
   const dateMs = event.kind === "bankable" ? event.deadline.ms : event.expiresMs;
   // Points that can only be used now go straight to "Use these points"
   // (use-points.html, Prompt 4); banking is a Disney step, so its item opens
   // the balance.
-  const links = event.kind === "bankable" ? [open("View balance", true)]
-    : [`<a class="point-action-link primary" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${event.year}">Use these points</a>`, open("View balance", false)];
+  const links = event.kind === "bankable" ? [open("View balance")]
+    : [`<a class="point-action-link" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${event.year}">Use these points &rarr;</a>`, open("View balance")];
   links.push(`<a class="point-action-link" href="${googleCalendarLink(c, dateMs, event.kind)}" target="_blank" rel="noopener">+ Calendar</a>`);
   return links.join("");
 }
@@ -2022,30 +2004,77 @@ function bringReconcileForward() {
 const YOUR_DATA_HTML = `
     <section class="section your-data" aria-labelledby="your-data-title">
       <h2 id="your-data-title">Your data</h2>
-      <div class="section-sub">Download a copy of what you've recorded here: contracts, use-year balances, point activity, checks against Disney, bookings and saved itineraries. The file contains your personal contract and stay details, so keep it somewhere private.</div>
-      <button type="button" class="export-btn" id="download-data">Download my data</button>
+      <div class="section-sub">Download a spreadsheet of what you've recorded here, one tab each for contracts, use-year balances, point activity, checks against Disney, bookings and saved itineraries. The file contains your personal contract and stay details, so keep it somewhere private.</div>
+      <div class="export-actions">
+        <button type="button" class="export-btn" id="download-data">Download spreadsheet</button>
+        <button type="button" class="export-btn" id="download-data-json">Full technical copy (JSON)</button>
+      </div>
       <p class="export-status" id="export-status" role="status" aria-live="polite"></p>
     </section>
 `;
 let exportBusy = false;
-async function handleDownloadData() {
+// SheetJS, loaded only when someone asks for the spreadsheet.
+const SHEETJS_SRC = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+const SHEETJS_SRI = "sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw";
+let sheetJsLoad = null;
+function loadSheetJs() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  sheetJsLoad = sheetJsLoad || new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = SHEETJS_SRC;
+    s.integrity = SHEETJS_SRI;
+    s.crossOrigin = "anonymous";
+    s.onload = () => (window.XLSX ? resolve(window.XLSX) : reject(new Error("no XLSX")));
+    s.onerror = () => { sheetJsLoad = null; reject(new Error("load failed")); };
+    document.head.appendChild(s);
+  });
+  return sheetJsLoad;
+}
+function exportRoomName(resortId, roomTypeId) {
+  const r = RESORTS.find(x => x.id === resortId && x.roomTypes.some(t => t.id === roomTypeId));
+  const t = r && r.roomTypes.find(x => x.id === roomTypeId);
+  return t ? t.name : roomTypeId;
+}
+function xlsxBlob(XLSX, sheets) {
+  const book = XLSX.utils.book_new();
+  for (const sheet of sheets) {
+    const ws = XLSX.utils.aoa_to_sheet(sheet.rows);
+    if (sheet.name !== "About") {
+      ws["!cols"] = sheet.rows[0].map((_, i) => ({ wch: Math.min(40, Math.max(8, ...sheet.rows.map(r => String(r[i] ?? "").length)) + 2) }));
+    }
+    XLSX.utils.book_append_sheet(book, ws, sheet.name);
+  }
+  const bytes = XLSX.write(book, { bookType: "xlsx", type: "array" });
+  return new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+async function handleDownloadData(format) {
   if (exportBusy) return;
   const btn = document.getElementById("download-data");
+  const jsonBtn = document.getElementById("download-data-json");
   const status = document.getElementById("export-status");
+  const clicked = format === "xlsx" ? btn : jsonBtn;
+  const label = clicked.textContent;
   exportBusy = true;
-  btn.disabled = true;
-  btn.textContent = "Preparing your file…";
+  btn.disabled = jsonBtn.disabled = true;
+  clicked.textContent = "Preparing your file…";
   status.textContent = "";
   status.classList.remove("error");
   let ok = false;
   try {
-    const result = await window.DVCAuth.readOwnerExport(window.DVCDataExport.COLLECTIONS.map(c => c.table));
+    const X = window.DVCDataExport;
+    const [result, XLSX] = await Promise.all([
+      window.DVCAuth.readOwnerExport(X.COLLECTIONS.map(c => c.table)),
+      format === "xlsx" ? loadSheetJs() : null,
+    ]);
     if (result.error) throw new Error(result.error);
     const now = new Date();
-    const built = window.DVCDataExport.build(result.reads, now);
+    const built = X.build(result.reads, now);
     if (built.error) throw new Error(built.error);
-    const name = window.DVCDataExport.fileName(now);
-    const url = URL.createObjectURL(new Blob([JSON.stringify(built.data, null, 2)], { type: "application/json" }));
+    const name = X.fileName(now, format);
+    const blob = format === "xlsx"
+      ? xlsxBlob(XLSX, X.sheets(built.data, { resort: resortName, room: exportRoomName }))
+      : new Blob([JSON.stringify(built.data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.download = name;
@@ -2056,13 +2085,17 @@ async function handleDownloadData() {
     status.textContent = `Downloaded ${name}.`;
     ok = true;
   } catch (_) {
-    status.textContent = "Couldn't read all of your records, so no file was made. Nothing has changed. Try again.";
+    status.textContent = "Couldn't make your file, so nothing was downloaded. Nothing has changed. Try again.";
     status.classList.add("error");
   } finally {
     exportBusy = false;
-    btn.disabled = false;
-    btn.textContent = ok ? "Download my data" : "Try again";
+    btn.disabled = jsonBtn.disabled = false;
+    clicked.textContent = ok ? label.replace("Try again", format === "xlsx" ? "Download spreadsheet" : "Full technical copy (JSON)") : "Try again";
   }
+}
+function wireDownloadData() {
+  document.getElementById("download-data").addEventListener("click", () => handleDownloadData("xlsx"));
+  document.getElementById("download-data-json").addEventListener("click", () => handleDownloadData("json"));
 }
 
 // Collapsed by default: a destructive action shouldn't be one of the most
@@ -2089,7 +2122,7 @@ async function renderSignedIn() {
       preview: true,
     });
     document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
-    document.getElementById("download-data").addEventListener("click", handleDownloadData);
+    wireDownloadData();
     handleCheckoutReturn();
     return;
   }
@@ -2305,7 +2338,7 @@ async function renderSignedIn() {
           <div class="studio-nav">
             <button type="button" class="cancel-btn" id="cancel-contract">Cancel</button>
             <div class="studio-nav-right">
-              <button type="button" class="ghost-btn" id="studio-back">&lt; Back</button>
+              <button type="button" class="ghost-btn" id="studio-back">Back</button>
               <button type="button" class="save-btn" id="studio-next">Continue to points</button>
               <button type="button" class="save-btn" id="save-contract" style="display:none;">Save contract</button>
             </div>
@@ -2387,7 +2420,7 @@ async function renderSignedIn() {
   document.getElementById("f-acquisition-year").addEventListener("input", updateModalCardPreview);
   attachLoanEstimateListeners();
   document.getElementById("delete-account").addEventListener("click", handleDeleteAccount);
-  document.getElementById("download-data").addEventListener("click", handleDownloadData);
+  wireDownloadData();
 
   // Notification Settings modal -- same open/close/backdrop-click
   // conventions as the Card Studio modal above.
@@ -2736,7 +2769,6 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
     return;
   }
   el.style.display = "";
-  el.style.borderTopColor = walletCardPrimaryColor(c.home_resort_id);
   const perks = window.DVCAuth?.evaluateContractPerks({
     purchase_type: c.purchase_type,
     purchase_date: c.purchase_date || null,
@@ -2808,7 +2840,7 @@ function renderActiveContractDetails(contracts, yearPointsByContract) {
           <div class="ledger-bar-seg ledger-seg-holding" style="flex-grow:${row.points_holding}"></div>
         </div>
         <div class="point-bucket-summary">${[['Current',row.points_remaining],['Banked',row.points_banked],['Borrowed',row.points_borrowed],['Holding',row.points_holding]].map(([label,n])=>`<div><span>${label}</span><strong>${n}</strong></div>`).join('')}</div>
-        ${c.is_active ? `<a class="ledger-primary-btn" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${row.year}">Use these points &rarr;</a>` : ""}
+        ${c.is_active ? `<a class="ledger-primary-btn" href="use-points.html?contract=${encodeURIComponent(c.id)}&year=${row.year}">Use these points</a>` : ""}
         <div class="ledger-secondary">
           <button type="button" class="ledger-secondary-btn" data-toggle-adjust aria-expanded="false" aria-controls="adjust-options-${row.year}">Adjust balance</button>
           <button type="button" class="ledger-secondary-btn" data-reconcile="${row.year}">Reconcile with Disney</button>

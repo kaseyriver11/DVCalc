@@ -389,23 +389,34 @@ body {
    since these are meant to be dragged for live sensitivity, not typed. */
 .assumptions-inline { margin-top: 14px; border-top: 1px solid var(--color-border-light); padding-top: 4px; }
 .assumptions-inline .assumptions-toggle { min-height: 44px; }
+/* At the top of the page (2026-09-24): the toggle stands on its own, and
+   the sliders open in a card of their own below it. */
+.top-assumptions { margin-bottom: 16px; }
+.assumptions-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.assumptions-reset { min-height: 34px; padding: 0 12px; border: 1.5px solid var(--color-primary); border-radius: 8px; background: white; color: var(--color-primary); font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.assumptions-reset:hover { background: var(--color-primary-tint-bg); }
+.top-assumptions .assumptions-inline { margin-top: 0; border-top: 0; padding-top: 0; }
+.top-assumptions .assumptions-panel.open { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px 20px; }
 .assumptions-result { padding: 10px 12px; border-radius: 10px; background: var(--color-primary-tint-bg); font-size: .88rem; color: var(--color-text); }
 .chart-assumptions { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border-light); display: flex; flex-direction: column; gap: 12px; }
 .opportunity-toggle { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: .85rem; font-weight: 700; color: var(--color-text); cursor: pointer; }
 .opportunity-toggle input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--color-primary); }
+/* Toggle (clickable styles): a Secondary button whose caret flips. */
 .assumptions-toggle {
   display: block;
   width: 100%;
   text-align: left;
-  background: none;
-  border: none;
+  background: white;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
+  font: inherit;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-primary);
   cursor: pointer;
-  padding: 4px 0;
+  padding: 10px 14px;
 }
-.assumptions-toggle:hover { color: var(--color-primary-active); }
+.assumptions-toggle:hover { background: var(--color-primary-tint-bg); }
 
 .assumptions-panel {
   display: none;
@@ -573,8 +584,6 @@ body {
 .exit-equity-tile-value { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); }
 .exit-equity-tile-label { font-size: 0.72rem; color: #888; margin-top: 4px; line-height: 1.35; }
 .exit-equity-tile-note { display: block; color: #aaa; }
-.keep-sell-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin: 10px 0 14px; }
-.keep-sell-note { font-size: 0.72rem; color: #888; margin-top: 8px; line-height: 1.4; }
 
 .exit-equity-status {
   margin-top: 14px;
@@ -619,11 +628,15 @@ body {
   text-align: center;
 }
 .chart-horizon-note strong { color: #555; }
+/* The payback figure's basis, as a short bullet list under the gauge. */
+.projection-basis { margin: 12px auto 0; padding-left: 18px; max-width: 360px; text-align: left; font-size: 0.78rem; line-height: 1.5; color: #666; }
+.projection-basis a { color: var(--color-primary); font-weight: 700; text-decoration: none; }
+.projection-basis a:hover { text-decoration: underline; }
 
 /* ---- Cost vs. Value Over Time chart ----
    Same hand-rolled SVG + HTML-tooltip approach as changes.html's own
    year-over-year chart (this app uses no chart library anywhere) --
-   .chart-card/.chart-tooltip/.tt-*/.year-hover class names match that
+   .chart-card, .chart-tooltip, .tt- and .year-hover class names match that
    page's exactly, so both charts share one visual language. Two series:
    Total Spent (--color-info blue) and Value Extracted (--color-good
    green) -- validated as a colorblind-safe pair via the dataviz skill's
@@ -631,6 +644,8 @@ body {
    fails CVD separation outright; blue+green passes every check in both
    light and dark). */
 .chart-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 12px; position: relative; }
+/* In its own section card, the chart doesn't need a second card around it. */
+.chart-section .chart-card { padding: 0; box-shadow: none; }
 /* touch-action: pan-y -- a vertical swipe still scrolls the page, while a
    horizontal drag belongs to the chart's own year scrubbing. Without it the
    browser claims the horizontal gesture and the scrub never fires. */
@@ -871,18 +886,21 @@ body {
 
 .cost-card-sources { margin-top: 6px; font-size: .74rem; color: #555; overflow-wrap: anywhere; }
 
+/* Small Secondary button; .danger is the red Danger outline. */
 .small-btn {
   font-size: 0.78rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-primary);
   background: white;
-  color: #555;
+  color: var(--color-primary);
   cursor: pointer;
 }
-.small-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.small-btn.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
+.small-btn:hover { background: var(--color-primary-tint-bg); }
+.small-btn.danger { border-color: var(--color-danger); color: var(--color-danger); }
+.small-btn.danger:hover { background: var(--color-danger-bg); }
 
 .add-btn {
   background: var(--color-primary);
@@ -890,8 +908,8 @@ body {
   border: none;
   border-radius: 8px;
   padding: 9px 18px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
 }
 .add-btn:hover { background: var(--color-primary-active); }
@@ -921,7 +939,7 @@ a.add-btn { display: inline-flex; align-items: center; }
 .disclosure[open] > summary::after { transform: rotate(-135deg); }
 .disclosure > summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; border-radius: 6px; }
 .disclosure[open] > summary { margin-bottom: 10px; }
-.stay-preview-line { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--color-border-light); color: var(--color-text); text-decoration: none; }
+.stay-preview-line { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--color-border-light); color: var(--color-text); text-decoration: none; }
 .stay-preview-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
 .stay-preview-main { display: flex; flex-direction: column; min-width: 0; }
 .stay-preview-main strong { font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -929,8 +947,8 @@ a.add-btn { display: inline-flex; align-items: center; }
 .stay-preview-value { font-size: .85rem; font-weight: 700; color: var(--color-good); white-space: nowrap; }
 .danger-btn { background: var(--color-danger); }
 .danger-btn:hover { background: var(--color-danger); filter: brightness(.92); }
-.page-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.page-actions-link { font-size: .85rem; font-weight: 600; color: var(--color-primary); text-decoration: none; }
+.page-actions-link { font-size: .85rem; font-weight: 700; color: var(--color-primary); text-decoration: none; }
+.page-actions-link:hover { text-decoration: underline; }
 .stay-group-title { font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-muted); margin: 4px 0 8px; }
 .balance-deduct-lines .deduct-earlier { color: var(--color-text); }
 .deduct-split { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 6px; }
@@ -949,23 +967,25 @@ a.add-btn { display: inline-flex; align-items: center; }
   background: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 9px 20px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .save-btn:hover { background: var(--color-primary-active); }
 
 .cancel-btn {
   background: white;
-  color: #666;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
   padding: 9px 20px;
   font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
 }
+.cancel-btn:hover { background: var(--color-primary-tint-bg); }
 
 .form-error {
   color: var(--color-danger);
@@ -988,7 +1008,6 @@ a.add-btn { display: inline-flex; align-items: center; }
   .dopamine-tile-label { font-size: 0.62rem; }
 
   .exit-equity-tiles { grid-template-columns: 1fr; }
-  .keep-sell-controls { grid-template-columns: 1fr; }
 
   /* Extra margin on top of the "Alt. Fund" shortened label (above) --
      real-world testing at ~386px still wrapped the 3rd legend item even
@@ -1050,7 +1069,6 @@ a.add-btn { display: inline-flex; align-items: center; }
         <a href="index.html">Calendar</a>
         <a href="compare.html">Compare Resorts</a>
         <a href="suggest.html">Suggest a Stay</a>
-        <a href="pointsorcash.html">Points or Cash</a>
       </span>
       <span class="site-nav-divider"></span>
       <span class="site-nav-group">
@@ -1063,6 +1081,7 @@ a.add-btn { display: inline-flex; align-items: center; }
         <span class="site-nav-group-label">Research</span>
         <a href="contractvalue.html">Buying Guide</a>
         <a href="changes.html">Point Changes</a>
+        <a href="pointsorcash.html">Worth the Points?</a>
       </span>
     </div>
     <span id="account-control"></span>
@@ -1103,7 +1122,8 @@ let trips = [];
 // overwritten with the signed-in owner's real saved settings once
 // renderSignedIn()'s initial fetch resolves. contractYearPoints is
 // cached at module scope for the separate badge coverage estimate.
-let userSettings = { point_value_baseline: 30, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
+const DEFAULT_ASSUMPTIONS = { point_value_baseline: 30, dues_growth_rate: 0.04, value_growth_rate: 0.05, opportunity_cost_rate: 0.00 };
+let userSettings = { ...DEFAULT_ASSUMPTIONS };
 let contractYearPoints = [];
 let assumptionsOpen = window.location.hash === '#model-assumptions';
 let settingsSaveTimer = null;
@@ -1632,10 +1652,33 @@ function buildGaugeHTML(stats) {
                 : `${fmt(stats.remaining)} remaining to reach House Money`)}
         ${breakdownTrigger}
         ${showBreakdown ? buildPaybackBreakdownHTML(stats, dateLabel) : ""}
-        <p class="chart-horizon-note">${fmt(stats.lifetimeValue)} logged stay value from owned-contract points. The projection values your points at $${stats.settings.point_value_baseline}/pt, ${(stats.settings.value_growth_rate * 100).toFixed(1)}% value growth and ${(stats.settings.dues_growth_rate * 100).toFixed(1)}% dues growth. Missing purchase details use estimates.</p>
+        ${buildProjectionBasisHTML(stats)}
       </div>
     </div>
   `;
+}
+
+// What the payback figure rests on, one fact per bullet. The estimate
+// bullet only appears when a contract is missing its purchase price or
+// date (dvc-owner-value.js costSources), and links to the first one.
+function buildProjectionBasisHTML(stats) {
+  const s = stats.settings;
+  const pct = v => (v * 100).toFixed(1) + "%";
+  const est = stats.perContract.filter(b => b.contract.is_active && (b.priceSource === "estimated" || b.startEstimated));
+  let estimate = "";
+  if (est.length) {
+    const what = est.some(b => b.priceSource === "estimated") && est.some(b => b.startEstimated) ? "Purchase price or date"
+      : est.some(b => b.priceSource === "estimated") ? "Purchase price" : "Purchase date";
+    estimate = `<li>${what} is estimated for ${est.length === 1 ? "1 contract" : est.length + " contracts"} &middot; <a href="account.html?contract=${encodeURIComponent(est[0].contract.id)}">Add it &rarr;</a></li>`;
+  }
+  return `
+    <ul class="projection-basis">
+      <li>${fmt(stats.lifetimeValue)} of stay value logged from your contracts' points</li>
+      <li>Points valued at $${s.point_value_baseline}/pt</li>
+      <li>Hotel prices grow ${pct(s.value_growth_rate)} a year</li>
+      <li>Dues grow ${pct(s.dues_growth_rate)} a year</li>
+      ${estimate}
+    </ul>`;
 }
 
 function buildStatTilesHTML(stats) {
@@ -1714,87 +1757,6 @@ function buildExitEquityHTML(equity) {
   `;
 }
 
-// ---- Keep or Sell ----
-// Exit Equity answers "what if I sold today"; this answers the question
-// owners actually ask: is keeping the contracts a few more years (then
-// selling) worth more than selling now? Math in dvc-resale.js
-// (tests/resale.test.js), in today's dollars, priced at the page's own
-// value per point, dues/hotel inflation and -- when it's on -- opportunity
-// cost as the discount rate. Years and usage are page-only (not saved).
-let keepSellYears = 10;
-let keepSellUsage = 1;
-const KEEP_SELL_FORMATTERS = {
-  keep_years: v => v + (v === 1 ? " year" : " years"),
-  keep_usage: v => Math.round(v * 100) + "% of points",
-};
-
-function computeKeepOrSell(contracts, settings) {
-  const year = new Date().getFullYear();
-  const active = contracts.filter(c => c.is_active);
-  return window.DVCResale.keepOrSell({
-    contracts: active.map(c => {
-      const inv = RESORT_INVESTMENT_DATA[c.home_resort_id] || {};
-      return {
-        points: c.points_per_year,
-        pricePerPoint: inv.resalePricePerPoint || FALLBACK_PRICE_PER_POINT,
-        yearsLeft: (inv.contractExpirationYear || year + 30) - year,
-        duesPerPoint: DUES_PER_POINT[c.home_resort_id] || 0,
-      };
-    }),
-    years: keepSellYears,
-    usage: keepSellUsage,
-    pointValue: settings.point_value_baseline,
-    duesGrowth: settings.dues_growth_rate,
-    valueGrowth: settings.value_growth_rate,
-    discountRate: settings.opportunity_cost_rate || 0,
-  });
-}
-
-function keepSellSummaryText(r) {
-  return r.verdict === "keep"
-    ? `Keeping is worth about ${fmt(r.advantage)} more than selling today`
-    : `Selling today comes out about ${fmt(-r.advantage)} ahead`;
-}
-
-function keepSellSliderRow(field, label, value, min, max, step) {
-  return `
-    <div class="assumption-row">
-      <div class="assumption-label-row">
-        <span class="assumption-label-text"><label for="ks-${field}">${label}</label></span>
-        <span class="assumption-value" id="ks-${field}-out">${KEEP_SELL_FORMATTERS[field](value)}</span>
-      </div>
-      <input type="range" id="ks-${field}" class="assumption-slider keep-sell-slider" data-field="${field}" min="${min}" max="${max}" step="${step}" value="${value}">
-    </div>`;
-}
-
-function buildKeepSellBodyHTML(r, settings) {
-  const years = r.heldYears;
-  const threshold = r.breakEvenUsage != null
-    ? ` Keeping wins as long as you use at least ${Math.ceil(r.breakEvenUsage * 100)}% of your points.`
-    : "";
-  return `
-    <div class="exit-equity-tiles">
-      <div class="exit-equity-tile">
-        <div class="exit-equity-tile-value">${fmt(r.sellNow)}</div>
-        <div class="exit-equity-tile-label">Sell today <span class="exit-equity-tile-note">(after broker and Disney fees)</span></div>
-      </div>
-      <div class="exit-equity-tile">
-        <div class="exit-equity-tile-value">${fmt(r.keep)}</div>
-        <div class="exit-equity-tile-label">Keep ${years} year${years === 1 ? "" : "s"}, then sell <span class="exit-equity-tile-note">(stays ${fmt(r.stayValue)} − dues ${fmt(r.dues)} + sale ${fmt(r.saleLater)})</span></div>
-      </div>
-    </div>
-    <div class="exit-equity-status${r.verdict === "keep" ? " achieved" : ""}">${keepSellSummaryText(r)}.${threshold}</div>
-    <p class="keep-sell-note">Points you use are valued at $${settings.point_value_baseline}/pt, what you value your points at; unused points count as nothing. In today's dollars${settings.opportunity_cost_rate > 0 ? `, discounted at ${(settings.opportunity_cost_rate * 100).toFixed(1)}%/yr` : ""}.</p>`;
-}
-
-function refreshKeepSell() {
-  const body = document.getElementById("keep-sell-body");
-  if (!body || !contracts.some(c => c.is_active)) return;
-  const r = computeKeepOrSell(contracts, userSettings);
-  body.innerHTML = buildKeepSellBodyHTML(r, userSettings);
-  document.getElementById("keep-sell-summary").textContent = keepSellSummaryText(r);
-}
-
 // ---- Model Assumptions & Sensitivity ----
 // Chip presets for Opportunity Cost Rate. Vacation Value Baseline uses the
 // shared $/pt editor (dvc-point-value.js), with its own presets; Dues and
@@ -1804,9 +1766,12 @@ function refreshKeepSell() {
 // lines, which is what lets all three sit on a single row on a phone
 // without shortening "Conservative/HYSA" into something unreadable.
 // No 0% chip: "off" is the checkbox's job (buildOpportunityControlsHTML()).
+// 10% is the S&P 500's long-run return before inflation -- the like-for-
+// like figure here, since the chart grows hotel prices with inflation too.
 const OPPORTUNITY_COST_PRESETS = [
   { label: "4%", sub: "HYSA", value: 0.04 },
-  { label: "7%", sub: "S&P 500", value: 0.07 },
+  { label: "7%", sub: "60/40 mix", value: 0.07 },
+  { label: "10%", sub: "S&P 500", value: 0.10 },
 ];
 
 // Longer-form explanations that don't fit a one-line label -- surfaced as
@@ -1855,7 +1820,7 @@ function assumptionSliderRow(field, label, value, min, max, step, presets) {
 // holds only the three sliders that move the projected House Money date --
 // the paid-off percent and remaining amount are actuals and never move.
 // The fourth, Opportunity Cost, only changes the chart's Alt. Fund line, so
-// it lives inside the chart's own disclosure (buildChartDisclosureHTML).
+// it lives in the chart's own card (buildChartSectionHTML).
 // The live result line means a slider always shows its effect right here,
 // wherever the page is scrolled.
 function buildAssumptionsPanelHTML(settings, stats) {
@@ -1866,10 +1831,13 @@ function buildAssumptionsPanelHTML(settings, stats) {
       </button>
       <div class="assumptions-panel${assumptionsOpen ? " open" : ""}" id="assumptions-panel">
         <div class="assumptions-result" id="assumptions-result" aria-live="polite">${assumptionsResultHTML(stats)}</div>
-        <div class="assumption-row">${window.DVCPointValue.html({ id: "a-point_value_baseline", value: settings.point_value_baseline, hint: "Prices your future points in the projection and Keep or Sell." })}</div>
+        <div class="assumption-row">${window.DVCPointValue.html({ id: "a-point_value_baseline", value: settings.point_value_baseline, hint: "Prices your future points in the projection." })}</div>
         ${assumptionSliderRow("dues_growth_rate", "Annual Dues Inflation", settings.dues_growth_rate, 0.02, 0.08, 0.001)}
         ${assumptionSliderRow("value_growth_rate", "Deluxe Hotel Inflation", settings.value_growth_rate, 0.02, 0.08, 0.001)}
-        <div class="assumptions-save-status" id="assumptions-save-status" role="status">${settingsSaveNote}</div>
+        <div class="assumptions-footer">
+          <div class="assumptions-save-status" id="assumptions-save-status" role="status">${settingsSaveNote}</div>
+          <button type="button" class="assumptions-reset" id="assumptions-reset">Reset to defaults</button>
+        </div>
       </div>
     </div>
   `;
@@ -1926,7 +1894,6 @@ function refreshHouseMoneyOutputs() {
     exitBody.innerHTML = buildExitEquityHTML(equity);
     document.getElementById("exit-equity-summary").textContent = exitEquitySummaryText(equity);
   }
-  refreshKeepSell();
 }
 
 // 500ms debounce, per the spec -- update the in-memory model and
@@ -1989,6 +1956,20 @@ function attachAssumptionsListeners() {
     e.currentTarget.setAttribute("aria-expanded", String(assumptionsOpen));
     e.currentTarget.innerHTML = `&#9881; ${assumptionsOpen ? "Hide" : "Adjust"} projection assumptions ${assumptionsOpen ? "&#9652;" : "&#9662;"}`;
   });
+  // Reset to defaults: all four assumptions (the chart's opportunity-cost
+  // comparison turns off too), saved like any other change. The panel is
+  // rebuilt so every control shows its default, and stays open.
+  const assumptionsReset = document.getElementById("assumptions-reset");
+  if (once(assumptionsReset)) assumptionsReset.addEventListener("click", () => {
+    userSettings = { ...userSettings, ...DEFAULT_ASSUMPTIONS };
+    const panel = document.getElementById("model-assumptions");
+    if (panel) panel.outerHTML = buildAssumptionsPanelHTML(userSettings, computeHouseMoneyStats(contracts, trips, userSettings));
+    renderOpportunityControls();
+    refreshHouseMoneyOutputs();
+    scheduleSettingsSave();
+    attachAssumptionsListeners();
+    document.getElementById("assumptions-reset")?.focus();
+  });
   const opportunityToggle = document.getElementById("opportunity-toggle");
   if (once(opportunityToggle)) opportunityToggle.addEventListener("change", (e) => {
     handleAssumptionChange("opportunity_cost_rate", e.target.checked ? lastOpportunityCostRate : 0);
@@ -2047,16 +2028,12 @@ async function renderSignedIn() {
   // dopamine stat tiles below use it directly.
   const stats = computeHouseMoneyStats(contracts, trips, userSettings);
   const exitEquity = computeExitEquity(contracts, stats);
-  const keepSell = computeKeepOrSell(contracts, userSettings);
   // ---- Cost of ownership: one card per active contract, from the same model ----
   const contractCostCards = stats.perContract.filter(b => b.contract.is_active).map(contractCostCardHTML).join("");
 
   const needsReview = trips.filter(t => !window.DVCTripFunding.summary(t, contracts).valid);
   pageContent.innerHTML = `
-    <div class="page-actions">
-      <a class="add-btn" href="bookings.html#record-booking">+ Record a booking</a>
-      <a class="page-actions-link" href="bookings.html">All stays &rarr;</a>
-    </div>
+    <div class="top-assumptions">${buildAssumptionsPanelHTML(userSettings, stats)}</div>
     ${needsReview.length ? `<div class="save-warning">${needsReview.length === 1 ? "1 stay has incomplete point sources and is" : needsReview.length + " stays have incomplete point sources and are"} excluded from membership value until reviewed. <a href="bookings.html#needs-review">Review point sources</a></div>` : ""}
     <div class="section">
       <h2>Your House Money Payback</h2>
@@ -2064,13 +2041,13 @@ async function renderSignedIn() {
       <div id="house-money-body">
         ${buildGaugeHTML(stats)}
       </div>
-      ${buildAssumptionsPanelHTML(userSettings, stats)}
       <details class="disclosure" id="payback-details">
         <summary>More payback details</summary>
         <div id="payback-details-body">${buildStatTilesHTML(stats)}</div>
       </details>
-      ${buildChartDisclosureHTML(stats)}
     </div>
+
+    ${buildChartSectionHTML(stats)}
 
     ${buildStaysPreviewHTML()}
 
@@ -2081,20 +2058,6 @@ async function renderSignedIn() {
         <summary><span id="exit-equity-summary">${exitEquitySummaryText(exitEquity)}</span></summary>
         <div class="section-sub">Net Resale Liquidation -- a second, more conservative "has this paid for itself" read that credits what the contracts themselves could still sell for</div>
         <div id="exit-equity-body">${buildExitEquityHTML(exitEquity)}</div>
-      </details>`}
-    </div>
-
-    <div class="section">
-      <h2>Keep or Sell</h2>
-      ${activeContracts.length === 0 ? `<div class="empty-note">No active contracts yet -- <a href="account.html">add one</a>.</div>` : `
-      <details class="disclosure" id="keep-sell-disclosure">
-        <summary><span id="keep-sell-summary">${keepSellSummaryText(keepSell)}</span></summary>
-        <div class="section-sub">Keeping your contracts a few more years and then selling, compared with selling today</div>
-        <div class="keep-sell-controls">
-          ${keepSellSliderRow("keep_years", "Years you'd keep them", keepSellYears, 1, 30, 1)}
-          ${keepSellSliderRow("keep_usage", "Points you'll use each year", keepSellUsage, 0, 1, 0.05)}
-        </div>
-        <div id="keep-sell-body">${buildKeepSellBodyHTML(keepSell, userSettings)}</div>
       </details>`}
     </div>
 
@@ -2111,26 +2074,22 @@ async function renderSignedIn() {
 
   renderHouseMoneyChart(stats);
   attachAssumptionsListeners();
-  // Page-only sliders: readout and results update in place while dragging.
-  document.querySelectorAll(".keep-sell-slider").forEach(input => input.addEventListener("input", () => {
-    const value = parseFloat(input.value);
-    if (input.dataset.field === "keep_years") keepSellYears = value; else keepSellUsage = value;
-    document.getElementById(`ks-${input.dataset.field}-out`).textContent = KEEP_SELL_FORMATTERS[input.dataset.field](value);
-    refreshKeepSell();
-  }));
 }
 
-// The projection chart sits behind a closed disclosure so the payback
-// result above stays the first thing read (2026-09-23). Its own container,
-// outside #house-money-body, so assumption-slider re-renders
-// (refreshHouseMoneyOutputs) redraw the chart without closing it.
-function buildChartDisclosureHTML(stats) {
+// The projection chart gets its own card, open on load, right after the
+// payback result (2026-09-24: it's the page's clearest picture; it used to
+// sit behind a closed disclosure). Its own container, outside
+// #house-money-body, so assumption-slider re-renders
+// (refreshHouseMoneyOutputs) redraw just the chart.
+function buildChartSectionHTML(stats) {
   const chart = buildHouseMoneyChartHTML(stats);
   if (!chart) return "";
-  return `<details class="disclosure" id="chart-disclosure"><summary>Cost vs. Value vs. Opportunity Cost</summary>
+  return `<div class="section chart-section">
+      <h2>Cost vs. Value Over Time</h2>
+      <div class="section-sub">What you'll have spent on your membership each year, against the vacation value it gives you</div>
       <div id="house-money-chart-body">${chart}</div>
       <div class="chart-assumptions" id="chart-assumptions">${buildOpportunityControlsHTML()}</div>
-    </details>`;
+    </div>`;
 }
 
 // The Alt. Fund comparison is opt-in: a checkbox, and the rate slider only
@@ -2146,7 +2105,7 @@ function buildOpportunityControlsHTML() {
   if (on) lastOpportunityCostRate = rate; // a saved rate, not the 4% default
   return `
     <label class="opportunity-toggle"><input type="checkbox" id="opportunity-toggle"${on ? " checked" : ""}><span>Compare with investing the money instead</span></label>
-    ${on ? assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate", rate, 0.005, 0.10, 0.005, OPPORTUNITY_COST_PRESETS) : ""}`;
+    ${on ? assumptionSliderRow("opportunity_cost_rate", "Opportunity Cost Rate", rate, 0.005, 0.15, 0.005, OPPORTUNITY_COST_PRESETS) : ""}`;
 }
 
 function renderOpportunityControls() {
@@ -2167,6 +2126,7 @@ function stayPreviewLineHTML({ kind, trip }) {
       <span class="stay-preview-label">${STAY_PREVIEW_LABEL[kind]}</span>
       <span class="stay-preview-main"><strong>${shorthandResortName(trip.resort_id, resortName(trip.resort_id))}</strong><span>${formatTripDateRange(trip.check_in, trip.check_out)} &middot; ${trip.points_used.toLocaleString()} pts</span></span>
       <span class="stay-preview-value">${v ? fmt(v.cash) + STAY_PREVIEW_VALUE[kind] : ""}</span>
+      <span class="row-chevron" aria-hidden="true">&rsaquo;</span>
     </a>`;
 }
 function buildStaysPreviewHTML() {
