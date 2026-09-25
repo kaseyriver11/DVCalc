@@ -1590,6 +1590,9 @@ function evaluateContractPerks(contract) {
 function renderAccountControl(session) {
   const el = document.getElementById("account-control");
   if (!el) return;
+  // Signed out, the phone menu puts Sign in first (nav.js); signed in,
+  // the email and Sign out stay at the bottom.
+  el.closest(".site-nav")?.classList.toggle("signed-out", !!configured && !session);
 
   if (!configured) {
     el.innerHTML = "";
