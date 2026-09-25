@@ -220,14 +220,16 @@
   <div class="main-layout">
     <div class="calendar-side">
       <div id="full-calendar-view">
-        <div class="month-nav">
-          <button id="prev-month">&larr;</button>
-          <span id="month-label" class="month-label"></span>
-          <button id="next-month">&rarr;</button>
-        </div>
-        <div class="selection-hint" id="selection-hint">Click a check-in date</div>
-        <div class="calendar-grid-scroll">
-          <div id="calendar-grid" class="calendar-grid"></div>
+        <div class="calendar-card">
+          <div class="month-nav">
+            <button id="prev-month" aria-label="Previous month">&larr;</button>
+            <span id="month-label" class="month-label"></span>
+            <button id="next-month" aria-label="Next month">&rarr;</button>
+          </div>
+          <div class="selection-hint" id="selection-hint">Click a check-in date</div>
+          <div class="calendar-grid-scroll">
+            <div id="calendar-grid" class="calendar-grid"></div>
+          </div>
         </div>
         <div class="legend-bar">
           <span class="legend-group">

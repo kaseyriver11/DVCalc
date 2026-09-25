@@ -973,14 +973,20 @@ select, input, textarea, button {
 }
 
 /* ---- Calendar ---- */
+/* The month navigator and hint are the calendar card's header, not loose
+   elements above it -- so on desktop the card's top edge sits level with
+   the first summary card (Resort Alerts / Your Stay) beside it. */
+.calendar-card {
+  background: white;
+  border-radius: 10px;
+  padding: 8px 12px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
-  background: white;
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .day-header {
